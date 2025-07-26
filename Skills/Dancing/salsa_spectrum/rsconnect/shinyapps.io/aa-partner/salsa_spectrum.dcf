@@ -1,0 +1,10 @@
+name: salsa_spectrum
+title:
+username: aa-partner
+account: aa-partner
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15039318
+bundleId: 10573814
+url: https://aa-partner.shinyapps.io/salsa_spectrum/
+version: 1

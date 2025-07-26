@@ -1,0 +1,10 @@
+name: infinvestors
+title:
+username: aa-partner
+account: aa-partner
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15019234
+bundleId: 10549848
+url: https://aa-partner.shinyapps.io/infinvestors/
+version: 1

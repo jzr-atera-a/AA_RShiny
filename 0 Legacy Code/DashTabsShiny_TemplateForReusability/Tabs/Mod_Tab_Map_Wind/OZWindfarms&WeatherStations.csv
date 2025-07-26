@@ -1,0 +1,545 @@
+name,lat,lng,Group,State,detail
+15590,-23.7951,133.889,Weather_Station,NT, ALICE SPRINGS AIRPORT                   
+14272,-13.0544,131.0252,Weather_Station,NT, BATCHELOR AIRPORT                       
+14723,-16.0755,136.3041,Weather_Station,NT, BORROLOOLA AIRPORT                      
+14954,-14.9408,130.8091,Weather_Station,NT, BRADSHAW                                
+14808,-15.4397,130.5731,Weather_Station,NT, BRADSHAW (ANGALLARI VALLEY) (DEFENCE)   
+14627,-13.6715,134.3415,Weather_Station,NT, BULMAN                                  
+14909,-13.3275,133.0861,Weather_Station,NT, CENTRAL ARNHEM PLATEAU                  
+14308,-11.1629,132.4813,Weather_Station,NT, CROKER ISLAND AIRPORT                   
+14626,-16.2637,133.3782,Weather_Station,NT, DALY WATERS AIRSTRIP                    
+14015,-12.4239,130.8925,Weather_Station,NT, DARWIN AIRPORT                          
+14949,-15.7441,131.9181,Weather_Station,NT, DELAMERE WEAPONS RANGE                  
+14901,-13.8345,131.1872,Weather_Station,NT, DOUGLAS RIVER RESEARCH FARM             
+14277,-12.635,130.3725,Weather_Station,NT, DUM IN MIRRIE AIRSTRIP                  
+14508,-12.2741,136.8201,Weather_Station,NT, GOVE AIRPORT                            
+14518,-13.9746,136.463,Weather_Station,NT, GROOTE EYLANDT AIRPORT                  
+14198,-12.6592,132.894,Weather_Station,NT, JABIRU AIRPORT                          
+15602,-22.9494,136.1442,Weather_Station,NT, JERVOIS                                 
+14982,-12.7934,130.8542,Weather_Station,NT, KANGAROO FLATS (DEFENCE)                
+14829,-18.3324,130.6361,Weather_Station,NT, LAJAMANU AIRPORT                        
+14405,-12.0569,134.2339,Weather_Station,NT, MANINGRIDA AIRPORT                      
+14704,-16.4423,136.076,Weather_Station,NT, MCARTHUR RIVER MINE AIRPORT             
+14274,-11.0468,132.9791,Weather_Station,NT, MCCLUER ISLAND                          
+14041,-12.605,131.2988,Weather_Station,NT, MIDDLE POINT                            
+14404,-12.0932,134.8919,Weather_Station,NT, MILINGIMBI AIRPORT                      
+14983,-12.9114,131.8663,Weather_Station,NT, MOUNT BUNDEY NORTH (DEFENCE)            
+14984,-13.0889,131.8478,Weather_Station,NT, MOUNT BUNDEY SOUTH (DEFENCE)            
+14309,-11.5485,132.9266,Weather_Station,NT, MURGANELLA AIRSTRIP                     
+14517,-11.9971,135.5726,Weather_Station,NT, NGAYAWILI                               
+14299,-14.7236,134.7456,Weather_Station,NT, NGUKURR AIRPORT                         
+14314,-12.6099,131.0474,Weather_Station,NT, NOONAMAH AIRSTRIP                       
+14310,-12.3272,133.0069,Weather_Station,NT, OENPELLI AIRPORT                        
+14142,-11.4021,130.4217,Weather_Station,NT, PIRLANGIMPI AIRPORT                     
+14254,-12.2397,131.8791,Weather_Station,NT, POINT STUART                            
+14948,-14.2494,129.5282,Weather_Station,NT, PORT KEATS AIRPORT                      
+15666,-20.1823,130.0148,Weather_Station,NT, RABBIT FLAT                             
+15135,-19.6423,134.1833,Weather_Station,NT, TENNANT CREEK AIRPORT                   
+15643,-22.4518,133.6377,Weather_Station,NT, TERRITORY GRAPE FARM                    
+14932,-14.5229,132.3826,Weather_Station,NT, TINDAL RAAF                             
+14825,-16.403,131.0145,Weather_Station,NT, VICTORIA RIVER DOWNS                    
+15664,-23.2656,129.3844,Weather_Station,NT, WALUNGURRU AIRPORT                      
+14401,-11.65,133.3797,Weather_Station,NT, WARRUWI AIRPORT                         
+15635,-25.1896,130.9737,Weather_Station,NT, YULARA AIRPORT                          
+23090,-34.9211,138.6216,Weather_Station,SA, ADELAIDE (KENT TOWN)                    
+23000,-34.9257,138.5832,Weather_Station,SA, ADELAIDE (WEST TERRACE / NGAYIRDAPIRA)  
+23034,-34.9524,138.5196,Weather_Station,SA, ADELAIDE AIRPORT                        
+22823,-35.7549,136.5959,Weather_Station,SA, CAPE BORDA                              
+26095,-36.9655,139.7164,Weather_Station,SA, CAPE JAFFA (THE LIMESTONE)              
+22803,-35.8426,138.1327,Weather_Station,SA, CAPE WILLOUGHBY                         
+18012,-32.1297,133.6976,Weather_Station,SA, CEDUNA AMO                              
+21131,-33.8226,138.5933,Weather_Station,SA, CLARE HIGH SCHOOL                       
+18116,-33.7081,136.5026,Weather_Station,SA, CLEVE AERODROME                         
+18230,-34.675,135.3362,Weather_Station,SA, COFFIN BAY (POINT AVOID)                
+16090,-29.0347,134.7222,Weather_Station,SA, COOBER PEDY AIRPORT                     
+26091,-37.2906,140.8254,Weather_Station,SA, COONAWARRA                              
+18229,-32.6845,137.3689,Weather_Station,SA, CULTANA (DEFENCE)                       
+18217,-34.2524,135.7135,Weather_Station,SA, CUMMINS AERO                            
+23083,-34.7111,138.6222,Weather_Station,SA, EDINBURGH RAAF                          
+22046,-35.1121,137.7395,Weather_Station,SA, EDITHBURGH                              
+16097,-26.2635,132.1771,Weather_Station,SA, ERNABELLA (PUKATJA)                     
+23894,-35.5194,138.8177,Weather_Station,SA, HINDMARSH ISLAND AWS                    
+22050,-33.9703,137.6628,Weather_Station,SA, KADINA AWS                              
+25557,-36.1058,140.3273,Weather_Station,SA, KEITH (MUNKORA)                         
+22841,-35.7114,137.5231,Weather_Station,SA, KINGSCOTE AERO                          
+23887,-35.1712,138.6783,Weather_Station,SA, KUITPO FOREST RESERVE                   
+25562,-35.3778,140.5378,Weather_Station,SA, LAMEROO (AUSTIN PLAINS)                 
+17110,-30.5963,138.4219,Weather_Station,SA, LEIGH CREEK AIRPORT                     
+24024,-34.439,140.5978,Weather_Station,SA, LOXTON RESEARCH CENTRE                  
+17126,-29.6587,138.0684,Weather_Station,SA, MARREE AERO                             
+22031,-34.748,137.5276,Weather_Station,SA, MINLATON AERO                           
+18195,-32.8427,135.1515,Weather_Station,SA, MINNIPA PIRSA                           
+17123,-28.0997,140.1956,Weather_Station,SA, MOOMBA AIRPORT                          
+23878,-34.7253,138.9278,Weather_Station,SA, MOUNT CRAWFORD AWS                      
+26021,-37.7473,140.7739,Weather_Station,SA, MOUNT GAMBIER AERO                      
+23842,-34.9784,138.7088,Weather_Station,SA, MOUNT LOFTY                             
+24584,-35.065,139.2273,Weather_Station,SA, MURRAY BRIDGE (PALLAMANA AERODROME)     
+26099,-36.9813,140.727,Weather_Station,SA, NARACOORTE AERODROME                    
+18115,-35.3365,136.1174,Weather_Station,SA, NEPTUNE ISLAND                          
+23885,-35.1586,138.5057,Weather_Station,SA, NOARLUNGA                               
+18192,-34.5993,135.8784,Weather_Station,SA, NORTH SHIELDS (PORT LINCOLN AWS)        
+18106,-31.4492,130.8976,Weather_Station,SA, NULLARBOR                               
+23373,-34.4761,139.0056,Weather_Station,SA, NURIOOTPA PIRSA                         
+17043,-27.5553,135.4456,Weather_Station,SA, OODNADATTA AIRPORT                      
+26100,-36.6539,140.5212,Weather_Station,SA, PADTHAWAY SOUTH                         
+23013,-34.7977,138.6281,Weather_Station,SA, PARAFIELD AIRPORT                       
+23875,-35.5695,138.2864,Weather_Station,SA, PARAWA (SECOND VALLEY FOREST AWS)       
+22843,-35.7916,137.2496,Weather_Station,SA, PARNDANA CFS AWS                        
+18201,-32.5073,137.7169,Weather_Station,SA, PORT AUGUSTA AERO                       
+24048,-34.1983,140.6766,Weather_Station,SA, RENMARK AERO                            
+26105,-37.1776,139.8054,Weather_Station,SA, ROBE AIRFIELD                           
+23122,-34.5106,138.6763,Weather_Station,SA, ROSEWORTHY AWS                          
+16096,-30.4829,136.8772,Weather_Station,SA, ROXBY DOWNS (OLYMPIC DAM AERODROME)     
+21133,-33.7676,138.2182,Weather_Station,SA, SNOWTOWN (RAYVILLE PARK)                
+22049,-35.2795,136.9392,Weather_Station,SA, STENHOUSE BAY                           
+24580,-35.2836,138.8934,Weather_Station,SA, STRATHALBYN RACECOURSE                  
+16098,-30.7051,134.5786,Weather_Station,SA, TARCOOLA AERO                           
+18120,-33.0539,137.5206,Weather_Station,SA, WHYALLA AERO                            
+16001,-31.1558,136.8054,Weather_Station,SA, WOOMERA AERODROME                       
+18083,-33.043,135.4519,Weather_Station,SA, WUDINNA AERO                            
+20062,-32.5707,139.5645,Weather_Station,SA, YUNTA AIRSTRIP                          
+90180,-38.4583,144.0883,Weather_Station,VIC, AIREYS INLET                            
+87113,-38.0287,144.4783,Weather_Station,VIC, AVALON AIRPORT                          
+85279,-37.8817,147.5669,Weather_Station,VIC, BAIRNSDALE AIRPORT                      
+89002,-37.5127,143.7911,Weather_Station,VIC, BALLARAT AERODROME                      
+81123,-36.7395,144.3266,Weather_Station,VIC, BENDIGO AIRPORT                         
+87184,-38.1737,144.3765,Weather_Station,VIC, BREAKWATER (GEELONG RACECOURSE)         
+90184,-38.4306,141.5437,Weather_Station,VIC, CAPE NELSON LIGHTHOUSE                  
+90015,-38.8556,143.5128,Weather_Station,VIC, CAPE OTWAY LIGHTHOUSE                   
+90182,-37.583,141.3339,Weather_Station,VIC, CASTERTON                               
+86361,-38.3646,145.1785,Weather_Station,VIC, CERBERUS                                
+80128,-36.2847,143.3341,Weather_Station,VIC, CHARLTON                                
+90035,-38.2333,143.7925,Weather_Station,VIC, COLAC (MOUNT GELLIBRAND)                
+86383,-37.7239,145.4092,Weather_Station,VIC, COLDSTREAM                              
+86320,-37.7239,145.4092,Weather_Station,VIC, COLDSTREAM COMPARISON                   
+84143,-37.3417,149.0228,Weather_Station,VIC, COMBIENBAR AWS                          
+85301,-38.8051,146.1939,Weather_Station,VIC, CORNER INLET (YANAKIE)                  
+90194,-37.9222,141.2614,Weather_Station,VIC, DARTMOOR                                
+83055,-37.0491,147.3347,Weather_Station,VIC, DINNER PLAIN (MOUNT HOTHAM AIRPORT)     
+85072,-38.1156,147.1322,Weather_Station,VIC, EAST SALE                               
+79099,-37.0222,141.2657,Weather_Station,VIC, EDENHOPE AIRPORT                        
+88164,-37.2091,145.8423,Weather_Station,VIC, EILDON FIRE TOWER                       
+86038,-37.7276,144.9066,Weather_Station,VIC, ESSENDON AIRPORT                        
+83084,-36.8708,147.2755,Weather_Station,VIC, FALLS CREEK                             
+86266,-37.8748,145.3496,Weather_Station,VIC, FERNY CREEK                             
+86371,-38.1481,145.1156,Weather_Station,VIC, FRANKSTON AWS                           
+84016,-37.5679,149.9158,Weather_Station,VIC, GABO ISLAND LIGHTHOUSE                  
+84142,-37.22,148.2625,Weather_Station,VIC, GELANTIPY                               
+79103,-37.295,142.6039,Weather_Station,VIC, GRAMPIANS (MOUNT WILLIAM)               
+90173,-37.6486,142.0636,Weather_Station,VIC, HAMILTON AIRPORT                        
+77010,-35.7151,142.3569,Weather_Station,VIC, HOPETOUN AIRPORT                        
+79100,-36.6697,142.1731,Weather_Station,VIC, HORSHAM AERODROME                       
+82139,-36.2136,147.5394,Weather_Station,VIC, HUNTERS HILL                            
+79097,-37.1169,141.8031,Weather_Station,VIC, KANAGULK                                
+78018,-36.3204,142.4161,Weather_Station,VIC, KELLALAC (WARRACKNABEAL AIRPORT)        
+80091,-36.335,145.0638,Weather_Station,VIC, KYABRAM                                 
+87031,-37.8565,144.7566,Weather_Station,VIC, LAVERTON RAAF                           
+79028,-36.6722,142.2991,Weather_Station,VIC, LONGERENONG                             
+84084,-37.5976,149.7289,Weather_Station,VIC, MALLACOOTA                              
+88109,-36.8886,145.1859,Weather_Station,VIC, MANGALORE AIRPORT                       
+86338,-37.8255,144.9816,Weather_Station,VIC, MELBOURNE (OLYMPIC PARK)                
+86282,-37.6655,144.8321,Weather_Station,VIC, MELBOURNE AIRPORT                       
+76031,-34.2358,142.0867,Weather_Station,VIC, MILDURA AIRPORT                         
+86077,-37.98,145.0962,Weather_Station,VIC, MOORABBIN AIRPORT                       
+90176,-38.0737,142.7744,Weather_Station,VIC, MORTLAKE RACECOURSE                     
+85280,-38.2094,146.4747,Weather_Station,VIC, MORWELL (LATROBE VALLEY AIRPORT)        
+85291,-37.8383,146.2747,Weather_Station,VIC, MOUNT BAW BAW                           
+83024,-37.145,146.4394,Weather_Station,VIC, MOUNT BULLER                            
+83085,-36.9767,147.1342,Weather_Station,VIC, MOUNT HOTHAM                            
+85296,-37.7481,147.1428,Weather_Station,VIC, MOUNT MOORNAPA                          
+84144,-37.6924,148.0908,Weather_Station,VIC, MOUNT NOWA NOWA                         
+78015,-36.3092,141.6486,Weather_Station,VIC, NHILL AERODROME                         
+83090,-37.1017,147.6008,Weather_Station,VIC, OMEO                                    
+84145,-37.6922,148.4667,Weather_Station,VIC, ORBOST                                  
+90175,-38.3906,142.2347,Weather_Station,VIC, PORT FAIRY AWS                          
+90171,-38.3148,141.4705,Weather_Station,VIC, PORTLAND (CASHMORE AIRPORT)             
+90192,-38.3439,141.6136,Weather_Station,VIC, PORTLAND NTC AWS                        
+85099,-38.6297,145.8107,Weather_Station,VIC, POUND CREEK                             
+79101,-37.2281,143.2006,Weather_Station,VIC, PYRENEES (BEN NEVIS)                    
+88051,-37.0194,144.5203,Weather_Station,VIC, REDESDALE                               
+86373,-38.4612,145.3101,Weather_Station,VIC, RHYLL                                   
+82039,-36.1047,146.5094,Weather_Station,VIC, RUTHERGLEN RESEARCH                     
+86104,-37.871,145.2561,Weather_Station,VIC, SCORESBY RESEARCH INSTITUTE             
+87168,-37.9075,144.1303,Weather_Station,VIC, SHEOAKS                                 
+81125,-36.4289,145.3947,Weather_Station,VIC, SHEPPARTON AIRPORT                      
+79105,-37.072,142.7402,Weather_Station,VIC, STAWELL AERODROME                       
+77094,-35.3766,143.5416,Weather_Station,VIC, SWAN HILL AERODROME                     
+81049,-36.4378,145.2672,Weather_Station,VIC, TATURA INST SUSTAINABLE AG              
+86068,-37.7408,145.0972,Weather_Station,VIC, VIEWBANK                                
+88162,-37.3807,144.9654,Weather_Station,VIC, WALLAN (KILMORE GAP)                    
+76064,-35.1201,142.004,Weather_Station,VIC, WALPEUP RESEARCH                        
+82138,-36.4206,146.3056,Weather_Station,VIC, WANGARATTA AERO                         
+90186,-38.2867,142.4522,Weather_Station,VIC, WARRNAMBOOL AIRPORT NDB                 
+89112,-37.7067,142.9378,Weather_Station,VIC, WESTMERE                                
+85096,-39.1297,146.4244,Weather_Station,VIC, WILSONS PROMONTORY LIGHTHOUSE           
+85151,-38.5647,146.7479,Weather_Station,VIC, YARRAM AIRPORT                          
+81124,-36.0294,146.0306,Weather_Station,VIC, YARRAWONGA                              
+33295,-19.4569,147.4833,Weather_Station,QLD, ALVA BEACH                              
+40004,-27.6297,152.7111,Weather_Station,QLD, AMBERLEY AMO                            
+41175,-28.6217,151.9533,Weather_Station,QLD, APPLETHORPE                             
+40211,-27.5717,153.0078,Weather_Station,QLD, ARCHERFIELD AIRPORT                     
+33002,-19.6169,147.3758,Weather_Station,QLD, AYR DPI RESEARCH STN                    
+45009,-27.4008,141.8114,Weather_Station,QLD, BALLERA GAS FIELD                       
+40983,-27.9707,152.9898,Weather_Station,QLD, BEAUDESERT DRUMLEY STREET               
+40284,-26.9586,152.9619,Weather_Station,QLD, BEERBURRUM FOREST STATION               
+38026,-25.8975,139.3472,Weather_Station,QLD, BIRDSVILLE AIRPORT                      
+36034,-24.4303,145.4306,Weather_Station,QLD, BLACKALL AIRPORT                        
+35134,-23.6015,148.8074,Weather_Station,QLD, BLACKWATER AIRPORT                      
+33327,-20.0154,148.2138,Weather_Station,QLD, BOWEN AIRPORT AWS                       
+40913,-27.4808,153.0389,Weather_Station,QLD, BRISBANE                                
+40842,-27.3917,153.1292,Weather_Station,QLD, BRISBANE AERO                           
+29077,-17.7483,139.5356,Weather_Station,QLD, BURKETOWN AIRPORT                       
+31011,-16.8736,145.7458,Weather_Station,QLD, CAIRNS AERO                             
+31222,-16.9463,145.7474,Weather_Station,QLD, CAIRNS RACECOURSE                       
+37010,-19.9225,138.1214,Weather_Station,QLD, CAMOOWEAL TOWNSHIP                      
+31213,-14.9672,145.3106,Weather_Station,QLD, CAPE FLATTERY                           
+37053,-20.9358,139.2964,Weather_Station,QLD, CARTERS BORE                            
+29167,-18.7569,138.7056,Weather_Station,QLD, CENTURY MINE                            
+44021,-26.4139,146.2558,Weather_Station,QLD, CHARLEVILLE AERO                        
+35124,-22.7756,147.6217,Weather_Station,QLD, CLERMONT AIRPORT                        
+29141,-20.6664,140.505,Weather_Station,QLD, CLONCURRY AIRPORT                       
+27054,-10.0511,143.0686,Weather_Station,QLD, COCONUT ISLAND                          
+27073,-13.7606,143.1183,Weather_Station,QLD, COEN AIRPORT                            
+31209,-15.4461,145.1861,Weather_Station,QLD, COOKTOWN AIRPORT                        
+40717,-28.1681,153.5053,Weather_Station,QLD, COOLANGATTA                             
+41522,-27.1605,151.2634,Weather_Station,QLD, DALBY AIRPORT                           
+40068,-25.9319,153.1906,Weather_Station,QLD, DOUBLE ISLAND POINT LIGHTHOUSE          
+35264,-23.5694,148.1756,Weather_Station,QLD, EMERALD AIRPORT                         
+39066,-25.6167,151.6156,Weather_Station,QLD, GAYNDAH AIRPORT                         
+30124,-18.3039,143.5306,Weather_Station,QLD, GEORGETOWN AIRPORT                      
+39326,-23.8697,151.2214,Weather_Station,QLD, GLADSTONE AIRPORT                       
+39123,-23.8553,151.2628,Weather_Station,QLD, GLADSTONE RADAR                         
+40764,-27.939,153.4283,Weather_Station,QLD, GOLD COAST SEAWAY                       
+40093,-26.1831,152.6414,Weather_Station,QLD, GYMPIE                                  
+33106,-20.3658,148.9536,Weather_Station,QLD, HAMILTON ISLAND AIRPORT                 
+40405,-25.322,152.8817,Weather_Station,QLD, HERVEY BAY AIRPORT                      
+27058,-10.5844,142.29,Weather_Station,QLD, HORN ISLAND                             
+30022,-20.8192,144.2333,Weather_Station,QLD, HUGHENDEN AIRPORT                       
+32197,-17.5581,146.0119,Weather_Station,QLD, INNISFAIL AERODROME                     
+29058,-20.6672,141.7214,Weather_Station,QLD, JULIA CREEK AIRPORT                     
+40922,-26.5737,151.8398,Weather_Station,QLD, KINGAROY AIRPORT                        
+29038,-15.4818,141.7483,Weather_Station,QLD, KOWANYAMA AIRPORT                       
+39059,-24.1116,152.7161,Weather_Station,QLD, LADY ELLIOT ISLAND                      
+29181,-20.1167,139.7256,Weather_Station,QLD, LAKE JULIUS AWS                         
+35139,-23.9424,147.525,Weather_Station,QLD, LOCHINGTON                              
+36031,-23.4397,144.2828,Weather_Station,QLD, LONGREACH AERO                          
+31037,-16.3842,145.5592,Weather_Station,QLD, LOW ISLES LIGHTHOUSE                    
+32141,-18.5203,146.3861,Weather_Station,QLD, LUCINDA POINT                           
+33045,-21.1706,149.1794,Weather_Station,QLD, MACKAY AERO                             
+33119,-21.1172,149.2169,Weather_Station,QLD, MACKAY M.O                              
+31210,-17.0704,145.4293,Weather_Station,QLD, MAREEBA AIRPORT                         
+40126,-25.5132,152.7152,Weather_Station,QLD, MARYBOROUGH                             
+42112,-26.6569,150.1819,Weather_Station,QLD, MILES CONSTANCE STREET                  
+34035,-22.0644,148.0758,Weather_Station,QLD, MORANBAH AIRPORT                        
+29182,-16.662,139.1655,Weather_Station,QLD, MORNINGTON ISLAND AIRPORT               
+29127,-20.6778,139.4875,Weather_Station,QLD, MOUNT ISA AERO                          
+32195,-19.4082,146.762,Weather_Station,QLD, MOUNT STUART (DEFENCE)                  
+40988,-26.6442,152.9383,Weather_Station,QLD, NAMBOUR DAFF - HILLSIDE                 
+37059,-20.59,139.3411,Weather_Station,QLD, NEW MAY DOWNS                           
+29063,-17.6872,141.0733,Weather_Station,QLD, NORMANTON AIRPORT                       
+41359,-27.4034,151.7413,Weather_Station,QLD, OAKEY AERO                              
+33329,-21.17,149.1515,Weather_Station,QLD, OORALEA RACECOURSE (MACKAY TURF CLUB)   
+28004,-15.9999,144.0754,Weather_Station,QLD, PALMERVILLE                             
+33247,-20.4925,148.555,Weather_Station,QLD, PROSERPINE AIRPORT                      
+40958,-27.2169,153.0922,Weather_Station,QLD, REDCLIFFE                               
+30161,-20.7017,143.1167,Weather_Station,QLD, RICHMOND AIRPORT                        
+39083,-23.3753,150.4775,Weather_Station,QLD, ROCKHAMPTON AERO                        
+35129,-24.4617,148.6264,Weather_Station,QLD, ROLLESTON AIRPORT                       
+43091,-26.5477,148.771,Weather_Station,QLD, ROMA AIRPORT                            
+33208,-23.161,150.7901,Weather_Station,QLD, ROSSLYN BAY NTC AWS                     
+39322,-23.5293,151.2763,Weather_Station,QLD, RUNDLE ISLAND                           
+33308,-22.7433,150.6578,Weather_Station,QLD, SAMUEL HILL AERO                        
+27075,-12.6167,142.0869,Weather_Station,QLD, SCHERGER RAAF                           
+32037,-17.6053,145.9972,Weather_Station,QLD, SOUTH JOHNSTONE EXP STN                 
+43109,-28.0489,148.5942,Weather_Station,QLD, ST GEORGE AIRPORT                       
+33210,-22.3472,149.5242,Weather_Station,QLD, ST LAWRENCE                             
+40861,-26.6006,153.0903,Weather_Station,QLD, SUNSHINE COAST AIRPORT                  
+40908,-26.3911,153.0403,Weather_Station,QLD, TEWANTIN RSL PARK                       
+39089,-24.4935,150.5709,Weather_Station,QLD, THANGOOL AIRPORT                        
+45025,-27.9867,143.815,Weather_Station,QLD, THARGOMINDAH AIRPORT                    
+37034,-21.8125,139.9267,Weather_Station,QLD, THE MONUMENT AIRPORT                    
+41529,-27.5425,151.9134,Weather_Station,QLD, TOOWOOMBA AIRPORT                       
+32040,-19.2483,146.7661,Weather_Station,QLD, TOWNSVILLE AERO                         
+32196,-19.3048,146.2438,Weather_Station,QLD, TOWNSVILLE- AIR WEAPONS RANGE (DEFENCE) 
+33328,-19.783,146.5,Weather_Station,QLD, TOWNSVILLE- FANNING RIVER (DEFENCE)     
+37036,-21.84,140.8925,Weather_Station,QLD, TREPELL AIRPORT                         
+40082,-27.5436,152.3375,Weather_Station,QLD, UNIVERSITY OF QUEENSLAND GATTON         
+37058,-21.5979,138.3665,Weather_Station,QLD, URANDANGI AERODROME                     
+41525,-28.2061,152.1003,Weather_Station,QLD, WARWICK                                 
+27045,-12.6778,141.9208,Weather_Station,QLD, WEIPA AERO                              
+33195,-22.4703,150.1786,Weather_Station,QLD, WILLIAMSON                              
+38076,-25.4117,142.6647,Weather_Station,QLD, WINDORAH AIRPORT                        
+37039,-22.3617,143.0836,Weather_Station,QLD, WINTON AIRPORT                          
+33307,-19.4167,146.5364,Weather_Station,QLD, WOOLSHED                                
+33294,-23.1364,150.7506,Weather_Station,QLD, YEPPOON THE ESPLANADE                   
+91344,-41.05,145.9149,Weather_Station,TAS, BURNIE NTC AWS                          
+95003,-42.7097,146.8983,Weather_Station,TAS, BUSHY PARK (BUSHY PARK ESTATES)         
+96003,-42.2753,146.2758,Weather_Station,TAS, BUTLERS GORGE                           
+94212,-42.6867,147.4258,Weather_Station,TAS, CAMPANIA (KINCORA)                      
+94198,-43.4886,147.1444,Weather_Station,TAS, CAPE BRUNY (CAPE BRUNY)                 
+91331,-40.6764,144.6922,Weather_Station,TAS, CAPE GRIM                               
+91245,-40.6828,144.69,Weather_Station,TAS, CAPE GRIM BAPS (COMPARISON)             
+97000,-42.1986,145.17,Weather_Station,TAS, CAPE SORELL                             
+91306,-41.7256,147.0794,Weather_Station,TAS, CRESSY RESEARCH STATION                 
+94255,-43.0639,147.3567,Weather_Station,TAS, DENNES POINT                            
+91126,-41.1701,146.4289,Weather_Station,TAS, DEVONPORT AIRPORT                       
+94254,-42.9017,147.7894,Weather_Station,TAS, DUNALLEY (STROUD POINT)                 
+92012,-41.6428,147.9664,Weather_Station,TAS, FINGAL (LEGGE STREET)                   
+99005,-40.0911,148.0024,Weather_Station,TAS, FLINDERS ISLAND AIRPORT                 
+92114,-41.9953,148.2794,Weather_Station,TAS, FRIENDLY BEACHES                        
+94220,-42.9858,147.0742,Weather_Station,TAS, GROVE (RESEARCH STATION)                
+94191,-43.2006,146.7683,Weather_Station,TAS, HARTZ MOUNTAIN (KEOGHS PIMPLE)          
+94029,-42.8897,147.3278,Weather_Station,TAS, HOBART (ELLERSLIE ROAD)                 
+94008,-42.8339,147.5033,Weather_Station,TAS, HOBART AIRPORT                          
+98017,-39.8801,143.8829,Weather_Station,TAS, KING ISLAND AIRPORT                     
+94087,-42.895,147.2358,Weather_Station,TAS, KUNANYI (MOUNT WELLINGTON PINNACLE)     
+92045,-40.9928,148.3467,Weather_Station,TAS, LARAPUNA (EDDYSTONE POINT)              
+91237,-41.4194,147.1219,Weather_Station,TAS, LAUNCESTON (TI TREE BEND)               
+91311,-41.5492,147.2144,Weather_Station,TAS, LAUNCESTON AIRPORT                      
+96033,-41.8997,146.6694,Weather_Station,TAS, LIAWENEE                                
+91293,-41.0547,146.7874,Weather_Station,TAS, LOW HEAD                                
+97080,-42.9831,145.5025,Weather_Station,TAS, LOW ROCKY POINT                         
+91259,-41.1492,145.1517,Weather_Station,TAS, LUNCHEON HILL (FORESTRY)                
+94041,-43.6578,146.2711,Weather_Station,TAS, MAATSUYKER ISLAND LIGHTHOUSE            
+92124,-42.6621,148.0179,Weather_Station,TAS, MARIA ISLAND (POINT LESUEUR)            
+95048,-42.4842,146.7106,Weather_Station,TAS, OUSE FIRE STATION                       
+97083,-43.0425,146.2722,Weather_Station,TAS, SCOTTS PEAK DAM                         
+91219,-41.1708,147.4883,Weather_Station,TAS, SCOTTSDALE (WEST MINSTONE ROAD)         
+91291,-41.3886,146.3219,Weather_Station,TAS, SHEFFIELD SCHOOL FARM                   
+91292,-40.8347,145.0847,Weather_Station,TAS, SMITHTON AERODROME                      
+92133,-42.5464,147.9308,Weather_Station,TAS, SPRING BAY NTC AWS                      
+92120,-41.3381,148.2792,Weather_Station,TAS, ST HELENS AERODROME                     
+97072,-42.155,145.2908,Weather_Station,TAS, STRAHAN AERODROME                       
+92123,-40.7292,148.125,Weather_Station,TAS, SWAN ISLAND                             
+94155,-43.2397,148.0025,Weather_Station,TAS, TASMAN ISLAND                           
+94195,-42.4543,147.4612,Weather_Station,TAS, TUNNACK FIRE STATION                    
+97024,-43.0609,146.704,Weather_Station,TAS, WARRA                                   
+91107,-40.9964,145.7311,Weather_Station,TAS, WYNYARD AIRPORT                         
+68241,-34.5638,150.79,Weather_Station,NSW, ALBION PARK (WOLLONGONG AIRPORT)        
+72160,-36.069,146.9509,Weather_Station,NSW, ALBURY AIRPORT AWS                      
+56238,-30.5273,151.6158,Weather_Station,NSW, ARMIDALE AIRPORT AWS                    
+67108,-33.8969,150.7281,Weather_Station,NSW, BADGERYS CREEK AWS                      
+58198,-28.8353,153.5585,Weather_Station,NSW, BALLINA AIRPORT AWS                     
+66137,-33.9181,150.9864,Weather_Station,NSW, BANKSTOWN AIRPORT AWS                   
+63291,-33.4119,149.654,Weather_Station,NSW, BATHURST AIRPORT AWS                    
+69139,-36.6722,149.8191,Weather_Station,NSW, BEGA AWS                                
+68228,-34.3691,150.9291,Weather_Station,NSW, BELLAMBI AWS                            
+70328,-37.0016,149.2336,Weather_Station,NSW, BOMBALA AWS                             
+48245,-30.0362,145.9521,Weather_Station,NSW, BOURKE AIRPORT AWS                      
+69132,-35.4253,149.7835,Weather_Station,NSW, BRAIDWOOD RACECOURSE AWS                
+47048,-32.0012,141.4694,Weather_Station,NSW, BROKEN HILL AIRPORT AWS                 
+58216,-28.6399,153.6358,Weather_Station,NSW, BYRON BAY (CAPE BYRON AWS)              
+72161,-35.9371,148.3779,Weather_Station,NSW, CABRAMURRA SMHEA AWS                    
+68192,-34.039,150.689,Weather_Station,NSW, CAMDEN AIRPORT AWS                      
+68257,-34.0615,150.7735,Weather_Station,NSW, CAMPBELLTOWN (MOUNT ANNAN)              
+70351,-35.3088,149.2004,Weather_Station,NSW, CANBERRA AIRPORT                        
+66194,-33.9057,151.1134,Weather_Station,NSW, CANTERBURY RACECOURSE AWS               
+58208,-28.8824,153.0618,Weather_Station,NSW, CASINO AIRPORT AWS                      
+61260,-32.7886,151.3377,Weather_Station,NSW, CESSNOCK AIRPORT AWS                    
+48027,-31.484,145.8294,Weather_Station,NSW, COBAR MO                                
+59151,-30.3189,153.1162,Weather_Station,NSW, COFFS HARBOUR AIRPORT                   
+50137,-33.0682,147.2133,Weather_Station,NSW, CONDOBOLIN AIRPORT AWS                  
+70217,-36.2939,148.9725,Weather_Station,NSW, COOMA AIRPORT AWS                       
+64017,-31.333,149.2699,Weather_Station,NSW, COONABARABRAN AIRPORT AWS               
+51161,-30.9776,148.3798,Weather_Station,NSW, COONAMBLE AIRPORT AWS                   
+61412,-33.0887,151.4636,Weather_Station,NSW, COORANBONG (LAKE MACQUARIE AWS)         
+65111,-33.8382,148.654,Weather_Station,NSW, COWRA AIRPORT AWS                       
+74258,-35.5575,144.9458,Weather_Station,NSW, DENILIQUIN AIRPORT AWS                  
+65070,-32.2206,148.5753,Weather_Station,NSW, DUBBO AIRPORT AWS                       
+49136,-32.8261,145.88,Weather_Station,NSW, EUABALONG (MOUNT HOPE AWS)              
+58212,-29.183,153.3964,Weather_Station,NSW, EVANS HEAD RAAF BOMBING RANGE AWS       
+65103,-33.3627,147.9205,Weather_Station,NSW, FORBES AIRPORT AWS                      
+46128,-31.0863,141.7008,Weather_Station,NSW, FOWLERS GAP AWS                         
+56243,-29.678,151.694,Weather_Station,NSW, GLEN INNES AIRPORT AWS                  
+61425,-33.4351,151.3614,Weather_Station,NSW, GOSFORD AWS                             
+70330,-34.8085,149.7311,Weather_Station,NSW, GOULBURN AIRPORT AWS                    
+58161,-29.7583,153.0297,Weather_Station,NSW, GRAFTON AIRPORT AWS                     
+58077,-29.6224,152.9605,Weather_Station,NSW, GRAFTON RESEARCH STN                    
+69137,-37.2622,150.0504,Weather_Station,NSW, GREEN CAPE AWS                          
+75041,-34.2487,146.0695,Weather_Station,NSW, GRIFFITH AIRPORT AWS                    
+55202,-30.9537,150.2494,Weather_Station,NSW, GUNNEDAH AIRPORT AWS                    
+75019,-34.5412,144.8345,Weather_Station,NSW, HAY AIRPORT AWS                         
+68263,-34.0811,150.9009,Weather_Station,NSW, HOLSWORTHY (DEFENCE)                    
+66161,-33.9925,150.9489,Weather_Station,NSW, HOLSWORTHY AERODROME AWS                
+67119,-33.851,150.8567,Weather_Station,NSW, HORSLEY PARK EQUESTRIAN CENTRE AWS      
+56018,-29.7752,151.082,Weather_Station,NSW, INVERELL RESEARCH CENTRE                
+49000,-32.8833,144.3092,Weather_Station,NSW, IVANHOE AERODROME AWS                   
+68151,-35.0936,150.8049,Weather_Station,NSW, JERVIS BAY (POINT PERPENDICULAR AWS)    
+74272,-35.1327,147.2513,Weather_Station,NSW, KAPOOKA (DEFENCE)                       
+59007,-31.0711,152.7717,Weather_Station,NSW, KEMPSEY AIRPORT AWS                     
+72162,-36.2304,148.1405,Weather_Station,NSW, KHANCOBAN AWS                           
+68242,-34.6532,150.8609,Weather_Station,NSW, KIAMA (BOMBO HEADLAND)                  
+58214,-28.8305,153.2601,Weather_Station,NSW, LISMORE AIRPORT AWS                     
+61428,-32.7023,151.4881,Weather_Station,NSW, MAITLAND AIRPORT AWS                    
+61375,-33.2894,151.2107,Weather_Station,NSW, MANGROVE MOUNTAIN AWS                   
+63308,-33.4347,150.1349,Weather_Station,NSW, MARRANGAROO (DEFENCE)                   
+69147,-36.9077,149.8989,Weather_Station,NSW, MERIMBULA AIRPORT AWS                   
+61287,-32.1852,150.1737,Weather_Station,NSW, MERRIWA (ROSCOMMON)                     
+69017,-36.2519,150.2275,Weather_Station,NSW, MONTAGUE ISLAND LIGHTHOUSE              
+53115,-29.4898,149.8471,Weather_Station,NSW, MOREE AERO                              
+69148,-35.9004,150.1437,Weather_Station,NSW, MORUYA AIRPORT AWS                      
+68239,-34.5253,150.4217,Weather_Station,NSW, MOSS VALE AWS                           
+63292,-33.6185,150.2741,Weather_Station,NSW, MOUNT BOYCE AWS                         
+70349,-35.5293,148.7721,Weather_Station,NSW, MOUNT GININI AWS                        
+62101,-32.5628,149.6149,Weather_Station,NSW, MUDGEE AIRPORT AWS                      
+47113,-33.3392,143.4,Weather_Station,NSW, MULURULU AWS                            
+61392,-31.7416,150.7937,Weather_Station,NSW, MURRURUNDI GAP AWS                      
+54038,-30.3154,149.8302,Weather_Station,NSW, NARRABRI AIRPORT AWS                    
+74148,-34.705,146.514,Weather_Station,NSW, NARRANDERA AIRPORT AWS                  
+69128,-35.1103,150.0826,Weather_Station,NSW, NERRIGA AWS                             
+61055,-32.9184,151.7985,Weather_Station,NSW, NEWCASTLE NOBBYS SIGNAL STATION AWS     
+48250,-31.7267,144.9314,Weather_Station,NSW, NOONA AWS                               
+61366,-33.2814,151.5766,Weather_Station,NSW, NORAH HEAD AWS                          
+68072,-34.9469,150.5353,Weather_Station,NSW, NOWRA RAN AIR STATION AWS               
+62100,-32.7244,150.229,Weather_Station,NSW, NULLO MOUNTAIN AWS                      
+51164,-31.0822,146.9294,Weather_Station,NSW, NYNGAN (GIRILAMBONE (OKEH) AWS)         
+63303,-33.3768,149.1263,Weather_Station,NSW, ORANGE AIRPORT AWS                      
+65068,-33.1281,148.2428,Weather_Station,NSW, PARKES AIRPORT AWS                      
+61250,-32.6296,151.5919,Weather_Station,NSW, PATERSON (TOCAL AWS)                    
+67113,-33.7195,150.6783,Weather_Station,NSW, PENRITH LAKES AWS                       
+71075,-36.4069,148.4055,Weather_Station,NSW, PERISHER VALLEY AWS                     
+68253,-34.4734,150.9118,Weather_Station,NSW, PORT KEMBLA NTC AWS                     
+60139,-31.4335,152.8655,Weather_Station,NSW, PORT MACQUARIE AIRPORT AWS              
+67105,-33.6004,150.7761,Weather_Station,NSW, RICHMOND RAAF                           
+61363,-32.0335,150.8264,Weather_Station,NSW, SCONE AIRPORT AWS                       
+46142,-30.0692,141.0064,Weather_Station,NSW, SMITHVILLE AWS                          
+66062,-33.8607,151.205,Weather_Station,NSW, SYDNEY (OBSERVATORY HILL)               
+66037,-33.9465,151.1731,Weather_Station,NSW, SYDNEY AIRPORT AMO                      
+66196,-33.8405,151.2643,Weather_Station,NSW, SYDNEY HARBOUR (WEDDING CAKE WEST)      
+66212,-33.8338,151.0718,Weather_Station,NSW, SYDNEY OLYMPIC PARK AWS (ARCHERY CENTRE)
+55325,-31.0742,150.8362,Weather_Station,NSW, TAMWORTH AIRPORT AWS                    
+60141,-31.8895,152.512,Weather_Station,NSW, TAREE AIRPORT AWS                       
+73151,-34.4277,147.5117,Weather_Station,NSW, TEMORA AIRPORT                          
+66059,-33.6908,151.2253,Weather_Station,NSW, TERREY HILLS AWS                        
+71032,-36.4917,148.2859,Weather_Station,NSW, THREDBO AWS                             
+46126,-29.4448,142.0567,Weather_Station,NSW, TIBOOBURRA AIRPORT                      
+51049,-31.9861,147.9489,Weather_Station,NSW, TRANGIE RESEARCH STATION AWS            
+70339,-35.4184,149.0937,Weather_Station,NSW, TUGGERANONG (ISABELLA PLAINS) AWS       
+69138,-35.3635,150.4828,Weather_Station,NSW, ULLADULLA AWS                           
+72150,-35.1583,147.4575,Weather_Station,NSW, WAGGA WAGGA AMO                         
+51162,-30.2411,147.5328,Weather_Station,NSW, WALGETT (BREWON AWS)                    
+52088,-30.0372,148.1223,Weather_Station,NSW, WALGETT AIRPORT AWS                     
+48247,-30.1007,145.3339,Weather_Station,NSW, WANAARING (DELTA AWS)                   
+50017,-33.9382,147.1962,Weather_Station,NSW, WEST WYALONG AIRPORT AWS                
+46129,-30.8522,143.0743,Weather_Station,NSW, WHITE CLIFFS AWS                        
+46012,-31.5194,143.385,Weather_Station,NSW, WILCANNIA AERODROME AWS                 
+61078,-32.7939,151.8364,Weather_Station,NSW, WILLIAMTOWN RAAF                        
+58012,-29.4335,153.3632,Weather_Station,NSW, YAMBA PILOT STATION                     
+74037,-34.6222,146.4326,Weather_Station,NSW, YANCO AGRICULTURAL INSTITUTE            
+73138,-34.2493,148.2475,Weather_Station,NSW, YOUNG AIRPORT                           
+9999,-34.9411,117.8158,Weather_Station,WA, ALBANY AIRPORT                          
+2064,-16.638,128.4516,Weather_Station,WA, ARGYLE AERODROME                        
+9037,-30.3381,115.5394,Weather_Station,WA, BADGINGARRA RESEARCH STN                
+5094,-20.874,115.4066,Weather_Station,WA, BARROW ISLAND AIRPORT                   
+4100,-19.5894,119.1,Weather_Station,WA, BEDOUT ISLAND                           
+9240,-32.0072,116.1369,Weather_Station,WA, BICKLEY                                 
+9617,-33.9486,116.1311,Weather_Station,WA, BRIDGETOWN                              
+3003,-17.9475,122.2353,Weather_Station,WA, BROOME AIRPORT                          
+3102,-18.0008,122.2183,Weather_Station,WA, BROOME NTC AWS                          
+9965,-33.3567,115.6447,Weather_Station,WA, BUNBURY                                 
+9603,-33.6858,115.4008,Weather_Station,WA, BUSSELTON AERO                          
+9518,-34.3728,115.1358,Weather_Station,WA, CAPE LEEUWIN                            
+9519,-33.5372,115.0189,Weather_Station,WA, CAPE NATURALISTE                        
+6011,-24.8878,113.67,Weather_Station,WA, CARNARVON AIRPORT                       
+9994,-33.3608,116.1717,Weather_Station,WA, COLLIE EAST                             
+10286,-31.6219,117.2217,Weather_Station,WA, CUNDERDIN AIRFIELD                      
+3080,-17.5769,123.8297,Weather_Station,WA, CURTIN AERO                             
+8297,-30.2761,116.6714,Weather_Station,WA, DALWALLINU                              
+3032,-17.3706,123.6611,Weather_Station,WA, DERBY AERO                              
+9538,-32.7103,116.0594,Weather_Station,WA, DWELLINGUP                              
+9789,-33.83,121.8925,Weather_Station,WA, ESPERANCE                               
+9542,-33.6825,121.8275,Weather_Station,WA, ESPERANCE AERO                          
+11003,-31.6797,128.8958,Weather_Station,WA, EUCLA                                   
+3093,-18.1814,125.5619,Weather_Station,WA, FITZROY CROSSING AERO                   
+11052,-30.8453,128.1092,Weather_Station,WA, FORREST                                 
+9256,-32.2433,115.6839,Weather_Station,WA, GARDEN ISLAND HSF                       
+8315,-28.8047,114.6989,Weather_Station,WA, GERALDTON AIRPORT                       
+13017,-25.0341,128.301,Weather_Station,WA, GILES METEOROLOGICAL OFFICE             
+9178,-31.4628,115.8642,Weather_Station,WA, GINGIN AERO                             
+9204,-31.9414,116.0506,Weather_Station,WA, GOOSEBERRY HILL                         
+2079,-18.2336,127.6667,Weather_Station,WA, HALLS CREEK AIRPORT                     
+9265,-31.8256,115.7386,Weather_Station,WA, HILLARYS BOAT HARBOUR NTC AWS           
+9961,-33.9306,120.1283,Weather_Station,WA, HOPETOUN NORTH                          
+10905,-33.8878,119.1092,Weather_Station,WA, JACUP                                   
+9172,-32.1011,115.8794,Weather_Station,WA, JANDAKOT AERO                           
+12038,-30.7847,121.4533,Weather_Station,WA, KALGOORLIE-BOULDER AIRPORT              
+1019,-14.2964,126.6453,Weather_Station,WA, KALUMBURU                               
+4083,-20.7097,116.7742,Weather_Station,WA, KARRATHA AERO                           
+10916,-33.6856,117.6064,Weather_Station,WA, KATANNING                               
+2056,-15.7814,128.71,Weather_Station,WA, KUNUNURRA AERO                          
+10911,-33.1006,118.4647,Weather_Station,WA, LAKE GRACE                              
+12305,-28.6133,122.4236,Weather_Station,WA, LAVERTON AERO                           
+5007,-22.2406,114.0967,Weather_Station,WA, LEARMONTH AIRPORT                       
+4095,-20.3583,116.8431,Weather_Station,WA, LEGENDRE ISLAND                         
+12314,-27.8386,120.7031,Weather_Station,WA, LEINSTER AERO                           
+12241,-28.8789,121.3186,Weather_Station,WA, LEONORA AERO                            
+4019,-19.7419,120.8433,Weather_Station,WA, MANDORA                                 
+9977,-32.5219,115.7119,Weather_Station,WA, MANDURAH                                
+9573,-34.2508,116.145,Weather_Station,WA, MANJIMUP                                
+4106,-21.1756,119.7497,Weather_Station,WA, MARBLE BAR                              
+5008,-21.1906,115.9797,Weather_Station,WA, MARDIE                                  
+7045,-26.6136,118.5372,Weather_Station,WA, MEEKATHARRA AIRPORT                     
+9281,-31.8108,116.0225,Weather_Station,WA, MILLENDON (SWAN VALLEY)                 
+8296,-29.2039,116.0247,Weather_Station,WA, MORAWA AIRPORT                          
+7600,-28.1156,117.8425,Weather_Station,WA, MOUNT MAGNET AERO                       
+12044,-33.5547,120.6997,Weather_Station,WA, MUNGLINUP WEST                          
+10692,-33.1131,118.84,Weather_Station,WA, NEWDEGATE RESEARCH STATION              
+7176,-23.4167,119.7992,Weather_Station,WA, NEWMAN AERO                             
+12009,-32.2147,121.7547,Weather_Station,WA, NORSEMAN AERO                           
+8290,-28.3008,113.5936,Weather_Station,WA, NORTH ISLAND                            
+9998,-34.9469,116.7222,Weather_Station,WA, NORTH WALPOLE                           
+5017,-21.6689,115.1092,Weather_Station,WA, ONSLOW AIRPORT                          
+7185,-23.1726,117.7493,Weather_Station,WA, PARABURDOO AERO                         
+9053,-31.6669,116.0189,Weather_Station,WA, PEARCE RAAF                             
+9021,-31.9275,115.9764,Weather_Station,WA, PERTH AIRPORT                           
+9225,-31.9192,115.8728,Weather_Station,WA, PERTH METRO                             
+4032,-20.3725,118.6317,Weather_Station,WA, PORT HEDLAND AIRPORT                    
+11053,-32.2028,127.5297,Weather_Station,WA, RED ROCKS POINT                         
+9964,-34.5714,117.0106,Weather_Station,WA, ROCKY GULLY                             
+4090,-20.7594,117.1583,Weather_Station,WA, ROEBOURNE AERO                          
+9193,-32.0069,115.5022,Weather_Station,WA, ROTTNEST ISLAND                         
+9968,-34.5683,116.3367,Weather_Station,WA, SHANNON                                 
+6105,-25.8925,113.5772,Weather_Station,WA, SHARK BAY AIRPORT                       
+12320,-31.2353,119.3564,Weather_Station,WA, SOUTHERN CROSS AIRFIELD                 
+9215,-31.9558,115.7619,Weather_Station,WA, SWANBOURNE                              
+13030,-21.7125,122.2281,Weather_Station,WA, TELFER AERO                             
+5084,-21.4606,115.0197,Weather_Station,WA, THEVENARD ISLAND                        
+1007,-13.7542,126.1485,Weather_Station,WA, TROUGHTON ISLAND                        
+1020,-14.09,126.3867,Weather_Station,WA, TRUSCOTT                                
+10917,-32.6722,116.6706,Weather_Station,WA, WANDERING                               
+13011,-26.1317,126.5839,Weather_Station,WA, WARBURTON AIRFIELD                      
+3096,-17.8964,122.3122,Weather_Station,WA, WEST ROEBUCK                            
+13044,-26.6274,120.2194,Weather_Station,WA, WILUNA AERO                             
+9746,-34.0281,115.1042,Weather_Station,WA, WITCHCLIFFE                             
+1006,-15.51,128.1503,Weather_Station,WA, WYNDHAM AERO                            
+1,-37.23277778,143.0313889,Wind_Farm,,Capital Wind Farm
+2,-36.57861111,149.1033333,Wind_Farm,,Boco Rock Wind Farm
+3,-35.16666667,149.5166667,Wind_Farm,,Capital Wind Farm
+4,-34.85,135.5833333,Wind_Farm,,Cathedral Rocks Wind Farm
+5,-37.38,143.11,Wind_Farm,,#5
+6,-31.59083333,118.4883333,Wind_Farm,,Collgar Wind Farm
+7,-30.5,115.3333333,Wind_Farm,,Emu Downs Wind Farm
+8,-34.56055556,149.4219444,Wind_Farm,,Gullen Range Wind Farm
+9,-33.36777778,138.7286111,Wind_Farm,,Hallett Wind Farm
+10,-33.05055556,138.5436111,Wind_Farm,,Hornsdale Wind Farm
+11,-37.76,140.4,Wind_Farm,,Lake Bonney Wind Farm
+12,-38.03972222,142.025,Wind_Farm,,Macarthur Wind Farm
+13,-37.84111111,143.8711111,Wind_Farm,,Mount Mercer Wind Farm
+14,-33.6325,136.685,Wind_Farm,,Mount Millar Wind Farm
+15,-40.78,147.9844444,Wind_Farm,,Musselroe Wind Farm
+16,-37.68777778,142.5527778,Wind_Farm,,Oaklands Hill Wind Farm
+17,-38.35242778,141.5873333,Wind_Farm,,Portland Wind Farm
+18,-34.42133333,149.864,Wind_Farm,,Taralga Wind Farm
+19,-34.42111111,149.8638889,Wind_Farm,,Taralga Wind Farm
+20,-28.89805556,114.8686111,Wind_Farm,,Walkaway Wind Farm
+21,-34.00166667,138.9141667,Wind_Farm,,Waterloo Wind Farm
+22,-35.1225,137.7152778,Wind_Farm,,Wattle Point Wind Farm
+23,-37.32555556,143.6088889,Wind_Farm,,Waubra Wind Farm
+24,-35.08388889,149.62,Wind_Farm,,Woodlawn Wind Farm
+25,-40.685,144.7169444,Wind_Farm,,Woolnorth Wind Farm
+26,-17.2,145.4,Wind_Farm,,#26
+27,-38.23,143.765,Wind_Farm,,Mount Gellibrand Wind Energy Project
+28,-29.7809871,151.5735424,Wind_Farm,,#28
+29,-29.8125,151.547778,Wind_Farm,,#29
+30,-32.55,137.63,Wind_Farm,,#30
+31,-33.393,138.848,Wind_Farm,,#31

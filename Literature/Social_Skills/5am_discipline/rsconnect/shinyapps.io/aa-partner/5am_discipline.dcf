@@ -1,0 +1,10 @@
+name: 5am_discipline
+title:
+username: aa-partner
+account: aa-partner
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15009627
+bundleId: 10539218
+url: https://aa-partner.shinyapps.io/5am_discipline/
+version: 1

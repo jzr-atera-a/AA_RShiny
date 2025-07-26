@@ -1,0 +1,10 @@
+name: ccav_zenzic
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15070432
+bundleId: 10610257
+url: https://atera-analytics.shinyapps.io/ccav_zenzic/
+version: 1

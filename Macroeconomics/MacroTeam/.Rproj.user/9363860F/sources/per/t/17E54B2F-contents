@@ -1,0 +1,24 @@
+#install.packages('rsconnect')
+## jz account 
+rsconnect::removeAccount("haaf4j-theone-andonly")#done to register new account, otherwise ignores name of new account
+rsconnect::setAccountInfo(name='oy68gf-frank-zr',
+                          token='73D1775008C36CE26E46BE2BDB273602',
+                          secret='1GvMM+5UtUAD3PjahUldP2FtXBhbx+4FbgzaypvM')
+
+rsconnect::removeAccount("oy68gf-frank-zr")
+##One and only account under jfz.003a@gmail.com
+rsconnect::setAccountInfo(name='haaf4j-theone-andonly',
+                          token='5DAC13A9CA3063E5A7671E7A01C3771F',
+                          secret='vH+4PJjpsJN86VuDm2VGce6mAKoEklTmoDoZ7FSh')
+
+rsconnect::setAccountInfo(name='aa-partner',
+                          token='8AC85379F384C0C41B6F16F3E12A8FC6',
+                          secret='+00Hk7tgIdPENNd+zq+dTzyi9SKR3UlKpaJETuel')
+
+library(rsconnect)
+rsconnect::deployApp('G:/My Drive/CM/III Easter/International Finance/Shiny App Examples/IF_d3b')
+
+rsconnect::deployApp('G:/My Drive/CM/III Easter/Finance Concentration Project/Concentration Project/CreditRisk&Portfolio/PCDA')
+
+
+rsconnect::deployApp('G:/My Drive/CM/III Easter/Finance Concentration Project/Concentration Project/CreditRisk&Portfolio/PC_Dashboard-JBS2025-MBA35E')

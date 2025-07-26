@@ -1,0 +1,1 @@
+SELECT * FROM atera-2.EVs_Infrastructure.Charge_Points_UK_EVs limit 20

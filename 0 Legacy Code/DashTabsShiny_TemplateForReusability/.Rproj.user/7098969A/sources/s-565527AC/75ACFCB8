@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1547458679023.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "75ACFCB8",
+    "lastKnownWriteTime" : 1547803602,
+    "last_content_update" : 1547803602264,
+    "path" : "D:/Data/SourceSafe/TestCode/ShinyApps/DashTabsShiny/Tabs/Mod_Tab_Map/Tab_Map.R",
+    "project_path" : "Tabs/Mod_Tab_Map/Tab_Map.R",
+    "properties" : {
+        "cursorPosition" : "50,54",
+        "scrollLine" : "43"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

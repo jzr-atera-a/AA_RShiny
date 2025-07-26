@@ -1,0 +1,10 @@
+name: tasks_diary_planning
+title:
+username: neofranz
+account: neofranz
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15033228
+bundleId: 10565713
+url: https://neofranz.shinyapps.io/tasks_diary_planning/
+version: 1

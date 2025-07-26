@@ -1,0 +1,10 @@
+name: aa_mobility_e
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15073634
+bundleId: 10613955
+url: https://atera-analytics.shinyapps.io/aa_mobility_e/
+version: 1

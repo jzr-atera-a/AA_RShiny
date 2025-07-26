@@ -1,0 +1,10 @@
+name: check_os
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15125782
+bundleId: 10678955
+url: https://atera-analytics.shinyapps.io/check_os/
+version: 1

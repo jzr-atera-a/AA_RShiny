@@ -1,0 +1,10 @@
+name: macroteam
+title:
+username: aa-partner
+account: aa-partner
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15008061
+bundleId: 10537499
+url: https://aa-partner.shinyapps.io/macroteam/
+version: 1

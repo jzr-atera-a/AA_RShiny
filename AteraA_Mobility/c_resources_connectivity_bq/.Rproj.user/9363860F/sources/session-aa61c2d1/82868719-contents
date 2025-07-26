@@ -1,0 +1,10 @@
+name: c_resources_connectivity_bq
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15125853
+bundleId: 10679058
+url: https://atera-analytics.shinyapps.io/c_resources_connectivity_bq/
+version: 1

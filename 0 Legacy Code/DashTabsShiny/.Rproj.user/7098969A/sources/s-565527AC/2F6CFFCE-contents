@@ -1,0 +1,58 @@
+rm(list = ls())
+
+library("shinydashboard")
+library(shiny)
+
+source('./Tabs/Tab_DashboardSimple.R')
+source('./Tabs/Mod_Tab_Map_Wind/Tab_WindLocs.R')
+source('./Tabs/Mod_Tab_Map/Tab_Map.R')
+source('./Tabs/Tab_NetworkCtxBaskets.R')
+
+## ui.R ##
+sidebar <- dashboardSidebar(
+  sidebarMenu(
+    menuItem("ctMap",   tabName = "CtMap")
+     ,menuItem("Dashboard", tabName = "dashboard",        icon = icon("dashboard")),
+      #menuItem("WindMap",   tabName = "EnergyWeatherMap"),
+    # 
+     menuItem("NetworkD3",   tabName = "NetworkD3"),
+     menuItem("Widgets", icon = icon("th"), tabName = "widgets",
+              badgeLabel = "new", badgeColor = "green")
+  )
+)
+
+body <- dashboardBody(
+  tabItems( #tabItem(tabName = "dashboard", h2("Dashboard tab content")),
+    tabItem("CtMap",Tab_Map),        
+     tabItem("dashboard",UI_Tab_Dashboard),
+     #tabItem("EnergyWeatherMap",UI_Tab_Map_Wind),
+    # 
+     tabItem("NetworkD3",UI_Tab_NetworkMarvel),
+    #         
+    #        #tabPanel("Gaussian Simple", UI_Tab_GaussianSimple) #original tabshiny format
+    #        #UI_Tab_GaussianSimple<-tabPanel("Gaussian Simple", ....) #inside called file for Gaussian Simple
+    # 
+     tabItem(tabName = "widgets",
+             h2("Widgets tab content")
+    )
+  )
+)
+
+server_fx <- function(input, output, session) {
+  # Empty reactive container
+  values  <- reactiveValues()
+  output$cMap <- Server_Tab_Map(input, output,session)
+  output$plot1      <- Server_Tab_DashboardSimple(input, output )
+  # #output$energyMap1 <- Server_Tab_Map_Wind(input, output)
+  # 
+  output$force      <- Server_Tab_NetworkMarvel(input, output)
+}
+
+shinyApp(
+  ui = dashboardPage(
+    dashboardHeader(title = "Simple tabs"),
+    sidebar,
+    body
+  ),
+  server = server_fx
+)

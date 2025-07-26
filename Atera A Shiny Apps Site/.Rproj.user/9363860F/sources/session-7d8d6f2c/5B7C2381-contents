@@ -1,0 +1,20 @@
+library(bigrquery)
+
+# Set the path to your service account key
+key_path <- "C:/111_SecA/atera_gcp/atera-2-5c456cc653a5.json"
+
+# Authenticate using the service account
+bq_auth(path = key_path)
+
+# Define your project ID and query
+project_id <- "atera-2"
+query <- "SELECT * FROM EVs_Infrastructure.Charge_Points_UK_EVs limit 20"
+
+# Run the query
+results <- bq_project_query(project_id, query)
+
+# Fetch the results into a dataframe
+df <- bq_table_download(results)
+
+# View the results
+print(df)

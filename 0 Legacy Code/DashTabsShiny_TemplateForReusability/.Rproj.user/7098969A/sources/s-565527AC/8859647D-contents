@@ -1,0 +1,62 @@
+
+#observe({
+#selectedCNeedsCluster <- input$selectCNeedsCluster
+
+#print(selectedCNeedsCluster)
+# selectedFeature     <- input$selectFeature
+# 
+# 
+# if (selectedCNeedsCluster!='All'){
+#   md_stores_set<-md_stores[md_stores[,'customer_cluster']==selectedCNeedsCluster,]
+# } else {md_stores_set<-md_stores }
+# md_stores_set$map_message <- paste0(as.character(md_stores_set$name),'-', md_stores_set$customer_cluster,'-', md_stores_set$State)
+# 
+# #sel_store <- md_stores_set %>% select(name)
+# 
+# md_stores_set<-md_stores_set[,c("name","map_message","lat","lng","customer_cluster")]
+# 
+# 
+# demog_features_sel <- demog_features[,c("Locn_No",selectedFeature)]
+# 
+# feat_data <- md_stores_set %>% inner_join(demog_features_sel, by = c("name" = "Locn_No"), keep= TRUE)
+# 
+# 
+# #md_stores_set<-md_stores_set[,c("map_message","lat","lng","customer_cluster")]
+# map_data <-feat_data[,c("map_message","lat","lng","customer_cluster",selectedFeature)]
+# 
+# #md_stores_set$customer_cluster <- as.factor(md_stores_set$customer_cluster)
+# map_data$customer_cluster <- as.factor(map_data$customer_cluster)
+# 
+# map_data$feature <- map_data$name
+# #colnames(map_data)[4] <- "feature"
+# colnames(map_data)[5] <- "feature"
+# #map_data$feature2 <- map_data[,selectedFeature]
+# 
+# range01 <- function(x){(x-min(x))/(max(x)-min(x))}
+# 
+# map_data$feature <- as.factor(as.integer(range01(map_data$feature)*5)+1)
+# 
+# print(head(map_data))
+# 
+# icons <- awesomeIcons(
+#   icon = 'ios-close',
+#   iconColor = 'black',
+#   library = 'ion',
+#   markerColor = getColor(map_data) #getColor(md_stores_set)
+# )
+# #md_stores_set %>%
+# #map_data %>%
+# #leaflet() %>%
+# leafletProxy("clusterMap", data=map_data) %>%
+#   addTiles() %>%
+#   addAwesomeMarkers(~lng, ~lat, icon=icons, popup = ~htmlEscape(map_message))%>%
+#   addLegend("bottomright",colors = c('green','orange','blue','yellow','red')#, pal = pal,
+#             ,values = ~feature
+#             ,labels = c('1',
+#                         '2',
+#                         '3',
+#                         '4',
+#                         '5')
+#             ,title = selectedFeature
+# )
+#})

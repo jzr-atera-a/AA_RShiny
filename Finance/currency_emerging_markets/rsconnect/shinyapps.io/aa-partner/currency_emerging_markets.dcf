@@ -1,0 +1,10 @@
+name: currency_emerging_markets
+title:
+username: aa-partner
+account: aa-partner
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15066361
+bundleId: 10604556
+url: https://aa-partner.shinyapps.io/currency_emerging_markets/
+version: 1

@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1547379268828.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "AB708368",
+    "lastKnownWriteTime" : 1547379532,
+    "last_content_update" : 1547379532668,
+    "path" : "D:/Data/SourceSafe/TestCode/ShinyApps/DashTabsShiny/Tabs/Mod_Tab_Map_Wind/Tab_WindLocs.R",
+    "project_path" : "Tabs/Mod_Tab_Map_Wind/Tab_WindLocs.R",
+    "properties" : {
+        "cursorPosition" : "8,0",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
