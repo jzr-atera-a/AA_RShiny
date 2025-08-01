@@ -1,0 +1,10 @@
+name: business_model_generation
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15126648
+bundleId: 10679949
+url: https://atera-analytics.shinyapps.io/business_model_generation/
+version: 1

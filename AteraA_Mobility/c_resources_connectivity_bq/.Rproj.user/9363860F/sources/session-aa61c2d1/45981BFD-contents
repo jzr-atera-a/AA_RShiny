@@ -82,6 +82,7 @@ rsconnect::deployApp(
   forceUpdate = TRUE
 )
 
+rsconnect::deployApp('C:/101_Code/R/Literature/Entrepreneurship/business_model_generation')
 rsconnect::deployApp('C:/101_Code/R/AteraA_Mobility/check_os')
 rsconnect::deployApp('C:/101_Code/R/AteraA_Mobility/c_resources_connectivity_no_renv')
 rsconnect::deployApp('C:/101_Code/R/AteraA_Mobility/c_resources_connectivity_bq')

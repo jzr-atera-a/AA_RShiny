@@ -1,3 +1,9 @@
+#renv::init()
+# Install the specific version
+#renv::install("bigrquery@1.4.0")
+# Take a snapshot
+#renv::snapshot()
+
 # Load required libraries
 library(shiny)
 library(shinydashboard)

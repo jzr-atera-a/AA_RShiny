@@ -1,0 +1,15 @@
+"dataset","feature_count","file_size_mb"
+"all_highways_combined.gpkg",26591,7.12
+"all_junctions_combined.gpkg",24855,3.4
+"bridges.gpkg",24855,0.06
+"general_junctions.gpkg",24855,0.06
+"motorway_junctions.gpkg",1051,0.25
+"motorway_links.gpkg",1505,0.75
+"motorways.gpkg",2559,1.35
+"primary_links.gpkg",1456,0.71
+"primary_roads.gpkg",1456,0.06
+"roundabouts.gpkg",12158,5.96
+"secondary_roads.gpkg",12158,0.06
+"traffic_signals.gpkg",23804,5.14
+"trunk_roads.gpkg",21071,15.15
+"tunnels.gpkg",21071,0.06

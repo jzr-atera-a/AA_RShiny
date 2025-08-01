@@ -1,11 +1,11 @@
 {
     "id": "9CC92DFD",
-    "path": null,
+    "path": "C:/101_Code/R/Entrepreneurship&Pitching/vc_funds_ai_transport_energy/app.R",
     "project_path": null,
     "type": "r_source",
-    "hash": "0",
+    "hash": "2253822416",
     "contents": "",
-    "dirty": true,
+    "dirty": false,
     "created": 1753546305476.0,
     "source_on_save": false,
     "relative_order": 8,
@@ -13,15 +13,15 @@
         "tempName": "Untitled1",
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "0,70",
-        "scrollLine": "0"
+        "cursorPosition": "862,34",
+        "scrollLine": "848"
     },
     "folds": "",
-    "lastKnownWriteTime": 1753537837,
-    "encoding": "",
+    "lastKnownWriteTime": 1753824084,
+    "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1753546308984,
+    "last_content_update": 1753824084500,
     "read_only": false,
     "read_only_alternatives": []
 }
