@@ -17,7 +17,6 @@ library(TTR)
 library(quantmod)
 library(PerformanceAnalytics)
 library(zoo)
-library(tidyr)
 
 # Define UI
 ui <- dashboardPage(
@@ -781,7 +780,6 @@ server <- function(input, output, session) {
         Avg_Spread_bps = round(mean(spread_pct, na.rm = TRUE) * 100, 1),
         Observations = n()
       ) %>%
-      tidyr::pivot_longer(everything(), names_to = "Metric", values ) %>%
       tidyr::pivot_longer(everything(), names_to = "Metric", values_to = "Value")
     
     datatable(stats, 
@@ -1027,33 +1025,19 @@ server <- function(input, output, session) {
     
     data$rsi <- RSI(data$Mid, n = input$rsiLength)
     
-    # Create base plot
     p <- plot_ly(data, x = ~date, y = ~rsi, type = "scatter", mode = "lines",
-                 line = list(color = "#9b59b6", width = 2))
-    
-    # Add horizontal reference lines using shapes instead of add_hline
-    p <- p %>% 
+                 line = list(color = "#9b59b6", width = 2)) %>%
+      add_hline(y = 70, line = list(color = "#e74c3c", dash = "dash")) %>%
+      add_hline(y = 30, line = list(color = "#27ae60", dash = "dash")) %>%
       layout(
         title = paste("RSI(", input$rsiLength, ")"),
         xaxis = list(title = "Date"),
         yaxis = list(title = "RSI", range = c(0, 100)),
         plot_bgcolor = "white",
         paper_bgcolor = "white",
-        shapes = list(
-          # Overbought line at 70
-          list(type = "line", x0 = min(data$date), x1 = max(data$date),
-               y0 = 70, y1 = 70, 
-               line = list(color = "#e74c3c", dash = "dash", width = 1)),
-          # Oversold line at 30
-          list(type = "line", x0 = min(data$date), x1 = max(data$date),
-               y0 = 30, y1 = 30, 
-               line = list(color = "#27ae60", dash = "dash", width = 1))
-        ),
         annotations = list(
-          list(x = 0.02, y = 75, text = "Overbought (70)", showarrow = FALSE, 
-               xref = "paper", yref = "y", font = list(size = 10)),
-          list(x = 0.02, y = 25, text = "Oversold (30)", showarrow = FALSE, 
-               xref = "paper", yref = "y", font = list(size = 10))
+          list(x = 0.02, y = 75, text = "Overbought (70)", showarrow = FALSE, xref = "paper", yref = "y"),
+          list(x = 0.02, y = 25, text = "Oversold (30)", showarrow = FALSE, xref = "paper", yref = "y")
         )
       )
     
@@ -1076,18 +1060,13 @@ server <- function(input, output, session) {
       add_lines(y = ~signal, name = "Signal", line = list(color = "#e74c3c", width = 1)) %>%
       add_bars(y = ~histogram, name = "Histogram", 
                marker = list(color = ifelse(data$histogram > 0, "#27ae60", "#e74c3c"))) %>%
+      add_hline(y = 0, line = list(color = "#95a5a6", dash = "dot")) %>%
       layout(
         title = "MACD",
         xaxis = list(title = "Date"),
         yaxis = list(title = "MACD"),
         plot_bgcolor = "white",
-        paper_bgcolor = "white",
-        shapes = list(
-          # Zero line
-          list(type = "line", x0 = min(data$date), x1 = max(data$date),
-               y0 = 0, y1 = 0, 
-               line = list(color = "#95a5a6", dash = "dot", width = 1))
-        )
+        paper_bgcolor = "white"
       )
     
     p
@@ -1116,22 +1095,14 @@ server <- function(input, output, session) {
     p <- plot_ly(data, x = ~date) %>%
       add_lines(y = ~stoch_k, name = "%K", line = list(color = "#3498db", width = 2)) %>%
       add_lines(y = ~stoch_d, name = "%D", line = list(color = "#e74c3c", width = 1)) %>%
+      add_hline(y = 80, line = list(color = "#e74c3c", dash = "dash")) %>%
+      add_hline(y = 20, line = list(color = "#27ae60", dash = "dash")) %>%
       layout(
         title = "Stochastic Oscillator",
         xaxis = list(title = "Date"),
         yaxis = list(title = "Stochastic (%)", range = c(0, 100)),
         plot_bgcolor = "white",
-        paper_bgcolor = "white",
-        shapes = list(
-          # Overbought line at 80
-          list(type = "line", x0 = min(data$date), x1 = max(data$date),
-               y0 = 80, y1 = 80, 
-               line = list(color = "#e74c3c", dash = "dash", width = 1)),
-          # Oversold line at 20
-          list(type = "line", x0 = min(data$date), x1 = max(data$date),
-               y0 = 20, y1 = 20, 
-               line = list(color = "#27ae60", dash = "dash", width = 1))
-        )
+        paper_bgcolor = "white"
       )
     
     p
@@ -1239,38 +1210,21 @@ server <- function(input, output, session) {
     
     returns <- data$returns[!is.na(data$returns)]
     
-    # Simple VaR and ES calculations to avoid conversion issues
-    tryCatch({
-      # Historical VaR
-      var_percentile <- (100 - input$confidenceLevel) / 100
-      var_value <- quantile(returns, var_percentile, na.rm = TRUE)
-      
-      # Expected Shortfall (average of returns below VaR)
-      es_value <- mean(returns[returns <= var_value], na.rm = TRUE)
-      
-      # Convert to portfolio value
-      var_dollar <- abs(var_value) * input$portfolioValue
-      es_dollar <- abs(es_value) * input$portfolioValue
-      
-      # Calculate drawdown manually
-      cumulative_returns <- cumprod(1 + returns)
-      running_max <- cummax(cumulative_returns)
-      drawdown <- (cumulative_returns - running_max) / running_max
-      max_drawdown <- min(drawdown, na.rm = TRUE) * 100
-      
-      # Simple Sharpe ratio
-      sharpe_ratio <- mean(returns, na.rm = TRUE) / sd(returns, na.rm = TRUE) * sqrt(252)
-      
-      paste(
-        paste("VaR (", input$confidenceLevel, "%):", "$", format(round(var_dollar, 0), big.mark = ",")),
-        paste("Expected Shortfall:", "$", format(round(es_dollar, 0), big.mark = ",")),
-        paste("Max Drawdown:", paste0(round(max_drawdown, 2), "%")),
-        paste("Sharpe Ratio:", round(sharpe_ratio, 3)),
-        sep = "\n"
-      )
-    }, error = function(e) {
-      "Error calculating risk metrics"
-    })
+    # Calculate VaR using PerformanceAnalytics
+    var_value <- VaR(returns, p = input$confidenceLevel/100, method = input$varMethod)
+    es_value <- ES(returns, p = input$confidenceLevel/100, method = input$varMethod)
+    
+    # Convert to portfolio value
+    var_dollar <- abs(var_value) * input$portfolioValue
+    es_dollar <- abs(es_value) * input$portfolioValue
+    
+    paste(
+      paste("VaR (", input$confidenceLevel, "%):", "$", format(round(var_dollar, 0), big.mark = ",")),
+      paste("Expected Shortfall:", "$", format(round(es_dollar, 0), big.mark = ",")),
+      paste("Max Drawdown:", paste0(round(maxDrawdown(returns)[1] * 100, 2), "%")),
+      paste("Sharpe Ratio:", round(SharpeRatio(returns)[1], 3)),
+      sep = "\n"
+    )
   })
   
   output$varChart <- renderPlotly({
@@ -1281,12 +1235,13 @@ server <- function(input, output, session) {
     
     returns <- data$returns[!is.na(data$returns)]
     
-    # Calculate rolling VaR using simple quantile method
-    window_size <- min(100, length(returns) - 50)
-    var_percentile <- (100 - input$confidenceLevel) / 100
+    # Calculate rolling VaR
+    window_size <- min(252, length(returns) - 50)
     
     rolling_var <- rollapply(returns, width = window_size, 
-                             FUN = function(x) quantile(x, var_percentile, na.rm = TRUE), 
+                             FUN = function(x) {
+                               VaR(x, p = input$confidenceLevel/100, method = input$varMethod)
+                             }, 
                              fill = NA, align = "right")
     
     # Create VaR chart data
@@ -1295,11 +1250,6 @@ server <- function(input, output, session) {
       var = abs(rolling_var) * input$portfolioValue,
       returns = tail(returns, length(rolling_var)) * input$portfolioValue
     )
-    
-    # Filter out NA values
-    var_data <- var_data[complete.cases(var_data), ]
-    
-    if (nrow(var_data) == 0) return(plotly_empty())
     
     p <- plot_ly(var_data, x = ~date) %>%
       add_lines(y = ~var, name = paste0("VaR (", input$confidenceLevel, "%)"),
@@ -1327,13 +1277,11 @@ server <- function(input, output, session) {
     returns <- data$returns[!is.na(data$returns)]
     
     # Calculate rolling Expected Shortfall
-    window_size <- min(100, length(returns) - 50)
-    var_percentile <- (100 - input$confidenceLevel) / 100
+    window_size <- min(252, length(returns) - 50)
     
     rolling_es <- rollapply(returns, width = window_size, 
                             FUN = function(x) {
-                              var_threshold <- quantile(x, var_percentile, na.rm = TRUE)
-                              mean(x[x <= var_threshold], na.rm = TRUE)
+                              ES(x, p = input$confidenceLevel/100, method = input$varMethod)
                             }, 
                             fill = NA, align = "right")
     
@@ -1341,11 +1289,6 @@ server <- function(input, output, session) {
       date = tail(data$date, length(rolling_es)),
       es = abs(rolling_es) * input$portfolioValue
     )
-    
-    # Filter out NA values
-    es_data <- es_data[complete.cases(es_data), ]
-    
-    if (nrow(es_data) == 0) return(plotly_empty())
     
     p <- plot_ly(es_data, x = ~date, y = ~es, type = "scatter", mode = "lines",
                  line = list(color = "#8e44ad", width = 2)) %>%
@@ -1411,38 +1354,30 @@ server <- function(input, output, session) {
     
     if (length(input$correlationPairs) < 2) return("Select at least 2 currency pairs")
     
-    tryCatch({
-      # Filter data for selected pairs
-      corr_data <- fx_data() %>%
-        filter(pair %in% input$correlationPairs) %>%
-        select(date, pair, returns) %>%
-        filter(!is.na(returns)) %>%
-        tidyr::pivot_wider(names_from = pair, values_from = returns) %>%
-        select(-date) %>%
-        na.omit()  # Remove rows with any NA values
-      
-      if (ncol(corr_data) < 2 || nrow(corr_data) < 50) return("Insufficient complete data for correlation analysis")
-      
-      # Calculate correlation matrix
-      corr_matrix <- cor(corr_data, use = "complete.obs", method = input$correlationType)
-      
-      # Get average correlation
-      upper_tri <- corr_matrix[upper.tri(corr_matrix)]
-      avg_corr <- mean(upper_tri, na.rm = TRUE)
-      max_corr <- max(upper_tri, na.rm = TRUE)
-      min_corr <- min(upper_tri, na.rm = TRUE)
-      
-      paste(
-        paste("Average Correlation:", round(avg_corr, 3)),
-        paste("Highest Correlation:", round(max_corr, 3)),
-        paste("Lowest Correlation:", round(min_corr, 3)),
-        paste("Pairs Analyzed:", length(input$correlationPairs)),
-        paste("Complete Observations:", nrow(corr_data)),
-        sep = "\n"
-      )
-    }, error = function(e) {
-      "Error calculating correlations. Try selecting different pairs or check data availability."
-    })
+    # Filter data for selected pairs
+    corr_data <- fx_data() %>%
+      filter(pair %in% input$correlationPairs) %>%
+      select(date, pair, returns) %>%
+      filter(!is.na(returns)) %>%
+      tidyr::pivot_wider(names_from = pair, values_from = returns)
+    
+    if (ncol(corr_data) < 3) return("Insufficient data for correlation analysis")
+    
+    # Calculate correlation matrix
+    corr_matrix <- cor(corr_data[,-1], use = "complete.obs", method = input$correlationType)
+    
+    # Get average correlation
+    avg_corr <- mean(corr_matrix[upper.tri(corr_matrix)], na.rm = TRUE)
+    max_corr <- max(corr_matrix[upper.tri(corr_matrix)], na.rm = TRUE)
+    min_corr <- min(corr_matrix[upper.tri(corr_matrix)], na.rm = TRUE)
+    
+    paste(
+      paste("Average Correlation:", round(avg_corr, 3)),
+      paste("Highest Correlation:", round(max_corr, 3)),
+      paste("Lowest Correlation:", round(min_corr, 3)),
+      paste("Pairs Analyzed:", length(input$correlationPairs)),
+      sep = "\n"
+    )
   })
   
   output$correlationHeatmap <- renderPlot({
@@ -1454,34 +1389,27 @@ server <- function(input, output, session) {
       return()
     }
     
-    tryCatch({
-      # Filter data for selected pairs
-      corr_data <- fx_data() %>%
-        filter(pair %in% input$correlationPairs) %>%
-        select(date, pair, returns) %>%
-        filter(!is.na(returns)) %>%
-        tidyr::pivot_wider(names_from = pair, values_from = returns) %>%
-        select(-date) %>%
-        na.omit()  # Remove rows with any NA values
-      
-      if (ncol(corr_data) < 2 || nrow(corr_data) < 50) {
-        plot.new()
-        text(0.5, 0.5, "Insufficient complete data for correlation analysis", cex = 1.2)
-        return()
-      }
-      
-      # Calculate correlation matrix
-      corr_matrix <- cor(corr_data, use = "complete.obs", method = input$correlationType)
-      
-      # Create heatmap
-      corrplot(corr_matrix, method = "color", type = "upper", 
-               order = "hclust", tl.cex = 1.2, tl.col = "#2c3e50",
-               cl.cex = 1.0, addCoef.col = "#2c3e50", number.cex = 1.2,
-               col = colorRampPalette(c("#e74c3c", "white", "#3498db"))(200))
-    }, error = function(e) {
+    # Filter data for selected pairs
+    corr_data <- fx_data() %>%
+      filter(pair %in% input$correlationPairs) %>%
+      select(date, pair, returns) %>%
+      filter(!is.na(returns)) %>%
+      tidyr::pivot_wider(names_from = pair, values_from = returns)
+    
+    if (ncol(corr_data) < 3) {
       plot.new()
-      text(0.5, 0.5, "Error creating correlation heatmap", cex = 1.2)
-    })
+      text(0.5, 0.5, "Insufficient data for correlation analysis", cex = 1.5)
+      return()
+    }
+    
+    # Calculate correlation matrix
+    corr_matrix <- cor(corr_data[,-1], use = "complete.obs", method = input$correlationType)
+    
+    # Create heatmap
+    corrplot(corr_matrix, method = "color", type = "upper", 
+             order = "hclust", tl.cex = 1.2, tl.col = "#2c3e50",
+             cl.cex = 1.0, addCoef.col = "#2c3e50", number.cex = 1.2,
+             col = colorRampPalette(c("#e74c3c", "white", "#3498db"))(200))
   })
   
   output$rollingCorrelations <- renderPlotly({
@@ -1489,56 +1417,39 @@ server <- function(input, output, session) {
     
     if (length(input$correlationPairs) < 2) return(plotly_empty())
     
-    tryCatch({
-      # For simplicity, show correlation between first two selected pairs
-      selected_pairs <- input$correlationPairs[1:2]
-      
-      corr_data <- fx_data() %>%
-        filter(pair %in% selected_pairs) %>%
-        select(date, pair, returns) %>%
-        filter(!is.na(returns)) %>%
-        tidyr::pivot_wider(names_from = pair, values_from = returns)
-      
-      if (ncol(corr_data) < 3 || nrow(corr_data) < input$correlationWindow) return(plotly_empty())
-      
-      # Remove rows with NA values
-      corr_data <- corr_data[complete.cases(corr_data), ]
-      
-      if (nrow(corr_data) < input$correlationWindow) return(plotly_empty())
-      
-      # Calculate rolling correlation
-      rolling_corr <- rollapply(corr_data[, 2:3], width = input$correlationWindow,
-                                FUN = function(x) cor(x[,1], x[,2], use = "complete.obs"),
-                                fill = NA, align = "right", by.column = FALSE)
-      
-      corr_df <- data.frame(
-        date = tail(corr_data$date, length(rolling_corr)),
-        correlation = rolling_corr
-      ) %>%
-        filter(!is.na(correlation))
-      
-      if (nrow(corr_df) == 0) return(plotly_empty())
-      
-      p <- plot_ly(corr_df, x = ~date, y = ~correlation, type = "scatter", mode = "lines",
-                   line = list(color = "#3498db", width = 2)) %>%
-        layout(
-          title = paste("Rolling Correlation:", paste(selected_pairs, collapse = " vs ")),
-          xaxis = list(title = "Date"),
-          yaxis = list(title = "Correlation", range = c(-1, 1)),
-          plot_bgcolor = "white",
-          paper_bgcolor = "white",
-          shapes = list(
-            # Zero line
-            list(type = "line", x0 = min(corr_df$date), x1 = max(corr_df$date),
-                 y0 = 0, y1 = 0, 
-                 line = list(color = "#95a5a6", dash = "dash", width = 1))
-          )
-        )
-      
-      p
-    }, error = function(e) {
-      plotly_empty()
-    })
+    # For simplicity, show correlation between first two selected pairs
+    selected_pairs <- input$correlationPairs[1:2]
+    
+    corr_data <- fx_data() %>%
+      filter(pair %in% selected_pairs) %>%
+      select(date, pair, returns) %>%
+      filter(!is.na(returns)) %>%
+      tidyr::pivot_wider(names_from = pair, values_from = returns)
+    
+    if (ncol(corr_data) < 3 || nrow(corr_data) < input$correlationWindow) return(plotly_empty())
+    
+    # Calculate rolling correlation
+    rolling_corr <- rollapply(corr_data[, 2:3], width = input$correlationWindow,
+                              FUN = function(x) cor(x[,1], x[,2], use = "complete.obs"),
+                              fill = NA, align = "right", by.column = FALSE)
+    
+    corr_df <- data.frame(
+      date = tail(corr_data$date, length(rolling_corr)),
+      correlation = rolling_corr
+    )
+    
+    p <- plot_ly(corr_df, x = ~date, y = ~correlation, type = "scatter", mode = "lines",
+                 line = list(color = "#3498db", width = 2)) %>%
+      add_hline(y = 0, line = list(color = "#95a5a6", dash = "dash")) %>%
+      layout(
+        title = paste("Rolling Correlation:", paste(selected_pairs, collapse = " vs ")),
+        xaxis = list(title = "Date"),
+        yaxis = list(title = "Correlation", range = c(-1, 1)),
+        plot_bgcolor = "white",
+        paper_bgcolor = "white"
+      )
+    
+    p
   })
   
   # Time Series and Advanced Analytics outputs with basic implementations
@@ -1566,7 +1477,7 @@ server <- function(input, output, session) {
       
       tryCatch({
         # Create time series
-        ts_data <- ts(data$Mid, frequency = 1)  # Daily data, no seasonality
+        ts_data <- ts(data$Mid, frequency = 252)  # Daily data
         
         # Fit model based on selection
         if (input$tsModel == "arima") {
@@ -1648,7 +1559,7 @@ server <- function(input, output, session) {
       if (nrow(data) < 100) return("Insufficient data")
       
       tryCatch({
-        ts_data <- ts(data$Mid, frequency = 1)
+        ts_data <- ts(data$Mid, frequency = 252)
         
         if (input$tsModel == "arima") {
           fit <- auto.arima(ts_data)
@@ -1687,7 +1598,7 @@ server <- function(input, output, session) {
     
     tryCatch({
       # Simple trend and seasonal decomposition
-      ts_data <- ts(data$Mid, frequency = 1)
+      ts_data <- ts(data$Mid, frequency = 252)
       
       # Calculate trend using moving average
       trend <- ma(ts_data, order = 20)
@@ -1834,22 +1745,14 @@ server <- function(input, output, session) {
     p <- plot_ly(jump_data, x = ~date, y = ~returns, type = "scatter", mode = "markers",
                  color = ~is_jump, colors = c("FALSE" = "#3498db", "TRUE" = "#e74c3c"),
                  marker = list(size = ~ifelse(is_jump, 8, 4))) %>%
+      add_hline(y = threshold * 100, line = list(color = "#e74c3c", dash = "dash")) %>%
+      add_hline(y = -threshold * 100, line = list(color = "#e74c3c", dash = "dash")) %>%
       layout(
         title = "Jump Detection in Returns",
         xaxis = list(title = "Date"),
         yaxis = list(title = "Daily Return (%)"),
         plot_bgcolor = "white",
-        paper_bgcolor = "white",
-        shapes = list(
-          # Upper threshold line
-          list(type = "line", x0 = min(jump_data$date), x1 = max(jump_data$date),
-               y0 = threshold * 100, y1 = threshold * 100, 
-               line = list(color = "#e74c3c", dash = "dash", width = 1)),
-          # Lower threshold line
-          list(type = "line", x0 = min(jump_data$date), x1 = max(jump_data$date),
-               y0 = -threshold * 100, y1 = -threshold * 100, 
-               line = list(color = "#e74c3c", dash = "dash", width = 1))
-        )
+        paper_bgcolor = "white"
       )
     
     p
@@ -1894,22 +1797,14 @@ server <- function(input, output, session) {
     # Create spread analysis
     p <- plot_ly(data, x = ~date, y = ~spread_z_score, type = "scatter", mode = "lines",
                  line = list(color = "#9b59b6", width = 2)) %>%
+      add_hline(y = 2, line = list(color = "#e74c3c", dash = "dash")) %>%
+      add_hline(y = -2, line = list(color = "#27ae60", dash = "dash")) %>%
       layout(
         title = "Market Microstructure: Spread Z-Score",
         xaxis = list(title = "Date"),
         yaxis = list(title = "Spread Z-Score"),
         plot_bgcolor = "white",
-        paper_bgcolor = "white",
-        shapes = list(
-          # Upper threshold line
-          list(type = "line", x0 = min(data$date), x1 = max(data$date),
-               y0 = 2, y1 = 2, 
-               line = list(color = "#e74c3c", dash = "dash", width = 1)),
-          # Lower threshold line
-          list(type = "line", x0 = min(data$date), x1 = max(data$date),
-               y0 = -2, y1 = -2, 
-               line = list(color = "#27ae60", dash = "dash", width = 1))
-        )
+        paper_bgcolor = "white"
       )
     
     p
@@ -1929,4 +1824,3 @@ server <- function(input, output, session) {
 
 # Run the application
 shinyApp(ui = ui, server = server)
-                          

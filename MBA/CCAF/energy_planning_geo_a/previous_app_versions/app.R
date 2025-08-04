@@ -44,154 +44,6 @@ get_region_coords <- function(region_name) {
   }
 }
 
-# Function to create AI data centers dataset
-create_ai_datacenters <- function() {
-  ai_datacenters <- data.frame(
-    provider = c(
-      "AWS", "AWS", "AWS", "AWS", "AWS",
-      "Microsoft Azure", "Microsoft Azure", 
-      "Google Cloud", 
-      "CoreWeave", "CoreWeave",
-      "Vantage Data Centers", "Vantage Data Centers", "Vantage Data Centers",
-      "Nscale", "ServiceNow", "ServiceNow", "CyrusOne",
-      "Equinix", "Equinix", "Equinix",
-      "Digital Realty", "Global Switch", "CloudHQ", "UK Government"
-    ),
-    facility_name = c(
-      "AWS London Region (Didcot)", "AWS London Region (Ridgeway)", "AWS London Region (AZ3)", 
-      "AWS Edge Location London", "AWS Edge Location Manchester",
-      "Azure UK South (London)", "Azure UK West (Cardiff)",
-      "Google Cloud London (europe-west2)",
-      "CoreWeave Crawley", "CoreWeave London Docklands",
-      "Vantage Cardiff/Newport Campus", "Vantage London Campus", "Vantage Bridgend",
-      "Nscale Loughton", "ServiceNow London", "ServiceNow Newport", "CyrusOne London I",
-      "Equinix Slough (LD8)", "Equinix London", "Equinix Manchester",
-      "Digital Realty London", "Global Switch London", "CloudHQ Didcot", "Culham AI Growth Zone"
-    ),
-    location = c(
-      "Didcot, Oxfordshire", "Ridgeway, Iver", "London Metro", 
-      "London", "Manchester",
-      "London Metro", "Cardiff",
-      "London Metro",
-      "Crawley", "London Docklands",
-      "Newport, South Wales", "London", "Bridgend, Wales",
-      "Loughton, Essex", "London", "Newport, Wales", "London",
-      "Slough", "London", "Manchester",
-      "London", "London", "Didcot, Oxfordshire", "Culham, Oxfordshire"
-    ),
-    capacity_mw = c(
-      84, 30, 25, 5, 3,
-      150, 100,
-      120,
-      50, 40,
-      148, 48, 80,
-      90, 25, 15, 9.3,
-      40, 35, 20,
-      45, 60, 35, 25
-    ),
-    status = c(
-      "Operational", "Operational", "Operational", "Operational", "Operational",
-      "Operational", "Operational",
-      "Operational",
-      "Operational", "Operational",
-      "Operational", "Under Construction", "Under Construction",
-      "Under Construction", "Operational", "Operational", "Operational",
-      "Operational", "Operational", "Operational",
-      "Operational", "Operational", "Planning", "Planning"
-    ),
-    companies_served = c(
-      "Government (Home Office, DWP, CMA, Defra), Financial Services, Enterprises",
-      "Enterprise, Cloud customers", "Enterprise, Cloud customers",
-      "Content delivery customers", "Northern England coverage customers",
-      "NHS, Enterprise customers, Office 365 users", "Government, Enterprise customers",
-      "Enterprise AI customers, Startups, Google services",
-      "AI model training customers, Research institutions", "Enterprise AI customers, Startups",
-      "Hyperscale customers, Enterprise", "Financial services, Enterprise", "Hyperscale customers",
-      "AI training customers, HPC customers", "UK Government, Enterprise customers", "Enterprise customers", "Carrier-neutral customers",
-      "Google, Amazon, Microsoft, AI companies", "Financial services, Cloud providers", "Regional customers",
-      "Global cloud providers, Enterprise", "Financial services, Cloud providers", "Enterprise customers", "Government departments, Research institutions"
-    ),
-    energy_details = c(
-      "Part of £8bn 5-year UK investment", "London region availability zone", "Location not publicly disclosed",
-      "Low-latency content delivery", "Northern England coverage",
-      "Primary UK region", "Secondary UK region",
-      "Part of global 38-region network",
-      "Partnership with Digital Realty, NVIDIA H200 GPUs", "Partnership with Global Switch, NVIDIA H200 GPUs",
-      "100% renewable energy, private 400kV SuperGrid connection", "£500m investment", "Part of £12bn UK investment",
-      "GPU cloud provider, 45,000 NVIDIA GB200 GPUs planned", "NVIDIA GPUs for local LLM processing", "Local data processing", "Part of £6.3bn collective investment",
-      "xScale hyperscale design", "70+ global metros", "Extended UK coverage",
-      "Partnership with CoreWeave", "Partnership with CoreWeave", "Near Culham AI Growth Zone", "Sustainable energy focus, fusion research"
-    ),
-    investment_gbp = c(
-      8000, 500, 300, 100, 50,
-      2000, 1000,
-      1500,
-      1000, 750,
-      12000, 500, 2000,
-      2500, 1150, 200, 300,
-      800, 600, 300,
-      500, 400, 200, 500
-    ),
-    lat = c(
-      51.6340, 51.5408, 51.5074, 51.5074, 53.4808,
-      51.5074, 51.4816,
-      51.5074,
-      51.1135, 51.5024,
-      51.5475, 51.5074, 51.5287,
-      51.6469, 51.5074, 51.5475, 51.5074,
-      51.5106, 51.5074, 53.4808,
-      51.5074, 51.5074, 51.6340, 51.6573
-    ),
-    lon = c(
-      -1.2879, -0.5123, -0.1278, -0.1278, -2.2426,
-      -0.1278, -3.1791,
-      -0.1278,
-      -0.1804, -0.0193,
-      -2.9833, -0.1278, -3.5816,
-      0.0546, -0.1278, -2.9833, -0.1278,
-      -0.5951, -0.1278, -2.2426,
-      -0.1278, -0.1278, -1.2879, -1.2243
-    ),
-    stringsAsFactors = FALSE
-  )
-  
-  # Add some offset to coordinates to avoid overlapping markers in same city
-  # Especially important for London where many facilities are located
-  london_facilities <- which(ai_datacenters$location == "London" | grepl("London", ai_datacenters$location))
-  if(length(london_facilities) > 1) {
-    for(i in seq_along(london_facilities)) {
-      idx <- london_facilities[i]
-      # Create a circle of points around London center
-      angle <- (i-1) * (2*pi/length(london_facilities))
-      ai_datacenters$lat[idx] <- ai_datacenters$lat[idx] + 0.05 * cos(angle)
-      ai_datacenters$lon[idx] <- ai_datacenters$lon[idx] + 0.08 * sin(angle)
-    }
-  }
-  
-  # Add hover text
-  ai_datacenters$hover_text <- paste(
-    "<b>", ai_datacenters$facility_name, "</b><br>",
-    "<b>Provider:</b>", ai_datacenters$provider, "<br>",
-    "<b>Location:</b>", ai_datacenters$location, "<br>",
-    "<b>Capacity:</b>", ai_datacenters$capacity_mw, "MW<br>",
-    "<b>Status:</b>", ai_datacenters$status, "<br>",
-    "<b>Investment:</b> £", ai_datacenters$investment_gbp, "M<br>",
-    "<b>Companies Served:</b>", ai_datacenters$companies_served, "<br>",
-    "<b>Energy Details:</b>", ai_datacenters$energy_details
-  )
-  
-  # Add provider categories for color coding
-  ai_datacenters$provider_category <- case_when(
-    ai_datacenters$provider %in% c("AWS", "Microsoft Azure", "Google Cloud") ~ "Major Cloud Providers",
-    ai_datacenters$provider %in% c("CoreWeave", "Nscale", "ServiceNow") ~ "Specialized AI Providers",
-    ai_datacenters$provider %in% c("Vantage Data Centers", "Equinix", "Digital Realty", "Global Switch", "CyrusOne") ~ "Infrastructure Providers",
-    ai_datacenters$provider %in% c("CloudHQ", "UK Government") ~ "Government/Other",
-    TRUE ~ "Other"
-  )
-  
-  return(ai_datacenters)
-}
-
 # Function to load and process renewable energy data from DUKES Excel file
 load_renewable_data <- function() {
   tryCatch({
@@ -299,8 +151,7 @@ ui <- dashboardPage(
     sidebarMenu(
       menuItem("Energy Colocation Importance", tabName = "importance", icon = icon("info-circle")),
       menuItem("Interactive Power Plant Map", tabName = "map", icon = icon("map")),
-      menuItem("Data Centres Map", tabName = "datacentres", icon = icon("server")),
-      menuItem("AI Data Centers Map", tabName = "ai_datacenters", icon = icon("microchip"))
+      menuItem("Data Centres Map", tabName = "datacentres", icon = icon("server"))
     )
   ),
   
@@ -689,93 +540,6 @@ ui <- dashboardPage(
                   DT::dataTableOutput("datacentre_table")
                 )
               )
-      ),
-      
-      # Fourth tab: AI Data Centers Map
-      tabItem(tabName = "ai_datacenters",
-              fluidRow(
-                box(
-                  title = "AI Data Center Filter Controls",
-                  status = "primary",
-                  solidHeader = TRUE,
-                  width = 12,
-                  
-                  fluidRow(
-                    column(3,
-                           selectInput("ai_provider_filter", "Select Provider:",
-                                       choices = NULL,
-                                       selected = "All"
-                           )
-                    ),
-                    column(3,
-                           selectInput("ai_category_filter", "Select Category:",
-                                       choices = NULL,
-                                       selected = "All"
-                           )
-                    ),
-                    column(3,
-                           selectInput("ai_status_filter", "Select Status:",
-                                       choices = NULL,
-                                       selected = "All"
-                           )
-                    ),
-                    column(3,
-                           numericInput("min_capacity", "Minimum Capacity (MW):",
-                                        value = 0,
-                                        min = 0,
-                                        max = 200,
-                                        step = 5
-                           )
-                    )
-                  )
-                )
-              ),
-              
-              fluidRow(
-                box(
-                  title = "UK AI Data Centers Location Map - Bubble Size = Energy Capacity",
-                  status = "primary",
-                  solidHeader = TRUE,
-                  width = 8,
-                  height = "600px",
-                  
-                  plotlyOutput("ai_datacenters_map", height = "550px")
-                ),
-                
-                box(
-                  title = "AI Data Center Statistics",
-                  status = "primary",
-                  solidHeader = TRUE,
-                  width = 4,
-                  height = "600px",
-                  
-                  div(class = "metric-box", style = "margin-bottom: 15px;",
-                      h4("Filtered Results", style = "color: #008A82; margin-top: 0;"),
-                      verbatimTextOutput("ai_summary_stats")
-                  ),
-                  
-                  div(class = "metric-box",
-                      h4("Providers Distribution", style = "color: #008A82; margin-top: 0;"),
-                      plotlyOutput("ai_provider_chart", height = "200px")
-                  ),
-                  
-                  div(class = "metric-box",
-                      h4("Investment by Provider", style = "color: #008A82; margin-top: 0;"),
-                      plotlyOutput("ai_investment_chart", height = "150px")
-                  )
-                )
-              ),
-              
-              fluidRow(
-                box(
-                  title = "Detailed AI Data Center Information",
-                  status = "primary",
-                  solidHeader = TRUE,
-                  width = 12,
-                  
-                  DT::dataTableOutput("ai_datacenters_table")
-                )
-              )
       )
     )
   ),
@@ -802,11 +566,6 @@ server <- function(input, output, session) {
       showNotification("Could not load data centres data from DC_UK_Locations_Data.xlsx", type = "error")
     }
     return(data)
-  })
-  
-  # Load AI data centers data
-  ai_datacenters_data <- reactive({
-    return(create_ai_datacenters())
   })
   
   # Initialize filter choices for renewable energy plants
@@ -856,29 +615,6 @@ server <- function(input, output, session) {
     }
   })
   
-  # Initialize filter choices for AI data centers
-  observe({
-    req(ai_datacenters_data())
-    df <- ai_datacenters_data()
-    
-    if (nrow(df) > 0) {
-      # Update provider choices
-      provider_choices <- c("All", sort(unique(df$provider)))
-      updateSelectInput(session, "ai_provider_filter", choices = provider_choices)
-      
-      # Update category choices
-      category_choices <- c("All", sort(unique(df$provider_category)))
-      updateSelectInput(session, "ai_category_filter", choices = category_choices)
-      
-      # Update status choices
-      status_choices <- c("All", sort(unique(df$status)))
-      updateSelectInput(session, "ai_status_filter", choices = status_choices)
-      
-      # Update max value for minimum capacity input
-      updateNumericInput(session, "min_capacity", max = max(df$capacity_mw, na.rm = TRUE))
-    }
-  })
-  
   # Filtered renewable energy data
   filtered_data <- reactive({
     req(renewable_data())
@@ -925,30 +661,6 @@ server <- function(input, output, session) {
     }
     
     df <- df %>% filter(count >= input$min_datacentres)
-    
-    return(df)
-  })
-  
-  # Filtered AI data centers data
-  filtered_ai_data <- reactive({
-    req(ai_datacenters_data())
-    df <- ai_datacenters_data()
-    
-    if (nrow(df) == 0) return(df)
-    
-    if (input$ai_provider_filter != "All") {
-      df <- df %>% filter(provider == input$ai_provider_filter)
-    }
-    
-    if (input$ai_category_filter != "All") {
-      df <- df %>% filter(provider_category == input$ai_category_filter)
-    }
-    
-    if (input$ai_status_filter != "All") {
-      df <- df %>% filter(status == input$ai_status_filter)
-    }
-    
-    df <- df %>% filter(capacity_mw >= input$min_capacity)
     
     return(df)
   })
@@ -1067,71 +779,6 @@ server <- function(input, output, session) {
     }
   })
   
-  # Render AI data centers map with improved visibility
-  output$ai_datacenters_map <- renderPlotly({
-    req(filtered_ai_data())
-    df <- filtered_ai_data()
-    
-    if (nrow(df) == 0) {
-      # Show empty map when no data
-      plot_ly(type = 'scattermapbox') %>%
-        layout(
-          mapbox = list(
-            style = 'open-street-map',
-            center = list(lon = -3.5, lat = 55.0),
-            zoom = 6
-          ),
-          title = "No data matches current filters"
-        )
-    } else {
-      # Create color mapping for provider categories with high contrast colors
-      unique_categories <- unique(df$provider_category)
-      category_colors <- c("#E74C3C", "#3498DB", "#F39C12", "#2ECC71", "#9B59B6")
-      category_color_map <- setNames(category_colors[1:length(unique_categories)], unique_categories)
-      df$color <- category_color_map[df$provider_category]
-      
-      # Create the scattermapbox map with larger, more visible bubbles
-      plot_ly(df, 
-              type = 'scattermapbox',
-              lon = ~lon, 
-              lat = ~lat,
-              mode = 'markers',
-              marker = list(
-                # Make bubbles proportional to capacity with larger minimum size
-                size = ~pmax(15, pmin(80, capacity_mw * 0.8)),
-                color = ~color,
-                sizemode = 'diameter',
-                opacity = 0.85,
-                line = list(width = 3, color = 'white')
-              ),
-              text = ~hover_text,
-              hovertemplate = "%{text}<extra></extra>",
-              customdata = ~provider_category,
-              name = ~provider_category
-      ) %>%
-        layout(
-          mapbox = list(
-            style = 'open-street-map',
-            center = list(lon = -1.5, lat = 52.5),
-            zoom = 6.5
-          ),
-          title = list(
-            text = "UK AI Data Centers - Bubble Size = Energy Capacity (MW)",
-            font = list(size = 16)
-          ),
-          showlegend = TRUE,
-          legend = list(
-            orientation = "h",
-            x = 0.1,
-            y = -0.1,
-            bgcolor = 'rgba(255,255,255,0.8)',
-            bordercolor = 'rgba(0,0,0,0.2)',
-            borderwidth = 1
-          )
-        )
-    }
-  })
-  
   # Summary statistics for renewable energy
   output$summary_stats <- renderText({
     req(filtered_data())
@@ -1177,32 +824,6 @@ server <- function(input, output, session) {
       "Average per Location:", avg_datacentres, "\n",
       "Regions:", unique_regions, "\n",
       "Countries:", unique_countries
-    )
-  })
-  
-  # AI data centers summary statistics
-  output$ai_summary_stats <- renderText({
-    req(filtered_ai_data())
-    df <- filtered_ai_data()
-    
-    if (nrow(df) == 0) {
-      return("No data available with current filters")
-    }
-    
-    total_facilities <- nrow(df)
-    total_capacity <- sum(df$capacity_mw)
-    avg_capacity <- round(mean(df$capacity_mw), 2)
-    total_investment <- sum(df$investment_gbp)
-    unique_providers <- length(unique(df$provider))
-    operational_count <- sum(df$status == "Operational")
-    
-    paste(
-      "Total Facilities:", total_facilities, "\n",
-      "Total Capacity:", total_capacity, "MW\n",
-      "Average Capacity:", avg_capacity, "MW\n",
-      "Total Investment: £", format(total_investment, big.mark = ","), "M\n",
-      "Unique Providers:", unique_providers, "\n",
-      "Operational:", operational_count
     )
   })
   
@@ -1315,64 +936,6 @@ server <- function(input, output, session) {
       config(displayModeBar = FALSE)
   })
   
-  # AI providers distribution chart
-  output$ai_provider_chart <- renderPlotly({
-    req(filtered_ai_data())
-    df <- filtered_ai_data()
-    
-    if (nrow(df) == 0) return(NULL)
-    
-    provider_summary <- df %>%
-      group_by(provider_category) %>%
-      summarise(count = n(), .groups = 'drop') %>%
-      arrange(desc(count))
-    
-    # Assign colors to provider categories
-    provider_summary$color <- tech_colors[1:nrow(provider_summary)]
-    
-    p <- ggplot(provider_summary, aes(x = reorder(provider_category, count), y = count, fill = provider_category)) +
-      geom_col() +
-      scale_fill_manual(values = setNames(provider_summary$color, provider_summary$provider_category)) +
-      coord_flip() +
-      labs(x = "Provider Category", y = "Number of Facilities") +
-      theme_minimal() +
-      theme(
-        text = element_text(size = 10),
-        axis.text.y = element_text(size = 8),
-        legend.position = "none"
-      )
-    
-    ggplotly(p, tooltip = c("x", "y")) %>%
-      config(displayModeBar = FALSE)
-  })
-  
-  # Investment by provider chart for AI data centers
-  output$ai_investment_chart <- renderPlotly({
-    req(filtered_ai_data())
-    df <- filtered_ai_data()
-    
-    if (nrow(df) == 0) return(NULL)
-    
-    investment_summary <- df %>%
-      group_by(provider) %>%
-      summarise(total_investment = sum(investment_gbp), .groups = 'drop') %>%
-      arrange(desc(total_investment)) %>%
-      head(10)  # Show top 10 providers by investment
-    
-    p <- ggplot(investment_summary, aes(x = reorder(provider, total_investment), y = total_investment)) +
-      geom_col(fill = tech_colors[5]) +
-      coord_flip() +
-      labs(x = "Provider", y = "Investment (£M)") +
-      theme_minimal() +
-      theme(
-        text = element_text(size = 10),
-        axis.text.y = element_text(size = 8)
-      )
-    
-    ggplotly(p, tooltip = c("x", "y")) %>%
-      config(displayModeBar = FALSE)
-  })
-  
   # Data table for renewable energy plants
   output$plant_table <- DT::renderDataTable({
     req(filtered_data())
@@ -1431,40 +994,6 @@ server <- function(input, output, session) {
         pageLength = 15,
         scrollX = TRUE,
         autoWidth = TRUE
-      ),
-      rownames = FALSE
-    )
-  })
-  
-  # Data table for AI data centers
-  output$ai_datacenters_table <- DT::renderDataTable({
-    req(filtered_ai_data())
-    df <- filtered_ai_data()
-    
-    if (nrow(df) == 0) return(NULL)
-    
-    display_df <- df %>%
-      select(
-        `Facility Name` = facility_name,
-        `Provider` = provider,
-        `Location` = location,
-        `Capacity (MW)` = capacity_mw,
-        `Status` = status,
-        `Investment (£M)` = investment_gbp,
-        `Companies Served` = companies_served,
-        `Energy Details` = energy_details
-      ) %>%
-      arrange(desc(`Capacity (MW)`))
-    
-    DT::datatable(
-      display_df,
-      options = list(
-        pageLength = 15,
-        scrollX = TRUE,
-        autoWidth = TRUE,
-        columnDefs = list(
-          list(width = '200px', targets = c(6, 7))  # Make text columns wider
-        )
       ),
       rownames = FALSE
     )
