@@ -155,19 +155,6 @@ create_ai_datacenters <- function() {
     stringsAsFactors = FALSE
   )
   
-  # Add some offset to coordinates to avoid overlapping markers in same city
-  # Especially important for London where many facilities are located
-  london_facilities <- which(ai_datacenters$location == "London" | grepl("London", ai_datacenters$location))
-  if(length(london_facilities) > 1) {
-    for(i in seq_along(london_facilities)) {
-      idx <- london_facilities[i]
-      # Create a circle of points around London center
-      angle <- (i-1) * (2*pi/length(london_facilities))
-      ai_datacenters$lat[idx] <- ai_datacenters$lat[idx] + 0.05 * cos(angle)
-      ai_datacenters$lon[idx] <- ai_datacenters$lon[idx] + 0.08 * sin(angle)
-    }
-  }
-  
   # Add hover text
   ai_datacenters$hover_text <- paste(
     "<b>", ai_datacenters$facility_name, "</b><br>",
@@ -307,105 +294,105 @@ ui <- dashboardPage(
   dashboardBody(
     # Custom CSS styling
     tags$style(HTML("
-        .skin-blue .main-header .navbar {
-          background-color: #008A82 !important;
-        }
-        
-        .skin-blue .main-header .logo {
-          background-color: #002C3C !important;
-        }
-        
-        .skin-blue .main-header .logo:hover {
-          background-color: #008A82 !important;
-        }
-        
-        .skin-blue .main-sidebar {
-          background-color: #00A39A !important;
-        }
-        
-        .skin-blue .sidebar-menu > li.header {
-          background: #008A82 !important;
-          color: white !important;
-        }
-        
-        .skin-blue .sidebar-menu > li > a {
-          color: white !important;
-        }
-        
-        .skin-blue .sidebar-menu > li:hover > a,
-        .skin-blue .sidebar-menu > li.active > a {
-          background-color: #008A82 !important;
-          color: white !important;
-        }
-        
-        .content-wrapper, .right-side {
-          background-color: #002C3C !important;
-        }
-        
-        .box {
-          background: #00A39A !important;
-          border-top: none !important;
-          color: white !important;
-        }
-        
-        .box-header {
-          background: #00A39A !important;
-          color: white !important;
-        }
-        
-        .box-body {
-          background: white !important;
-          color: #2c3e50 !important;
-        }
-        
-        .box-title {
-          color: white !important;
-        }
-        
-        .metric-box {
-          background: white;
-          border-radius: 8px;
-          padding: 15px;
-          margin: 10px 0;
-          border-left: 4px solid #00A39A;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-          color: #2c3e50 !important;
-        }
-        
-        .network-container {
-          height: 600px;
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          background: white;
-        }
-        
-        .form-control {
-          background-color: rgba(255,255,255,0.9) !important;
-          border: 1px solid #bdc3c7 !important;
-          color: #2c3e50 !important;
-        }
-        
-        .form-control:focus {
-          border-color: #008A82 !important;
-          box-shadow: 0 0 0 0.2rem rgba(0, 163, 154, 0.25) !important;
-        }
-        
-        .reference-box {
-          background: #f8f9fa;
-          border: 1px solid #dee2e6;
-          border-radius: 8px;
-          padding: 15px;
-          margin: 20px 0;
-          font-size: 0.9em;
-          color: #495057;
-        }
-        
-        .reference-box h5 {
-          color: #00A39A;
-          margin-bottom: 10px;
-          font-weight: bold;
-        }
-      ")),
+       .skin-blue .main-header .navbar {
+         background-color: #008A82 !important;
+       }
+       
+       .skin-blue .main-header .logo {
+         background-color: #002C3C !important;
+       }
+       
+       .skin-blue .main-header .logo:hover {
+         background-color: #008A82 !important;
+       }
+       
+       .skin-blue .main-sidebar {
+         background-color: #00A39A !important;
+       }
+       
+       .skin-blue .sidebar-menu > li.header {
+         background: #008A82 !important;
+         color: white !important;
+       }
+       
+       .skin-blue .sidebar-menu > li > a {
+         color: white !important;
+       }
+       
+       .skin-blue .sidebar-menu > li:hover > a,
+       .skin-blue .sidebar-menu > li.active > a {
+         background-color: #008A82 !important;
+         color: white !important;
+       }
+       
+       .content-wrapper, .right-side {
+         background-color: #002C3C !important;
+       }
+       
+       .box {
+         background: #00A39A !important;
+         border-top: none !important;
+         color: white !important;
+       }
+       
+       .box-header {
+         background: #00A39A !important;
+         color: white !important;
+       }
+       
+       .box-body {
+         background: white !important;
+         color: #2c3e50 !important;
+       }
+       
+       .box-title {
+         color: white !important;
+       }
+       
+       .metric-box {
+         background: white;
+         border-radius: 8px;
+         padding: 15px;
+         margin: 10px 0;
+         border-left: 4px solid #00A39A;
+         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+         color: #2c3e50 !important;
+       }
+       
+       .network-container {
+         height: 600px;
+         border: 1px solid #ddd;
+         border-radius: 8px;
+         background: white;
+       }
+       
+       .form-control {
+         background-color: rgba(255,255,255,0.9) !important;
+         border: 1px solid #bdc3c7 !important;
+         color: #2c3e50 !important;
+       }
+       
+       .form-control:focus {
+         border-color: #008A82 !important;
+         box-shadow: 0 0 0 0.2rem rgba(0, 163, 154, 0.25) !important;
+       }
+       
+       .reference-box {
+         background: #f8f9fa;
+         border: 1px solid #dee2e6;
+         border-radius: 8px;
+         padding: 15px;
+         margin: 20px 0;
+         font-size: 0.9em;
+         color: #495057;
+       }
+       
+       .reference-box h5 {
+         color: #00A39A;
+         margin-bottom: 10px;
+         font-weight: bold;
+       }
+     ")),
     
     tabItems(
       # First tab: Importance of Energy Colocation
@@ -733,7 +720,7 @@ ui <- dashboardPage(
               
               fluidRow(
                 box(
-                  title = "UK AI Data Centers Location Map - Bubble Size = Energy Capacity",
+                  title = "UK AI Data Centers Location Map",
                   status = "primary",
                   solidHeader = TRUE,
                   width = 8,
@@ -1067,7 +1054,7 @@ server <- function(input, output, session) {
     }
   })
   
-  # Render AI data centers map with improved visibility
+  # Render AI data centers map
   output$ai_datacenters_map <- renderPlotly({
     req(filtered_ai_data())
     df <- filtered_ai_data()
@@ -1084,50 +1071,45 @@ server <- function(input, output, session) {
           title = "No data matches current filters"
         )
     } else {
-      # Create color mapping for provider categories with high contrast colors
+      # Create color mapping for provider categories
       unique_categories <- unique(df$provider_category)
-      category_colors <- c("#E74C3C", "#3498DB", "#F39C12", "#2ECC71", "#9B59B6")
-      category_color_map <- setNames(category_colors[1:length(unique_categories)], unique_categories)
+      category_color_map <- setNames(tech_colors[1:length(unique_categories)], unique_categories)
       df$color <- category_color_map[df$provider_category]
       
-      # Create the scattermapbox map with larger, more visible bubbles
+      # Create status-based symbols
+      df$symbol <- case_when(
+        df$status == "Operational" ~ "circle",
+        df$status == "Under Construction" ~ "square",
+        df$status == "Planning" ~ "triangle-up",
+        TRUE ~ "diamond"
+      )
+      
+      # Create the scattermapbox map
       plot_ly(df, 
               type = 'scattermapbox',
               lon = ~lon, 
               lat = ~lat,
               mode = 'markers',
               marker = list(
-                # Make bubbles proportional to capacity with larger minimum size
-                size = ~pmax(15, pmin(80, capacity_mw * 0.8)),
+                size = ~pmax(12, pmin(60, capacity_mw/3)),
                 color = ~color,
+                symbol = ~symbol,
                 sizemode = 'diameter',
-                opacity = 0.85,
-                line = list(width = 3, color = 'white')
+                opacity = 0.8,
+                line = list(width = 2, color = 'white')
               ),
               text = ~hover_text,
               hovertemplate = "%{text}<extra></extra>",
-              customdata = ~provider_category,
-              name = ~provider_category
+              customdata = ~provider_category
       ) %>%
         layout(
           mapbox = list(
             style = 'open-street-map',
             center = list(lon = -1.5, lat = 52.5),
-            zoom = 6.5
+            zoom = 6
           ),
-          title = list(
-            text = "UK AI Data Centers - Bubble Size = Energy Capacity (MW)",
-            font = list(size = 16)
-          ),
-          showlegend = TRUE,
-          legend = list(
-            orientation = "h",
-            x = 0.1,
-            y = -0.1,
-            bgcolor = 'rgba(255,255,255,0.8)',
-            bordercolor = 'rgba(0,0,0,0.2)',
-            borderwidth = 1
-          )
+          title = "UK AI Data Centers Distribution",
+          showlegend = FALSE
         )
     }
   })
@@ -1200,7 +1182,7 @@ server <- function(input, output, session) {
       "Total Facilities:", total_facilities, "\n",
       "Total Capacity:", total_capacity, "MW\n",
       "Average Capacity:", avg_capacity, "MW\n",
-      "Total Investment: £", format(total_investment, big.mark = ","), "M\n",
+      "Total Investment: £", total_investment, "M\n",
       "Unique Providers:", unique_providers, "\n",
       "Operational:", operational_count
     )
