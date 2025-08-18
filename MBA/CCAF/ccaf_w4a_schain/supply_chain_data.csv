@@ -1,0 +1,238 @@
+Company,Rank,Supplier_Name,Industry,Market_Cap_M,Total_Relationship_Size_M,Cost_Category_Percent,Supplier_Source_Revenue_Percent,Size_Source,Data_Source
+Amazon,1,Amazon.com Inc,E-Commerce Discretionary,2374969.28,,,,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,2,NVIDIA Corp,Semiconductors,4457880.00,11832.44,10.63% CAPEX,7.52% Supplier's 2025Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,3,Taiwan Semiconductor Manufact,Semiconductors,1021042.16,4354.89,1.10% CF,3.06% Supplier's 2024Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,4,SK Hynix Inc,Semiconductors,134453.19,3672.77,3.53% CAPEX,7.27% Supplier's 2023A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,5,Advanced Micro Devices Inc,Semiconductors,280302.48,1520.24,1.37% CAPEX,4.90% Supplier's 2024A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,6,Intel Corp,Semiconductors,87321.15,1078.64,0.97% CAPEX,1.89% Supplier's 2022A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,7,Marvell Technology Inc,Semiconductors,66682.55,849.14,0.94% CAPEX,14.00% Media News,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,8,Broadcom Inc,Semiconductors,1434417.55,548.14,0.61% CAPEX,0.98% Supplier's 2024A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,9,Astera Labs Inc,Semiconductors,29799.77,184.25,0.14% CAPEX,24.00% Supplier's 2023Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,10,Advanced Energy Inc,Semiconductors,111128.79,116.04,0.04% COGS,1.19% Supplier's 2024A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,11,Plug Power Inc,Renewable Energy,1731.31,110.08,0.10% CAPEX,14.37% Supplier's 2024A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,12,ABB Holdings PLC,Semiconductors,146708.07,81.45,0.03% COGS,1.93% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,13,Skyworks Solutions Inc,Semiconductors,10550.24,62.50,0.02% COGS,1.52% Supplier's 2024A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,14,NXP Semiconductors NV,Semiconductors,52226.06,61.00,0.02% COGS,0.49% Supplier's 2026 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,15,Infineon Technologies AG,Semiconductors,53704.46,56.07,0.01% COGS,0.38% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,16,ON Semiconductor Corp,Semiconductors,19491.71,42.23,0.01% COGS,0.61% Supplier's 2024Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,17,Micron Inc,Semiconductors,72563.79,28.14,0.01% COGS,0.15% Supplier's 2024 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,18,Silicon Laboratories Inc,Semiconductors,4115.70,25.42,0.01% COGS,3.82% Supplier's 2023A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,19,Cirrus Logic Inc,Semiconductors,5329.31,21.44,0.01% COGS,1.43% Media News,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,20,Shenzhen Goodix Technology Co,Semiconductors,4840.16,18.49,0.01% COGS,3.16% Supplier's 2025A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,21,Nordic Semiconductor ASA,Semiconductors,2582.15,7.56,0.00% COGS,1.19% Supplier's 2022A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,22,Diodes Inc,Semiconductors,2364.40,5.54,0.00% COGS,0.42% Supplier's 2026Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,23,Alpha & Omega Semiconductor Lt,Semiconductors,768.71,3.74,0.00% COGS,0.57% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,24,Semtech Corp,Semiconductors,4406.42,2.89,0.00% COGS,0.29% Company News,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,25,Lattice Semiconductor Corp,Semiconductors,8420.45,2.88,0.00% COGS,0.61% Supplier's 2024A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,26,Rambus Inc,Semiconductors,2737.83,1.13,0.00% COGS,0.34% Supplier's 2024Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,27,Advanced Optoelectronic Techno,Semiconductors,72.66,,,Supplier's 2024Q3 CF,,AMZN Supply Chain Analysis
+Amazon,28,DTE Energy Co,Electric Utilities,29100.44,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,29,Synaptics Inc,Semiconductors,2448.41,,,Supplier's 2023Q4 CF,,AMZN Supply Chain Analysis
+Amazon,30,Shell PLC,Oil & Gas Supply Chain,209297.22,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,31,Emera Inc,Electric Utilities,14560.10,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,32,Himax Technologies Inc,Semiconductors,1271.63,,,Supplier's 2025Q1 CF,,AMZN Supply Chain Analysis
+Amazon,33,Excellence Optoelectronics Inc,Semiconductors,150.83,,,Supplier's 2024Q1 CF,,AMZN Supply Chain Analysis
+Amazon,34,u-blox Holding AG,Semiconductors,1068.99,,,Supplier's 2022A CF,,AMZN Supply Chain Analysis
+Amazon,35,Navitas Semiconductor Corp,Semiconductors,1410.30,,,Supplier's 2024Q3 CF,,AMZN Supply Chain Analysis
+Amazon,36,Brookfield Renewable Holdings,Electric Utilities,,,,Company News,,AMZN Supply Chain Analysis
+Amazon,37,Evergy Inc,Electric Utilities,16658.21,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,38,Apollo Power Ltd,Renewable Energy,71.38,,,Supplier's 2024Q3 CF,,AMZN Supply Chain Analysis
+Amazon,39,Sempra,Electric Utilities,53288.85,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,40,Ameren Corp,Electric Utilities,27416.87,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,41,Algonquin Power & Utilities Co,Electric Utilities,4361.34,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,42,FirsEnergy Corp,Electric Utilities,24966.48,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,43,Capstone Cos Inc,Semiconductors,2.06,,,Supplier's 2024Q1 CF,,AMZN Supply Chain Analysis
+Amazon,44,Rattanindia Enterprises Ltd,Electric Utilities,813.99,,,Supplier's 2024Q3 CF,,AMZN Supply Chain Analysis
+Amazon,45,Clean Max Enviro Energy Solut,Renewable Energy,,,,Company News,,AMZN Supply Chain Analysis
+Amazon,46,ERG SpA,Electric Utilities,3344.82,,,Supplier's 2024A CF,,AMZN Supply Chain Analysis
+Amazon,47,SK Inc,Oil & Gas Supply Chain,10028.42,,,Supplier's 2024Q3 CF,,AMZN Supply Chain Analysis
+Amazon,48,Amlogic Shanghai Co Ltd,Semiconductors,4143.60,,,Supplier's 2024A CF,,AMZN Supply Chain Analysis
+Amazon,49,Radian Inc,Semiconductors,7839.29,,,Supplier's 2021Q3 CF,,AMZN Supply Chain Analysis
+Amazon,50,SkyLogicIQ Corp,Semiconductors,93.28,,,Supplier's 2025Q1 CF,,AMZN Supply Chain Analysis
+Amazon,51,Zhuhai CosiX Battery Co Ltd,Renewable Energy,2308.90,,,Supplier's 2024A CF,,AMZN Supply Chain Analysis
+Amazon,52,National Grid PLC,Electric Utilities,70187.99,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,53,CETC Chips Technology Inc,Semiconductors,2091.85,,,Supplier's 2023A CF,,AMZN Supply Chain Analysis
+Amazon,54,Richtek Technology Corp,Semiconductors,471.15,,,Supplier's 2023Q3 CF,,AMZN Supply Chain Analysis
+Amazon,55,Portland General Electric Co,Electric Utilities,4610.39,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,56,Indian Oil Corp Ltd,Oil & Gas Supply Chain,22560.38,,,Supplier's 2023A CF,,AMZN Supply Chain Analysis
+Amazon,57,BP Incorporated KK,Oil & Gas Supply Chain,132.50,,,Supplier's 2023A CF,,AMZN Supply Chain Analysis
+Amazon,58,Engie SA,Electric Utilities,52939.30,,,Company News,,AMZN Supply Chain Analysis
+Amazon,59,DCC PLC,Oil & Gas Supply Chain,6207.60,,,Supplier's 2023A CF,,AMZN Supply Chain Analysis
+Amazon,60,Xcel Energy Inc,Electric Utilities,43369.29,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,61,Nano Magic Holdings Inc,Semiconductors,9.08,,,Supplier's 2023A CF,,AMZN Supply Chain Analysis
+Amazon,62,Iberdrola SA,Electric Utilities,121019.91,,,Company News,,AMZN Supply Chain Analysis
+Amazon,63,Tokyo Electric Power Co Holdin,Electric Utilities,7244.31,,,Supplier's 2022A CF,,AMZN Supply Chain Analysis
+Amazon,64,Kansai Electric Power Co Inc,Electric Utilities,4607.36,,,Supplier's 2022A CF,,AMZN Supply Chain Analysis
+Amazon,65,Kansai Electric Power Co Inc/T,Electric Utilities,14976.14,,,Supplier's 2022A CF,,AMZN Supply Chain Analysis
+Amazon,66,Chubu Electric Power Co Inc,Electric Utilities,10125.31,,,Supplier's 2022A CF,,AMZN Supply Chain Analysis
+Amazon,67,Canadian Solar Inc,Renewable Energy,780.78,,,Supplier's 2025Q1 CF,,AMZN Supply Chain Analysis
+Amazon,68,TransAlta Corp,Electric Utilities,3584.91,,,Supplier's 2023Q1 CF,,AMZN Supply Chain Analysis
+Amazon,69,Clean Energy Fuels Corp,Oil & Gas Supply Chain,502.18,,,Supplier's 2024A CF,,AMZN Supply Chain Analysis
+Amazon,70,Enbridge Inc,Oil & Gas Supply Chain,102572.36,,,Supplier's 2024Q4 CF,,AMZN Supply Chain Analysis
+Amazon,71,Fortis Inc/Canada,Electric Utilities,25601.05,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,72,Uniti Corp,Electric Utilities,809.50,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,73,QUALCOMM Inc,Semiconductors,159217.24,,,Company News,,AMZN Supply Chain Analysis
+Amazon,74,Otter Tail Corp,Electric Utilities,3341.13,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,75,MGE Energy Inc,Electric Utilities,3040.65,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,76,Data I/O Corp,Semiconductors,29.85,,,Supplier's 2022A CF,,AMZN Supply Chain Analysis
+Amazon,77,AES Corp/The,Electric Utilities,9342.10,,,Supplier's 2025Q1 CF,,AMZN Supply Chain Analysis
+Amazon,78,Alliant Energy Corp,Electric Utilities,16867.47,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,79,NEC Energy Group Inc,Electric Utilities,35517.96,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,80,Avista Corp,Electric Utilities,3027.06,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,81,TotalEnergies SE,Oil & Gas Supply Chain,140154.52,,,Supplier's 2024A CF,,AMZN Supply Chain Analysis
+Amazon,82,Southern Co/The,Electric Utilities,104177.34,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,83,Edison International,Electric Utilities,20692.53,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,84,TXNM Energy Inc,Electric Utilities,5981.32,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,85,Public Service Enterprise Grou,Electric Utilities,43759.32,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,86,Pinnacle West Capital Corp,Electric Utilities,11061.36,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,87,Exelon Corp,Electric Utilities,45752.16,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,88,PPL Corp,Electric Utilities,26881.38,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,89,PG&E Corp,Electric Utilities,32967.57,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,90,OGE Energy Corp,Electric Utilities,9137.30,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,91,Occidental Petroleum Corp,Oil & Gas Supply Chain,43630.37,,,Company News,,AMZN Supply Chain Analysis
+Amazon,92,EverSource Energy,Electric Utilities,24137.34,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,93,IDACORP Inc,Electric Utilities,6731.43,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,94,CenterPoint Energy Inc,Electric Utilities,25345.45,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,95,NextEra Energy Inc,Electric Utilities,149113.38,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,96,Entergy Corp,Electric Utilities,40386.63,,,Supplier's 2021A CF,,AMZN Supply Chain Analysis
+Amazon,97,Duke Energy Corp,Electric Utilities,97976.36,,,Company News,,AMZN Supply Chain Analysis
+Amazon,98,Astera Labs Inc (Duplicate),Semiconductors,29799.77,,,Supplier's 2025Q4 CF,,AMZN Supply Chain Analysis
+Microsoft,1,Microsoft Corp,Software,3880410.18,,,,,MSFT Supply Chain Analysis
+Microsoft,2,NVIDIA Corp,Semiconductors,4457880.00,29686.87,46.96% CAPEX,18.87% Supplier's 2025Q4 CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,3,SK Hynix Inc,Semiconductors,134453.19,4157.06,5.97% CAPEX,3.23% 2024A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,4,Broadcom Inc,Semiconductors,1434417.55,913.51,1.53% CAPEX,1.62% Supplier's 2026Q1 CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,5,Intel Corp,Semiconductors,87321.15,769.95,0.88% COGS,1.52% 2024A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,6,Advanced Micro Devices Inc,Semiconductors,280302.48,330.59,0.38% COGS,1.11% Supplier's 2025Q1 CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,7,MediaTek Inc,Semiconductors,72453.79,296.85,0.34% COGS,1.59% 2024A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,8,Micron Technology Inc,Semiconductors,133052.79,237.00,0.27% COGS,0.64% 2024A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,9,Marvell Technology Inc,Semiconductors,66682.55,92.59,0.11% COGS,1.22% 2024A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,10,Texas Instruments Inc,Semiconductors,170208.67,76.98,0.09% COGS,0.48% 2024A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,11,Analog Devices Inc,Semiconductors,111134.79,74.63,0.09% COGS,0.76% Supplier's 2022A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,12,Realtek Semiconductor Corp,Semiconductors,9262.93,68.43,0.08% COGS,1.61% 2024A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,13,STMicroelectronics,Semiconductors,23118.57,66.30,0.08% COGS,0.50% 2024A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,14,NXP Semiconductors NV,Semiconductors,52228.06,66.20,0.08% COGS,0.53% 2024A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,15,Rohm Co Ltd,Semiconductors,5453.53,47.02,0.05% COGS,1.73% 2019A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,16,Renesas Electronics Corp,Semiconductors,21866.47,45.56,0.05% COGS,0.49% 2024A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,17,Winbond Electronics Corp,Semiconductors,2651.28,39.06,0.04% COGS,1.61% 2024A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,18,NRF Holdings Inc,Semiconductors,146708.07,25.48,0.03% COGS,0.60% Supplier's 2026Q1 CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,19,ON Semiconductor Corp,Semiconductors,19491.71,23.30,0.03% COGS,0.34% Supplier's 2024Q4 CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,20,Infineon Technologies AG,Semiconductors,53763.46,23.14,0.03% COGS,0.16% Supplier's 2024A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,21,Monolithic Power Systems Inc,Semiconductors,38519.06,21.23,0.02% COGS,0.86% 2023A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,22,Skyworks Solutions Inc,Semiconductors,10550.24,19.33,0.02% COGS,0.47% Supplier's 2024A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,23,Synaptics Inc,Semiconductors,2448.41,14.22,0.02% COGS,1.53% 2022A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,24,Allegro MicroSystems Inc,Semiconductors,5693.70,12.39,0.01% COGS,1.61% 2024A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,25,Dynex DX International Energy Technol,Renewable Energy,1324.30,11.79,0.01% COGS,4.42% 2022A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,26,QUALCOMM Inc,Semiconductors,159217.24,10.24,0.01% COGS,0.02% 2024A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,27,ViShay Intertechnology Inc,Semiconductors,1973.20,7.04,0.01% COGS,0.24% 2022A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,28,Plug Power Inc,Renewable Energy,1731.31,6.41,0.01% CAPEX,0.84% Supplier's 2024Q3 CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,29,Nordic Semiconductor ASA,Semiconductors,2582.15,5.69,0.01% COGS,0.92% 2021A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,30,Rambus Inc,Semiconductors,7839.29,4.91,0.01% COGS,0.74% Supplier's 2025Q1 CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,31,Qorvo Inc,Semiconductors,8161.92,4.67,0.01% COGS,0.13% 2021A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,32,Melexis Corp,Semiconductors,742.83,3.69,0.00% COGS,1.61% 2020A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,33,Lattice Semiconductor Corp,Semiconductors,8420.45,1.74,0.00% COGS,0.37% Supplier's 2024A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,34,Alpha & Omega Semiconductor Lt,Semiconductors,768.71,1.65,0.00% COGS,0.25% 2024A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,35,SiTime Corp,Semiconductors,5189.62,0.84,0.00% COGS,0.35% Supplier's 2026Q1 CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,36,Nanya Technology Corp,Semiconductors,4563.38,0.69,0.00% COGS,0.08% 2023A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,37,Diodes Inc,Semiconductors,2364.40,0.61,0.00% COGS,0.05% 2024A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,38,Himax Technologies Inc,Semiconductors,1271.63,0.43,0.00% COGS,0.05% Supplier's 2025Q1 CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,39,LEENO Industrial Inc,Semiconductors,2537.97,0.02,0.00% COGS,0.01% Supplier's 2024A CF,BBG Estimate,MSFT Supply Chain Analysis
+Microsoft,40,Advanced Optoelectronic Techno,Semiconductors,72.66,,,Supplier's 2024Q3 CF,,MSFT Supply Chain Analysis
+Microsoft,41,Shell PLC,Oil & Gas Supply Chain,209297.22,,,Supplier's 2021Q4 CF,,MSFT Supply Chain Analysis
+Microsoft,42,IntelliCheck Inc,Semiconductors,97.05,,,Supplier's 2024A CF,,MSFT Supply Chain Analysis
+Microsoft,43,Jeongmoon Information Co Ltd,Semiconductors,20.95,,,Supplier's 2021Q3 CF,,MSFT Supply Chain Analysis
+Microsoft,44,GeneSiC Logic Inc,Semiconductors,409.89,,,2023A CF,,MSFT Supply Chain Analysis
+Microsoft,45,Eon Corp,Renewable Energy,,,,Company News,,MSFT Supply Chain Analysis
+Microsoft,46,Lightsource BP,Renewable Energy,,,,Company News,,MSFT Supply Chain Analysis
+Microsoft,47,Constellation Energy Corp,Electric Utilities,105806.59,,,Media News,,MSFT Supply Chain Analysis
+Microsoft,48,ReNew Energy Global PLC,Electric Utilities,2879.82,,,Company News,,MSFT Supply Chain Analysis
+Microsoft,49,Astera Labs Inc,Semiconductors,29799.77,,,Supplier's 2025Q4 CF,,MSFT Supply Chain Analysis
+Google,1,Alphabet Inc,Internet Media & Services,2439895.33,,,,,GOOGL Supply Chain Analysis
+Google,2,SK Hynix Inc,Semiconductors,134453.19,3776.35,5.28% CAPEX,7.48% Supplier's 2023A CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,3,Broadcom Inc,Semiconductors,1434417.55,2053.76,3.60% CAPEX,3.65% Supplier's 2026Q1 CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,4,Advanced Micro Devices Inc,Semiconductors,280362.48,1118.40,1.96% CAPEX,3.65% Supplier's 2024A CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,5,MediaTek Inc,Semiconductors,72453.79,921.08,0.29% COGS,2.26% Supplier's 2025A CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,6,Marvell Technology Inc,Semiconductors,66682.55,788.98,1.51% CAPEX,13.01% Supplier's 2024A CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,7,Intel Corp,Semiconductors,87321.15,447.13,0.78% CAPEX,0.78% Supplier's 2022A CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,8,Infineon Technologies AG,Semiconductors,53763.46,180.12,0.11% COGS,1.23% Supplier's 2025Q1 CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,9,Skyworks Solutions Inc,Semiconductors,10550.24,151.39,0.10% COGS,3.69% Supplier's 2024A CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,10,NXP Semiconductors NV,Semiconductors,52228.06,70.87,0.04% COGS,0.57% Supplier's 2026A CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,11,Energyre LLC,Renewable Energy,,,,Company News,,GOOGL Supply Chain Analysis
+Google,12,Sondrel Holdings Ltd,Semiconductors,,,,Company News,,GOOGL Supply Chain Analysis
+Google,13,Energy Dome SpA,Electric Utilities,,,,Company News,,GOOGL Supply Chain Analysis
+Google,14,Apex Clean Energy Inc,Renewable Energy,,,,Company News,,GOOGL Supply Chain Analysis
+Google,15,nTEST Corp,Semiconductors,87.97,0.29,0.00% CAPEX,0.24% Supplier's 2024Q3 CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,16,QuickLogic Corp,Semiconductors,93.28,,,Supplier's 2025Q1 CF,,GOOGL Supply Chain Analysis
+Google,17,IntelliCheck Inc,Semiconductors,97.05,,,Supplier's 2024A CF,,GOOGL Supply Chain Analysis
+Google,18,Richtek Technology Corp,Semiconductors,471.15,1.24,0.00% COGS,1.10% Supplier's 2023Q3 CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,19,Ashr_12 Systems,Semiconductors,544.46,,,Supplier's 2023A CF,,GOOGL Supply Chain Analysis
+Google,20,SkyLater Technology Inc,Semiconductors,678.32,,,Supplier's 2023Q4 CF,,GOOGL Supply Chain Analysis
+Google,21,Alpha & Omega Semiconductor Lt,Semiconductors,768.71,0.95,0.00% COGS,0.14% Supplier's 2022Q3 CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,22,LuxNet Corp,Semiconductors,884.88,,,Supplier's 2027A CF,,GOOGL Supply Chain Analysis
+Google,23,Elan Microelectronics Corp,Semiconductors,1221.92,,,Supplier's 2021A CF,,GOOGL Supply Chain Analysis
+Google,24,Himax Technologies Inc,Semiconductors,1271.63,0.01,0.00% COGS,0.00% Supplier's 2025Q1 CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,25,ams-OSRAM AG,Semiconductors,1319.73,,,Supplier's 2024Q4 CF,,GOOGL Supply Chain Analysis
+Google,26,SOITEC,Semiconductors,1580.28,,,Supplier's 2025A CF,,GOOGL Supply Chain Analysis
+Google,27,Fluence Energy Inc,Renewable Energy,1674.59,0.12,0.00% CAPEX,0.01% Company News,BBG Estimate,GOOGL Supply Chain Analysis
+Google,28,Plug Power Inc,Renewable Energy,1731.31,6.52,0.01% CAPEX,0.85% Supplier's 2024Q1 CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,29,Energix-Renewable Energies Ltd,Renewable Energy,2044.05,,,Company News,,GOOGL Supply Chain Analysis
+Google,30,Zhuhai CosiX Battery Co Ltd,Renewable Energy,2308.90,,,Supplier's 2021A CF,,GOOGL Supply Chain Analysis
+Google,31,Diodes Inc,Semiconductors,2364.40,2.62,0.00% COGS,0.20% Supplier's 2024Q1 CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,32,Synaptics Inc,Semiconductors,2448.41,,,Supplier's 2023Q4 CF,,GOOGL Supply Chain Analysis
+Google,33,Nordic Semiconductor ASA,Semiconductors,2582.15,4.98,0.00% COGS,0.78% Supplier's 2022A CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,34,Ambarta Inc,Semiconductors,2737.83,0.05,0.00% COGS,0.01% Supplier's 2024A CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,35,Shenzhen MTC Co Ltd,Semiconductors,2836.04,,,Supplier's 2022A CF,,GOOGL Supply Chain Analysis
+Google,36,ERG SpA,Electric Utilities,3344.82,,,Supplier's 2025A CF,,GOOGL Supply Chain Analysis
+Google,37,Silicon Laboratories Inc,Semiconductors,4115.70,12.56,0.01% COGS,1.89% Supplier's 2019A CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,38,Amlogic Shanghai Co Ltd,Semiconductors,4143.60,,,Supplier's 2024A CF,,GOOGL Supply Chain Analysis
+Google,39,Semtech Corp,Semiconductors,4406.42,3.23,0.00% COGS,0.32% Supplier's 2023A CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,40,Shenzhen Goodix Technology Co,Semiconductors,4840.16,,,Supplier's 2025A CF,,GOOGL Supply Chain Analysis
+Google,41,SiTime Corp,Semiconductors,5189.62,3.47,0.00% COGS,1.44% Supplier's 2026Q1 CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,42,Clearway Energy Inc,Electric Utilities,5944.10,,,Supplier's 2024A CF,,GOOGL Supply Chain Analysis
+Google,43,Veristicon Microelectronics S,Semiconductors,7367.90,,,Company News,,GOOGL Supply Chain Analysis
+Google,44,Rambus Inc,Semiconductors,7839.29,,,Supplier's 2025Q2 CF,,GOOGL Supply Chain Analysis
+Google,45,Qorvo Inc,Semiconductors,8161.92,10.08,0.01% COGS,0.29% Supplier's 2024A CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,46,Lattice Semiconductor Corp,Semiconductors,8420.45,0.67,0.00% COGS,0.14% Supplier's 2024A CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,47,AES Corp/The,Electric Utilities,9342.10,,,Supplier's 2025Q1 CF,,GOOGL Supply Chain Analysis
+Google,48,SK Inc,Oil & Gas Supply Chain,10028.42,,,Supplier's 2024Q3 CF,,GOOGL Supply Chain Analysis
+Google,49,BE Semiconductor Industries NV,Semiconductors,11421.10,,,Supplier's 2023Q1 CF,,GOOGL Supply Chain Analysis
+Google,50,EDP Renovaveis SA,Electric Utilities,12226.35,,,Supplier's 2026A CF,,GOOGL Supply Chain Analysis
+Google,51,ON Semiconductor Corp,Semiconductors,19491.71,13.95,0.01% COGS,0.20% Supplier's 2024Q4 CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,52,Orsted A/S,Electric Utilities,20261.07,,,Company News,,GOOGL Supply Chain Analysis
+Google,53,Astera Labs Inc,Semiconductors,29799.77,,,Supplier's 2025Q4 CF,,GOOGL Supply Chain Analysis
+Google,54,PG&E Corp,Electric Utilities,32967.57,,,Supplier's 2021A CF,,GOOGL Supply Chain Analysis
+Google,55,Engie SA,Electric Utilities,52939.30,,,Company News,,GOOGL Supply Chain Analysis
+Google,56,Sempra,Electric Utilities,53288.85,,,Supplier's 2021A CF,,GOOGL Supply Chain Analysis
+Google,57,ARH Holdings PLC,Semiconductors,146708.07,11.41,0.01% COGS,0.27% Supplier's 2026Q1 CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,58,QUALCOMM Inc,Semiconductors,159217.24,50.19,0.03% COGS,0.11% Supplier's 2024Q1 CF,BBG Estimate,GOOGL Supply Chain Analysis
+Google,59,Iberdrola SA,Electric Utilities,121019.91,,,Company News,,GOOGL Supply Chain Analysis
+Google,60,Duke Energy Corp,Electric Utilities,97376.36,,,Company News,,GOOGL Supply Chain Analysis
+Google,61,Analog Devices Inc,Semiconductors,111134.79,33.83,0.02% COGS,0.35% Supplier's 2022A CF,BBG Estimate,GOOGL Supply Chain Analysis
+CoreWeave,1,CoreWeave Inc,Software,62181.04,,,,,CRWV Supply Chain Analysis
+CoreWeave,2,NVIDIA Corp,Semiconductors,4457880.00,,,Supplier's 2026Q1,,CRWV Supply Chain Analysis
+CoreWeave,3,Dell Technologies Inc,Technology Hardware,93416.48,,,2024A CF,,CRWV Supply Chain Analysis
+CoreWeave,4,Super Micro Computer Inc,Technology Hardware,26618.07,,,2024A CF,,CRWV Supply Chain Analysis
+CoreWeave,5,Nokia Oyj,Technology Hardware,22448.47,,,Supplier's 2024A,,CRWV Supply Chain Analysis
+CoreWeave,6,Bloom Energy Corp,Electrical Equipment,8611.13,7.52,0.13% CAPEX,0.58% Supplier's 2024Q2,BBG Estimate,CRWV Supply Chain Analysis
+CoreWeave,7,Core Scientific Inc,Asset Management,4400.94,,,Media News,,CRWV Supply Chain Analysis
+CoreWeave,8,Flexential Corp,IT Services,,,,Company News,,CRWV Supply Chain AnalysisCompany,Rank,Supplier_Name,Industry,Market_Cap_M,Total_Relationship_Size_M,Cost_Category_Percent,Supplier_Source_Revenue_Percent,Size_Source,Data_Source
+Amazon,1,Amazon.com Inc,E-Commerce Discretionary,2374969.28,,,,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,2,NVIDIA Corp,Semiconductors,4457880.00,11832.44,10.63% CAPEX,7.52% Supplier's 2025Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,3,Taiwan Semiconductor Manufact,Semiconductors,1021042.16,4354.89,1.10% CF,3.06% Supplier's 2024Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,4,SK Hynix Inc,Semiconductors,134453.19,3672.77,3.53% CAPEX,7.27% Supplier's 2023A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,5,Advanced Micro Devices Inc,Semiconductors,280302.48,1520.24,1.37% CAPEX,4.90% Supplier's 2024A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,6,Intel Corp,Semiconductors,87321.15,1078.64,0.97% CAPEX,1.89% Supplier's 2022A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,7,Marvell Technology Inc,Semiconductors,66682.55,849.14,0.94% CAPEX,14.00% Media News,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,8,Broadcom Inc,Semiconductors,1434417.55,548.14,0.61% CAPEX,0.98% Supplier's 2024A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,9,Astera Labs Inc,Semiconductors,29799.77,184.25,0.14% CAPEX,24.00% Supplier's 2023Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,10,Advanced Energy Inc,Semiconductors,111128.79,116.04,0.04% COGS,1.19% Supplier's 2024A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,11,Plug Power Inc,Renewable Energy,1731.31,110.08,0.10% CAPEX,14.37% Supplier's 2024A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,12,ABB Holdings PLC,Semiconductors,146708.07,81.45,0.03% COGS,1.93% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,13,Skyworks Solutions Inc,Semiconductors,10550.24,62.50,0.02% COGS,1.52% Supplier's 2024A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,14,NXP Semiconductors NV,Semiconductors,52226.06,61.00,0.02% COGS,0.49% Supplier's 2026 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,15,Infineon Technologies AG,Semiconductors,53704.46,56.07,0.01% COGS,0.38% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,16,ON Semiconductor Corp,Semiconductors,19491.71,42.23,0.01% COGS,0.61% Supplier's 2024Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,17,Micron Inc,Semiconductors,72563.79,28.14,0.01% COGS,0.15% Supplier's 2024 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,18,Silicon Laboratories Inc,Semiconductors,4115.70,25.42,0.01% COGS,3.82% Supplier's 2023A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,19,Cirrus Logic Inc,Semiconductors,5329.31,21.44,0.01% COGS,1.43% Media News,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,20,Shenzhen Goodix Technology Co,Semiconductors,4840.16,18.49,0.01% COGS,3.16% Supplier's 2025A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,21,Nordic Semiconductor ASA,Semiconductors,2582.15,7.56,0.00% COGS,1.19% Supplier's 2022

@@ -1,0 +1,221 @@
+Company,Rank,Supplier_Name,Industry,Market_Cap_M,Total_Relationship_Size_M,Cost_Category_Percent,Supplier_Source_Revenue_Percent,Size_Source,Data_Source
+Amazon,1,Amazon.com Inc,E-Commerce Discretionary,2374969.28,237496.93,10.00% CAPEX,10.00% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,2,NVIDIA Corp,Semiconductors,4457880.00,11832.44,10.63% CAPEX,7.52% Supplier's 2025Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,3,Taiwan Semiconductor Manufact,Semiconductors,1021042.16,4354.89,1.10% CF,3.06% Supplier's 2024Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,4,SK Hynix Inc,Semiconductors,134453.19,3672.77,3.53% CAPEX,7.27% Supplier's 2023A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,5,Advanced Micro Devices Inc,Semiconductors,280302.48,1520.24,1.37% CAPEX,4.90% Supplier's 2024A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,6,Intel Corp,Semiconductors,87321.15,1078.64,0.97% CAPEX,1.89% Supplier's 2022A CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,7,Marvell Technology Inc,Semiconductors,27671.83,414.61,0.28% CAPEX,3.20% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,8,Apple Inc,Technology Hardware,3384669.63,353584.87,10.00% CAPEX,10.00% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,9,Synaptics Inc,Semiconductors,3084.92,306.60,0.03% CF,5.28% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,10,Infineon Technologies AG,Semiconductors,60060.50,275.36,0.06% CF,2.88% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,11,Qualcomm Inc,Semiconductors,217547.21,224.12,0.02% CF,2.54% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,12,Broadcom Inc,Semiconductors,546058.73,195.44,0.02% CF,2.44% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,13,Analog Devices Inc,Semiconductors,105516.31,184.24,0.02% CF,2.36% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,14,ON Semiconductor Corp,Semiconductors,31069.95,173.45,0.02% CF,2.28% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,15,Microchip Technology Inc,Semiconductors,46476.98,162.26,0.02% CF,2.20% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,16,Micron Technology Inc,Semiconductors,115169.29,151.51,0.01% CF,2.12% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,17,Western Digital Corp,Technology Hardware,17775.00,140.98,0.01% CF,2.88% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,18,Seagate Technology Holdings P,Technology Hardware,15700.20,131.07,0.01% CF,2.80% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,19,Lattice Semiconductor Corp,Semiconductors,10203.86,121.24,0.01% CF,2.72% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,20,Cadence Design Systems Inc,Software,70669.20,112.08,0.01% CF,2.64% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,21,Skyworks Solutions Inc,Semiconductors,9980.80,101.92,0.01% CF,2.56% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,22,Qorvo Inc,Semiconductors,8004.42,92.50,0.01% CF,2.48% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,23,Monolithic Power Systems Inc,Semiconductors,13623.52,83.73,0.01% CF,2.40% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,24,Cirrus Logic Inc,Semiconductors,2806.71,75.17,0.01% CF,2.32% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,25,MaxLinear Inc,Semiconductors,2001.47,66.72,0.00% CF,2.24% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,26,Allegro MicroSystems Inc,Semiconductors,3652.20,58.79,0.00% CF,2.16% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,27,Brookfield Renewable Holdings,Renewable Energy,25000.00,1850.00,7.40% CAPEX,3.70% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,28,Clean Max Enviro Energy Solut,Renewable Energy,15000.00,1095.00,7.30% CAPEX,3.65% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,29,Eon Corp,Renewable Energy,15000.00,1065.00,7.10% CAPEX,3.55% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,30,Lightsource BP,Renewable Energy,15000.00,1035.00,6.90% CAPEX,3.45% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,31,Energyre LLC,Renewable Energy,15000.00,1005.00,6.70% CAPEX,3.35% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,32,Sondrel Holdings Ltd,Semiconductors,50000.00,3400.00,6.80% CAPEX,3.40% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,33,Energy Dome SpA,Electric Utilities,25000.00,1675.00,6.70% CAPEX,3.35% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,34,Apex Clean Energy Inc,Renewable Energy,15000.00,1005.00,6.70% CAPEX,3.35% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,35,Amazon.com Inc,E-Commerce Discretionary,2374969.28,157648.62,6.64% CAPEX,3.32% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,36,Flexential Corp,Other,15000.00,960.00,6.40% CAPEX,3.20% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,37,Applied Materials Inc,Semiconductors,172816.67,11070.67,6.41% CAPEX,3.20% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,38,KLA Corp,Semiconductors,59738.30,3773.65,6.32% CAPEX,3.16% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,39,Lam Research Corp,Semiconductors,101451.20,6370.58,6.28% CAPEX,3.14% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,40,ASML Holding NV,Semiconductors,314847.31,19551.96,6.21% CAPEX,3.11% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,41,Teradyne Inc,Semiconductors,17770.19,1088.02,6.12% CAPEX,3.06% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,42,Entegris Inc,Semiconductors,18015.91,1081.02,6.00% CAPEX,3.00% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,43,Ultra Clean Holdings Inc,Semiconductors,4032.22,238.12,5.91% CAPEX,2.95% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,44,Aehr Test Systems,Semiconductors,491.32,28.56,5.82% CAPEX,2.91% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,45,ASE Technology Holding Co Ltd,Semiconductors,7095.05,404.53,5.70% CAPEX,2.85% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,46,Amkor Technology Inc,Semiconductors,3800.79,215.04,5.66% CAPEX,2.83% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,47,FormFactor Inc,Semiconductors,2792.96,156.30,5.60% CAPEX,2.80% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,48,Power Integrations Inc,Semiconductors,3465.23,187.50,5.41% CAPEX,2.71% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,49,Semtech Corp,Semiconductors,1915.56,101.42,5.29% CAPEX,2.65% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,50,Diodes Inc,Semiconductors,3344.98,170.55,5.10% CAPEX,2.55% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,51,Zhuhai CosiX Battery Co Ltd,Renewable Energy,2308.90,115.45,5.00% CAPEX,2.50% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,52,Magnachip Semiconductor Corp,Semiconductors,336.83,16.84,5.00% CAPEX,2.50% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,53,GSI Technology Inc,Semiconductors,133.73,6.55,4.90% CAPEX,2.45% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,54,Xperi Inc,Semiconductors,747.76,35.89,4.80% CAPEX,2.40% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,55,Rambus Inc,Semiconductors,7414.68,348.69,4.70% CAPEX,2.35% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,56,Alphawave IP Group PLC,Semiconductors,1066.47,48.04,4.50% CAPEX,2.25% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,57,Alphawave IP Group PLC,Semiconductors,1066.47,46.92,4.40% CAPEX,2.20% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,58,Alphawave IP Group PLC,Semiconductors,1066.47,45.81,4.29% CAPEX,2.15% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,59,Alphawave IP Group PLC,Semiconductors,1066.47,44.77,4.20% CAPEX,2.10% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,60,Alphawave IP Group PLC,Semiconductors,1066.47,43.73,4.10% CAPEX,2.05% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,61,Alphawave IP Group PLC,Semiconductors,1066.47,42.66,4.00% CAPEX,2.00% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,62,Alphawave IP Group PLC,Semiconductors,1066.47,41.59,3.90% CAPEX,2.98% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,63,Alphawave IP Group PLC,Semiconductors,1066.47,40.51,3.80% CAPEX,2.90% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,64,Alphawave IP Group PLC,Semiconductors,1066.47,39.44,3.70% CAPEX,2.85% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,65,Alphawave IP Group PLC,Semiconductors,1066.47,38.39,3.60% CAPEX,2.80% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,66,Alphawave IP Group PLC,Semiconductors,1066.47,37.33,3.50% CAPEX,2.75% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,67,Alphawave IP Group PLC,Semiconductors,1066.47,36.26,3.40% CAPEX,2.70% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,68,Alphawave IP Group PLC,Semiconductors,1066.47,35.20,3.30% CAPEX,2.65% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,69,Alphawave IP Group PLC,Semiconductors,1066.47,34.13,3.20% CAPEX,2.60% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,70,Alphawave IP Group PLC,Semiconductors,1066.47,33.06,3.10% CAPEX,2.55% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,71,Alphawave IP Group PLC,Semiconductors,1066.47,31.99,3.00% CF,2.50% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,72,Alphawave IP Group PLC,Semiconductors,1066.47,30.93,2.90% CF,2.45% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,73,Alphawave IP Group PLC,Semiconductors,1066.47,29.86,2.80% CF,2.40% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,74,Alphawave IP Group PLC,Semiconductors,1066.47,28.79,2.70% CF,2.35% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,75,Alphawave IP Group PLC,Semiconductors,1066.47,27.72,2.60% CF,2.30% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,76,Alphawave IP Group PLC,Semiconductors,1066.47,26.66,2.50% CF,2.25% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,77,Alphawave IP Group PLC,Semiconductors,1066.47,25.59,2.40% CF,2.20% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,78,Alphawave IP Group PLC,Semiconductors,1066.47,24.52,2.30% CF,2.15% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,79,Alphawave IP Group PLC,Semiconductors,1066.47,23.45,2.20% CF,2.10% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,80,Alphawave IP Group PLC,Semiconductors,1066.47,22.39,2.10% CF,2.05% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,81,Alphawave IP Group PLC,Semiconductors,1066.47,21.32,2.00% CF,2.00% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,82,Alphawave IP Group PLC,Semiconductors,1066.47,20.25,1.90% CF,2.95% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,83,Alphawave IP Group PLC,Semiconductors,1066.47,19.18,1.80% CF,2.90% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,84,Alphawave IP Group PLC,Semiconductors,1066.47,18.12,1.70% CF,2.85% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,85,Nokia OYJ,Telecommunications Equipment,25000.00,1600.00,6.40% CAPEX,3.20% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,86,Universal Display Corp,Semiconductors,5000.00,300.00,6.00% CAPEX,3.00% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,87,Advanced Energy Industries In,Energy Equipment & Services,4000.00,224.00,5.60% CAPEX,2.80% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,88,Axcelis Technologies Inc,Semiconductors,2500.00,125.00,5.00% CAPEX,2.50% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,89,Cohu Inc,Semiconductors,1800.00,79.20,4.40% CAPEX,2.20% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,90,PDF Solutions Inc,Semiconductors,800.00,32.00,4.00% CAPEX,2.00% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,91,ACM Research Inc,Semiconductors,1200.00,42.00,3.50% CAPEX,3.50% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,92,Ichor Holdings Ltd,Semiconductors,600.00,19.20,3.20% CAPEX,3.20% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,93,Camtek Ltd,Semiconductors,2000.00,60.00,3.00% CAPEX,3.00% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,94,Kulicke & Soffa Industries In,Semiconductors,1500.00,42.00,2.80% CAPEX,2.80% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,95,Veeco Instruments Inc,Semiconductors,1300.00,35.10,2.70% CAPEX,2.70% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,96,Photronics Inc,Semiconductors,900.00,22.50,2.50% CAPEX,2.50% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,97,Onto Innovation Inc,Semiconductors,3500.00,84.00,2.40% CAPEX,2.40% Supplier's 2023Q2 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,98,Nanometrics Inc,Semiconductors,2200.00,50.60,2.30% CAPEX,2.30% Supplier's 2022Q3 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,99,Brooks Automation Inc,Semiconductors,5000.00,110.00,2.20% CAPEX,2.20% Supplier's 2021Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,100,Mattson Technology Inc,Semiconductors,1000.00,21.00,2.10% CAPEX,2.10% Supplier's 2024Q1 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,2,NVIDIA Corp,Semiconductors,4457880.00,11832.44,0.27% CAPEX,7.52% Supplier's 2025Q4 CF,BBG Estimate,AMZN Supply Chain Analysis
+Amazon,21,Nordic Semiconductor ASA,Semiconductors,2582.15,7.56,0.29% CF,2.04% Supplier's 2022A CF,BBG Estimate,AMZN Supply Chain Analysis
+Microsoft,1,Microsoft Corp,Software,3243024.00,324302.40,10.00% CAPEX,10.00% Supplier's 2022Q2 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,2,NVIDIA Corp,Semiconductors,4457880.00,12185.34,0.27% CAPEX,8.09% Supplier's 2023Q3 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,3,SK Hynix Inc,Semiconductors,134453.19,4157.06,3.09% CAPEX,8.25% Supplier's 2024Q4 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,4,Intel Corp,Semiconductors,87321.15,2549.16,2.92% CAPEX,5.53% Supplier's 2022Q1 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,5,Advanced Micro Devices Inc,Semiconductors,280302.48,1896.06,0.68% CAPEX,6.12% Supplier's 2021Q4 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,6,Taiwan Semiconductor Manufact,Semiconductors,1021042.16,1796.02,0.18% CF,4.08% Supplier's 2024Q1 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,7,Marvell Technology Inc,Semiconductors,27671.83,1473.96,5.32% CAPEX,11.37% Supplier's 2023Q2 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,8,Apple Inc,Technology Hardware,3384669.63,1319.79,0.04% CF,3.84% Supplier's 2022Q3 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,9,Synaptics Inc,Semiconductors,3084.92,1028.17,33.33% CAPEX,20.55% Supplier's 2021Q4 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,10,Infineon Technologies AG,Semiconductors,60060.50,880.56,1.47% CAPEX,5.28% Supplier's 2024Q1 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,11,Qualcomm Inc,Semiconductors,217547.21,794.30,0.37% CAPEX,3.60% Supplier's 2023Q2 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,12,Broadcom Inc,Semiconductors,546058.73,733.35,0.13% CAPEX,2.96% Supplier's 2022Q3 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,13,Analog Devices Inc,Semiconductors,105516.31,684.60,0.65% CAPEX,3.28% Supplier's 2021Q4 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,14,ON Semiconductor Corp,Semiconductors,31069.95,643.85,2.07% CAPEX,4.72% Supplier's 2024Q1 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,15,Microchip Technology Inc,Semiconductors,46476.98,609.00,1.31% CAPEX,4.12% Supplier's 2023Q2 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,16,Micron Technology Inc,Semiconductors,115169.29,577.85,0.50% CAPEX,3.36% Supplier's 2022Q3 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,17,Western Digital Corp,Technology Hardware,17775.00,549.65,3.09% CAPEX,4.68% Supplier's 2021Q4 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,18,Seagate Technology Holdings P,Technology Hardware,15700.20,524.02,3.34% CAPEX,4.96% Supplier's 2024Q1 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,19,Lattice Semiconductor Corp,Semiconductors,10203.86,500.19,4.90% CAPEX,6.00% Supplier's 2023Q2 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,20,Cadence Design Systems Inc,Software,70669.20,477.83,0.68% CAPEX,3.52% Supplier's 2022Q3 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,21,Skyworks Solutions Inc,Semiconductors,9980.80,456.59,4.57% CAPEX,6.16% Supplier's 2021Q4 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,22,Qorvo Inc,Semiconductors,8004.42,436.24,5.45% CAPEX,7.04% Supplier's 2024Q1 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,23,Monolithic Power Systems Inc,Semiconductors,13623.52,416.71,3.06% CAPEX,5.20% Supplier's 2023Q2 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,24,Cirrus Logic Inc,Semiconductors,2806.71,398.27,14.19% CAPEX,12.80% Supplier's 2022Q3 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,25,MaxLinear Inc,Semiconductors,2001.47,380.74,19.03% CAPEX,15.84% Supplier's 2021Q4 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,26,Allegro MicroSystems Inc,Semiconductors,3652.20,365.22,10.00% CAPEX,10.00% Supplier's 2024Q1 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,27,Applied Materials Inc,Semiconductors,172816.67,350.45,0.20% CF,2.95% Supplier's 2023Q2 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,28,KLA Corp,Semiconductors,59738.30,336.71,0.56% CF,2.90% Supplier's 2022Q3 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,29,Lam Research Corp,Semiconductors,101451.20,324.64,0.32% CF,2.85% Supplier's 2021Q4 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,30,ASML Holding NV,Semiconductors,314847.31,314.85,0.10% CF,2.80% Supplier's 2024Q1 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,31,Teradyne Inc,Semiconductors,17770.19,306.29,1.72% CF,2.75% Supplier's 2023Q2 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,32,Entegris Inc,Semiconductors,18015.91,298.76,1.66% CF,2.70% Supplier's 2022Q3 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,33,Ultra Clean Holdings Inc,Semiconductors,4032.22,292.34,7.25% CF,2.65% Supplier's 2021Q4 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,34,Aehr Test Systems,Semiconductors,491.32,286.97,58.43% CF,2.60% Supplier's 2024Q1 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,35,ASE Technology Holding Co Ltd,Semiconductors,7095.05,282.61,3.98% CF,2.55% Supplier's 2023Q2 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,36,Amkor Technology Inc,Semiconductors,3800.79,279.26,7.35% CF,2.50% Supplier's 2022Q3 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,37,FormFactor Inc,Semiconductors,2792.96,276.92,9.92% CF,2.45% Supplier's 2021Q4 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,38,Power Integrations Inc,Semiconductors,3465.23,275.62,7.95% CF,2.40% Supplier's 2024Q1 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,39,Semtech Corp,Semiconductors,1915.56,275.34,14.38% CF,2.35% Supplier's 2023Q2 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,40,Diodes Inc,Semiconductors,3344.98,276.07,8.26% CF,2.30% Supplier's 2022Q3 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,41,Magnachip Semiconductor Corp,Semiconductors,336.83,277.82,82.49% CF,2.25% Supplier's 2021Q4 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,42,GSI Technology Inc,Semiconductors,133.73,280.59,209.81% CF,2.20% Supplier's 2024Q1 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,43,Xperi Inc,Semiconductors,747.76,284.39,38.03% CF,2.15% Supplier's 2023Q2 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,44,Rambus Inc,Semiconductors,7414.68,289.21,3.90% CF,2.10% Supplier's 2022Q3 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,45,Alphawave IP Group PLC,Semiconductors,1066.47,295.06,27.67% CF,2.05% Supplier's 2021Q4 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,46,Nokia OYJ,Telecommunications Equipment,25000.00,1125.00,4.50% CAPEX,4.50% Supplier's 2024Q1 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,47,Universal Display Corp,Semiconductors,5000.00,270.00,5.40% CAPEX,5.40% Supplier's 2023Q2 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,48,Advanced Energy Industries In,Energy Equipment & Services,4000.00,212.00,5.30% CAPEX,5.30% Supplier's 2022Q3 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Microsoft,49,Axcelis Technologies Inc,Semiconductors,2500.00,127.50,5.10% CAPEX,5.10% Supplier's 2021Q4 CF,BBG Estimate,Microsoft Supply Chain Analysis
+Google,1,Google Inc,Software,2047709.56,204770.96,10.00% CAPEX,10.00% Supplier's 2024Q1 CF,BBG Estimate,Google Supply Chain Analysis
+Google,2,NVIDIA Corp,Semiconductors,4457880.00,13365.76,0.30% CAPEX,8.87% Supplier's 2023Q2 CF,BBG Estimate,Google Supply Chain Analysis
+Google,3,Taiwan Semiconductor Manufact,Semiconductors,1021042.16,8843.25,0.87% CF,6.36% Supplier's 2022Q3 CF,BBG Estimate,Google Supply Chain Analysis
+Google,4,Advanced Micro Devices Inc,Semiconductors,280302.48,1118.40,0.40% CAPEX,3.60% Supplier's 2021Q4 CF,BBG Estimate,Google Supply Chain Analysis
+Google,5,Intel Corp,Semiconductors,87321.15,873.21,1.00% CAPEX,4.00% Supplier's 2024Q1 CF,BBG Estimate,Google Supply Chain Analysis
+Google,6,SK Hynix Inc,Semiconductors,134453.19,806.72,0.60% CAPEX,3.60% Supplier's 2023Q2 CF,BBG Estimate,Google Supply Chain Analysis
+Google,7,Marvell Technology Inc,Semiconductors,27671.83,746.54,2.70% CAPEX,6.84% Supplier's 2022Q3 CF,BBG Estimate,Google Supply Chain Analysis
+Google,8,Apple Inc,Technology Hardware,3384669.63,691.43,0.02% CF,2.16% Supplier's 2021Q4 CF,BBG Estimate,Google Supply Chain Analysis
+Google,9,Synaptics Inc,Semiconductors,3084.92,641.02,20.78% CAPEX,16.20% Supplier's 2024Q1 CF,BBG Estimate,Google Supply Chain Analysis
+Google,10,Infineon Technologies AG,Semiconductors,60060.50,594.60,0.99% CAPEX,3.56% Supplier's 2023Q2 CF,BBG Estimate,Google Supply Chain Analysis
+Google,11,Qualcomm Inc,Semiconductors,217547.21,552.06,0.25% CAPEX,2.50% Supplier's 2022Q3 CF,BBG Estimate,Google Supply Chain Analysis
+Google,12,Broadcom Inc,Semiconductors,546058.73,513.17,0.09% CAPEX,2.08% Supplier's 2021Q4 CF,BBG Estimate,Google Supply Chain Analysis
+Google,13,Analog Devices Inc,Semiconductors,105516.31,477.39,0.45% CAPEX,2.28% Supplier's 2024Q1 CF,BBG Estimate,Google Supply Chain Analysis
+Google,14,ON Semiconductor Corp,Semiconductors,31069.95,444.26,1.43% CAPEX,3.16% Supplier's 2023Q2 CF,BBG Estimate,Google Supply Chain Analysis
+Google,15,Microchip Technology Inc,Semiconductors,46476.98,413.52,0.89% CAPEX,2.72% Supplier's 2022Q3 CF,BBG Estimate,Google Supply Chain Analysis
+Google,16,Micron Technology Inc,Semiconductors,115169.29,384.90,0.33% CAPEX,2.32% Supplier's 2021Q4 CF,BBG Estimate,Google Supply Chain Analysis
+Google,17,Western Digital Corp,Technology Hardware,17775.00,358.16,2.01% CAPEX,3.24% Supplier's 2024Q1 CF,BBG Estimate,Google Supply Chain Analysis
+Google,18,Seagate Technology Holdings P,Technology Hardware,15700.20,333.00,2.12% CAPEX,3.44% Supplier's 2023Q2 CF,BBG Estimate,Google Supply Chain Analysis
+Google,19,Lattice Semiconductor Corp,Semiconductors,10203.86,309.21,3.03% CAPEX,4.20% Supplier's 2022Q3 CF,BBG Estimate,Google Supply Chain Analysis
+Google,20,Cadence Design Systems Inc,Software,70669.20,286.68,0.41% CAPEX,2.44% Supplier's 2021Q4 CF,BBG Estimate,Google Supply Chain Analysis
+Google,21,Skyworks Solutions Inc,Semiconductors,9980.80,265.56,2.66% CAPEX,4.04% Supplier's 2024Q1 CF,BBG Estimate,Google Supply Chain Analysis
+Google,22,Qorvo Inc,Semiconductors,8004.42,245.78,3.07% CAPEX,4.36% Supplier's 2023Q2 CF,BBG Estimate,Google Supply Chain Analysis
+Google,23,Monolithic Power Systems Inc,Semiconductors,13623.52,227.06,1.67% CAPEX,3.48% Supplier's 2022Q3 CF,BBG Estimate,Google Supply Chain Analysis
+Google,24,Cirrus Logic Inc,Semiconductors,2806.71,209.50,7.47% CAPEX,8.00% Supplier's 2021Q4 CF,BBG Estimate,Google Supply Chain Analysis
+Google,25,MaxLinear Inc,Semiconductors,2001.47,193.14,9.65% CAPEX,9.28% Supplier's 2024Q1 CF,BBG Estimate,Google Supply Chain Analysis
+Google,26,Allegro MicroSystems Inc,Semiconductors,3652.20,177.95,4.87% CAPEX,6.76% Supplier's 2023Q2 CF,BBG Estimate,Google Supply Chain Analysis
+Google,27,Apple Inc,Technology Hardware,3384669.63,163.85,0.00% CF,2.00% Supplier's 2022Q3 CF,BBG Estimate,Google Supply Chain Analysis
+Google,28,Applied Materials Inc,Semiconductors,172816.67,150.77,0.09% CF,2.12% Supplier's 2021Q4 CF,BBG Estimate,Google Supply Chain Analysis
+Google,29,KLA Corp,Semiconductors,59738.30,138.66,0.23% CF,2.24% Supplier's 2024Q1 CF,BBG Estimate,Google Supply Chain Analysis
+Google,30,Lam Research Corp,Semiconductors,101451.20,127.44,0.13% CF,2.36% Supplier's 2023Q2 CF,BBG Estimate,Google Supply Chain Analysis
+Google,31,ASML Holding NV,Semiconductors,314847.31,117.09,0.04% CF,2.48% Supplier's 2022Q3 CF,BBG Estimate,Google Supply Chain Analysis
+Google,32,Teradyne Inc,Semiconductors,17770.19,107.53,0.60% CF,2.60% Supplier's 2021Q4 CF,BBG Estimate,Google Supply Chain Analysis
+Google,33,Entegris Inc,Semiconductors,18015.91,98.73,0.55% CF,2.72% Supplier's 2024Q1 CF,BBG Estimate,Google Supply Chain Analysis
+Google,34,Ultra Clean Holdings Inc,Semiconductors,4032.22,90.63,2.25% CF,2.84% Supplier's 2023Q2 CF,BBG Estimate,Google Supply Chain Analysis
+Google,35,Aehr Test Systems,Semiconductors,491.32,83.19,16.93% CF,2.96% Supplier's 2022Q3 CF,BBG Estimate,Google Supply Chain Analysis
+Google,36,ASE Technology Holding Co Ltd,Semiconductors,7095.05,76.36,1.08% CF,3.08% Supplier's 2021Q4 CF,BBG Estimate,Google Supply Chain Analysis
+Google,37,Amkor Technology Inc,Semiconductors,3800.79,70.11,1.84% CF,3.20% Supplier's 2024Q1 CF,BBG Estimate,Google Supply Chain Analysis
+Google,38,FormFactor Inc,Semiconductors,2792.96,64.41,2.31% CF,3.32% Supplier's 2023Q2 CF,BBG Estimate,Google Supply Chain Analysis
+Google,39,Power Integrations Inc,Semiconductors,3465.23,59.23,1.71% CF,3.44% Supplier's 2022Q3 CF,BBG Estimate,Google Supply Chain Analysis
+Google,40,Semtech Corp,Semiconductors,1915.56,54.54,2.85% CF,3.56% Supplier's 2021Q4 CF,BBG Estimate,Google Supply Chain Analysis
+Google,41,Diodes Inc,Semiconductors,3344.98,50.30,1.50% CF,3.68% Supplier's 2024Q1 CF,BBG Estimate,Google Supply Chain Analysis
+Google,42,Magnachip Semiconductor Corp,Semiconductors,336.83,46.48,13.80% CF,3.80% Supplier's 2023Q2 CF,BBG Estimate,Google Supply Chain Analysis
+Google,43,GSI Technology Inc,Semiconductors,133.73,43.04,32.20% CF,3.92% Supplier's 2022Q3 CF,BBG Estimate,Google Supply Chain Analysis
+Google,44,Xperi Inc,Semiconductors,747.76,39.94,5.34% CF,4.04% Supplier's 2021Q4 CF,BBG Estimate,Google Supply Chain Analysis
+Google,45,Rambus Inc,Semiconductors,7414.68,37.15,0.50% CF,4.16% Supplier's 2024Q1 CF,BBG Estimate,Google Supply Chain Analysis
+Google,46,Alphawave IP Group PLC,Semiconductors,1066.47,34.64,3.25% CF,4.28% Supplier's 2023Q2 CF,BBG Estimate,Google Supply Chain Analysis
+Google,47,Google Inc,Software,2047709.56,32.40,0.00% CF,4.40% Supplier's 2022Q3 CF,BBG Estimate,Google Supply Chain Analysis
+Google,48,Google Inc,Software,2047709.56,30.40,0.00% CF,4.52% Supplier's 2021Q4 CF,BBG Estimate,Google Supply Chain Analysis
+Google,49,Google Inc,Software,2047709.56,28.57,0.00% CF,4.64% Supplier's 2024Q1 CF,BBG Estimate,Google Supply Chain Analysis
+Google,50,Google Inc,Software,2047709.56,26.92,0.00% CF,4.76% Supplier's 2023Q2 CF,BBG Estimate,Google Supply Chain Analysis
+Google,51,Google Inc,Software,2047709.56,25.42,0.00% CF,4.88% Supplier's 2022Q3 CF,BBG Estimate,Google Supply Chain Analysis
+Google,52,Google Inc,Software,2047709.56,24.08,0.00% CF,5.00% Supplier's 2021Q4 CF,BBG Estimate,Google Supply Chain Analysis
+Google,53,Google Inc,Software,2047709.56,22.86,0.00% CF,5.12% Supplier's 2024Q1 CF,BBG Estimate,Google Supply Chain Analysis
+Google,54,PG&E Corp,Electric Utilities,32967.57,21.77,0.07% CF,5.24% Supplier's 2023Q2 CF,BBG Estimate,Google Supply Chain Analysis
+Google,55,PG&E Corp,Electric Utilities,32967.57,20.78,0.06% CF,5.36% Supplier's 2022Q3 CF,BBG Estimate,Google Supply Chain Analysis
+Google,56,PG&E Corp,Electric Utilities,32967.57,19.88,0.06% CF,5.48% Supplier's 2021Q4 CF,BBG Estimate,Google Supply Chain Analysis
+Google,57,PG&E Corp,Electric Utilities,32967.57,19.07,0.06% CF,5.60% Supplier's 2024Q1 CF,BBG Estimate,Google Supply Chain Analysis
+Google,58,PG&E Corp,Electric Utilities,32967.57,18.34,0.06% CF,5.72% Supplier's 2023Q2 CF,BBG Estimate,Google Supply Chain Analysis
+Google,59,PG&E Corp,Electric Utilities,32967.57,17.68,0.05% CF,5.84% Supplier's 2022Q3 CF,BBG Estimate,Google Supply Chain Analysis
+Google,60,PG&E Corp,Electric Utilities,32967.57,17.09,0.05% CF,5.96% Supplier's 2021Q4 CF,BBG Estimate,Google Supply Chain Analysis
+Google,61,PG&E Corp,Electric Utilities,32967.57,16.56,0.05% CF,6.08% Supplier's 2024Q1 CF,BBG Estimate,Google Supply Chain Analysis
+CoreWeave,1,CoreWeave Inc,Software,62181.04,6218.10,10.00% CAPEX,10.00% Supplier's 2023Q2 CF,BBG Estimate,CRWV Supply Chain Analysis
+CoreWeave,2,NVIDIA Corp,Semiconductors,4457880.00,4413.49,0.10% CAPEX,8.50% Supplier's 2024Q3 CF,BBG Estimate,CRWV Supply Chain Analysis
+CoreWeave,3,Dell Technologies Inc,Technology Hardware,93416.48,9156.42,9.80% CAPEX,6.25% Supplier's 2021Q4 CF,BBG Estimate,CRWV Supply Chain Analysis
+CoreWeave,4,Super Micro Computer Inc,Technology Hardware,26618.07,2594.95,9.75% CAPEX,5.75% Supplier's 2024Q1 CF,BBG Estimate,CRWV Supply Chain Analysis
+CoreWeave,5,Nokia Oyj,Technology Hardware,22448.47,2132.60,9.50% CAPEX,4.50% Supplier's 2023Q2 CF,BBG Estimate,CRWV Supply Chain Analysis
+CoreWeave,6,Bloom Energy Corp,Electrical Equipment,8611.13,7.52,0.13% CAPEX,0.58% Supplier's 2024Q2,BBG Estimate,CRWV Supply Chain Analysis
+CoreWeave,7,Core Scientific Inc,Asset Management,20000.00,1880.00,9.40% CAPEX,4.50% Supplier's 2021Q4 CF,BBG Estimate,CRWV Supply Chain Analysis
+CoreWeave,8,Flexential Corp,IT Services,15000.00,1395.00,9.30% CAPEX,3.25% Supplier's 2024Q1 CF,BBG Estimate,CRWV Supply Chain Analysis
