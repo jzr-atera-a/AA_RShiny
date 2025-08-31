@@ -1,10 +1,10 @@
-name: 5am_discipline
+name: ai_matrix_links
 title:
 username: aa-partner
 account: aa-partner
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
-appId: 15009627
-bundleId: 10539218
-url: https://aa-partner.shinyapps.io/5am_discipline/
+appId: 15290774
+bundleId: 10830705
+url: https://aa-partner.shinyapps.io/ai_matrix_links/
 version: 1

@@ -82,6 +82,8 @@ rsconnect::deployApp(
   forceUpdate = TRUE
 )
 
+rsconnect::deployApp('C:/101_Code/R/CareerDevelopment/profile_jfz_ai_leadership')
+rsconnect::deployApp('C:/101_Code/R/MBA/CCAF/ai_matrix_links')
 rsconnect::deployApp('C:/101_Code/R/MBA/CCAF/ccaf_w4a_schain')
 rsconnect::deployApp('C:/101_Code/R/Literature/Entrepreneurship/business_model_generation')
 rsconnect::deployApp('C:/101_Code/R/AteraA_Mobility/check_os')

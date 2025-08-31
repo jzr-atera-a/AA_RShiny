@@ -760,7 +760,7 @@ server <- function(input, output, session) {
   })
   
   # Market statistics
-  output$marketStats <- renderDT({
+  output$marketStats <- renderDT({ 
     req(pair_data())
     data <- pair_data()
     
