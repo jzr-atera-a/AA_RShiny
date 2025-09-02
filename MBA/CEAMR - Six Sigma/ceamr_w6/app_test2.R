@@ -35,9 +35,11 @@ ui <- dashboardPage(
     sidebarMenu(
       menuItem("Database Connection", tabName = "connection", icon = icon("database")),
       menuItem("Market Overview", tabName = "overview", icon = icon("chart-line")),
+      menuItem("Price Analysis", tabName = "price", icon = icon("chart-simple")),
       menuItem("Technical Indicators", tabName = "technical", icon = icon("chart-bar")),
       menuItem("Volatility Analysis", tabName = "volatility", icon = icon("wave-square")),
-      menuItem("Risk Metrics", tabName = "risk", icon = icon("exclamation-triangle"))
+      menuItem("Risk Metrics", tabName = "risk", icon = icon("exclamation-triangle")),
+      menuItem("Correlation Matrix", tabName = "correlation", icon = icon("project-diagram"))
     )
   ),
   
@@ -724,7 +726,362 @@ ui <- dashboardPage(
                   )
                 )
               )
+      ),
+      
+      # Price Analysis Tab (UI - replace existing)
+      tabItem(tabName = "price",
+              conditionalPanel(
+                condition = "output.dataLoaded == false",
+                div(class = "error-message",
+                    h4("No Data Available"),
+                    p("Price analysis requires database connection and data loading.")
+                )
+              ),
+              
+              conditionalPanel(
+                condition = "output.dataLoaded == true",
+                
+                # Price Analysis Controls
+                fluidRow(
+                  box(
+                    title = "Price Analysis Controls & Data Information", 
+                    status = "primary", 
+                    solidHeader = TRUE, 
+                    width = 12,
+                    
+                    fluidRow(
+                      column(3,
+                             h5("Date Range Selection:"),
+                             dateRangeInput("priceRange", "Analysis Period:",
+                                            start = Sys.Date() - years(1),
+                                            end = Sys.Date(),
+                                            format = "yyyy-mm-dd",
+                                            width = "100%")
+                      ),
+                      column(3,
+                             h5("Price Components:"),
+                             checkboxGroupInput("priceComponents", "Show Components:",
+                                                choices = c("Mid Price (Calculated)" = "mid", 
+                                                            "Bid Price" = "bid", 
+                                                            "Ask Price" = "ask",
+                                                            "Bid-Ask Spread" = "spread"),
+                                                selected = c("mid", "spread"),
+                                                inline = FALSE)
+                      ),
+                      column(3,
+                             h5("Technical Settings:"),
+                             numericInput("movingAvgDays", "Moving Average Periods:",
+                                          value = 20, min = 5, max = 200, step = 5),
+                             checkboxInput("showBollingerBands", "Show Bollinger Bands", value = FALSE),
+                             numericInput("bbPeriods", "BB Periods:", value = 20, min = 5, max = 100)
+                      ),
+                      column(3,
+                             h5("Data Quality Info:"),
+                             div(style = "background-color: #f8f9fa; padding: 10px; border-radius: 5px;",
+                                 p(textOutput("priceAnalysisDataInfo"), style = "margin: 0; font-size: 12px;"))
+                      )
+                    ),
+                    
+                    hr(),
+                    
+                    fluidRow(
+                      column(12,
+                             h5("Period Statistics:"),
+                             verbatimTextOutput("priceStats")
+                      )
+                    )
+                  )
+                ),
+                
+                # Detailed Price Chart
+                fluidRow(
+                  box(
+                    title = "Detailed Price Chart with Technical Analysis", 
+                    status = "primary", 
+                    solidHeader = TRUE, 
+                    width = 12,
+                    
+                    withSpinner(plotlyOutput("detailedPriceChart", height = "600px"))
+                  )
+                ),
+                
+                # OHLC Analysis (for aggregated data)
+                conditionalPanel(
+                  condition = "output.showOHLCAnalysis == true",
+                  fluidRow(
+                    box(
+                      title = "OHLC Candlestick Analysis", 
+                      status = "primary", 
+                      solidHeader = TRUE, 
+                      width = 12,
+                      
+                      fluidRow(
+                        column(8,
+                               withSpinner(plotlyOutput("ohlcCandlestickChart", height = "450px"))
+                        ),
+                        column(4,
+                               h5("OHLC Statistics:"),
+                               withSpinner(DT::dataTableOutput("ohlcStatsTable"))
+                        )
+                      )
+                    )
+                  )
+                ),
+                
+                # Bid-Ask Spread Analysis
+                fluidRow(
+                  box(
+                    title = "Comprehensive Bid-Ask Spread Analysis", 
+                    status = "primary", 
+                    solidHeader = TRUE, 
+                    width = 12,
+                    
+                    fluidRow(
+                      column(6,
+                             withSpinner(plotlyOutput("spreadAnalysis", height = "400px"))
+                      ),
+                      column(6,
+                             withSpinner(plotlyOutput("spreadDistributionAnalysis", height = "400px"))
+                      )
+                    )
+                  )
+                ),
+                
+                # Price Distribution Analysis
+                fluidRow(
+                  box(
+                    title = "Price Distribution and Statistical Analysis", 
+                    status = "primary", 
+                    solidHeader = TRUE, 
+                    width = 12,
+                    
+                    fluidRow(
+                      column(4,
+                             withSpinner(plotlyOutput("priceDistribution", height = "350px"))
+                      ),
+                      column(4,
+                             withSpinner(plotlyOutput("priceQQPlot", height = "350px"))
+                      ),
+                      column(4,
+                             withSpinner(plotlyOutput("priceBoxPlot", height = "350px"))
+                      )
+                    )
+                  )
+                ),
+                
+                # Returns Analysis
+                fluidRow(
+                  box(
+                    title = "Returns Analysis and Performance Metrics", 
+                    status = "primary", 
+                    solidHeader = TRUE, 
+                    width = 12,
+                    
+                    fluidRow(
+                      column(6,
+                             withSpinner(plotlyOutput("returnsTimeSeriesChart", height = "400px"))
+                      ),
+                      column(6,
+                             withSpinner(plotlyOutput("returnsDistributionChart", height = "400px"))
+                      )
+                    )
+                  )
+                ),
+                
+                # Advanced Price Analytics
+                fluidRow(
+                  box(
+                    title = "Advanced Price Analytics", 
+                    status = "primary", 
+                    solidHeader = TRUE, 
+                    width = 12,
+                    
+                    fluidRow(
+                      column(4,
+                             h5("Price Level Analysis:"),
+                             withSpinner(DT::dataTableOutput("priceLevelsTable"))
+                      ),
+                      column(4,
+                             h5("Volatility Breakdown:"),
+                             withSpinner(DT::dataTableOutput("volatilityBreakdownTable"))
+                      ),
+                      column(4,
+                             h5("Trading Statistics:"),
+                             withSpinner(DT::dataTableOutput("tradingStatsTable"))
+                      )
+                    )
+                  )
+                ),
+                
+                # Intraperiod Analysis (for intraday data)
+                conditionalPanel(
+                  condition = "output.showIntraperiodAnalysis == true",
+                  fluidRow(
+                    box(
+                      title = "Intraperiod Pattern Analysis", 
+                      status = "info", 
+                      solidHeader = TRUE, 
+                      width = 12,
+                      
+                      fluidRow(
+                        column(6,
+                               withSpinner(plotlyOutput("intraperiodPatternsChart", height = "350px"))
+                        ),
+                        column(6,
+                               withSpinner(plotlyOutput("aggregationImpactChart", height = "350px"))
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+      ),
+      
+      # Correlation Matrix Tab (UI - replace existing)
+      tabItem(tabName = "correlation",
+              conditionalPanel(
+                condition = "output.dataLoaded == false",
+                div(class = "error-message",
+                    h4("No Data Available"),
+                    p("Correlation analysis requires database connection and loaded data.")
+                )
+              ),
+              
+              conditionalPanel(
+                condition = "output.dataLoaded == true",
+                fluidRow(
+                  box(
+                    title = "Correlation Analysis Settings", 
+                    status = "primary", 
+                    solidHeader = TRUE, 
+                    width = 4,
+                    
+                    div(style = "background-color: #e8f4fd; padding: 8px; border-radius: 4px; margin-bottom: 15px;",
+                        p("Data source info:", style = "margin: 0; font-size: 11px; color: #2c3e50;"),
+                        p(textOutput("correlationDataSource"), style = "margin: 0; font-size: 11px; font-weight: bold;")
+                    ),
+                    
+                    conditionalPanel(
+                      condition = "output.showCorrelationControls == true",
+                      
+                      checkboxGroupInput("correlationPairs", "Select Currency Pairs:",
+                                         choices = NULL,
+                                         selected = NULL),
+                      
+                      br(),
+                      radioButtons("correlationType", "Correlation Type:",
+                                   choices = c("Pearson" = "pearson",
+                                               "Spearman" = "spearman",
+                                               "Kendall" = "kendall"),
+                                   selected = "pearson"),
+                      
+                      br(),
+                      numericInput("correlationWindow", "Rolling Window (periods):",
+                                   value = 60, min = 30, max = 500, step = 10),
+                      
+                      br(),
+                      radioButtons("returnType", "Return Type:",
+                                   choices = c("Simple Returns" = "simple",
+                                               "Log Returns" = "log"),
+                                   selected = "log"),
+                      
+                      br(),
+                      h5("Correlation Summary:"),
+                      verbatimTextOutput("correlationSummary")
+                    ),
+                    
+                    conditionalPanel(
+                      condition = "output.showCorrelationControls == false",
+                      div(class = "data-warning",
+                          h5("Multiple Currency Pairs Required"),
+                          p("Correlation analysis requires data from multiple currency pairs."),
+                          p("The current data source contains only single pair data from fx_spot_prices table."),
+                          p("Please load data from fx_spot_prices_daily to access correlation analysis features."))
+                    )
+                  ),
+                  
+                  box(
+                    title = "Correlation Heatmap", 
+                    status = "primary", 
+                    solidHeader = TRUE, 
+                    width = 8,
+                    
+                    conditionalPanel(
+                      condition = "output.showCorrelationControls == true",
+                      withSpinner(plotOutput("correlationHeatmap", height = "450px"))
+                    ),
+                    
+                    conditionalPanel(
+                      condition = "output.showCorrelationControls == false",
+                      div(class = "error-message", style = "height: 400px; display: flex; align-items: center; justify-content: center;",
+                          div(style = "text-align: center;",
+                              h4("Correlation Heatmap Unavailable"),
+                              p("Multiple currency pairs are required for correlation analysis."),
+                              p("Current data source: fx_spot_prices (single pair data)"),
+                              p("Switch to fx_spot_prices_daily for multi-pair correlation analysis.")))
+                    )
+                  )
+                ),
+                
+                fluidRow(
+                  box(
+                    title = "Rolling Correlations Time Series", 
+                    status = "primary", 
+                    solidHeader = TRUE, 
+                    width = 6,
+                    
+                    conditionalPanel(
+                      condition = "output.showCorrelationControls == true",
+                      withSpinner(plotlyOutput("rollingCorrelations", height = "350px"))
+                    ),
+                    
+                    conditionalPanel(
+                      condition = "output.showCorrelationControls == false",
+                      div(class = "error-message", style = "height: 300px; display: flex; align-items: center; justify-content: center;",
+                          div(style = "text-align: center;",
+                              h5("Rolling Correlations Unavailable"),
+                              p("Requires multiple currency pairs"),
+                              p("Please use fx_spot_prices_daily table")))
+                    )
+                  ),
+                  
+                  box(
+                    title = "Correlation Statistics & Network", 
+                    status = "primary", 
+                    solidHeader = TRUE, 
+                    width = 6,
+                    
+                    conditionalPanel(
+                      condition = "output.showCorrelationControls == true",
+                      withSpinner(plotlyOutput("correlationNetwork", height = "350px"))
+                    ),
+                    
+                    conditionalPanel(
+                      condition = "output.showCorrelationControls == false",
+                      div(class = "error-message", style = "height: 300px; display: flex; align-items: center; justify-content: center;",
+                          div(style = "text-align: center;",
+                              h5("Correlation Network Unavailable"),
+                              p("Requires multiple currency pairs"),
+                              p("Please use fx_spot_prices_daily table")))
+                    )
+                  )
+                ),
+                
+                conditionalPanel(
+                  condition = "output.showCorrelationControls == true",
+                  fluidRow(
+                    box(
+                      title = "Correlation Matrix Statistics", 
+                      status = "info", 
+                      solidHeader = TRUE, 
+                      width = 12,
+                      withSpinner(DT::dataTableOutput("correlationStatsTable"))
+                    )
+                  )
+                )
+              )
       )
+      
       
     )
     
@@ -1891,6 +2248,675 @@ server <- function(input, output, session) {
     }
     
     p1
+  })
+  
+  # Server Functions for Price Analysis Tab 
+  
+  # Price analysis data info
+  output$priceAnalysisDataInfo <- renderText({
+    if (!values$data_loaded) return("No data loaded")
+    
+    unique_pairs <- unique(values$fx_data$pair)
+    total_records <- nrow(values$fx_data)
+    
+    paste(
+      paste("Source:", values$source_table),
+      paste("Pairs:", length(unique_pairs)),
+      paste("Records:", format(total_records, big.mark = ",")),
+      "✓ Mid = (Bid + Ask) / 2",
+      sep = "\n"
+    )
+  })
+  
+  # Check for OHLC analysis availability
+  output$showOHLCAnalysis <- reactive({
+    if (!values$data_loaded) return(FALSE)
+    
+    # Check if OHLC columns are available (aggregated data)
+    ohlc_cols <- c("Mid_Open", "Mid_High", "Mid_Low", "Mid_Close")
+    return(all(ohlc_cols %in% names(values$fx_data)))
+  })
+  outputOptions(output, "showOHLCAnalysis", suspendWhenHidden = FALSE)
+  
+  # Check for intraperiod analysis
+  output$showIntraperiodAnalysis <- reactive({
+    if (!values$data_loaded) return(FALSE)
+    
+    # Show intraperiod analysis for fx_spot_prices with aggregation
+    return(values$source_table == "fx_spot_prices" && "record_count" %in% names(values$fx_data))
+  })
+  outputOptions(output, "showIntraperiodAnalysis", suspendWhenHidden = FALSE)
+  
+  # Update date range when data loads
+  observe({
+    if (values$data_loaded && !is.null(values$fx_data)) {
+      date_range <- range(values$fx_data$date, na.rm = TRUE)
+      updateDateRangeInput(session, "priceRange",
+                           start = max(date_range[1], date_range[2] - years(1)),
+                           end = date_range[2],
+                           min = date_range[1],
+                           max = date_range[2])
+    }
+  })
+  
+  # Price statistics
+  output$priceStats <- renderText({
+    req(pair_data())
+    
+    # Filter data for selected date range
+    data <- pair_data() %>%
+      filter(date >= input$priceRange[1] & date <= input$priceRange[2])
+    
+    if (nrow(data) == 0) return("No data available for selected range")
+    
+    # Use appropriate price series
+    price_series <- if ("Mid_Close" %in% names(data)) data$Mid_Close else data$Mid
+    
+    # Calculate comprehensive statistics
+    current_price <- tail(price_series, 1)
+    period_high <- max(price_series, na.rm = TRUE)
+    period_low <- min(price_series, na.rm = TRUE)
+    period_avg <- mean(price_series, na.rm = TRUE)
+    price_range <- period_high - period_low
+    
+    # Volatility metrics
+    if ("returns" %in% names(data) && sum(!is.na(data$returns)) > 10) {
+      returns <- data$returns[!is.na(data$returns)]
+      daily_vol <- sd(returns, na.rm = TRUE)
+      annual_vol <- daily_vol * sqrt(252)
+      max_gain <- max(returns, na.rm = TRUE) * 100
+      max_loss <- min(returns, na.rm = TRUE) * 100
+      
+      vol_info <- paste(
+        paste("Daily Volatility:", paste0(round(daily_vol * 100, 4), "%")),
+        paste("Annualized Volatility:", paste0(round(annual_vol * 100, 2), "%")),
+        paste("Max Daily Gain:", paste0(round(max_gain, 4), "%")),
+        paste("Max Daily Loss:", paste0(round(max_loss, 4), "%")),
+        sep = " | "
+      )
+    } else {
+      vol_info <- "Volatility: N/A (insufficient return data)"
+    }
+    
+    # Spread statistics
+    avg_spread <- mean(data$spread_pct, na.rm = TRUE)
+    spread_range <- max(data$spread_pct, na.rm = TRUE) - min(data$spread_pct, na.rm = TRUE)
+    
+    paste(
+      paste("Analysis Period:", input$priceRange[1], "to", input$priceRange[2], "|", nrow(data), "observations"),
+      paste("Current Price:", round(current_price, 6), "| Period High:", round(period_high, 6), 
+            "| Period Low:", round(period_low, 6), "| Average:", round(period_avg, 6)),
+      paste("Price Range:", round(price_range, 6), "| Range %:", paste0(round(price_range/period_avg*100, 3), "%")),
+      paste("Avg Spread:", paste0(round(avg_spread, 4), "%"), "| Spread Range:", paste0(round(spread_range, 4), "%")),
+      vol_info,
+      sep = "\n"
+    )
+  })
+  
+  # Detailed price chart
+  output$detailedPriceChart <- renderPlotly({
+    req(pair_data())
+    
+    # Filter data for selected date range
+    data <- pair_data() %>%
+      filter(date >= input$priceRange[1] & date <= input$priceRange[2]) %>%
+      arrange(Timestamp)
+    
+    if (nrow(data) == 0) {
+      return(plot_ly() %>% layout(title = "No data available for selected date range"))
+    }
+    
+    # Calculate technical indicators
+    price_series <- if ("Mid_Close" %in% names(data)) data$Mid_Close else data$Mid
+    
+    if (nrow(data) >= input$movingAvgDays) {
+      data$ma <- SMA(price_series, n = input$movingAvgDays)
+    }
+    
+    if (input$showBollingerBands && nrow(data) >= input$bbPeriods) {
+      bb <- BBands(price_series, n = input$bbPeriods)
+      data$bb_upper <- bb[, "up"]
+      data$bb_lower <- bb[, "dn"]
+      data$bb_mavg <- bb[, "mavg"]
+    }
+    
+    # Create base plot
+    p <- plot_ly(data, x = ~Timestamp) %>%
+      layout(
+        title = paste("Detailed Price Analysis -", input$selectedPair, "| Period:", 
+                      input$priceRange[1], "to", input$priceRange[2], "| Records:", nrow(data)),
+        xaxis = list(title = "Date/Time"),
+        yaxis = list(title = "Exchange Rate", tickformat = ".6f"),
+        hovermode = "x unified",
+        plot_bgcolor = "white",
+        paper_bgcolor = "white"
+      )
+    
+    # Add selected price components
+    if ("mid" %in% input$priceComponents) {
+      p <- p %>% add_lines(y = price_series, name = "Mid Price (Calculated)", 
+                           line = list(color = "#2c3e50", width = 3))
+    }
+    if ("bid" %in% input$priceComponents) {
+      bid_price <- if ("Bid_Close" %in% names(data)) data$Bid_Close else data$Bid
+      p <- p %>% add_lines(y = bid_price, name = "Bid Price", 
+                           line = list(color = "#27ae60", width = 2))
+    }
+    if ("ask" %in% input$priceComponents) {
+      ask_price <- if ("Ask_Close" %in% names(data)) data$Ask_Close else data$Ask
+      p <- p %>% add_lines(y = ask_price, name = "Ask Price", 
+                           line = list(color = "#e74c3c", width = 2))
+    }
+    
+    # Add moving average
+    if ("ma" %in% names(data)) {
+      p <- p %>% add_lines(y = ~ma, name = paste("MA(", input$movingAvgDays, ")"), 
+                           line = list(color = "#9b59b6", width = 2, dash = "dash"))
+    }
+    
+    # Add Bollinger Bands
+    if (input$showBollingerBands && "bb_upper" %in% names(data)) {
+      p <- p %>% 
+        add_lines(y = ~bb_upper, name = "BB Upper", line = list(color = "#95a5a6", dash = "dash")) %>%
+        add_lines(y = ~bb_lower, name = "BB Lower", line = list(color = "#95a5a6", dash = "dash")) %>%
+        add_lines(y = ~bb_mavg, name = "BB Middle", line = list(color = "#f39c12", width = 1))
+    }
+    
+    # Add spread as secondary y-axis if selected
+    if ("spread" %in% input$priceComponents) {
+      p <- p %>% add_lines(y = ~spread_pct, name = "Spread (%)", 
+                           yaxis = "y2", line = list(color = "#f39c12", width = 2, dash = "dot")) %>%
+        layout(yaxis2 = list(overlaying = "y", side = "right", title = "Spread (%)"))
+    }
+    
+    p
+  })
+  
+  # OHLC Candlestick chart
+  output$ohlcCandlestickChart <- renderPlotly({
+    req(pair_data())
+    
+    # Check if OHLC data is available
+    ohlc_cols <- c("Mid_Open", "Mid_High", "Mid_Low", "Mid_Close")
+    if (!all(ohlc_cols %in% names(pair_data()))) {
+      return(plot_ly() %>% layout(title = "OHLC data not available"))
+    }
+    
+    data <- pair_data() %>%
+      filter(date >= input$priceRange[1] & date <= input$priceRange[2]) %>%
+      slice_tail(n = 200)  # Show last 200 periods for performance
+    
+    if (nrow(data) == 0) {
+      return(plot_ly() %>% layout(title = "No OHLC data for selected range"))
+    }
+    
+    plot_ly(data, x = ~Timestamp, type = "candlestick",
+            open = ~Mid_Open, high = ~Mid_High, low = ~Mid_Low, close = ~Mid_Close,
+            name = "OHLC") %>%
+      layout(
+        title = paste("OHLC Candlestick Chart -", input$selectedPair, "| Periods:", nrow(data)),
+        xaxis = list(title = "Date/Time", rangeslider = list(visible = FALSE)),
+        yaxis = list(title = "Exchange Rate", tickformat = ".6f"),
+        plot_bgcolor = "white",
+        paper_bgcolor = "white"
+      )
+  })
+  
+  # OHLC statistics table
+  output$ohlcStatsTable <- renderDT({
+    req(pair_data())
+    
+    ohlc_cols <- c("Mid_Open", "Mid_High", "Mid_Low", "Mid_Close")
+    if (!all(ohlc_cols %in% names(pair_data()))) {
+      return(datatable(data.frame(Message = "OHLC data not available")))
+    }
+    
+    data <- pair_data() %>%
+      filter(date >= input$priceRange[1] & date <= input$priceRange[2])
+    
+    if (nrow(data) == 0) {
+      return(datatable(data.frame(Message = "No data for selected range")))
+    }
+    
+    # Calculate OHLC statistics
+    stats <- data.frame(
+      Metric = c("Avg Open", "Avg High", "Avg Low", "Avg Close", "Avg Range (H-L)", 
+                 "Max Range", "Min Range", "Avg Body Size", "Bullish Periods", "Bearish Periods"),
+      Value = c(
+        format(round(mean(data$Mid_Open, na.rm = TRUE), 6), nsmall = 6),
+        format(round(mean(data$Mid_High, na.rm = TRUE), 6), nsmall = 6),
+        format(round(mean(data$Mid_Low, na.rm = TRUE), 6), nsmall = 6),
+        format(round(mean(data$Mid_Close, na.rm = TRUE), 6), nsmall = 6),
+        format(round(mean(data$Mid_High - data$Mid_Low, na.rm = TRUE), 6), nsmall = 6),
+        format(round(max(data$Mid_High - data$Mid_Low, na.rm = TRUE), 6), nsmall = 6),
+        format(round(min(data$Mid_High - data$Mid_Low, na.rm = TRUE), 6), nsmall = 6),
+        format(round(mean(abs(data$Mid_Close - data$Mid_Open), na.rm = TRUE), 6), nsmall = 6),
+        paste0(round(sum(data$Mid_Close > data$Mid_Open, na.rm = TRUE) / nrow(data) * 100, 1), "%"),
+        paste0(round(sum(data$Mid_Close < data$Mid_Open, na.rm = TRUE) / nrow(data) * 100, 1), "%")
+      )
+    )
+    
+    datatable(stats, options = list(dom = 't', pageLength = 12), rownames = FALSE)
+  })
+  
+  # Spread analysis chart
+  output$spreadAnalysis <- renderPlotly({
+    req(pair_data())
+    
+    data <- pair_data() %>%
+      filter(date >= input$priceRange[1] & date <= input$priceRange[2]) %>%
+      slice_tail(n = 1000)  # Last 1000 observations for performance
+    
+    if (nrow(data) == 0) {
+      return(plot_ly() %>% layout(title = "No data for spread analysis"))
+    }
+    
+    # Calculate rolling spread statistics
+    if (nrow(data) >= 30) {
+      data$spread_ma <- SMA(data$spread_pct, n = min(30, nrow(data)))
+      data$spread_volatility <- rollapply(data$spread_pct, width = min(30, nrow(data)), 
+                                          FUN = sd, fill = NA, align = "right")
+    }
+    
+    p <- plot_ly(data, x = ~Timestamp) %>%
+      add_lines(y = ~spread_pct, name = "Bid-Ask Spread", 
+                line = list(color = "#f39c12", width = 1.5)) %>%
+      layout(
+        title = "Bid-Ask Spread Time Series Analysis",
+        xaxis = list(title = "Date/Time"),
+        yaxis = list(title = "Spread (%)"),
+        plot_bgcolor = "white",
+        paper_bgcolor = "white"
+      )
+    
+    # Add rolling average if available
+    if ("spread_ma" %in% names(data)) {
+      p <- p %>% add_lines(y = ~spread_ma, name = "Spread MA(30)", 
+                           line = list(color = "#e74c3c", width = 2, dash = "dash"))
+    }
+    
+    # Add mean line
+    mean_spread <- mean(data$spread_pct, na.rm = TRUE)
+    p <- p %>% layout(
+      shapes = list(
+        list(type = "line", x0 = min(data$Timestamp), x1 = max(data$Timestamp),
+             y0 = mean_spread, y1 = mean_spread, 
+             line = list(color = "#95a5a6", dash = "dash", width = 1))
+      ),
+      annotations = list(
+        list(x = min(data$Timestamp) + (max(data$Timestamp) - min(data$Timestamp)) * 0.02, 
+             y = mean_spread * 1.1, text = paste("Mean:", round(mean_spread, 4), "%"), 
+             showarrow = FALSE, font = list(size = 12))
+      )
+    )
+    
+    p
+  })
+  
+  # Spread distribution analysis
+  output$spreadDistributionAnalysis <- renderPlotly({
+    req(pair_data())
+    
+    data <- pair_data() %>%
+      filter(date >= input$priceRange[1] & date <= input$priceRange[2])
+    
+    if (nrow(data) == 0) {
+      return(plot_ly() %>% layout(title = "No data for spread distribution"))
+    }
+    
+    plot_ly(x = data$spread_pct, type = "histogram", nbinsx = 40,
+            marker = list(color = "#f39c12", opacity = 0.7)) %>%
+      layout(
+        title = "Spread Distribution Analysis",
+        xaxis = list(title = "Spread (%)"),
+        yaxis = list(title = "Frequency"),
+        plot_bgcolor = "white",
+        paper_bgcolor = "white"
+      )
+  })
+  
+  # Price distribution
+  output$priceDistribution <- renderPlotly({
+    req(pair_data())
+    
+    data <- pair_data() %>%
+      filter(date >= input$priceRange[1] & date <= input$priceRange[2])
+    
+    if (nrow(data) == 0) {
+      return(plot_ly() %>% layout(title = "No data available"))
+    }
+    
+    price_series <- if ("Mid_Close" %in% names(data)) data$Mid_Close else data$Mid
+    
+    plot_ly(x = price_series, type = "histogram", nbinsx = 40,
+            marker = list(color = "#3498db", opacity = 0.7)) %>%
+      layout(
+        title = "Price Distribution",
+        xaxis = list(title = "Mid Price", tickformat = ".6f"),
+        yaxis = list(title = "Frequency"),
+        plot_bgcolor = "white",
+        paper_bgcolor = "white"
+      )
+  })
+  
+  # Price Q-Q plot
+  output$priceQQPlot <- renderPlotly({
+    req(pair_data())
+    
+    data <- pair_data() %>%
+      filter(date >= input$priceRange[1] & date <= input$priceRange[2])
+    
+    if (nrow(data) == 0) {
+      return(plot_ly() %>% layout(title = "No data available"))
+    }
+    
+    price_series <- if ("Mid_Close" %in% names(data)) data$Mid_Close else data$Mid
+    
+    # Calculate quantiles
+    theoretical_quantiles <- qnorm(ppoints(length(price_series)))
+    sample_quantiles <- sort(scale(price_series))
+    
+    plot_ly(x = theoretical_quantiles, y = sample_quantiles, type = "scatter", mode = "markers",
+            marker = list(color = "#e74c3c")) %>%
+      add_lines(x = theoretical_quantiles, y = theoretical_quantiles, 
+                line = list(color = "#2c3e50", dash = "dash")) %>%
+      layout(
+        title = "Q-Q Plot (Normality Test)",
+        xaxis = list(title = "Theoretical Quantiles"),
+        yaxis = list(title = "Sample Quantiles"),
+        plot_bgcolor = "white",
+        paper_bgcolor = "white",
+        showlegend = FALSE
+      )
+  })
+  
+  # Price box plot
+  output$priceBoxPlot <- renderPlotly({
+    req(pair_data())
+    
+    data <- pair_data() %>%
+      filter(date >= input$priceRange[1] & date <= input$priceRange[2])
+    
+    if (nrow(data) == 0) {
+      return(plot_ly() %>% layout(title = "No data available"))
+    }
+    
+    price_series <- if ("Mid_Close" %in% names(data)) data$Mid_Close else data$Mid
+    
+    plot_ly(y = price_series, type = "box", name = "Price Distribution",
+            marker = list(color = "#27ae60")) %>%
+      layout(
+        title = "Price Box Plot",
+        yaxis = list(title = "Mid Price", tickformat = ".6f"),
+        plot_bgcolor = "white",
+        paper_bgcolor = "white",
+        showlegend = FALSE
+      )
+  })
+  
+  # Returns time series chart
+  output$returnsTimeSeriesChart <- renderPlotly({
+    req(pair_data())
+    
+    data <- pair_data() %>%
+      filter(date >= input$priceRange[1] & date <= input$priceRange[2])
+    
+    if (nrow(data) == 0 || !"returns" %in% names(data)) {
+      return(plot_ly() %>% layout(title = "Returns data not available"))
+    }
+    
+    returns_data <- data %>% filter(!is.na(returns))
+    
+    if (nrow(returns_data) < 10) {
+      return(plot_ly() %>% layout(title = "Insufficient returns data"))
+    }
+    
+    plot_ly(returns_data, x = ~Timestamp, y = ~returns * 100, type = "scatter", mode = "lines",
+            line = list(color = "#8e44ad", width = 1)) %>%
+      layout(
+        title = "Returns Time Series",
+        xaxis = list(title = "Date/Time"),
+        yaxis = list(title = "Returns (%)"),
+        plot_bgcolor = "white",
+        paper_bgcolor = "white"
+      ) %>%
+      layout(
+        shapes = list(
+          list(type = "line", x0 = min(returns_data$Timestamp), x1 = max(returns_data$Timestamp),
+               y0 = 0, y1 = 0, line = list(color = "#95a5a6", dash = "dash"))
+        )
+      )
+  })
+  
+  # Returns distribution chart
+  output$returnsDistributionChart <- renderPlotly({
+    req(pair_data())
+    
+    data <- pair_data() %>%
+      filter(date >= input$priceRange[1] & date <= input$priceRange[2])
+    
+    if (nrow(data) == 0 || !"returns" %in% names(data)) {
+      return(plot_ly() %>% layout(title = "Returns data not available"))
+    }
+    
+    returns <- data$returns[!is.na(data$returns)] * 100
+    
+    if (length(returns) < 10) {
+      return(plot_ly() %>% layout(title = "Insufficient returns data"))
+    }
+    
+    plot_ly(x = returns, type = "histogram", nbinsx = 40,
+            marker = list(color = "#8e44ad", opacity = 0.7)) %>%
+      layout(
+        title = "Returns Distribution",
+        xaxis = list(title = "Returns (%)"),
+        yaxis = list(title = "Frequency"),
+        plot_bgcolor = "white",
+        paper_bgcolor = "white"
+      )
+  })
+  
+  # Price levels table
+  output$priceLevelsTable <- renderDT({
+    req(pair_data())
+    
+    data <- pair_data() %>%
+      filter(date >= input$priceRange[1] & date <= input$priceRange[2])
+    
+    if (nrow(data) == 0) {
+      return(datatable(data.frame(Message = "No data for selected range")))
+    }
+    
+    price_series <- if ("Mid_Close" %in% names(data)) data$Mid_Close else data$Mid
+    
+    # Calculate support and resistance levels
+    percentiles <- quantile(price_series, probs = c(0.05, 0.25, 0.5, 0.75, 0.95), na.rm = TRUE)
+    
+    stats <- data.frame(
+      Level = c("Strong Support (5%)", "Support (25%)", "Median (50%)", "Resistance (75%)", "Strong Resistance (95%)"),
+      Price = format(round(percentiles, 6), nsmall = 6),
+      Distance_from_Current = paste0(round((percentiles - tail(price_series, 1)) / tail(price_series, 1) * 100, 3), "%")
+    )
+    
+    datatable(stats, options = list(dom = 't'), rownames = FALSE)
+  })
+  
+  # Volatility breakdown table
+  output$volatilityBreakdownTable <- renderDT({
+    req(pair_data())
+    
+    data <- pair_data() %>%
+      filter(date >= input$priceRange[1] & date <= input$priceRange[2])
+    
+    if (nrow(data) == 0 || !"returns" %in% names(data)) {
+      return(datatable(data.frame(Message = "Returns data not available")))
+    }
+    
+    returns <- data$returns[!is.na(data$returns)]
+    
+    if (length(returns) < 30) {
+      return(datatable(data.frame(Message = "Insufficient returns data")))
+    }
+    
+    # Calculate volatility breakdown
+    daily_vol <- sd(returns, na.rm = TRUE)
+    weekly_vol <- daily_vol * sqrt(7)
+    monthly_vol <- daily_vol * sqrt(30)
+    annual_vol <- daily_vol * sqrt(252)
+    
+    # Calculate rolling volatilities
+    if (length(returns) >= 30) {
+      vol_30d <- sd(tail(returns, 30), na.rm = TRUE) * sqrt(252)
+    } else {
+      vol_30d <- annual_vol
+    }
+    
+    if (length(returns) >= 60) {
+      vol_60d <- sd(tail(returns, 60), na.rm = TRUE) * sqrt(252)
+    } else {
+      vol_60d <- annual_vol
+    }
+    
+    stats <- data.frame(
+      Period = c("Daily", "Weekly", "Monthly", "Annual", "Last 30 Days (Ann.)", "Last 60 Days (Ann.)"),
+      Volatility = paste0(round(c(daily_vol, weekly_vol, monthly_vol, annual_vol, vol_30d, vol_60d) * 100, 3), "%"),
+      Risk_Level = c("Low", "Low", "Medium", "High", "Current", "Recent")
+    )
+    
+    datatable(stats, options = list(dom = 't'), rownames = FALSE)
+  })
+  
+  # Trading statistics table
+  output$tradingStatsTable <- renderDT({
+    req(pair_data())
+    
+    data <- pair_data() %>%
+      filter(date >= input$priceRange[1] & date <= input$priceRange[2])
+    
+    if (nrow(data) == 0) {
+      return(datatable(data.frame(Message = "No data for selected range")))
+    }
+    
+    # Calculate trading statistics
+    price_series <- if ("Mid_Close" %in% names(data)) data$Mid_Close else data$Mid
+    
+    # Basic trading metrics
+    total_periods <- nrow(data)
+    price_changes <- diff(price_series)
+    up_periods <- sum(price_changes > 0, na.rm = TRUE)
+    down_periods <- sum(price_changes < 0, na.rm = TRUE)
+    flat_periods <- sum(price_changes == 0, na.rm = TRUE)
+    
+    # Calculate average moves
+    avg_up_move <- mean(price_changes[price_changes > 0], na.rm = TRUE)
+    avg_down_move <- mean(price_changes[price_changes < 0], na.rm = TRUE)
+    
+    # Spread statistics
+    avg_spread <- mean(data$spread_pct, na.rm = TRUE)
+    tight_spreads <- sum(data$spread_pct < 0.01, na.rm = TRUE)
+    wide_spreads <- sum(data$spread_pct > 0.05, na.rm = TRUE)
+    
+    stats <- data.frame(
+      Metric = c("Total Periods", "Up Periods", "Down Periods", "Flat Periods", 
+                 "Avg Up Move", "Avg Down Move", "Up/Down Ratio", 
+                 "Avg Spread (%)", "Tight Spreads (<0.01%)", "Wide Spreads (>0.05%)"),
+      Value = c(
+        total_periods,
+        paste0(up_periods, " (", round(up_periods/total_periods*100, 1), "%)"),
+        paste0(down_periods, " (", round(down_periods/total_periods*100, 1), "%)"),
+        paste0(flat_periods, " (", round(flat_periods/total_periods*100, 1), "%)"),
+        format(round(avg_up_move, 6), nsmall = 6),
+        format(round(avg_down_move, 6), nsmall = 6),
+        round(up_periods/down_periods, 2),
+        paste0(round(avg_spread, 4), "%"),
+        paste0(tight_spreads, " (", round(tight_spreads/total_periods*100, 1), "%)"),
+        paste0(wide_spreads, " (", round(wide_spreads/total_periods*100, 1), "%)")
+      )
+    )
+    
+    datatable(stats, options = list(dom = 't', pageLength = 12), rownames = FALSE)
+  })
+  
+  # Intraperiod patterns chart
+  output$intraperiodPatternsChart <- renderPlotly({
+    req(pair_data())
+    
+    # Only show for aggregated intraday data
+    if (!"record_count" %in% names(pair_data())) {
+      return(plot_ly() %>% layout(title = "Intraperiod analysis not available"))
+    }
+    
+    data <- pair_data() %>%
+      filter(date >= input$priceRange[1] & date <= input$priceRange[2]) %>%
+      filter(!is.na(record_count), record_count > 1)
+    
+    if (nrow(data) == 0) {
+      return(plot_ly() %>% layout(title = "No intraperiod data available"))
+    }
+    
+    # Check if OHLC data is available
+    if (all(c("Mid_High", "Mid_Low", "Mid_Open", "Mid_Close") %in% names(data))) {
+      # Calculate intraperiod range
+      data$intraperiod_range <- (data$Mid_High - data$Mid_Low) / data$Mid_Open * 100
+      
+      plot_ly(data, x = ~Timestamp, y = ~intraperiod_range, type = "scatter", mode = "lines",
+              line = list(color = "#e67e22", width = 2)) %>%
+        layout(
+          title = "Intraperiod Range Analysis",
+          xaxis = list(title = "Date/Time"),
+          yaxis = list(title = "Intraperiod Range (%)"),
+          plot_bgcolor = "white",
+          paper_bgcolor = "white"
+        )
+    } else {
+      # Show record count pattern
+      plot_ly(data, x = ~Timestamp, y = ~record_count, type = "scatter", mode = "lines+markers",
+              line = list(color = "#e67e22", width = 2)) %>%
+        layout(
+          title = "Records per Aggregation Period",
+          xaxis = list(title = "Date/Time"),
+          yaxis = list(title = "Record Count"),
+          plot_bgcolor = "white",
+          paper_bgcolor = "white"
+        )
+    }
+  })
+  
+  # Aggregation impact chart
+  output$aggregationImpactChart <- renderPlotly({
+    req(pair_data())
+    
+    # Only show for aggregated intraday data
+    if (!"record_count" %in% names(pair_data()) || !all(c("Mid_High", "Mid_Low") %in% names(pair_data()))) {
+      return(plot_ly() %>% layout(title = "Aggregation impact analysis not available"))
+    }
+    
+    data <- pair_data() %>%
+      filter(date >= input$priceRange[1] & date <= input$priceRange[2]) %>%
+      filter(!is.na(record_count), record_count > 1)
+    
+    if (nrow(data) == 0) {
+      return(plot_ly() %>% layout(title = "No aggregation data available"))
+    }
+    
+    # Calculate aggregation impact metrics
+    data$price_impact <- abs(data$Mid_Close - data$Mid_Open) / data$Mid_Open * 100
+    data$volatility_impact <- (data$Mid_High - data$Mid_Low) / data$Mid_Open * 100
+    
+    plot_ly(data, x = ~record_count, y = ~volatility_impact, type = "scatter", mode = "markers",
+            marker = list(color = ~price_impact, colorscale = "Viridis", size = 8),
+            text = ~paste("Date:", date, "<br>Records:", record_count, 
+                          "<br>Price Impact:", round(price_impact, 4), "%",
+                          "<br>Vol Impact:", round(volatility_impact, 4), "%"),
+            hovertemplate = "%{text}<extra></extra>") %>%
+      layout(
+        title = "Aggregation Impact: Records vs Volatility",
+        xaxis = list(title = "Records in Period"),
+        yaxis = list(title = "Volatility Impact (%)"),
+        plot_bgcolor = "white",
+        paper_bgcolor = "white"
+      ) %>%
+      colorbar(title = "Price Impact (%)")
   })
   
   # TECHNICAL INDICATORS TAB FUNCTIONS
@@ -3150,6 +4176,406 @@ server <- function(input, output, session) {
       
     }, error = function(e) {
       datatable(data.frame(Scenario = "Error", Impact = e$message))
+    })
+  })
+  
+  # Check if correlation controls should be shown
+  output$showCorrelationControls <- reactive({
+    if (!values$data_loaded || is.null(values$fx_data)) return(FALSE)
+    
+    # Check if we have multiple pairs
+    unique_pairs <- unique(values$fx_data$pair)
+    return(length(unique_pairs) > 1)
+  })
+  outputOptions(output, "showCorrelationControls", suspendWhenHidden = FALSE)
+  
+  # Data source information
+  output$correlationDataSource <- renderText({
+    if (!values$data_loaded) return("No data loaded")
+    
+    unique_pairs <- unique(values$fx_data$pair)
+    source_info <- paste("Source:", values$source_table)
+    pair_info <- paste("Pairs available:", length(unique_pairs))
+    
+    if (length(unique_pairs) > 1) {
+      return(paste(source_info, pair_info, "✓ Multi-pair analysis ready", sep = " | "))
+    } else {
+      return(paste(source_info, pair_info, "⚠ Single pair only", sep = " | "))
+    }
+  })
+  
+  # Update correlation pair choices when data loads
+  observe({
+    if (values$data_loaded && !is.null(values$fx_data)) {
+      available_pairs <- sort(unique(values$fx_data$pair))
+      
+      if (length(available_pairs) > 1) {
+        updateCheckboxGroupInput(session, "correlationPairs",
+                                 choices = available_pairs,
+                                 selected = available_pairs[1:min(6, length(available_pairs))])
+      }
+    }
+  })
+  
+  # Correlation summary
+  output$correlationSummary <- renderText({
+    if (!values$data_loaded || is.null(values$fx_data)) return("No data available")
+    
+    if (is.null(input$correlationPairs) || length(input$correlationPairs) < 2) {
+      return("Select at least 2 currency pairs for correlation analysis")
+    }
+    
+    tryCatch({
+      # Filter data for selected pairs
+      corr_data <- values$fx_data %>%
+        filter(pair %in% input$correlationPairs) %>%
+        select(date, Timestamp, pair, Mid) %>%
+        arrange(pair, Timestamp) %>%
+        group_by(pair) %>%
+        mutate(
+          returns = if (input$returnType == "log") {
+            c(NA, diff(log(Mid)))
+          } else {
+            c(NA, diff(Mid) / head(Mid, -1))
+          }
+        ) %>%
+        ungroup() %>%
+        filter(!is.na(returns)) %>%
+        select(date, pair, returns) %>%
+        tidyr::pivot_wider(names_from = pair, values_from = returns) %>%
+        select(-date) %>%
+        na.omit()
+      
+      if (ncol(corr_data) < 2 || nrow(corr_data) < 50) {
+        return("Insufficient overlapping data for correlation analysis")
+      }
+      
+      # Calculate correlation matrix
+      corr_matrix <- cor(corr_data, use = "complete.obs", method = input$correlationType)
+      
+      # Summary statistics
+      upper_tri <- corr_matrix[upper.tri(corr_matrix)]
+      avg_corr <- mean(upper_tri, na.rm = TRUE)
+      max_corr <- max(upper_tri, na.rm = TRUE)
+      min_corr <- min(upper_tri, na.rm = TRUE)
+      
+      # Find most/least correlated pairs
+      max_idx <- which(corr_matrix == max_corr & upper.tri(corr_matrix), arr.ind = TRUE)[1,]
+      min_idx <- which(corr_matrix == min_corr & upper.tri(corr_matrix), arr.ind = TRUE)[1,]
+      
+      most_corr_pair <- paste(rownames(corr_matrix)[max_idx[1]], colnames(corr_matrix)[max_idx[2]], sep = " vs ")
+      least_corr_pair <- paste(rownames(corr_matrix)[min_idx[1]], colnames(corr_matrix)[min_idx[2]], sep = " vs ")
+      
+      paste(
+        paste("Pairs analyzed:", length(input$correlationPairs)),
+        paste("Complete observations:", nrow(corr_data)),
+        paste("Method:", input$correlationType),
+        "",
+        paste("Average correlation:", round(avg_corr, 3)),
+        paste("Highest correlation:", round(max_corr, 3)),
+        paste("Lowest correlation:", round(min_corr, 3)),
+        "",
+        paste("Most correlated:", most_corr_pair),
+        paste("Least correlated:", least_corr_pair),
+        sep = "\n"
+      )
+    }, error = function(e) {
+      paste("Error calculating correlations:", e$message)
+    })
+  })
+  
+  # Correlation heatmap
+  output$correlationHeatmap <- renderPlot({
+    if (!values$data_loaded || is.null(input$correlationPairs) || length(input$correlationPairs) < 2) {
+      plot.new()
+      text(0.5, 0.5, "Select at least 2 currency pairs", cex = 1.5)
+      return()
+    }
+    
+    tryCatch({
+      # Prepare data
+      corr_data <- values$fx_data %>%
+        filter(pair %in% input$correlationPairs) %>%
+        select(date, Timestamp, pair, Mid) %>%
+        arrange(pair, Timestamp) %>%
+        group_by(pair) %>%
+        mutate(
+          returns = if (input$returnType == "log") {
+            c(NA, diff(log(Mid)))
+          } else {
+            c(NA, diff(Mid) / head(Mid, -1))
+          }
+        ) %>%
+        ungroup() %>%
+        filter(!is.na(returns)) %>%
+        select(date, pair, returns) %>%
+        tidyr::pivot_wider(names_from = pair, values_from = returns) %>%
+        select(-date) %>%
+        na.omit()
+      
+      if (ncol(corr_data) < 2 || nrow(corr_data) < 50) {
+        plot.new()
+        text(0.5, 0.5, "Insufficient overlapping data", cex = 1.2)
+        return()
+      }
+      
+      # Calculate correlation matrix
+      corr_matrix <- cor(corr_data, use = "complete.obs", method = input$correlationType)
+      
+      # Create heatmap using corrplot
+      corrplot(corr_matrix, method = "color", type = "upper", 
+               order = "hclust", tl.cex = 1.0, tl.col = "#2c3e50",
+               cl.cex = 1.0, addCoef.col = "#2c3e50", number.cex = 1.0,
+               col = colorRampPalette(c("#e74c3c", "white", "#3498db"))(200),
+               title = paste("Correlation Matrix -", input$correlationType, "| Obs:", nrow(corr_data)),
+               mar = c(0,0,2,0))
+    }, error = function(e) {
+      plot.new()
+      text(0.5, 0.5, "Error creating correlation heatmap", cex = 1.2)
+    })
+  })
+  
+  # Rolling correlations
+  output$rollingCorrelations <- renderPlotly({
+    if (!values$data_loaded || is.null(input$correlationPairs) || length(input$correlationPairs) < 2) {
+      return(plot_ly() %>% layout(title = "Select at least 2 currency pairs"))
+    }
+    
+    tryCatch({
+      # Use first two selected pairs for rolling correlation
+      selected_pairs <- input$correlationPairs[1:2]
+      
+      corr_data <- values$fx_data %>%
+        filter(pair %in% selected_pairs) %>%
+        select(date, Timestamp, pair, Mid) %>%
+        arrange(pair, Timestamp) %>%
+        group_by(pair) %>%
+        mutate(
+          returns = if (input$returnType == "log") {
+            c(NA, diff(log(Mid)))
+          } else {
+            c(NA, diff(Mid) / head(Mid, -1))
+          }
+        ) %>%
+        ungroup() %>%
+        filter(!is.na(returns)) %>%
+        select(Timestamp, pair, returns) %>%
+        tidyr::pivot_wider(names_from = pair, values_from = returns)
+      
+      # Remove rows with NA values
+      corr_data <- corr_data[complete.cases(corr_data), ]
+      
+      if (ncol(corr_data) < 3 || nrow(corr_data) < input$correlationWindow) {
+        return(plot_ly() %>% layout(title = "Insufficient data for rolling correlation"))
+      }
+      
+      # Calculate rolling correlation
+      rolling_corr <- rollapply(corr_data[, 2:3], width = input$correlationWindow,
+                                FUN = function(x) cor(x[,1], x[,2], use = "complete.obs", method = input$correlationType),
+                                fill = NA, align = "right", by.column = FALSE)
+      
+      corr_df <- data.frame(
+        Timestamp = tail(corr_data$Timestamp, length(rolling_corr)),
+        correlation = rolling_corr
+      ) %>%
+        filter(!is.na(correlation))
+      
+      if (nrow(corr_df) == 0) {
+        return(plot_ly() %>% layout(title = "No valid rolling correlation data"))
+      }
+      
+      p <- plot_ly(corr_df, x = ~Timestamp, y = ~correlation, type = "scatter", mode = "lines",
+                   line = list(color = "#3498db", width = 2)) %>%
+        layout(
+          title = paste("Rolling Correlation:", paste(selected_pairs, collapse = " vs "), 
+                        "| Window:", input$correlationWindow),
+          xaxis = list(title = "Date/Time"),
+          yaxis = list(title = "Correlation", range = c(-1, 1)),
+          plot_bgcolor = "white",
+          paper_bgcolor = "white",
+          shapes = list(
+            # Zero line
+            list(type = "line", x0 = min(corr_df$Timestamp), x1 = max(corr_df$Timestamp),
+                 y0 = 0, y1 = 0, line = list(color = "#95a5a6", dash = "dash", width = 1))
+          )
+        )
+      
+      p
+    }, error = function(e) {
+      plot_ly() %>% layout(title = paste("Error:", e$message))
+    })
+  })
+  
+  # Correlation network visualization
+  output$correlationNetwork <- renderPlotly({
+    if (!values$data_loaded || is.null(input$correlationPairs) || length(input$correlationPairs) < 3) {
+      return(plot_ly() %>% layout(title = "Select at least 3 currency pairs for network analysis"))
+    }
+    
+    tryCatch({
+      # Prepare correlation data
+      corr_data <- values$fx_data %>%
+        filter(pair %in% input$correlationPairs) %>%
+        select(date, pair, Mid) %>%
+        arrange(pair, date) %>%
+        group_by(pair) %>%
+        mutate(
+          returns = if (input$returnType == "log") {
+            c(NA, diff(log(Mid)))
+          } else {
+            c(NA, diff(Mid) / head(Mid, -1))
+          }
+        ) %>%
+        ungroup() %>%
+        filter(!is.na(returns)) %>%
+        select(date, pair, returns) %>%
+        tidyr::pivot_wider(names_from = pair, values_from = returns) %>%
+        select(-date) %>%
+        na.omit()
+      
+      if (ncol(corr_data) < 3 || nrow(corr_data) < 50) {
+        return(plot_ly() %>% layout(title = "Insufficient data for network analysis"))
+      }
+      
+      # Calculate correlation matrix
+      corr_matrix <- cor(corr_data, use = "complete.obs", method = input$correlationType)
+      
+      # Create network layout (simple circular arrangement)
+      n_pairs <- ncol(corr_data)
+      angles <- seq(0, 2*pi, length.out = n_pairs + 1)[-1]
+      radius <- 1
+      
+      node_x <- cos(angles) * radius
+      node_y <- sin(angles) * radius
+      node_names <- colnames(corr_data)
+      
+      # Create edges for strong correlations (>0.3 or <-0.3)
+      edge_x <- c()
+      edge_y <- c()
+      edge_strength <- c()
+      
+      for (i in 1:(n_pairs-1)) {
+        for (j in (i+1):n_pairs) {
+          corr_val <- corr_matrix[i, j]
+          if (abs(corr_val) > 0.3) {
+            edge_x <- c(edge_x, node_x[i], node_x[j], NA)
+            edge_y <- c(edge_y, node_y[i], node_y[j], NA)
+            edge_strength <- c(edge_strength, abs(corr_val))
+          }
+        }
+      }
+      
+      # Create plot
+      p <- plot_ly() %>%
+        # Add edges
+        add_lines(x = edge_x, y = edge_y, 
+                  line = list(color = "#95a5a6", width = 1),
+                  hoverinfo = "none", showlegend = FALSE) %>%
+        # Add nodes
+        add_markers(x = node_x, y = node_y, 
+                    text = node_names,
+                    marker = list(size = 20, color = "#3498db"),
+                    hovertemplate = "%{text}<extra></extra>",
+                    showlegend = FALSE) %>%
+        # Add node labels
+        add_annotations(x = node_x * 1.15, y = node_y * 1.15, 
+                        text = node_names,
+                        showarrow = FALSE, font = list(size = 12)) %>%
+        layout(
+          title = "Correlation Network (|r| > 0.3)",
+          xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE, range = c(-1.5, 1.5)),
+          yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE, range = c(-1.5, 1.5)),
+          plot_bgcolor = "white",
+          paper_bgcolor = "white"
+        )
+      
+      p
+    }, error = function(e) {
+      plot_ly() %>% layout(title = paste("Error:", e$message))
+    })
+  })
+  
+  # Correlation statistics table
+  output$correlationStatsTable <- renderDT({
+    if (!values$data_loaded || is.null(input$correlationPairs) || length(input$correlationPairs) < 2) {
+      return(datatable(data.frame(Message = "Select at least 2 currency pairs")))
+    }
+    
+    tryCatch({
+      # Prepare data
+      corr_data <- values$fx_data %>%
+        filter(pair %in% input$correlationPairs) %>%
+        select(date, pair, Mid) %>%
+        arrange(pair, date) %>%
+        group_by(pair) %>%
+        mutate(
+          returns = if (input$returnType == "log") {
+            c(NA, diff(log(Mid)))
+          } else {
+            c(NA, diff(Mid) / head(Mid, -1))
+          }
+        ) %>%
+        ungroup() %>%
+        filter(!is.na(returns)) %>%
+        select(date, pair, returns) %>%
+        tidyr::pivot_wider(names_from = pair, values_from = returns) %>%
+        select(-date) %>%
+        na.omit()
+      
+      if (ncol(corr_data) < 2 || nrow(corr_data) < 50) {
+        return(datatable(data.frame(Message = "Insufficient overlapping data")))
+      }
+      
+      # Calculate correlation matrix
+      corr_matrix <- cor(corr_data, use = "complete.obs", method = input$correlationType)
+      
+      # Create pairwise correlation statistics
+      stats_list <- list()
+      pair_names <- colnames(corr_data)
+      
+      for (i in 1:(length(pair_names)-1)) {
+        for (j in (i+1):length(pair_names)) {
+          pair1 <- pair_names[i]
+          pair2 <- pair_names[j]
+          corr_val <- corr_matrix[i, j]
+          
+          # Additional statistics
+          x <- corr_data[[pair1]]
+          y <- corr_data[[pair2]]
+          
+          # Test correlation significance
+          cor_test <- cor.test(x, y, method = input$correlationType)
+          p_value <- cor_test$p.value
+          
+          stats_list[[length(stats_list) + 1]] <- data.frame(
+            Pair1 = pair1,
+            Pair2 = pair2,
+            Correlation = round(corr_val, 4),
+            P_Value = round(p_value, 4),
+            Significant = ifelse(p_value < 0.05, "Yes", "No"),
+            Strength = case_when(
+              abs(corr_val) >= 0.7 ~ "Strong",
+              abs(corr_val) >= 0.3 ~ "Moderate", 
+              TRUE ~ "Weak"
+            ),
+            Direction = ifelse(corr_val > 0, "Positive", "Negative")
+          )
+        }
+      }
+      
+      stats_df <- do.call(rbind, stats_list)
+      
+      datatable(stats_df, 
+                options = list(pageLength = 10, scrollX = TRUE), 
+                rownames = FALSE) %>%
+        formatStyle(columns = "Correlation",
+                    backgroundColor = styleInterval(c(-0.5, 0, 0.5), 
+                                                    c("#f8d7da", "#fff3cd", "#d4edda", "#c3e6cb"))) %>%
+        formatStyle(columns = "Significant",
+                    backgroundColor = styleEqual("Yes", "#d4edda"))
+      
+    }, error = function(e) {
+      datatable(data.frame(Error = paste("Error:", e$message)))
     })
   })
   
