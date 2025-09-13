@@ -1,0 +1,10 @@
+name: ccaf_ai_energy_dashboard
+title:
+username: aa-partner
+account: aa-partner
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15426702
+bundleId: 10894460
+url: https://aa-partner.shinyapps.io/ccaf_ai_energy_dashboard/
+version: 1
