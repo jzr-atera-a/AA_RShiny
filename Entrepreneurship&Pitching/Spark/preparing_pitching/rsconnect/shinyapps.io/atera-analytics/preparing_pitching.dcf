@@ -1,0 +1,10 @@
+name: preparing_pitching
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15473262
+bundleId: 10914007
+url: https://atera-analytics.shinyapps.io/preparing_pitching/
+version: 1

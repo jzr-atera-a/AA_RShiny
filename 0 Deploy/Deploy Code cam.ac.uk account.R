@@ -81,6 +81,8 @@ rsconnect::deployApp(
   appName = "c_resources_connectivity_bq",
   forceUpdate = TRUE
 )
+rsconnect::deployApp('C:/101_Code/R/Literature/Active_Inference_Framework/')
+rsconnect::deployApp('C:/101_Code/R/Entrepreneurship&Pitching/Spark/preparing_pitching/')
 rsconnect::deployApp('C:/101_Code/R/AteraA_Mobility/mobile_phone_apps/test_geo2')
 rsconnect::deployApp('C:/101_Code/R/MBA/CCAF/ccaf_ai_energy_dashboard')
 rsconnect::deployApp('C:/101_Code/R/Health&Nutrition/SaraiMazu_MenuDegustacion')

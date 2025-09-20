@@ -1,0 +1,10 @@
+name: active_inference_framework
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15499045
+bundleId: 10923920
+url: https://atera-analytics.shinyapps.io/active_inference_framework/
+version: 1
