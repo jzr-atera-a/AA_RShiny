@@ -1,0 +1,10 @@
+name: intelligence_types
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15588400
+bundleId: 10964327
+url: https://atera-analytics.shinyapps.io/intelligence_types/
+version: 1

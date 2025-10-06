@@ -1,0 +1,10 @@
+name: strategic_selling
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15588335
+bundleId: 10964299
+url: https://atera-analytics.shinyapps.io/strategic_selling/
+version: 1

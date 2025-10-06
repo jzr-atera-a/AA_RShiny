@@ -187,17 +187,6 @@ ui <- dashboardPage(
           background: #e74c3c;
           color: white;
         }
-        .transcription-input {
-          text-align: center;
-          font-size: 18px;
-          padding: 10px;
-          width: 100%;
-          max-width: 300px;
-        }
-        .phrase-transcription-input {
-          width: 100%;
-          font-size: 16px;
-        }
       "))
     ),
     
@@ -292,19 +281,19 @@ ui <- dashboardPage(
                   title = "Símbolos del Alfabeto Fonético Internacional", 
                   status = "primary", solidHeader = TRUE, width = 12,
                   h4("Consonantes Principales"),
-                  uiOutput("consonants_grid_ui")
+                  div(id = "consonants-grid", style = "display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;")
                 )
               ),
               
               fluidRow(
                 box(
                   title = "Vocales del IPA", status = "info", solidHeader = TRUE, width = 6,
-                  uiOutput("vowels_grid_ui")
+                  div(id = "vowels-grid", style = "display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin: 20px 0;")
                 ),
                 
                 box(
                   title = "Símbolos Especiales", status = "success", solidHeader = TRUE, width = 6,
-                  uiOutput("special_grid_ui")
+                  div(id = "special-grid", style = "display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin: 20px 0;")
                 )
               ),
               
@@ -313,10 +302,9 @@ ui <- dashboardPage(
                   title = "Explorador Interactivo", status = "warning", solidHeader = TRUE, width = 12,
                   div(style = "text-align: center; padding: 20px;",
                       h4("Haz clic en cualquier símbolo para escuchar su pronunciación"),
-                      div(id = "selected-symbol", style = "font-size: 72px; color: #667eea; margin: 20px;", 
-                          textOutput("selected_symbol_display", inline = TRUE)),
+                      div(id = "selected-symbol", style = "font-size: 72px; color: #667eea; margin: 20px;", "?"),
                       div(id = "symbol-description", style = "font-size: 18px; margin: 20px;", 
-                          textOutput("symbol_description_display")),
+                          "Selecciona un símbolo para ver su descripción"),
                       actionButton("play_sound", "", icon = icon("play"), 
                                    class = "audio-button", 
                                    style = "font-size: 24px; width: 80px; height: 80px;")
@@ -389,7 +377,7 @@ ui <- dashboardPage(
                                 "Diptongos" = "diphthongs"
                               )),
                   br(),
-                  uiOutput("pronunciation_exercise_ui"),
+                  div(id = "pronunciation-exercise", style = "text-align: center; padding: 20px;"),
                   br(),
                   actionButton("next_sound", "Siguiente Sonido", class = "exercise-button"),
                   actionButton("repeat_sound", "Repetir", class = "exercise-button")
@@ -412,13 +400,13 @@ ui <- dashboardPage(
                   div(style = "display: flex; justify-content: space-around; padding: 20px;",
                       div(style = "text-align: center;",
                           h5("Sonido 1"),
-                          div(style = "font-size: 48px; color: #667eea; margin: 10px;", textOutput("sound1_display", inline = TRUE)),
+                          div(id = "sound1-display", style = "font-size: 48px; color: #667eea; margin: 10px;", "/p/"),
                           actionButton("play_sound1", "Reproducir", class = "audio-button")
                       ),
                       div(style = "text-align: center; font-size: 24px; color: #7f8c8d; margin-top: 30px;", "VS"),
                       div(style = "text-align: center;",
                           h5("Sonido 2"),
-                          div(style = "font-size: 48px; color: #764ba2; margin: 10px;", textOutput("sound2_display", inline = TRUE)),
+                          div(id = "sound2-display", style = "font-size: 48px; color: #764ba2; margin: 10px;", "/b/"),
                           actionButton("play_sound2", "Reproducir", class = "audio-button")
                       )
                   ),
@@ -453,39 +441,31 @@ ui <- dashboardPage(
                 box(
                   title = "Centro de Ejercicios Interactivos", status = "primary", solidHeader = TRUE, width = 12,
                   h4("Selecciona el tipo de ejercicio que deseas practicar"),
-                  fluidRow(
-                    column(3,
-                           actionButton("exercise_symbol_recognition", "",
-                                        style = "width: 100%; height: 150px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 15px;",
-                                        icon = icon("eye", style = "font-size: 48px; display: block; margin: 10px auto;"),
-                                        tags$div("Reconocimiento de Símbolos", style = "font-size: 18px; font-weight: 500;"),
-                                        tags$div("Identifica símbolos del IPA", style = "font-size: 14px; opacity: 0.9;")
-                           )
-                    ),
-                    column(3,
-                           actionButton("exercise_sound_matching", "",
-                                        style = "width: 100%; height: 150px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 15px;",
-                                        icon = icon("headphones", style = "font-size: 48px; display: block; margin: 10px auto;"),
-                                        tags$div("Asociación Sonido-Símbolo", style = "font-size: 18px; font-weight: 500;"),
-                                        tags$div("Conecta sonidos con símbolos", style = "font-size: 14px; opacity: 0.9;")
-                           )
-                    ),
-                    column(3,
-                           actionButton("exercise_transcription", "",
-                                        style = "width: 100%; height: 150px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 15px;",
-                                        icon = icon("edit", style = "font-size: 48px; display: block; margin: 10px auto;"),
-                                        tags$div("Transcripción", style = "font-size: 18px; font-weight: 500;"),
-                                        tags$div("Transcribe palabras al IPA", style = "font-size: 14px; opacity: 0.9;")
-                           )
-                    ),
-                    column(3,
-                           actionButton("exercise_minimal_pairs", "",
-                                        style = "width: 100%; height: 150px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 15px;",
-                                        icon = icon("exchange-alt", style = "font-size: 48px; display: block; margin: 10px auto;"),
-                                        tags$div("Pares Mínimos", style = "font-size: 18px; font-weight: 500;"),
-                                        tags$div("Distingue sonidos similares", style = "font-size: 14px; opacity: 0.9;")
-                           )
-                    )
+                  div(style = "display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 20px 0;",
+                      
+                      div(class = "phonetic-card", onclick = "selectExercise('symbol_recognition')",
+                          div(class = "phonetic-letter", icon("eye")),
+                          div(class = "phonetic-word", "Reconocimiento de Símbolos"),
+                          div(class = "phonetic-pronunciation", "Identifica símbolos del IPA")
+                      ),
+                      
+                      div(class = "phonetic-card", onclick = "selectExercise('sound_matching')",
+                          div(class = "phonetic-letter", icon("headphones")),
+                          div(class = "phonetic-word", "Asociación Sonido-Símbolo"),
+                          div(class = "phonetic-pronunciation", "Conecta sonidos con símbolos")
+                      ),
+                      
+                      div(class = "phonetic-card", onclick = "selectExercise('transcription')",
+                          div(class = "phonetic-letter", icon("edit")),
+                          div(class = "phonetic-word", "Transcripción"),
+                          div(class = "phonetic-pronunciation", "Transcribe palabras al IPA")
+                      ),
+                      
+                      div(class = "phonetic-card", onclick = "selectExercise('minimal_pairs')",
+                          div(class = "phonetic-letter", icon("exchange-alt")),
+                          div(class = "phonetic-word", "Pares Mínimos"),
+                          div(class = "phonetic-pronunciation", "Distingue sonidos similares")
+                      )
                   )
                 )
               ),
@@ -493,29 +473,35 @@ ui <- dashboardPage(
               fluidRow(
                 box(
                   title = "Ejercicio Actual", status = "info", solidHeader = TRUE, width = 8,
-                  h4(textOutput("exercise_title")),
-                  uiOutput("exercise_content_ui"),
-                  uiOutput("exercise_controls_ui")
+                  div(id = "current-exercise",
+                      h4(id = "exercise-title", "Selecciona un ejercicio para comenzar"),
+                      div(id = "exercise-content", style = "min-height: 300px; padding: 20px; text-align: center;",
+                          p("Haz clic en una de las tarjetas superiores para comenzar a practicar.")
+                      ),
+                      div(id = "exercise-controls", style = "text-align: center; margin-top: 20px;")
+                  )
                 ),
                 
                 box(
                   title = "Estadísticas de Rendimiento", status = "success", solidHeader = TRUE, width = 4,
                   h5("Progreso Actual:"),
-                  div(style = "margin: 15px 0;",
-                      strong("Ejercicios Completados: "), 
-                      textOutput("completed_exercises", inline = TRUE)
-                  ),
-                  div(style = "margin: 15px 0;",
-                      strong("Precisión Promedio: "), 
-                      textOutput("average_accuracy", inline = TRUE)
-                  ),
-                  div(style = "margin: 15px 0;",
-                      strong("Tiempo Promedio: "), 
-                      textOutput("average_time", inline = TRUE)
-                  ),
-                  div(style = "margin: 15px 0;",
-                      strong("Nivel Actual: "), 
-                      textOutput("current_level", inline = TRUE)
+                  div(id = "stats-display",
+                      div(style = "margin: 15px 0;",
+                          strong("Ejercicios Completados: "), 
+                          span(id = "completed-exercises", "0")
+                      ),
+                      div(style = "margin: 15px 0;",
+                          strong("Precisión Promedio: "), 
+                          span(id = "average-accuracy", "0%")
+                      ),
+                      div(style = "margin: 15px 0;",
+                          strong("Tiempo Promedio: "), 
+                          span(id = "average-time", "0s")
+                      ),
+                      div(style = "margin: 15px 0;",
+                          strong("Nivel Actual: "), 
+                          span(id = "current-level", "Principiante")
+                      )
                   ),
                   br(),
                   withSpinner(plotlyOutput("progress_chart", height = "200px"))
@@ -552,32 +538,31 @@ ui <- dashboardPage(
                 box(
                   title = "Logros y Medallas", status = "primary", solidHeader = TRUE, width = 6,
                   h5("Tus Logros:"),
-                  fluidRow(
-                    column(3,
-                           div(style = "text-align: center; padding: 10px;",
-                               div(style = "font-size: 30px; color: #f39c12;", HTML("&#127941;")),
-                               p("Primer Ejercicio", style = "font-size: 12px; margin: 5px 0; color: #7f8c8d;")
-                           )
-                    ),
-                    column(3,
-                           div(style = "text-align: center; padding: 10px;",
-                               div(style = "font-size: 30px; color: #95a5a6;", HTML("&#128274;")),
-                               p("10 Ejercicios", style = "font-size: 12px; margin: 5px 0; color: #7f8c8d;")
-                           )
-                    ),
-                    column(3,
-                           div(style = "text-align: center; padding: 10px;",
-                               div(style = "font-size: 30px; color: #95a5a6;", HTML("&#128274;")),
-                               p("Precisión 90%", style = "font-size: 12px; margin: 5px 0; color: #7f8c8d;")
-                           )
-                    ),
-                    column(3,
-                           div(style = "text-align: center; padding: 10px;",
-                               div(style = "font-size: 30px; color: #95a5a6;", HTML("&#128274;")),
-                               p("Velocidad", style = "font-size: 12px; margin: 5px 0; color: #7f8c8d;")
-                           )
-                    )
+                  div(id = "achievements",
+                      div(style = "display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px;",
+                          
+                          div(style = "text-align: center; padding: 10px;",
+                              div(style = "font-size: 30px; color: #f39c12;", "🥉"),
+                              p("Primer Ejercicio", style = "font-size: 12px; margin: 5px 0; color: #7f8c8d;")
+                          ),
+                          
+                          div(style = "text-align: center; padding: 10px;",
+                              div(style = "font-size: 30px; color: #95a5a6;", "🔒"),
+                              p("10 Ejercicios", style = "font-size: 12px; margin: 5px 0; color: #7f8c8d;")
+                          ),
+                          
+                          div(style = "text-align: center; padding: 10px;",
+                              div(style = "font-size: 30px; color: #95a5a6;", "🔒"),
+                              p("Precisión 90%", style = "font-size: 12px; margin: 5px 0; color: #7f8c8d;")
+                          ),
+                          
+                          div(style = "text-align: center; padding: 10px;",
+                              div(style = "font-size: 30px; color: #95a5a6;", "🔒"),
+                              p("Velocidad", style = "font-size: 12px; margin: 5px 0; color: #7f8c8d;")
+                          )
+                      )
                   ),
+                  
                   br(),
                   div(style = "text-align: center;",
                       h6("Próximo Objetivo:"),
@@ -616,14 +601,14 @@ ui <- dashboardPage(
                 box(
                   title = "Consonantes Problemáticas", status = "info", solidHeader = TRUE, width = 6,
                   h5("Sonidos del inglés difíciles para hispanohablantes:"),
+                  
                   div(class = "comparison-table",
                       DT::dataTableOutput("consonant_differences")
                   )
                 ),
                 
                 box(
-                  title = "Sistema Vocálico", status = "success", solidHeader = TRUE,
-                  width = 6,
+                  title = "Sistema Vocálico", status = "success", solidHeader = TRUE, width = 6,
                   h5("Comparación de vocales:"),
                   div(class = "info-box",
                       p(strong("Español:"), " 5 vocales básicas /a/, /e/, /i/, /o/, /u/"),
@@ -647,22 +632,20 @@ ui <- dashboardPage(
                   h4("Practica las Diferencias"),
                   div(style = "text-align: center; padding: 20px;",
                       h5("Escucha y compara:"),
-                      div(style = "display: flex; justify-content: space-around; margin: 30px 0;",
-                          div(style = "text-align: center;",
-                              h6("Pronunciación Española"),
-                              div(style = "font-size: 36px; color: #e74c3c; margin: 15px;", 
-                                  textOutput("spanish_word", inline = TRUE)),
-                              div(style = "font-size: 24px; color: #7f8c8d;", 
-                                  textOutput("spanish_ipa", inline = TRUE)),
-                              actionButton("play_spanish", "Reproducir", class = "audio-button")
-                          ),
-                          div(style = "text-align: center;",
-                              h6("Pronunciación Inglesa"),
-                              div(style = "font-size: 36px; color: #667eea; margin: 15px;", 
-                                  textOutput("english_word", inline = TRUE)),
-                              div(style = "font-size: 24px; color: #7f8c8d;", 
-                                  textOutput("english_ipa", inline = TRUE)),
-                              actionButton("play_english", "Reproducir", class = "audio-button")
+                      div(id = "comparison-exercise",
+                          div(style = "display: flex; justify-content: space-around; margin: 30px 0;",
+                              div(style = "text-align: center;",
+                                  h6("Pronunciación Española"),
+                                  div(id = "spanish-word", style = "font-size: 36px; color: #e74c3c; margin: 15px;", "casa"),
+                                  div(id = "spanish-ipa", style = "font-size: 24px; color: #7f8c8d;", "[ˈka.sa]"),
+                                  actionButton("play_spanish", "🔊", class = "audio-button")
+                              ),
+                              div(style = "text-align: center;",
+                                  h6("Pronunciación Inglesa"),
+                                  div(id = "english-word", style = "font-size: 36px; color: #667eea; margin: 15px;", "house"),
+                                  div(id = "english-ipa", style = "font-size: 24px; color: #7f8c8d;", "[haʊs]"),
+                                  actionButton("play_english", "🔊", class = "audio-button")
+                              )
                           )
                       ),
                       
@@ -747,49 +730,40 @@ ui <- dashboardPage(
                   div(style = "text-align: center; padding: 20px;",
                       p("Pronuncia las siguientes palabras y compara con el modelo nativo:"),
                       
-                      fluidRow(
-                        column(3,
-                               div(style = "border: 2px solid #667eea; border-radius: 10px; padding: 15px; text-align: center;",
-                                   h6("ship [ʃɪp]"),
-                                   actionButton("record_ship", "Grabar", icon = icon("microphone"), 
-                                                class = "audio-button", style = "margin: 5px;"),
-                                   actionButton("play_ship_model", "Modelo", icon = icon("volume-up"), 
-                                                class = "audio-button", style = "margin: 5px;")
-                               )
-                        ),
-                        column(3,
-                               div(style = "border: 2px solid #667eea; border-radius: 10px; padding: 15px; text-align: center;",
-                                   h6("think [θɪŋk]"),
-                                   actionButton("record_think", "Grabar", icon = icon("microphone"), 
-                                                class = "audio-button", style = "margin: 5px;"),
-                                   actionButton("play_think_model", "Modelo", icon = icon("volume-up"), 
-                                                class = "audio-button", style = "margin: 5px;")
-                               )
-                        ),
-                        column(3,
-                               div(style = "border: 2px solid #667eea; border-radius: 10px; padding: 15px; text-align: center;",
-                                   h6("very [ˈveri]"),
-                                   actionButton("record_very", "Grabar", icon = icon("microphone"), 
-                                                class = "audio-button", style = "margin: 5px;"),
-                                   actionButton("play_very_model", "Modelo", icon = icon("volume-up"), 
-                                                class = "audio-button", style = "margin: 5px;")
-                               )
-                        ),
-                        column(3,
-                               div(style = "border: 2px solid #667eea; border-radius: 10px; padding: 15px; text-align: center;",
-                                   h6("book [bʊk]"),
-                                   actionButton("record_book", "Grabar", icon = icon("microphone"), 
-                                                class = "audio-button", style = "margin: 5px;"),
-                                   actionButton("play_book_model", "Modelo", icon = icon("volume-up"), 
-                                                class = "audio-button", style = "margin: 5px;")
-                               )
-                        )
+                      div(id = "diagnostic-words", style = "display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;",
+                          
+                          div(style = "border: 2px solid #667eea; border-radius: 10px; padding: 15px; text-align: center;",
+                              h6("ship [ʃɪp]"),
+                              actionButton("record_ship", "🎤 Grabar", class = "audio-button", style = "margin: 5px;"),
+                              actionButton("play_ship_model", "🔊 Modelo", class = "audio-button", style = "margin: 5px;")
+                          ),
+                          
+                          div(style = "border: 2px solid #667eea; border-radius: 10px; padding: 15px; text-align: center;",
+                              h6("think [θɪŋk]"),
+                              actionButton("record_think", "🎤 Grabar", class = "audio-button", style = "margin: 5px;"),
+                              actionButton("play_think_model", "🔊 Modelo", class = "audio-button", style = "margin: 5px;")
+                          ),
+                          
+                          div(style = "border: 2px solid #667eea; border-radius: 10px; padding: 15px; text-align: center;",
+                              h6("very [ˈveri]"),
+                              actionButton("record_very", "🎤 Grabar", class = "audio-button", style = "margin: 5px;"),
+                              actionButton("play_very_model", "🔊 Modelo", class = "audio-button", style = "margin: 5px;")
+                          ),
+                          
+                          div(style = "border: 2px solid #667eea; border-radius: 10px; padding: 15px; text-align: center;",
+                              h6("book [bʊk]"),
+                              actionButton("record_book", "🎤 Grabar", class = "audio-button", style = "margin: 5px;"),
+                              actionButton("play_book_model", "🔊 Modelo", class = "audio-button", style = "margin: 5px;")
+                          )
                       ),
                       
                       br(),
                       actionButton("analyze_pronunciation", "Analizar Pronunciación", class = "exercise-button"),
                       
-                      uiOutput("diagnosis_results_ui")
+                      div(id = "diagnosis-results", style = "margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; display: none;",
+                          h5("Resultados del Diagnóstico:"),
+                          div(id = "diagnosis-content")
+                      )
                   )
                 )
               ),
@@ -825,27 +799,22 @@ ui <- dashboardPage(
                   title = "Transcripción de Palabras", status = "info", solidHeader = TRUE, width = 6,
                   h5("Transcribe la siguiente palabra:"),
                   div(style = "text-align: center; padding: 30px;",
-                      div(style = "font-size: 48px; color: #667eea; margin: 20px;", 
-                          textOutput("word_to_transcribe", inline = TRUE)),
-                      actionButton("play_word_audio", "Escuchar", icon = icon("volume-up"), 
-                                   class = "audio-button", style = "margin: 10px;"),
+                      div(id = "word-to-transcribe", style = "font-size: 48px; color: #667eea; margin: 20px;", "beautiful"),
+                      actionButton("play-word-audio", "🔊 Escuchar", class = "audio-button", style = "margin: 10px;"),
                       br(), br(),
                       
                       div(style = "font-size: 18px; margin: 20px;",
                           "Escribe la transcripción fonética:"
                       ),
-                      div(style = "text-align: center;",
-                          textInput("transcription_input", label = NULL, 
-                                    placeholder = "Ejemplo: /ˈbjuːtɪfəl/", 
-                                    width = "300px")
-                      ),
+                      textInput("transcription-input", "", placeholder = "Ejemplo: /ˈbjuːtɪfəl/", 
+                                width = "300px", style = "text-align: center; font-size: 18px;"),
                       br(),
-                      actionButton("check_transcription", "Verificar Transcripción", class = "exercise-button"),
-                      actionButton("show_hint", "Pista", class = "exercise-button"),
-                      actionButton("next_word", "Siguiente Palabra", class = "exercise-button")
+                      actionButton("check-transcription", "Verificar Transcripción", class = "exercise-button"),
+                      actionButton("show-hint", "Pista", class = "exercise-button"),
+                      actionButton("next-word", "Siguiente Palabra", class = "exercise-button")
                   ),
                   
-                  uiOutput("transcription_feedback_ui")
+                  div(id = "transcription-feedback", style = "margin-top: 20px; padding: 15px; border-radius: 10px; display: none;")
                 ),
                 
                 box(
@@ -868,14 +837,14 @@ ui <- dashboardPage(
                       ),
                       
                       br(),
-                      div(
-                        h6(textOutput("stress_exercise_word", inline = TRUE)),
-                        p("¿Dónde va el acento principal?"),
-                        div(style = "text-align: center;",
-                            actionButton("stress_1", "PHO-to-graph", class = "exercise-button", style = "margin: 5px;"),
-                            actionButton("stress_2", "pho-TO-graph", class = "exercise-button", style = "margin: 5px;"),
-                            actionButton("stress_3", "pho-to-GRAPH", class = "exercise-button", style = "margin: 5px;")
-                        )
+                      div(id = "stress-exercise",
+                          h6("Palabra actual: photograph"),
+                          p("¿Dónde va el acento principal?"),
+                          div(style = "text-align: center;",
+                              actionButton("stress-1", "PHO-to-graph", class = "exercise-button", style = "margin: 5px;"),
+                              actionButton("stress-2", "pho-TO-graph", class = "exercise-button", style = "margin: 5px;"),
+                              actionButton("stress-3", "pho-to-GRAPH", class = "exercise-button", style = "margin: 5px;")
+                          )
                       )
                   )
                 )
@@ -887,36 +856,34 @@ ui <- dashboardPage(
                   h4("Transcripción Conectada"),
                   p("Transcribe las siguientes frases incluyendo fenómenos de habla conectada:"),
                   
-                  div(
-                    div(style = "background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;",
-                        h5("Frase actual:"),
-                        div(style = "font-size: 24px; text-align: center; margin: 20px;",
-                            textOutput("current_phrase", inline = TRUE)),
-                        actionButton("play_phrase", "Escuchar Normal", icon = icon("volume-up"), 
-                                     class = "audio-button"),
-                        actionButton("play_phrase_slow", "Escuchar Lento", icon = icon("volume-down"), 
-                                     class = "audio-button")
-                    ),
-                    
-                    div(style = "margin: 20px 0;",
-                        h6("Fenómenos de habla conectada a considerar:"),
-                        tags$ul(
-                          tags$li("Elisión: omisión de sonidos"),
-                          tags$li("Asimilación: cambio de sonidos"),
-                          tags$li("Enlace: conexión entre palabras"),
-                          tags$li("Reducción vocálica: schwa en sílabas átonas")
-                        )
-                    ),
-                    
-                    textAreaInput("phrase_transcription_input", "Tu transcripción:",
-                                  placeholder = "Ejemplo: /wʌt də ju wɑnt/",
-                                  width = "100%", height = "80px"),
-                    
-                    div(style = "text-align: center;",
-                        actionButton("check_phrase", "Verificar Frase", class = "exercise-button"),
-                        actionButton("show_phrase_answer", "Ver Respuesta", class = "exercise-button"),
-                        actionButton("next_phrase", "Siguiente Frase", class = "exercise-button")
-                    )
+                  div(id = "phrase-transcription",
+                      div(style = "background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;",
+                          h5("Frase actual:"),
+                          div(id = "current-phrase", style = "font-size: 24px; text-align: center; margin: 20px;",
+                              "What do you want?"),
+                          actionButton("play-phrase", "🔊 Escuchar Normal", class = "audio-button"),
+                          actionButton("play-phrase-slow", "🔊 Escuchar Lento", class = "audio-button")
+                      ),
+                      
+                      div(style = "margin: 20px 0;",
+                          h6("Fenómenos de habla conectada a considerar:"),
+                          tags$ul(
+                            tags$li("Elisión: omisión de sonidos"),
+                            tags$li("Asimilación: cambio de sonidos"),
+                            tags$li("Enlace: conexión entre palabras"),
+                            tags$li("Reducción vocálica: schwa en sílabas átonas")
+                          )
+                      ),
+                      
+                      textAreaInput("phrase-transcription-input", "Tu transcripción:",
+                                    placeholder = "Ejemplo: /wʌt də ju wɑnt/",
+                                    width = "100%", height = "80px"),
+                      
+                      div(style = "text-align: center;",
+                          actionButton("check-phrase", "Verificar Frase", class = "exercise-button"),
+                          actionButton("show-phrase-answer", "Ver Respuesta", class = "exercise-button"),
+                          actionButton("next-phrase", "Siguiente Frase", class = "exercise-button")
+                      )
                   )
                 ),
                 
@@ -928,7 +895,7 @@ ui <- dashboardPage(
                   p("Este espectrograma muestra las características acústicas de la pronunciación, 
               incluyendo formantes vocálicos y transiciones consonánticas."),
                   br(),
-                  actionButton("analyze_spectrogram", "Analizar", class = "exercise-button")
+                  actionButton("analyze-spectrogram", "Analizar", class = "exercise-button")
                 )
               ),
               
@@ -940,29 +907,27 @@ ui <- dashboardPage(
                       p("Escucha el audio y escribe lo que oyes en transcripción fonética:"),
                       
                       div(style = "margin: 20px 0;",
-                          actionButton("play_dictation", "Reproducir Dictado", 
-                                       icon = icon("volume-up"),
-                                       class = "audio-button", 
+                          actionButton("play-dictation", "🔊 Reproducir Dictado", class = "audio-button", 
                                        style = "font-size: 18px; padding: 15px 25px;"),
-                          actionButton("play_dictation_slow", "Versión Lenta", 
-                                       icon = icon("volume-down"),
-                                       class = "audio-button")
+                          actionButton("play-dictation-slow", "🔊 Versión Lenta", class = "audio-button")
                       ),
                       
-                      sliderInput("playback_speed", "Velocidad de reproducción:",
-                                  min = 0.5, max = 1.5, value = 1.0, step = 0.1, width = "300px"),
+                      div(id = "dictation-controls",
+                          sliderInput("playback-speed", "Velocidad de reproducción:",
+                                      min = 0.5, max = 1.5, value = 1.0, step = 0.1, width = "300px"),
+                          
+                          numericInput("repetitions", "Número de repeticiones:",
+                                       value = 1, min = 1, max = 5, width = "200px")
+                      ),
                       
-                      numericInput("repetitions", "Número de repeticiones:",
-                                   value = 1, min = 1, max = 5, width = "200px"),
-                      
-                      textAreaInput("dictation_response", "Tu transcripción:",
+                      textAreaInput("dictation-response", "Tu transcripción:",
                                     placeholder = "Escribe aquí la transcripción fonética...",
                                     width = "100%", height = "100px"),
                       
                       br(),
-                      actionButton("submit_dictation", "Enviar Respuesta", class = "exercise-button"),
+                      actionButton("submit-dictation", "Enviar Respuesta", class = "exercise-button"),
                       
-                      uiOutput("dictation_results_ui")
+                      div(id = "dictation-results", style = "margin-top: 20px; display: none;")
                   )
                 ),
                 
@@ -973,7 +938,7 @@ ui <- dashboardPage(
                   div(class = "info-box",
                       h6("Configuración del ejercicio:"),
                       
-                      selectInput("exercise_type_generator", "Tipo de ejercicio:",
+                      selectInput("exercise-type", "Tipo de ejercicio:",
                                   choices = list(
                                     "Transcripción de palabras" = "word_transcription",
                                     "Transcripción de frases" = "phrase_transcription",
@@ -982,7 +947,7 @@ ui <- dashboardPage(
                                     "Análisis de errores" = "error_analysis"
                                   )),
                       
-                      selectInput("difficulty_generator", "Nivel de dificultad:",
+                      selectInput("difficulty", "Nivel de dificultad:",
                                   choices = list(
                                     "Principiante" = "beginner",
                                     "Intermedio" = "intermediate",
@@ -990,7 +955,7 @@ ui <- dashboardPage(
                                     "Experto" = "expert"
                                   )),
                       
-                      checkboxGroupInput("phoneme_focus", "Fonemas a practicar:",
+                      checkboxGroupInput("phoneme-focus", "Fonemas a practicar:",
                                          choices = list(
                                            "Vocales problemáticas" = "problem_vowels",
                                            "Consonantes fricativas" = "fricatives",
@@ -998,13 +963,13 @@ ui <- dashboardPage(
                                            "Sonidos inexistentes en español" = "spanish_absent"
                                          )),
                       
-                      sliderInput("exercise_length", "Número de elementos:",
+                      sliderInput("exercise-length", "Número de elementos:",
                                   min = 5, max = 50, value = 15, step = 5),
                       
                       br(),
-                      actionButton("generate_exercise", "Generar Ejercicio", class = "exercise-button"),
+                      actionButton("generate-exercise", "Generar Ejercicio", class = "exercise-button"),
                       
-                      uiOutput("custom_exercise_ui")
+                      div(id = "custom-exercise", style = "margin-top: 20px; display: none;")
                   )
                 )
               ),
@@ -1038,41 +1003,31 @@ ui <- dashboardPage(
               fluidRow(
                 box(
                   title = "Tipos de Evaluación", status = "info", solidHeader = TRUE, width = 8,
-                  fluidRow(
-                    column(6,
-                           actionButton("assessment_quick_test", "",
-                                        style = "width: 100%; height: 150px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 15px; margin-bottom: 10px;",
-                                        icon = icon("clock", style = "font-size: 48px; display: block; margin: 10px auto;"),
-                                        tags$div("Evaluación Rápida", style = "font-size: 18px; font-weight: 500;"),
-                                        tags$div("10 preguntas - 5 minutos", style = "font-size: 14px; opacity: 0.9;")
-                           )
-                    ),
-                    column(6,
-                           actionButton("assessment_comprehensive", "",
-                                        style = "width: 100%; height: 150px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 15px; margin-bottom: 10px;",
-                                        icon = icon("clipboard-list", style = "font-size: 48px; display: block; margin: 10px auto;"),
-                                        tags$div("Evaluación Completa", style = "font-size: 18px; font-weight: 500;"),
-                                        tags$div("50 preguntas - 20 minutos", style = "font-size: 14px; opacity: 0.9;")
-                           )
-                    )
-                  ),
-                  fluidRow(
-                    column(6,
-                           actionButton("assessment_listening", "",
-                                        style = "width: 100%; height: 150px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 15px;",
-                                        icon = icon("headphones", style = "font-size: 48px; display: block; margin: 10px auto;"),
-                                        tags$div("Evaluación Auditiva", style = "font-size: 18px; font-weight: 500;"),
-                                        tags$div("Solo reconocimiento por audio", style = "font-size: 14px; opacity: 0.9;")
-                           )
-                    ),
-                    column(6,
-                           actionButton("assessment_transcription", "",
-                                        style = "width: 100%; height: 150px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 15px;",
-                                        icon = icon("pen", style = "font-size: 48px; display: block; margin: 10px auto;"),
-                                        tags$div("Evaluación de Transcripción", style = "font-size: 18px; font-weight: 500;"),
-                                        tags$div("Transcripción completa", style = "font-size: 14px; opacity: 0.9;")
-                           )
-                    )
+                  div(style = "display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 20px 0;",
+                      
+                      div(class = "phonetic-card", onclick = "startAssessment('quick_test')",
+                          div(class = "phonetic-letter", icon("clock")),
+                          div(class = "phonetic-word", "Evaluación Rápida"),
+                          div(class = "phonetic-pronunciation", "10 preguntas - 5 minutos")
+                      ),
+                      
+                      div(class = "phonetic-card", onclick = "startAssessment('comprehensive')",
+                          div(class = "phonetic-letter", icon("clipboard-list")),
+                          div(class = "phonetic-word", "Evaluación Completa"),
+                          div(class = "phonetic-pronunciation", "50 preguntas - 20 minutos")
+                      ),
+                      
+                      div(class = "phonetic-card", onclick = "startAssessment('listening')",
+                          div(class = "phonetic-letter", icon("headphones")),
+                          div(class = "phonetic-word", "Evaluación Auditiva"),
+                          div(class = "phonetic-pronunciation", "Solo reconocimiento por audio")
+                      ),
+                      
+                      div(class = "phonetic-card", onclick = "startAssessment('transcription')",
+                          div(class = "phonetic-letter", icon("pen")),
+                          div(class = "phonetic-word", "Evaluación de Transcripción"),
+                          div(class = "phonetic-pronunciation", "Transcripción completa")
+                      )
                   )
                 ),
                 
@@ -1081,18 +1036,20 @@ ui <- dashboardPage(
                   h5("Tus Resultados Anteriores:"),
                   withSpinner(plotlyOutput("assessment_history", height = "250px")),
                   br(),
-                  h6("Mejores Puntuaciones:"),
-                  div(style = "margin: 10px 0;",
-                      strong("Evaluación Rápida: "), textOutput("best_quick", inline = TRUE)
-                  ),
-                  div(style = "margin: 10px 0;",
-                      strong("Evaluación Completa: "), textOutput("best_comprehensive", inline = TRUE)
-                  ),
-                  div(style = "margin: 10px 0;",
-                      strong("Evaluación Auditiva: "), textOutput("best_listening", inline = TRUE)
-                  ),
-                  div(style = "margin: 10px 0;",
-                      strong("Transcripción: "), textOutput("best_transcription", inline = TRUE)
+                  div(id = "best-scores",
+                      h6("Mejores Puntuaciones:"),
+                      div(style = "margin: 10px 0;",
+                          strong("Evaluación Rápida: "), span(id = "best-quick", "No realizada")
+                      ),
+                      div(style = "margin: 10px 0;",
+                          strong("Evaluación Completa: "), span(id = "best-comprehensive", "No realizada")
+                      ),
+                      div(style = "margin: 10px 0;",
+                          strong("Evaluación Auditiva: "), span(id = "best-listening", "No realizada")
+                      ),
+                      div(style = "margin: 10px 0;",
+                          strong("Transcripción: "), span(id = "best-transcription", "No realizada")
+                      )
                   )
                 )
               ),
@@ -1100,7 +1057,43 @@ ui <- dashboardPage(
               fluidRow(
                 box(
                   title = "Evaluación Actual", status = "warning", solidHeader = TRUE, width = 12,
-                  uiOutput("assessment_container_ui")
+                  div(id = "assessment-container",
+                      div(id = "assessment-intro", style = "text-align: center; padding: 40px;",
+                          h4("Selecciona un tipo de evaluación para comenzar"),
+                          p("Las evaluaciones te ayudarán a identificar áreas de fortaleza y oportunidades de mejora.")
+                      ),
+                      
+                      div(id = "assessment-content", style = "display: none;",
+                          div(id = "assessment-header", style = "background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 20px;",
+                              div(style = "display: flex; justify-content: space-between; align-items: center;",
+                                  h5(id = "assessment-title", "Evaluación en Progreso"),
+                                  div(
+                                    span("Pregunta "), span(id = "current-question", "1"), span(" de "), span(id = "total-questions", "10"),
+                                    span(" | Tiempo: "), span(id = "time-remaining", "5:00")
+                                  )
+                              ),
+                              div(class = "progress", style = "height: 10px; margin-top: 10px;",
+                                  div(id = "assessment-progress", class = "progress-bar", style = "width: 10%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);")
+                              )
+                          ),
+                          
+                          div(id = "question-container", style = "min-height: 300px; padding: 20px;",
+                              div(id = "question-content")
+                          ),
+                          
+                          div(id = "assessment-controls", style = "text-align: center; margin-top: 20px;",
+                              actionButton("prev-question", "Anterior", class = "exercise-button", style = "margin: 5px;"),
+                              actionButton("next-question", "Siguiente", class = "exercise-button", style = "margin: 5px;"),
+                              actionButton("finish-assessment", "Finalizar Evaluación", class = "exercise-button", style = "margin: 5px; background: #e74c3c;")
+                          )
+                      ),
+                      
+                      div(id = "assessment-results", style = "display: none;",
+                          h4("Resultados de la Evaluación"),
+                          div(id = "results-summary", style = "text-align: center; padding: 30px;"),
+                          div(id = "detailed-results")
+                      )
+                  )
                 )
               ),
               
@@ -1115,21 +1108,25 @@ ui <- dashboardPage(
                 box(
                   title = "Recomendaciones Personalizadas", status = "info", solidHeader = TRUE, width = 6,
                   h5("Basado en tus Resultados:"),
-                  div(class = "info-box",
-                      h6("Áreas a Reforzar:"),
-                      uiOutput("weak_areas_ui"),
-                      
-                      br(),
-                      h6("Ejercicios Sugeridos:"),
-                      uiOutput("suggested_exercises_ui"),
-                      
-                      br(),
-                      h6("Tiempo de Estudio Recomendado:"),
-                      uiOutput("study_time_ui")
+                  div(id = "recommendations",
+                      div(class = "info-box",
+                          h6("Áreas a Reforzar:"),
+                          div(id = "weak-areas", style = "margin: 15px 0;",
+                              p("Completa una evaluación para recibir recomendaciones personalizadas.")
+                          ),
+                          
+                          br(),
+                          h6("Ejercicios Sugeridos:"),
+                          div(id = "suggested-exercises", style = "margin: 15px 0;"),
+                          
+                          br(),
+                          h6("Tiempo de Estudio Recomendado:"),
+                          div(id = "study-time", style = "margin: 15px 0;")
+                      )
                   ),
                   
                   br(),
-                  actionButton("create_study_plan", "Crear Plan de Estudio", class = "exercise-button")
+                  actionButton("create-study-plan", "Crear Plan de Estudio", class = "exercise-button")
                 )
               ),
               
@@ -1140,39 +1137,39 @@ ui <- dashboardPage(
                   div(style = "text-align: center; padding: 20px;",
                       div(class = "info-box",
                           h5("Requisitos para la Certificación:"),
-                          fluidRow(
-                            column(3,
-                                   div(style = "text-align: center; padding: 15px;",
-                                       div(style = "font-size: 40px; color: #2ecc71;", HTML("&#10003;")),
-                                       h6("Evaluación Completa"),
-                                       p("Puntuación ≥ 80%")
-                                   )
-                            ),
-                            column(3,
-                                   div(style = "text-align: center; padding: 15px;",
-                                       div(style = "font-size: 40px; color: #95a5a6;", HTML("&#9675;")),
-                                       h6("Evaluación Auditiva"),
-                                       p("Puntuación ≥ 85%")
-                                   )
-                            ),
-                            column(3,
-                                   div(style = "text-align: center; padding: 15px;",
-                                       div(style = "font-size: 40px; color: #95a5a6;", HTML("&#9675;")),
-                                       h6("Transcripción"),
-                                       p("Puntuación ≥ 75%")
-                                   )
-                            ),
-                            column(3,
-                                   div(style = "text-align: center; padding: 15px;",
-                                       div(style = "font-size: 40px; color: #95a5a6;", HTML("&#9675;")),
-                                       h6("Ejercicios Completados"),
-                                       p("Mínimo 25 ejercicios")
-                                   )
-                            )
+                          div(style = "display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0;",
+                              
+                              div(style = "text-align: center; padding: 15px;",
+                                  div(style = "font-size: 40px; color: #2ecc71;", "✓"),
+                                  h6("Evaluación Completa"),
+                                  p("Puntuación ≥ 80%")
+                              ),
+                              
+                              div(style = "text-align: center; padding: 15px;",
+                                  div(id = "listening-check", style = "font-size: 40px; color: #95a5a6;", "○"),
+                                  h6("Evaluación Auditiva"),
+                                  p("Puntuación ≥ 85%")
+                              ),
+                              
+                              div(style = "text-align: center; padding: 15px;",
+                                  div(id = "transcription-check", style = "font-size: 40px; color: #95a5a6;", "○"),
+                                  h6("Transcripción"),
+                                  p("Puntuación ≥ 75%")
+                              ),
+                              
+                              div(style = "text-align: center; padding: 15px;",
+                                  div(id = "exercises-check", style = "font-size: 40px; color: #95a5a6;", "○"),
+                                  h6("Ejercicios Completados"),
+                                  p("Mínimo 25 ejercicios")
+                              )
                           ),
                           
                           br(),
-                          uiOutput("certification_status_ui")
+                          div(id = "certification-status",
+                              p("Completa todos los requisitos para desbloquear tu certificado."),
+                              actionButton("generate-certificate", "Generar Certificado", 
+                                           class = "exercise-button", style = "display: none;")
+                          )
                       )
                   )
                 )
@@ -1219,7 +1216,7 @@ ui <- dashboardPage(
                       ),
                       
                       br(),
-                      selectInput("audio_category", "Categoría de Audio:",
+                      selectInput("audio-category", "Categoría de Audio:",
                                   choices = list(
                                     "Consonantes Oclusivas" = "stops",
                                     "Consonantes Fricativas" = "fricatives",
@@ -1230,10 +1227,10 @@ ui <- dashboardPage(
                                     "Diptongos" = "diphthongs")),
                       
                       br(),
-                      uiOutput("audio_list_ui"),
+                      div(id = "audio-list", style = "max-height: 300px; overflow-y: auto;"),
                       
                       br(),
-                      actionButton("download_audio_pack", "Descargar Pack de Audio", class = "exercise-button")
+                      actionButton("download-audio-pack", "Descargar Pack de Audio", class = "exercise-button")
                   )
                 ),
                 
@@ -1244,24 +1241,17 @@ ui <- dashboardPage(
                   div(class = "info-box",
                       h6("Tabla del IPA Interactiva:"),
                       div(style = "text-align: center; margin: 20px 0;",
-                          div(style = "width: 100%; max-width: 400px; height: 300px; margin: 0 auto; background: #f8f9fa; border: 1px solid #ddd; border-radius: 10px; display: flex; align-items: center; justify-content: center;",
-                              p("Tabla IPA Interactiva", style = "color: #7f8c8d;")
-                          ),
+                          img(src = "ipa_chart_placeholder.png", alt = "Tabla IPA", 
+                              style = "width: 100%; max-width: 400px; border: 1px solid #ddd; border-radius: 10px;"),
                           br(), br(),
-                          actionButton("open_interactive_chart", "Abrir Tabla Interactiva", class = "exercise-button")
+                          actionButton("open-interactive-chart", "Abrir Tabla Interactiva", class = "exercise-button")
                       ),
                       
                       h6("Otras Herramientas:"),
                       div(style = "margin: 15px 0;",
-                          actionButton("sound_recorder", "Grabadora de Sonidos", 
-                                       icon = icon("microphone"),
-                                       class = "exercise-button", style = "margin: 5px;"),
-                          actionButton("spectrogram_analyzer", "Analizador Espectral", 
-                                       icon = icon("chart-bar"),
-                                       class = "exercise-button", style = "margin: 5px;"),
-                          actionButton("pronunciation_trainer", "Entrenador de Pronunciación", 
-                                       icon = icon("bullseye"),
-                                       class = "exercise-button", style = "margin: 5px;")
+                          actionButton("sound-recorder", "🎤 Grabadora de Sonidos", class = "exercise-button", style = "margin: 5px;"),
+                          actionButton("spectrogram-analyzer", "📊 Analizador Espectral", class = "exercise-button", style = "margin: 5px;"),
+                          actionButton("pronunciation-trainer", "🎯 Entrenador de Pronunciación", class = "exercise-button", style = "margin: 5px;")
                       )
                   )
                 )
@@ -1284,7 +1274,7 @@ ui <- dashboardPage(
                                   ),
                                   div(
                                     span(class = "difficulty-badge difficulty-intermediate", "PDF"),
-                                    actionButton("download_manual", "Descargar", class = "exercise-button", style = "margin-left: 10px;")
+                                    actionButton("download-manual", "Descargar", class = "exercise-button", style = "margin-left: 10px;")
                                   )
                               )
                           ),
@@ -1297,7 +1287,7 @@ ui <- dashboardPage(
                                   ),
                                   div(
                                     span(class = "difficulty-badge difficulty-basic", "PDF"),
-                                    actionButton("download_exercises_doc", "Descargar", class = "exercise-button", style = "margin-left: 10px;")
+                                    actionButton("download-exercises", "Descargar", class = "exercise-button", style = "margin-left: 10px;")
                                   )
                               )
                           ),
@@ -1310,7 +1300,7 @@ ui <- dashboardPage(
                                   ),
                                   div(
                                     span(class = "difficulty-badge difficulty-advanced", "PDF"),
-                                    actionButton("download_contrastive", "Descargar", class = "exercise-button", style = "margin-left: 10px;")
+                                    actionButton("download-contrastive", "Descargar", class = "exercise-button", style = "margin-left: 10px;")
                                   )
                               )
                           ),
@@ -1323,7 +1313,7 @@ ui <- dashboardPage(
                                   ),
                                   div(
                                     span(class = "difficulty-badge difficulty-basic", "PDF"),
-                                    actionButton("download_glossary", "Descargar", class = "exercise-button", style = "margin-left: 10px;")
+                                    actionButton("download-glossary", "Descargar", class = "exercise-button", style = "margin-left: 10px;")
                                   )
                               )
                           )
@@ -1341,33 +1331,33 @@ ui <- dashboardPage(
                       div(style = "margin: 15px 0;",
                           strong("International Phonetic Association"),
                           br(),
-                          tags$a("internationalphoneticassociation.org", 
-                                 href = "https://www.internationalphoneticassociation.org", 
-                                 target = "_blank", style = "color: #667eea;")
+                          a("https://www.internationalphoneticassociation.org", 
+                            href = "https://www.internationalphoneticassociation.org", 
+                            target = "_blank", style = "color: #667eea;")
                       ),
                       
                       div(style = "margin: 15px 0;",
                           strong("Sounds of Speech (University of Iowa)"),
                           br(),
-                          tags$a("soundsofspeech.uiowa.edu", 
-                                 href = "https://soundsofspeech.uiowa.edu", 
-                                 target = "_blank", style = "color: #667eea;")
+                          a("https://soundsofspeech.uiowa.edu", 
+                            href = "https://soundsofspeech.uiowa.edu", 
+                            target = "_blank", style = "color: #667eea;")
                       ),
                       
                       div(style = "margin: 15px 0;",
                           strong("Speech Accent Archive"),
                           br(),
-                          tags$a("accent.gmu.edu", 
-                                 href = "https://accent.gmu.edu", 
-                                 target = "_blank", style = "color: #667eea;")
+                          a("https://accent.gmu.edu", 
+                            href = "https://accent.gmu.edu", 
+                            target = "_blank", style = "color: #667eea;")
                       ),
                       
                       div(style = "margin: 15px 0;",
                           strong("Phonetic Transcription Tools"),
                           br(),
-                          tags$a("tophonetics.com", 
-                                 href = "https://tophonetics.com", 
-                                 target = "_blank", style = "color: #667eea;")
+                          a("https://tophonetics.com", 
+                            href = "https://tophonetics.com", 
+                            target = "_blank", style = "color: #667eea;")
                       ),
                       
                       br(),
@@ -1390,45 +1380,45 @@ ui <- dashboardPage(
                   div(class = "info-box",
                       h6("Serie de Videos: 'Fonética para Hispanohablantes'"),
                       
-                      div(
-                        div(style = "border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin: 10px 0;",
-                            div(style = "display: flex; align-items: center;",
-                                div(style = "width: 80px; height: 60px; background: #667eea; border-radius: 5px; margin-right: 15px; display: flex; align-items: center; justify-content: center; color: white;",
-                                    icon("play", style = "font-size: 24px;")
-                                ),
-                                div(
-                                  h6("Introducción al Alfabeto Fonético", style = "margin: 0;"),
-                                  p("Duración: 15:30 | Nivel: Principiante", style = "margin: 5px 0; color: #7f8c8d;"),
-                                  actionButton("play_video_1", "Ver Video", class = "exercise-button", style = "padding: 5px 15px; font-size: 12px;")
-                                )
-                            )
-                        ),
-                        
-                        div(style = "border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin: 10px 0;",
-                            div(style = "display: flex; align-items: center;",
-                                div(style = "width: 80px; height: 60px; background: #667eea; border-radius: 5px; margin-right: 15px; display: flex; align-items: center; justify-content: center; color: white;",
-                                    icon("play", style = "font-size: 24px;")
-                                ),
-                                div(
-                                  h6("Consonantes Problemáticas para Hispanohablantes", style = "margin: 0;"),
-                                  p("Duración: 22:45 | Nivel: Intermedio", style = "margin: 5px 0; color: #7f8c8d;"),
-                                  actionButton("play_video_2", "Ver Video", class = "exercise-button", style = "padding: 5px 15px; font-size: 12px;")
-                                )
-                            )
-                        ),
-                        
-                        div(style = "border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin: 10px 0;",
-                            div(style = "display: flex; align-items: center;",
-                                div(style = "width: 80px; height: 60px; background: #667eea; border-radius: 5px; margin-right: 15px; display: flex; align-items: center; justify-content: center; color: white;",
-                                    icon("play", style = "font-size: 24px;")
-                                ),
-                                div(
-                                  h6("Transcripción Avanzada y Suprasegmentales", style = "margin: 0;"),
-                                  p("Duración: 28:15 | Nivel: Avanzado", style = "margin: 5px 0; color: #7f8c8d;"),
-                                  actionButton("play_video_3", "Ver Video", class = "exercise-button", style = "padding: 5px 15px; font-size: 12px;")
-                                )
-                            )
-                        )
+                      div(id = "video-list",
+                          div(style = "border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin: 10px 0;",
+                              div(style = "display: flex; align-items: center;",
+                                  div(style = "width: 80px; height: 60px; background: #667eea; border-radius: 5px; margin-right: 15px; display: flex; align-items: center; justify-content: center; color: white;",
+                                      icon("play", style = "font-size: 24px;")
+                                  ),
+                                  div(
+                                    h6("Introducción al Alfabeto Fonético", style = "margin: 0;"),
+                                    p("Duración: 15:30 | Nivel: Principiante", style = "margin: 5px 0; color: #7f8c8d;"),
+                                    actionButton("play-video-1", "Ver Video", class = "exercise-button", style = "padding: 5px 15px; font-size: 12px;")
+                                  )
+                              )
+                          ),
+                          
+                          div(style = "border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin: 10px 0;",
+                              div(style = "display: flex; align-items: center;",
+                                  div(style = "width: 80px; height: 60px; background: #667eea; border-radius: 5px; margin-right: 15px; display: flex; align-items: center; justify-content: center; color: white;",
+                                      icon("play", style = "font-size: 24px;")
+                                  ),
+                                  div(
+                                    h6("Consonantes Problemáticas para Hispanohablantes", style = "margin: 0;"),
+                                    p("Duración: 22:45 | Nivel: Intermedio", style = "margin: 5px 0; color: #7f8c8d;"),
+                                    actionButton("play-video-2", "Ver Video", class = "exercise-button", style = "padding: 5px 15px; font-size: 12px;")
+                                  )
+                              )
+                          ),
+                          
+                          div(style = "border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin: 10px 0;",
+                              div(style = "display: flex; align-items: center;",
+                                  div(style = "width: 80px; height: 60px; background: #667eea; border-radius: 5px; margin-right: 15px; display: flex; align-items: center; justify-content: center; color: white;",
+                                      icon("play", style = "font-size: 24px;")
+                                  ),
+                                  div(
+                                    h6("Transcripción Avanzada y Suprasegmentales", style = "margin: 0;"),
+                                    p("Duración: 28:15 | Nivel: Avanzado", style = "margin: 5px 0; color: #7f8c8d;"),
+                                    actionButton("play-video-3", "Ver Video", class = "exercise-button", style = "padding: 5px 15px; font-size: 12px;")
+                                  )
+                              )
+                          )
                       )
                   )
                 ),
@@ -1449,7 +1439,7 @@ ui <- dashboardPage(
                             tags$li("Análisis de pitch y entonación"),
                             tags$li("Síntesis de habla")
                           ),
-                          actionButton("download_praat_guide", "Guía de Praat", class = "exercise-button")
+                          actionButton("download-praat-guide", "Guía de Praat", class = "exercise-button")
                       ),
                       
                       div(style = "margin: 20px 0;",
@@ -1480,35 +1470,31 @@ ui <- dashboardPage(
                   title = "Comunidad y Soporte", status = "primary", solidHeader = TRUE, width = 12,
                   h4("Conecta con Otros Estudiantes"),
                   
-                  fluidRow(
-                    column(3,
-                           div(class = "info-box",
-                               h5(icon("users"), " Foro de Discusión"),
-                               p("Participa en discusiones sobre fonética, comparte dudas y ayuda a otros estudiantes."),
-                               actionButton("join_forum", "Unirse al Foro", class = "exercise-button")
-                           )
-                    ),
-                    column(3,
-                           div(class = "info-box",
-                               h5(icon("comments"), " Grupo de Estudio"),
-                               p("Forma parte de grupos de estudio virtuales organizados por nivel y horario."),
-                               actionButton("join_study_group", "Buscar Grupo", class = "exercise-button")
-                           )
-                    ),
-                    column(3,
-                           div(class = "info-box",
-                               h5(icon("graduation-cap"), " Tutorías Online"),
-                               p("Sesiones personalizadas con instructores especializados en fonética."),
-                               actionButton("book_tutoring", "Reservar Tutoría", class = "exercise-button")
-                           )
-                    ),
-                    column(3,
-                           div(class = "info-box",
-                               h5(icon("calendar"), " Eventos y Talleres"),
-                               p("Participa en webinars, talleres y conferencias sobre fonética aplicada."),
-                               actionButton("view_events", "Ver Eventos", class = "exercise-button")
-                           )
-                    )
+                  div(style = "display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 20px 0;",
+                      
+                      div(class = "info-box",
+                          h5(icon("users"), " Foro de Discusión"),
+                          p("Participa en discusiones sobre fonética, comparte dudas y ayuda a otros estudiantes."),
+                          actionButton("join-forum", "Unirse al Foro", class = "exercise-button")
+                      ),
+                      
+                      div(class = "info-box",
+                          h5(icon("comments"), " Grupo de Estudio"),
+                          p("Forma parte de grupos de estudio virtuales organizados por nivel y horario."),
+                          actionButton("join-study-group", "Buscar Grupo", class = "exercise-button")
+                      ),
+                      
+                      div(class = "info-box",
+                          h5(icon("graduation-cap"), " Tutorías Online"),
+                          p("Sesiones personalizadas con instructores especializados en fonética."),
+                          actionButton("book-tutoring", "Reservar Tutoría", class = "exercise-button")
+                      ),
+                      
+                      div(class = "info-box",
+                          h5(icon("calendar"), " Eventos y Talleres"),
+                          p("Participa en webinars, talleres y conferencias sobre fonética aplicada."),
+                          actionButton("view-events", "Ver Eventos", class = "exercise-button")
+                      )
                   )
                 )
               ),
@@ -1522,23 +1508,29 @@ ui <- dashboardPage(
                       p("Tu opinión es muy valiosa para nosotros. Comparte tus comentarios y sugerencias 
                 para mejorar continuamente esta plataforma de aprendizaje."),
                       
-                      fluidRow(
-                        column(6,
-                               h6("Evalúa la Aplicación:"),
-                               div(style = "text-align: center; margin: 20px 0;",
-                                   div(style = "font-size: 30px; margin: 10px 0;",
-                                       HTML("&#9733;&#9733;&#9733;&#9733;&#9734;")
-                                   ),
-                                   p("4.0/5.0 - ¡Gracias por tu valoración!")
-                               )
-                        ),
-                        column(6,
-                               h6("Enviar Comentarios:"),
-                               textAreaInput("user_feedback", label = NULL,
-                                             placeholder = "Comparte tus comentarios, sugerencias o reporta problemas...",
-                                             height = "100px"),
-                               actionButton("submit_feedback", "Enviar Feedback", class = "exercise-button")
-                        )
+                      div(style = "display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 20px 0;",
+                          
+                          div(
+                            h6("Evalúa la Aplicación:"),
+                            div(style = "text-align: center; margin: 20px 0;",
+                                div(style = "font-size: 30px; margin: 10px 0;",
+                                    span(style = "color: #f39c12; cursor: pointer;", "★"),
+                                    span(style = "color: #f39c12; cursor: pointer;", "★"),
+                                    span(style = "color: #f39c12; cursor: pointer;", "★"),
+                                    span(style = "color: #f39c12; cursor: pointer;", "★"),
+                                    span(style = "color: #ddd; cursor: pointer;", "★")
+                                ),
+                                p("4.0/5.0 - ¡Gracias por tu valoración!")
+                            )
+                          ),
+                          
+                          div(
+                            h6("Enviar Comentarios:"),
+                            textAreaInput("user-feedback", "", 
+                                          placeholder = "Comparte tus comentarios, sugerencias o reporta problemas...",
+                                          height = "100px"),
+                            actionButton("submit-feedback", "Enviar Feedback", class = "exercise-button")
+                          )
                       )
                   )
                 )
@@ -1572,29 +1564,17 @@ server <- function(input, output, session) {
     exercises_completed = 0,
     assessment_scores = list(),
     current_exercise = NULL,
-    current_exercise_type = NULL,
     exercise_stats = data.frame(
-      date = character(0),
+      date = Sys.Date(),
       exercise_type = character(0),
       score = numeric(0),
-      time_taken = numeric(0),
-      stringsAsFactors = FALSE
+      time_taken = numeric(0)
     ),
     phonetic_data = NULL,
     audio_playing = FALSE,
     current_assessment = NULL,
     assessment_questions = list(),
-    current_question = 1,
-    selected_symbol = "?",
-    selected_description = "Selecciona un símbolo para ver su descripción",
-    current_word_to_transcribe = "beautiful",
-    current_phrase = "What do you want?",
-    spanish_word = "casa",
-    spanish_ipa = "[ˈka.sa]",
-    english_word = "house",
-    english_ipa = "[haʊs]",
-    sound1 = "/p/",
-    sound2 = "/b/"
+    current_question = 1
   )
   
   # Initialize phonetic alphabet data
@@ -1634,131 +1614,53 @@ server <- function(input, output, session) {
   
   # Start learning button
   observeEvent(input$start_learning, {
-    updateTabItems(session, "tabs", "basic_alphabet")
+    updateTabItems(session, "sidebar", "basic_alphabet")
     values$user_progress <- max(10, values$user_progress)
   })
   
   # Generate consonants grid for basic alphabet tab
-  output$consonants_grid_ui <- renderUI({
+  observe({
     req(values$phonetic_data)
     
-    consonant_cards <- lapply(1:nrow(values$phonetic_data$consonants), function(i) {
+    consonants_html <- ""
+    for(i in 1:nrow(values$phonetic_data$consonants)) {
       row <- values$phonetic_data$consonants[i, ]
-      tags$div(
-        class = "phonetic-card",
-        onclick = sprintf("Shiny.setInputValue('symbol_clicked', {symbol: '%s', description: '%s'}, {priority: 'event'});", 
-                          row$symbol, row$description),
-        tags$div(class = "phonetic-letter", row$symbol),
-        tags$div(class = "phonetic-word", row$example),
-        tags$div(class = "phonetic-pronunciation", row$description)
+      consonants_html <- paste0(consonants_html,
+                                '<div class="phonetic-card" onclick="selectSymbol(\'', row$symbol, '\', \'', row$description, '\')">',
+                                '<div class="phonetic-letter">', row$symbol, '</div>',
+                                '<div class="phonetic-word">', row$example, '</div>',
+                                '<div class="phonetic-pronunciation">', row$description, '</div>',
+                                '</div>'
       )
-    })
+    }
     
-    tags$div(
-      style = "display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;",
-      consonant_cards
+    insertUI(
+      selector = "#consonants-grid",
+      ui = HTML(consonants_html),
+      where = "afterBegin"
     )
   })
   
   # Generate vowels grid
-  output$vowels_grid_ui <- renderUI({
+  observe({
     req(values$phonetic_data)
     
-    vowel_cards <- lapply(1:nrow(values$phonetic_data$vowels), function(i) {
+    vowels_html <- ""
+    for(i in 1:nrow(values$phonetic_data$vowels)) {
       row <- values$phonetic_data$vowels[i, ]
-      tags$div(
-        class = "phonetic-card",
-        onclick = sprintf("Shiny.setInputValue('symbol_clicked', {symbol: '%s', description: '%s'}, {priority: 'event'});", 
-                          row$symbol, row$description),
-        tags$div(class = "phonetic-letter", row$symbol),
-        tags$div(class = "phonetic-word", row$example),
-        tags$div(class = "phonetic-pronunciation", row$description)
+      vowels_html <- paste0(vowels_html,
+                            '<div class="phonetic-card" onclick="selectSymbol(\'', row$symbol, '\', \'', row$description, '\')">',
+                            '<div class="phonetic-letter">', row$symbol, '</div>',
+                            '<div class="phonetic-word">', row$example, '</div>',
+                            '<div class="phonetic-pronunciation">', row$description, '</div>',
+                            '</div>'
       )
-    })
-    
-    tags$div(
-      style = "display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin: 20px 0;",
-      vowel_cards
-    )
-  })
-  
-  # Generate special symbols grid
-  output$special_grid_ui <- renderUI({
-    special_symbols <- data.frame(
-      symbol = c("ː", "ˈ", "ˌ", ".", "‿"),
-      description = c("Vocal larga", "Acento primario", "Acento secundario", "Separación silábica", "Enlace"),
-      stringsAsFactors = FALSE
-    )
-    
-    special_cards <- lapply(1:nrow(special_symbols), function(i) {
-      row <- special_symbols[i, ]
-      tags$div(
-        class = "phonetic-card",
-        onclick = sprintf("Shiny.setInputValue('symbol_clicked', {symbol: '%s', description: '%s'}, {priority: 'event'});", 
-                          row$symbol, row$description),
-        tags$div(class = "phonetic-letter", row$symbol),
-        tags$div(class = "phonetic-pronunciation", row$description)
-      )
-    })
-    
-    tags$div(
-      style = "display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin: 20px 0;",
-      special_cards
-    )
-  })
-  
-  # Handle symbol clicks
-  observeEvent(input$symbol_clicked, {
-    values$selected_symbol <- input$symbol_clicked$symbol
-    values$selected_description <- input$symbol_clicked$description
-  })
-  
-  # Display selected symbol
-  output$selected_symbol_display <- renderText({
-    values$selected_symbol
-  })
-  
-  output$symbol_description_display <- renderText({
-    values$selected_description
-  })
-  
-  # Play sound button
-  observeEvent(input$play_sound, {
-    showNotification(paste("Reproduciendo sonido:", values$selected_symbol), type = "message")
-    # In a real application, this would play actual audio
-  })
-  
-  # Sound comparison displays
-  output$sound1_display <- renderText({
-    values$sound1
-  })
-  
-  output$sound2_display <- renderText({
-    values$sound2
-  })
-  
-  # Update sounds based on comparison type
-  observeEvent(input$comparison_type, {
-    comparison_pairs <- list(
-      voicing = list(sound1 = "/p/", sound2 = "/b/"),
-      vowel_position = list(sound1 = "/i/", sound2 = "/u/"),
-      manner = list(sound1 = "/f/", sound2 = "/w/"),
-      language = list(sound1 = "/r/ (ES)", sound2 = "/ɹ/ (EN)")
-    )
-    
-    if (!is.null(input$comparison_type) && input$comparison_type %in% names(comparison_pairs)) {
-      values$sound1 <- comparison_pairs[[input$comparison_type]]$sound1
-      values$sound2 <- comparison_pairs[[input$comparison_type]]$sound2
     }
-  })
-  
-  # Pronunciation exercise UI
-  output$pronunciation_exercise_ui <- renderUI({
-    div(
-      style = "text-align: center; padding: 20px;",
-      div(style = "font-size: 48px; color: #667eea; margin: 20px;", "/p/"),
-      p("Sonido actual: Oclusiva bilabial sorda"),
-      actionButton("play_pronunciation", "Reproducir Sonido", icon = icon("volume-up"), class = "audio-button")
+    
+    insertUI(
+      selector = "#vowels-grid", 
+      ui = HTML(vowels_html),
+      where = "afterBegin"
     )
   })
   
@@ -1776,7 +1678,7 @@ server <- function(input, output, session) {
     
     p <- ggplot(wave_data, aes(x = time, y = amplitude)) +
       geom_line(color = "#667eea", size = 1) +
-      labs(title = "Forma de Onda del Sonido del Sonido /a/",
+      labs(title = "Forma de Onda del Sonido /a/",
            x = "Tiempo (segundos)", 
            y = "Amplitud") +
       theme_minimal() +
@@ -1801,38 +1703,13 @@ server <- function(input, output, session) {
     )
     
     DT::datatable(differences_data,
-                  options = list(pageLength = 10, searching = FALSE, info = FALSE, paging = FALSE, dom = 't'),
+                  options = list(pageLength = 10, searching = FALSE, info = FALSE, paging = FALSE),
                   colnames = c("Sonido IPA", "Ejemplo", "Problema", "Sustitución", "Dificultad"),
                   rownames = FALSE) %>%
       formatStyle("Dificultad",
                   backgroundColor = styleEqual(c("Alta", "Media", "Baja"), 
                                                c("#e74c3c", "#f39c12", "#2ecc71")),
                   color = "white")
-  })
-  
-  # Spanish/English word pair displays
-  output$spanish_word <- renderText({ values$spanish_word })
-  output$spanish_ipa <- renderText({ values$spanish_ipa })
-  output$english_word <- renderText({ values$english_word })
-  output$english_ipa <- renderText({ values$english_ipa })
-  
-  # Update word pairs
-  observeEvent(input$word_pair, {
-    word_pairs <- list(
-      casa_house = list(sp_word = "casa", sp_ipa = "[ˈka.sa]", en_word = "house", en_ipa = "[haʊs]"),
-      pero_but = list(sp_word = "pero", sp_ipa = "[ˈpe.ɾo]", en_word = "but", en_ipa = "[bʌt]"),
-      cinco_five = list(sp_word = "cinco", sp_ipa = "[ˈsiŋ.ko]", en_word = "five", en_ipa = "[faɪv]"),
-      rojo_red = list(sp_word = "rojo", sp_ipa = "[ˈro.xo]", en_word = "red", en_ipa = "[ɹɛd]"),
-      agua_water = list(sp_word = "agua", sp_ipa = "[ˈa.ɣwa]", en_word = "water", en_ipa = "[ˈwɔtɚ]")
-    )
-    
-    if (!is.null(input$word_pair) && input$word_pair %in% names(word_pairs)) {
-      pair <- word_pairs[[input$word_pair]]
-      values$spanish_word <- pair$sp_word
-      values$spanish_ipa <- pair$sp_ipa
-      values$english_word <- pair$en_word
-      values$english_ipa <- pair$en_ipa
-    }
   })
   
   # Transfer analysis plot for differences tab
@@ -1860,131 +1737,11 @@ server <- function(input, output, session) {
     ggplotly(p)
   })
   
-  # Diagnosis results UI
-  output$diagnosis_results_ui <- renderUI({
-    if (input$analyze_pronunciation > 0) {
-      div(
-        style = "margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px;",
-        h5("Resultados del Diagnóstico:"),
-        p("Análisis completado. Áreas a mejorar: /θ/ y /v/"),
-        p("Precisión general: 75%")
-      )
-    }
-  })
-  
-  # Exercise button handlers
-  observeEvent(input$exercise_symbol_recognition, {
-    values$current_exercise_type <- "symbol_recognition"
-    values$exercises_completed <- values$exercises_completed + 1
-  })
-  
-  observeEvent(input$exercise_sound_matching, {
-    values$current_exercise_type <- "sound_matching"
-  })
-  
-  observeEvent(input$exercise_transcription, {
-    values$current_exercise_type <- "transcription"
-  })
-  
-  observeEvent(input$exercise_minimal_pairs, {
-    values$current_exercise_type <- "minimal_pairs"
-  })
-  
-  # Exercise title
-  output$exercise_title <- renderText({
-    exercise_titles <- list(
-      symbol_recognition = "Reconocimiento de Símbolos",
-      sound_matching = "Asociación Sonido-Símbolo",
-      transcription = "Ejercicios de Transcripción",
-      minimal_pairs = "Pares Mínimos"
-    )
-    
-    if (!is.null(values$current_exercise_type)) {
-      exercise_titles[[values$current_exercise_type]]
-    } else {
-      "Selecciona un ejercicio para comenzar"
-    }
-  })
-  
-  # Exercise content
-  output$exercise_content_ui <- renderUI({
-    if (is.null(values$current_exercise_type)) {
-      div(style = "min-height: 300px; padding: 20px; text-align: center;",
-          p("Haz clic en una de las tarjetas superiores para comenzar a practicar.")
-      )
-    } else if (values$current_exercise_type == "symbol_recognition") {
-      div(style = "text-align: center; padding: 30px;",
-          h4("¿Qué símbolo es este?"),
-          div(style = "font-size: 72px; color: #667eea; margin: 30px;", "/θ/"),
-          fluidRow(
-            column(6, actionButton("answer1", "Fricativa dental sorda", class = "exercise-button", style = "width: 100%;")),
-            column(6, actionButton("answer2", "Oclusiva bilabial", class = "exercise-button", style = "width: 100%;"))
-          ),
-          br(),
-          fluidRow(
-            column(6, actionButton("answer3", "Fricativa postalveolar", class = "exercise-button", style = "width: 100%;")),
-            column(6, actionButton("answer4", "Nasal alveolar", class = "exercise-button", style = "width: 100%;"))
-          )
-      )
-    } else {
-      div(style = "min-height: 300px; padding: 20px; text-align: center;",
-          p(paste("Contenido del ejercicio:", values$current_exercise_type))
-      )
-    }
-  })
-  
-  # Exercise controls
-  output$exercise_controls_ui <- renderUI({
-    if (!is.null(values$current_exercise_type)) {
-      div(style = "text-align: center; margin-top: 20px;",
-          actionButton("next_exercise_btn", "Siguiente Ejercicio", class = "exercise-button"),
-          actionButton("show_hint_btn", "Pista", class = "exercise-button"),
-          actionButton("reset_exercise_btn", "Reiniciar", class = "exercise-button")
-      )
-    }
-  })
-  
-  # Exercise statistics
-  output$completed_exercises <- renderText({
-    as.character(values$exercises_completed)
-  })
-  
-  output$average_accuracy <- renderText({
-    if (nrow(values$exercise_stats) > 0) {
-      paste0(round(mean(values$exercise_stats$score), 1), "%")
-    } else {
-      "0%"
-    }
-  })
-  
-  output$average_time <- renderText({
-    if (nrow(values$exercise_stats) > 0) {
-      paste0(round(mean(values$exercise_stats$time_taken), 1), "s")
-    } else {
-      "0s"
-    }
-  })
-  
-  output$current_level <- renderText({
-    if (values$exercises_completed < 5) {
-      "Principiante"
-    } else if (values$exercises_completed < 15) {
-      "Intermedio"
-    } else {
-      "Avanzado"
-    }
-  })
-  
   # Progress chart for exercises tab
   output$progress_chart <- renderPlotly({
     # Generate sample progress data
-    if (values$exercises_completed > 0) {
-      dates <- seq(Sys.Date() - min(30, values$exercises_completed), Sys.Date(), length.out = min(30, values$exercises_completed + 1))
-      progress <- seq(0, values$exercises_completed, length.out = length(dates))
-    } else {
-      dates <- Sys.Date()
-      progress <- 0
-    }
+    dates <- seq(Sys.Date() - 30, Sys.Date(), by = "day")
+    progress <- cumsum(runif(length(dates), 0, 3))
     
     progress_data <- data.frame(
       date = dates,
@@ -2005,111 +1762,6 @@ server <- function(input, output, session) {
     
     ggplotly(p) %>%
       layout(showlegend = FALSE)
-  })
-  
-  # Advanced practice outputs
-  output$word_to_transcribe <- renderText({
-    values$current_word_to_transcribe
-  })
-  
-  observeEvent(input$next_word, {
-    words <- c("beautiful", "important", "pronunciation", "different", "language", "education", "wonderful")
-    values$current_word_to_transcribe <- sample(words, 1)
-  })
-  
-  output$transcription_feedback_ui <- renderUI({
-    if (input$check_transcription > 0) {
-      isolate({
-        div(
-          style = "margin-top: 20px; padding: 15px; border-radius: 10px; background: #e8f5e9;",
-          p(strong("Feedback:"), " Revisa la posición del acento primario.")
-        )
-      })
-    }
-  })
-  
-  output$stress_exercise_word <- renderText({
-    "Palabra actual: photograph"
-  })
-  
-  output$current_phrase <- renderText({
-    values$current_phrase
-  })
-  
-  observeEvent(input$next_phrase, {
-    phrases <- c("What do you want?", "How are you doing?", "Where did you go?", "Can I help you?")
-    values$current_phrase <- sample(phrases, 1)
-  })
-  
-  # Spectrogram for advanced tab
-  output$spectrogram <- renderPlotly({
-    # Generate sample spectrogram data
-    time <- seq(0, 2, length.out = 100)
-    freq <- seq(0, 4000, length.out = 50)
-    
-    # Create a matrix for spectrogram (simplified)
-    spectrogram_matrix <- matrix(0, nrow = length(freq), ncol = length(time))
-    
-    # Add some formant patterns (simplified)
-    for(i in 1:length(time)) {
-      # First formant around 500 Hz
-      f1_index <- which.min(abs(freq - 500))
-      if (length(f1_index) == 1 && f1_index > 2 && f1_index < (length(freq) - 2)) {
-        indices <- f1_index + (-2:2)
-        indices <- indices[indices > 0 & indices <= length(freq)]
-        spectrogram_matrix[indices, i] <- exp(-((freq[indices] - 500)^2) / 10000) * 0.8
-      }
-      
-      # Second formant around 1500 Hz
-      f2_index <- which.min(abs(freq - 1500))
-      if (length(f2_index) == 1 && f2_index > 3 && f2_index < (length(freq) - 3)) {
-        indices <- f2_index + (-3:3)
-        indices <- indices[indices > 0 & indices <= length(freq)]
-        spectrogram_matrix[indices, i] <- exp(-((freq[indices] - 1500)^2) / 20000) * 0.6
-      }
-      
-      # Third formant around 2500 Hz
-      f3_index <- which.min(abs(freq - 2500))
-      if (length(f3_index) == 1 && f3_index > 2 && f3_index < (length(freq) - 2)) {
-        indices <- f3_index + (-2:2)
-        indices <- indices[indices > 0 & indices <= length(freq)]
-        spectrogram_matrix[indices, i] <- exp(-((freq[indices] - 2500)^2) / 15000) * 0.4
-      }
-    }
-    
-    plot_ly(
-      z = spectrogram_matrix,
-      type = "heatmap",
-      colorscale = "Viridis",
-      showscale = FALSE
-    ) %>%
-      layout(
-        title = "Espectrograma de /a/",
-        xaxis = list(title = "Tiempo (s)"),
-        yaxis = list(title = "Frecuencia (Hz)")
-      )
-  })
-  
-  # Dictation results UI
-  output$dictation_results_ui <- renderUI({
-    if (input$submit_dictation > 0) {
-      div(
-        style = "margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 10px;",
-        h5("Resultados:"),
-        p("Tu transcripción ha sido registrada. Precisión: 80%")
-      )
-    }
-  })
-  
-  # Custom exercise UI
-  output$custom_exercise_ui <- renderUI({
-    if (input$generate_exercise > 0) {
-      div(
-        style = "margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 10px;",
-        h5("Ejercicio Generado:"),
-        p("Se ha creado un ejercicio personalizado con tus preferencias.")
-      )
-    }
   })
   
   # Assessment history plot
@@ -2137,21 +1789,6 @@ server <- function(input, output, session) {
     ggplotly(p)
   })
   
-  # Best scores
-  output$best_quick <- renderText({ "No realizada" })
-  output$best_comprehensive <- renderText({ "No realizada" })
-  output$best_listening <- renderText({ "No realizada" })
-  output$best_transcription <- renderText({ "No realizada" })
-  
-  # Assessment container UI
-  output$assessment_container_ui <- renderUI({
-    div(
-      style = "text-align: center; padding: 40px;",
-      h4("Selecciona un tipo de evaluación para comenzar"),
-      p("Las evaluaciones te ayudarán a identificar áreas de fortaleza y oportunidades de mejora.")
-    )
-  })
-  
   # Performance radar chart for assessment tab
   output$performance_radar <- renderPlotly({
     # Generate sample performance data
@@ -2166,129 +1803,439 @@ server <- function(input, output, session) {
       max_score = rep(100, length(categories))
     )
     
+    p <- ggplot(radar_data, aes(x = category, y = score)) +
+      geom_polygon(aes(group = 1), fill = "#667eea", alpha = 0.3, color = "#667eea", size = 2) +
+      geom_point(color = "#764ba2", size = 4) +
+      coord_polar() +
+      ylim(0, 100) + labs(title = "Perfil de Competencias Fonéticas",
+                          x = "", y = "Puntuación (%)") +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(hjust = 0.5, size = 14),
+        axis.text.x = element_text(size = 10),
+        axis.text.y = element_text(size = 8)
+      )
+    
+    ggplotly(p) %>%
+      layout(showlegend = FALSE)
+  })
+  
+  # Spectrogram for advanced tab
+  output$spectrogram <- renderPlotly({
+    # Generate sample spectrogram data
+    time <- seq(0, 2, length.out = 100)
+    freq <- seq(0, 4000, length.out = 50)
+    
+    # Create a matrix for spectrogram (simplified)
+    spectrogram_matrix <- matrix(0, nrow = length(freq), ncol = length(time))
+    
+    # Add some formant patterns (simplified)
+    for(i in 1:length(time)) {
+      # First formant around 500 Hz
+      f1_index <- which.min(abs(freq - 500))
+      spectrogram_matrix[f1_index + (-2:2), i] <- exp(-((freq[f1_index + (-2:2)] - 500)^2) / 10000) * 0.8
+      
+      # Second formant around 1500 Hz
+      f2_index <- which.min(abs(freq - 1500))
+      spectrogram_matrix[f2_index + (-3:3), i] <- exp(-((freq[f2_index + (-3:3)] - 1500)^2) / 20000) * 0.6
+      
+      # Third formant around 2500 Hz
+      f3_index <- which.min(abs(freq - 2500))
+      spectrogram_matrix[f3_index + (-2:2), i] <- exp(-((freq[f3_index + (-2:2)] - 2500)^2) / 15000) * 0.4
+    }
+    
     plot_ly(
-      type = 'scatterpolar',
-      r = radar_data$score,
-      theta = radar_data$category,
-      fill = 'toself',
-      fillcolor = 'rgba(102, 126, 234, 0.3)',
-      line = list(color = '#667eea', width = 2)
+      z = spectrogram_matrix,
+      type = "heatmap",
+      colorscale = "Viridis",
+      showscale = FALSE
     ) %>%
       layout(
-        polar = list(
-          radialaxis = list(
-            visible = TRUE,
-            range = c(0, 100)
-          )
-        ),
-        showlegend = FALSE,
-        title = "Perfil de Competencias Fonéticas"
+        title = "Espectrograma de /a/",
+        xaxis = list(title = "Tiempo (s)"),
+        yaxis = list(title = "Frecuencia (Hz)")
       )
   })
   
-  # Recommendations outputs
-  output$weak_areas_ui <- renderUI({
-    p("Completa una evaluación para recibir recomendaciones personalizadas.")
-  })
-  
-  output$suggested_exercises_ui <- renderUI({
-    p("Las sugerencias aparecerán después de completar tu primera evaluación.")
-  })
-  
-  output$study_time_ui <- renderUI({
-    p("Se calculará basado en tu desempeño.")
-  })
-  
-  # Certification status
-  output$certification_status_ui <- renderUI({
-    div(
-      p("Completa todos los requisitos para desbloquear tu certificado."),
-      actionButton("generate_certificate", "Generar Certificado", 
-                   class = "exercise-button", style = "display: none;")
-    )
-  })
-  
   # Audio list for resources tab
-  # Audio list for resources tab
-  output$audio_list_ui <- renderUI({
-    # Validate input exists and is a single value
-    if (is.null(input$audio_category)) {
-      return(p("Selecciona una categoría de audio"))
-    }
+  observe({
+    audio_category <- input$`audio-category`
     
-    if (length(input$audio_category) != 1) {
-      return(p("Por favor selecciona solo una categoría"))
-    }
-    
-    audio_items <- switch(as.character(input$audio_category),
-                          "stops" = list(
-                            list(symbol = "/p/", word = "pat"),
-                            list(symbol = "/b/", word = "bat"),
-                            list(symbol = "/t/", word = "tap"),
-                            list(symbol = "/d/", word = "dad"),
-                            list(symbol = "/k/", word = "cat"),
-                            list(symbol = "/g/", word = "gap")
-                          ),
-                          "fricatives" = list(
-                            list(symbol = "/f/", word = "fat"),
-                            list(symbol = "/v/", word = "vat"),
-                            list(symbol = "/θ/", word = "think"),
-                            list(symbol = "/ð/", word = "this"),
-                            list(symbol = "/s/", word = "sip"),
-                            list(symbol = "/z/", word = "zip")
-                          ),
-                          "nasals" = list(
-                            list(symbol = "/m/", word = "mat"),
-                            list(symbol = "/n/", word = "nat"),
-                            list(symbol = "/ŋ/", word = "sing")
-                          ),
-                          "liquids" = list(
-                            list(symbol = "/l/", word = "let"),
-                            list(symbol = "/ɹ/", word = "red")
-                          ),
-                          "front_vowels" = list(
-                            list(symbol = "/i/", word = "see"),
-                            list(symbol = "/ɪ/", word = "sit"),
-                            list(symbol = "/e/", word = "set"),
-                            list(symbol = "/æ/", word = "sat")
-                          ),
-                          "back_vowels" = list(
-                            list(symbol = "/u/", word = "soon"),
-                            list(symbol = "/ʊ/", word = "book"),
-                            list(symbol = "/o/", word = "go"),
-                            list(symbol = "/ɔ/", word = "thought")
-                          ),
-                          "diphthongs" = list(
-                            list(symbol = "/aɪ/", word = "my"),
-                            list(symbol = "/eɪ/", word = "day"),
-                            list(symbol = "/ɔɪ/", word = "boy"),
-                            list(symbol = "/aʊ/", word = "now")
-                          ),
-                          list()
-    )
-    
-    # Check if we got valid items
-    if (length(audio_items) == 0) {
-      return(p("No hay elementos de audio disponibles para esta categoría"))
-    }
-    
-    # Generate cards safely
-    audio_cards <- lapply(seq_along(audio_items), function(idx) {
-      item <- audio_items[[idx]]
-      # Create safe button ID by removing special characters
-      btn_id <- paste0("play_audio_", idx)
+    if(!is.null(audio_category)) {
+      audio_items <- switch(audio_category,
+                            "stops" = list(
+                              list(symbol = "/p/", word = "pat", file = "p_sound.mp3"),
+                              list(symbol = "/b/", word = "bat", file = "b_sound.mp3"),
+                              list(symbol = "/t/", word = "tap", file = "t_sound.mp3"),
+                              list(symbol = "/d/", word = "dad", file = "d_sound.mp3"),
+                              list(symbol = "/k/", word = "cat", file = "k_sound.mp3"),
+                              list(symbol = "/g/", word = "gap", file = "g_sound.mp3")
+                            ),
+                            "fricatives" = list(
+                              list(symbol = "/f/", word = "fat", file = "f_sound.mp3"),
+                              list(symbol = "/v/", word = "vat", file = "v_sound.mp3"),
+                              list(symbol = "/θ/", word = "think", file = "theta_sound.mp3"),
+                              list(symbol = "/ð/", word = "this", file = "eth_sound.mp3"),
+                              list(symbol = "/s/", word = "sip", file = "s_sound.mp3"),
+                              list(symbol = "/z/", word = "zip", file = "z_sound.mp3")
+                            ),
+                            "front_vowels" = list(
+                              list(symbol = "/i/", word = "see", file = "i_sound.mp3"),
+                              list(symbol = "/ɪ/", word = "sit", file = "I_sound.mp3"),
+                              list(symbol = "/e/", word = "set", file = "e_sound.mp3"),
+                              list(symbol = "/æ/", word = "sat", file = "ae_sound.mp3")
+                            ),
+                            list()
+      )
       
-      div(
-        style = "border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin: 8px 0; display: flex; justify-content: space-between; align-items: center;",
-        div(strong(item$symbol), " - ", item$word),
-        actionButton(btn_id, 
-                     "", 
-                     icon = icon("volume-up"),
-                     class = "audio-button")
-      )
-    })
-    
-    div(style = "max-height: 300px; overflow-y: auto;", audio_cards)
+      audio_html <- ""
+      for(item in audio_items) {
+        audio_html <- paste0(audio_html,
+                             '<div style="border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin: 8px 0; display: flex; justify-content: space-between; align-items: center;">',
+                             '<div>',
+                             '<strong>', item$symbol, '</strong> - ', item$word,
+                             '</div>',
+                             '<button class="audio-button" onclick="playAudio(\'', item$file, '\')">🔊</button>',
+                             '</div>'
+        )
+      }
+      
+      runjs(paste0("$('#audio-list').html('", gsub("'", "\\'", audio_html), "');"))
+    }
+  })
+  
+  # Custom JavaScript functions
+  observe({
+    runjs("
+      // Function to select phonetic symbol
+      window.selectSymbol = function(symbol, description) {
+        $('#selected-symbol').text(symbol);
+        $('#symbol-description').text(description);
+      };
+      
+      // Function to select exercise type
+      window.selectExercise = function(exerciseType) {
+        var titles = {
+          'symbol_recognition': 'Reconocimiento de Símbolos',
+          'sound_matching': 'Asociación Sonido-Símbolo', 
+          'transcription': 'Ejercicios de Transcripción',
+          'minimal_pairs': 'Pares Mínimos'
+        };
+        
+        $('#exercise-title').text(titles[exerciseType]);
+        
+        var content = '';
+        switch(exerciseType) {
+          case 'symbol_recognition':
+            content = generateSymbolRecognitionExercise();
+            break;
+          case 'sound_matching':
+            content = generateSoundMatchingExercise();
+            break;
+          case 'transcription':
+            content = generateTranscriptionExercise();
+            break;
+          case 'minimal_pairs':
+            content = generateMinimalPairsExercise();
+            break;
+        }
+        
+        $('#exercise-content').html(content);
+        generateExerciseControls(exerciseType);
+      };
+      
+      // Generate different exercise types
+      function generateSymbolRecognitionExercise() {
+        var symbols = ['/p/', '/b/', '/θ/', '/ð/', '/ʃ/', '/ʒ/'];
+        var randomSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+        
+        return '<div style=\"text-align: center; padding: 30px;\">' +
+               '<h4>¿Qué símbolo es este?</h4>' +
+               '<div style=\"font-size: 72px; color: #667eea; margin: 30px;\">' + randomSymbol + '</div>' +
+               '<div style=\"display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; max-width: 400px; margin: 0 auto;\">' +
+               '<button class=\"exercise-button\" onclick=\"checkAnswer(this, true)\">Fricativa dental sorda</button>' +
+               '<button class=\"exercise-button\" onclick=\"checkAnswer(this, false)\">Oclusiva bilabial</button>' +
+               '<button class=\"exercise-button\" onclick=\"checkAnswer(this, false)\">Fricativa postalveolar</button>' +
+               '<button class=\"exercise-button\" onclick=\"checkAnswer(this, false)\">Nasal alveolar</button>' +
+               '</div></div>';
+      }
+      
+      function generateSoundMatchingExercise() {
+        return '<div style=\"text-align: center; padding: 30px;\">' +
+               '<h4>Escucha el sonido y selecciona el símbolo correcto</h4>' +
+               '<button class=\"audio-button\" style=\"font-size: 24px; width: 100px; height: 100px; margin: 20px;\">🔊</button>' +
+               '<div style=\"display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; max-width: 600px; margin: 30px auto;\">' +
+               '<button class=\"exercise-button\" onclick=\"checkAnswer(this, false)\">/p/</button>' +
+               '<button class=\"exercise-button\" onclick=\"checkAnswer(this, true)\">/θ/</button>' +
+               '<button class=\"exercise-button\" onclick=\"checkAnswer(this, false)\">/s/</button>' +
+               '<button class=\"exercise-button\" onclick=\"checkAnswer(this, false)\">/f/</button>' +
+               '</div></div>';
+      }
+      
+      function generateTranscriptionExercise() {
+        return '<div style=\"text-align: center; padding: 30px;\">' +
+               '<h4>Transcribe la siguiente palabra:</h4>' +
+               '<div style=\"font-size: 36px; color: #667eea; margin: 20px;\">\"think\"</div>' +
+               '<input type=\"text\" placeholder=\"Escribe la transcripción (ej: /θɪŋk/)\" ' +
+               'style=\"font-size: 18px; padding: 15px; width: 300px; text-align: center; border: 2px solid #ddd; border-radius: 10px;\"/>' +
+               '<br><br>' +
+               '<button class=\"exercise-button\" onclick=\"checkTranscription()\">Verificar</button>' +
+               '</div>';
+      }
+      
+      function generateMinimalPairsExercise() {
+        return '<div style=\"text-align: center; padding: 30px;\">' +
+               '<h4>Identifica la diferencia entre estos pares:</h4>' +
+               '<div style=\"display: flex; justify-content: space-around; margin: 30px 0;\">' +
+               '<div>' +
+               '<h5>Sonido A</h5>' +
+               '<div style=\"font-size: 48px; color: #667eea;\">/ʃɪp/</div>' +
+               '<p>ship</p>' +
+               '<button class=\"audio-button\">🔊</button>' +
+               '</div>' +
+               '<div style=\"font-size: 24px; margin-top: 50px;\">VS</div>' +
+               '<div>' +
+               '<h5>Sonido B</h5>' +
+               '<div style=\"font-size: 48px; color: #764ba2;\">/ʃiːp/</div>' +
+               '<p>sheep</p>' +
+               '<button class=\"audio-button\">🔊</button>' +
+               '</div>' +
+               '</div>' +
+               '<p>¿Cuál es la principal diferencia?</p>' +
+               '<div style=\"display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; max-width: 400px; margin: 0 auto;\">' +
+               '<button class=\"exercise-button\" onclick=\"checkAnswer(this, true)\">Duración vocálica</button>' +
+               '<button class=\"exercise-button\" onclick=\"checkAnswer(this, false)\">Consonante inicial</button>' +
+               '</div></div>';
+      }
+      
+      function generateExerciseControls(exerciseType) {
+        var controls = '<div style=\"text-align: center; margin-top: 30px;\">' +
+                      '<button class=\"exercise-button\" onclick=\"nextExercise()\">Siguiente Ejercicio</button>' +
+                      '<button class=\"exercise-button\" onclick=\"showHint()\">Pista</button>' +
+                      '<button class=\"exercise-button\" onclick=\"resetExercise()\">Reiniciar</button>' +
+                      '</div>';
+        $('#exercise-controls').html(controls);
+      }
+      
+      // Answer checking functions
+      window.checkAnswer = function(button, isCorrect) {
+        var buttons = $(button).parent().find('button');
+        buttons.removeClass('correct-answer incorrect-answer');
+        
+        if(isCorrect) {
+          $(button).addClass('correct-answer');
+          setTimeout(function() {
+            alert('¡Correcto! Bien hecho.');
+          }, 100);
+        } else {
+          $(button).addClass('incorrect-answer');
+          setTimeout(function() {
+            alert('Incorrecto. Inténtalo de nuevo.');
+          }, 100);
+        }
+      };
+      
+      window.checkTranscription = function() {
+        var input = $('input[type=\"text\"]').val().toLowerCase();
+        var correct = '/θɪŋk/';
+        
+        if(input === correct || input === 'θɪŋk') {
+          alert('¡Excelente! Transcripción correcta.');
+        } else {
+          alert('Incorrecto. La respuesta correcta es: ' + correct);
+        }
+      };
+      
+      // Assessment functions
+      window.startAssessment = function(assessmentType) {
+        var titles = {
+          'quick_test': 'Evaluación Rápida',
+          'comprehensive': 'Evaluación Completa',
+          'listening': 'Evaluación Auditiva',
+          'transcription': 'Evaluación de Transcripción'
+        };
+        
+        $('#assessment-intro').hide();
+        $('#assessment-content').show();
+        $('#assessment-title').text(titles[assessmentType]);
+        
+        // Generate first question
+        generateAssessmentQuestion(assessmentType, 1);
+        
+        // Start timer
+        startAssessmentTimer(assessmentType === 'quick_test' ? 300 : 1200); // 5 or 20 minutes
+      };
+      
+      function generateAssessmentQuestion(type, questionNumber) {
+        var questionContent = '';
+        
+        switch(type) {
+          case 'quick_test':
+            questionContent = generateQuickTestQuestion(questionNumber);
+            break;
+          case 'comprehensive':
+            questionContent = generateComprehensiveQuestion(questionNumber);
+            break;
+          case 'listening':
+            questionContent = generateListeningQuestion(questionNumber);
+            break;
+          case 'transcription':
+            questionContent = generateTranscriptionTestQuestion(questionNumber);
+            break;
+        }
+        
+        $('#question-content').html(questionContent);
+        $('#current-question').text(questionNumber);
+        
+        var totalQuestions = type === 'quick_test' ? 10 : 50;
+        $('#total-questions').text(totalQuestions);
+        
+        var progressPercent = (questionNumber / totalQuestions) * 100;
+        $('#assessment-progress').css('width', progressPercent + '%');
+      }
+      
+      function generateQuickTestQuestion(questionNumber) {
+        var questions = [
+          {
+            question: '¿Cuál es el símbolo IPA para el sonido \"th\" en \"think\"?',
+            options: ['/θ/', '/ð/', '/s/', '/t/'],
+            correct: 0
+          },
+          {
+            question: '¿Qué tipo de sonido es /p/?',
+            options: ['Fricativa', 'Nasal', 'Oclusiva', 'Lateral'],
+            correct: 2
+          },
+          {
+            question: '¿Cuál de estos sonidos NO existe en español?',
+            options: ['/p/', '/v/', '/t/', '/m/'],
+            correct: 1
+          }
+        ];
+        
+        var q = questions[(questionNumber - 1) % questions.length];
+        var html = '<div style=\"padding: 30px;\">' +
+                   '<h4>' + q.question + '</h4>' +
+                   '<div style=\"display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 30px 0;\">';
+        
+        for(var i = 0; i < q.options.length; i++) {
+          html += '<button class=\"exercise-button\" onclick=\"selectAssessmentAnswer(' + i + ', ' + q.correct + ')\">' + q.options[i] + '</button>';
+        }
+        
+        html += '</div></div>';
+        return html;
+      }
+      
+      function generateComprehensiveQuestion(questionNumber) {
+        // More complex questions for comprehensive assessment
+        return generateQuickTestQuestion(questionNumber); // Simplified for this example
+      }
+      
+      function generateListeningQuestion(questionNumber) {
+        return '<div style=\"text-align: center; padding: 30px;\">' +
+               '<h4>Escucha el sonido y selecciona la transcripción correcta:</h4>' +
+               '<button class=\"audio-button\" style=\"font-size: 24px; width: 100px; height: 100px; margin: 20px;\">🔊</button>' +
+               '<div style=\"display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; max-width: 400px; margin: 30px auto;\">' +
+               '<button class=\"exercise-button\" onclick=\"selectAssessmentAnswer(0, 1)\">/kæt/</button>' +
+               '<button class=\"exercise-button\" onclick=\"selectAssessmentAnswer(1, 1)\">/kʌt/</button>' +
+               '<button class=\"exercise-button\" onclick=\"selectAssessmentAnswer(2, 1)\">/kaːt/</button>' +
+               '<button class=\"exercise-button\" onclick=\"selectAssessmentAnswer(3, 1)\">/kɔt/</button>' +
+               '</div></div>';
+      }
+      
+      function generateTranscriptionTestQuestion(questionNumber) {
+        var words = ['beautiful', 'important', 'pronunciation', 'different', 'language'];
+        var word = words[(questionNumber - 1) % words.length];
+        
+        return '<div style=\"text-align: center; padding: 30px;\">' +
+               '<h4>Transcribe completamente la palabra:</h4>' +
+               '<div style=\"font-size: 48px; color: #667eea; margin: 30px;\">' + word + '</div>' +
+               '<input type=\"text\" placeholder=\"Transcripción completa con acento\" ' +
+               'style=\"font-size: 18px; padding: 15px; width: 400px; text-align: center; border: 2px solid #ddd; border-radius: 10px;\"/>' +
+               '<br><br>' +
+               '<button class=\"exercise-button\" onclick=\"checkAssessmentTranscription()\">Verificar Respuesta</button>' +
+               '</div>';
+      }
+      
+      window.selectAssessmentAnswer = function(selected, correct) {
+        // Store the answer and provide feedback
+        if(selected === correct) {
+          alert('Correcto!');
+        } else {
+          alert('Incorrecto.');
+        }
+        
+        // Move to next question after a delay
+        setTimeout(function() {
+          var currentQ = parseInt($('#current-question').text());
+          var totalQ = parseInt($('#total-questions').text());
+          
+          if(currentQ < totalQ) {
+            generateAssessmentQuestion('quick_test', currentQ + 1); // Simplified
+          } else {
+            finishAssessment();
+          }
+        }, 1500);
+      };
+      
+      function startAssessmentTimer(seconds) {
+        var timeLeft = seconds;
+        var timer = setInterval(function() {
+          var minutes = Math.floor(timeLeft / 60);
+          var secs = timeLeft % 60;
+          $('#time-remaining').text(minutes + ':' + (secs < 10 ? '0' : '') + secs);
+          
+          timeLeft--;
+          
+          if(timeLeft < 0) {
+            clearInterval(timer);
+            alert('¡Tiempo agotado!');
+            finishAssessment();
+          }
+        }, 1000);
+      }
+      
+      function finishAssessment() {
+        $('#assessment-content').hide();
+        $('#assessment-results').show();
+        
+        // Generate random results for demonstration
+        var score = Math.floor(Math.random() * 30) + 70; // 70-100%
+        
+        $('#results-summary').html(
+          '<h2 style=\"color: #667eea;\">Evaluación Completada</h2>' +
+          '<div style=\"font-size: 72px; color: ' + (score >= 80 ? '#2ecc71' : score >= 60 ? '#f39c12' : '#e74c3c') + '; margin: 20px;\">' + score + '%</div>' +
+          '<p style=\"font-size: 18px;\">Has obtenido una puntuación de ' + score + '% en esta evaluación.</p>' +
+          '<div style=\"margin: 30px 0;\">' +
+          '<div style=\"background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 10px 0;\">' +
+          '<strong>Respuestas Correctas:</strong> ' + Math.floor(score/10) + '/10<br>' +
+          '<strong>Tiempo Utilizado:</strong> 4:23<br>' +
+          '<strong>Área de Mayor Fortaleza:</strong> Reconocimiento de símbolos<br>' +
+          '<strong>Área a Mejorar:</strong> Transcripción de palabras complejas' +
+          '</div></div>'
+        );
+      }
+      
+      // Utility functions
+      window.playAudio = function(filename) {
+        // Simulate audio playback
+        console.log('Playing audio: ' + filename);
+        // In a real application, this would play the actual audio file
+      };
+      
+      window.nextExercise = function() {
+        alert('Cargando siguiente ejercicio...');
+        // Generate new exercise of same type
+      };
+      
+      window.showHint = function() {
+        alert('Pista: Recuerda que los símbolos entre barras oblicuas representan fonemas.');
+      };
+      
+      window.resetExercise = function() {
+        location.reload();
+      };
+    ")
   })
   
   # Session end cleanup
