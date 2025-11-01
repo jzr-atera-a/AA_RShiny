@@ -178,7 +178,7 @@ execute_bq_with_json <- function(project_id, query, json_path) {
     
     # Restore original environment
     if (old_creds != "") {
-      Sys.setenv(GOOGLE_APPLICATION_CREDENTIALS = old_creds)
+      Sys.setenv(GOOGLE_APPLICATION_CREDENTIALS = old_credsD)
     } else {
       Sys.unsetenv("GOOGLE_APPLICATION_CREDENTIALS")
     }
