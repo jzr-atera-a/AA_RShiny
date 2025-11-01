@@ -38,8 +38,7 @@ ui <- dashboardPage(
       menuItem("Price Analysis", tabName = "price", icon = icon("chart-simple")),
       menuItem("Technical Indicators", tabName = "technical", icon = icon("chart-bar")),
       menuItem("Volatility Analysis", tabName = "volatility", icon = icon("wave-square")),
-      menuItem("Risk Metrics", tabName = "risk", icon = icon("exclamation-triangle")),
-      menuItem("Correlation Matrix", tabName = "correlation", icon = icon("project-diagram"))
+      menuItem("Risk Metrics", tabName = "risk", icon = icon("exclamation-triangle"))
     )
   ),
   

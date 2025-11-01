@@ -82,6 +82,7 @@ rsconnect::deployApp(
   forceUpdate = TRUE
 )
 rsconnect::deployApp('C:/101_Code/R/Skills/Productivity/10x_productivity/')
+rsconnect::deployApp('C:/101_Code/R/Health&Nutrition/SaraiMazu_MenuDegustacionTest/')
 rsconnect::deployApp('C:/101_Code/R/Health&Nutrition/SaraiMazu_MenuDegustacion_Nov/')
 rsconnect::deployApp('C:/101_Code/R/Skills/Intelligence/intelligence_types/')
 rsconnect::deployApp('C:/101_Code/R/Skills/Social/connecting_influencing/')

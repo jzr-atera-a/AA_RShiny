@@ -3,7 +3,7 @@ library(shiny)
 library(shinydashboard)
 library(DT)
 library(jsonlite)
-library(httr)
+library(bigrquery)
 
 # Define UI
 ui <- dashboardPage(
@@ -47,12 +47,16 @@ ui <- dashboardPage(
                   solidHeader = TRUE,
                   width = 12,
                   
-                  h4("Service Account JSON Authentication"),
-                  p("Use your working JSON credentials file:"),
+                  h4("BigQuery Authentication"),
+                  p("Use your service account credentials to connect to BigQuery."),
+                  div(class = "alert alert-info",
+                      tags$strong("Note:"), 
+                      " For GCP VMs: This app explicitly clears default VM credentials to use your JSON file."),
                   
                   # Service Account JSON File
+                  h5("Upload Service Account JSON File:"),
                   fileInput("json_file", 
-                            "Upload Service Account JSON File:",
+                            "Select JSON File:",
                             accept = ".json",
                             width = "400px"),
                   
@@ -74,13 +78,18 @@ ui <- dashboardPage(
                   # Authentication Button
                   br(),
                   actionButton("authenticate", 
-                               "Authenticate with JSON", 
+                               "Connect to BigQuery", 
                                class = "btn-primary btn-lg"),
                   
                   # Status Display
                   hr(),
                   h4("Connection Status"),
-                  htmlOutput("auth_status")
+                  htmlOutput("auth_status"),
+                  
+                  # Package Info
+                  hr(),
+                  h5("Package Information:"),
+                  verbatimTextOutput("package_info")
                 )
               )
       ),
@@ -99,25 +108,33 @@ ui <- dashboardPage(
                                 label = NULL,
                                 height = "200px",
                                 width = "100%",
-                                placeholder = "SELECT \n  column1, \n  column2, \n  COUNT(*) as count\nFROM `project.dataset.table` \nGROUP BY column1, column2\nLIMIT 100;"),
+                                placeholder = "SELECT \n  year,\n  month,\n  day,\n  weight_pounds\nFROM `bigquery-public-data.samples.natality`\nLIMIT 10;"),
                   
                   fluidRow(
-                    column(4,
+                    column(3,
                            actionButton("run_query", 
                                         "Execute Query", 
                                         class = "btn-success btn-lg",
                                         icon = icon("play"))
                     ),
-                    column(4,
+                    column(3,
                            actionButton("clear_query", 
                                         "Clear Query", 
                                         class = "btn-secondary",
                                         icon = icon("eraser"))
                     ),
-                    column(4,
+                    column(3,
                            downloadButton("download_csv", 
                                           "Download CSV", 
                                           class = "btn-info")
+                    ),
+                    column(3,
+                           numericInput("max_rows", 
+                                        "Max Rows:", 
+                                        value = 1000, 
+                                        min = 1, 
+                                        max = 50000,
+                                        step = 100)
                     )
                   ),
                   
@@ -333,132 +350,162 @@ server <- function(input, output, session) {
     authenticated = FALSE,
     project_id = NULL,
     query_results = NULL,
-    json_path = NULL
+    temp_file_path = NULL
   )
+  
+  # Display package information
+  output$package_info <- renderText({
+    paste0("bigrquery version: ", packageVersion("bigrquery"))
+  })
   
   # Authentication
   observeEvent(input$authenticate, {
     
-    if (is.null(input$project_id) || trimws(input$project_id) == "") {
-      output$auth_status <- renderUI({
-        tags$div(class = "status-error", 
-                 tags$i(class = "fa fa-times-circle"), 
-                 " Error: Please provide a Project ID")
-      })
-      return()
-    }
-    
-    # Check if bq CLI is available
-    if (!check_bq_cli()) {
-      output$auth_status <- renderUI({
-        tags$div(class = "status-error",
-                 tags$i(class = "fa fa-times-circle"), 
-                 " Error: Google Cloud SDK 'bq' command not found.",
-                 tags$br(),
-                 "Please install Google Cloud SDK: https://cloud.google.com/sdk/docs/install")
-      })
-      return()
-    }
-    
-    json_path <- NULL
-    
-    # Get JSON credentials
-    if (!is.null(input$json_file) && !is.null(input$json_file$datapath)) {
-      json_path <- input$json_file$datapath
-    } else if (!is.null(input$json_text) && trimws(input$json_text) != "") {
-      # Create temporary file from pasted JSON
-      temp_json <- tempfile(fileext = ".json")
-      writeLines(input$json_text, temp_json)
-      json_path <- temp_json
-    } else {
-      output$auth_status <- renderUI({
-        tags$div(class = "status-error",
-                 tags$i(class = "fa fa-times-circle"), 
-                 " Error: Please provide JSON credentials")
-      })
-      return()
-    }
-    
-    # Validate JSON format
     tryCatch({
-      json_content <- fromJSON(json_path)
-      required_fields <- c("type", "project_id", "private_key", "client_email")
-      missing_fields <- setdiff(required_fields, names(json_content))
-      if (length(missing_fields) > 0) {
-        stop(paste("Missing required fields:", paste(missing_fields, collapse = ", ")))
+      # Validation
+      if (is.null(input$project_id) || trimws(input$project_id) == "") {
+        output$auth_status <- renderUI({
+          tags$div(class = "status-error", 
+                   tags$i(class = "fa fa-times-circle"), 
+                   " Error: Please provide a valid Project ID")
+        })
+        return()
       }
+      
+      auth_successful <- FALSE
+      auth_method <- ""
+      
+      # CRITICAL: Clear any existing authentication (especially on GCP VMs)
+      # This ensures we don't use default VM credentials
+      tryCatch({
+        bq_deauth()
+      }, error = function(e) {
+        # Ignore errors if no auth exists
+      })
+      
+      # Clear any environment variables that might interfere
+      Sys.unsetenv("GOOGLE_APPLICATION_CREDENTIALS")
+      Sys.unsetenv("GCE_METADATA_HOST")
+      
+      # Method 1: JSON file upload
+      if (!is.null(input$json_file) && !is.null(input$json_file$datapath)) {
+        
+        # Validate JSON file
+        json_content <- tryCatch({
+          fromJSON(input$json_file$datapath)
+        }, error = function(e) {
+          stop("Invalid JSON file format: ", e$message)
+        })
+        
+        # Check required fields
+        required_fields <- c("type", "project_id", "private_key", "client_email")
+        missing_fields <- setdiff(required_fields, names(json_content))
+        if (length(missing_fields) > 0) {
+          stop("Missing required fields in JSON: ", paste(missing_fields, collapse = ", "))
+        }
+        
+        # Force authentication with this specific JSON file
+        # Use cache = FALSE to prevent using cached/default credentials
+        bq_auth(path = input$json_file$datapath, cache = FALSE)
+        
+        auth_successful <- TRUE
+        auth_method <- "JSON file upload"
+        
+        # Method 2: Manual JSON input
+      } else if (!is.null(input$json_text) && trimws(input$json_text) != "") {
+        
+        # Validate JSON format
+        json_content <- tryCatch({
+          fromJSON(input$json_text)
+        }, error = function(e) {
+          stop("Invalid JSON format in text input: ", e$message)
+        })
+        
+        # Check required fields
+        required_fields <- c("type", "project_id", "private_key", "client_email")
+        missing_fields <- setdiff(required_fields, names(json_content))
+        if (length(missing_fields) > 0) {
+          stop("Missing required fields in JSON: ", paste(missing_fields, collapse = ", "))
+        }
+        
+        # Create temporary file
+        temp_file <- tempfile(fileext = ".json")
+        writeLines(input$json_text, temp_file)
+        values$temp_file_path <- temp_file
+        
+        # Force authentication with this specific JSON file
+        # Use cache = FALSE to prevent using cached/default credentials
+        bq_auth(path = temp_file, cache = FALSE)
+        
+        auth_successful <- TRUE
+        auth_method <- "manual JSON input"
+        
+      } else {
+        stop("Please provide authentication credentials using one of the available methods")
+      }
+      
+      if (auth_successful) {
+        values$project_id <- trimws(input$project_id)
+        
+        # Test the connection by trying to list datasets
+        test_result <- tryCatch({
+          datasets <- bq_project_datasets(values$project_id)
+          TRUE
+        }, error = function(e) {
+          stop("Connection test failed: ", e$message)
+        })
+        
+        if (test_result) {
+          values$authenticated <- TRUE
+          
+          output$auth_status <- renderUI({
+            tags$div(class = "status-success",
+                     tags$i(class = "fa fa-check-circle"), 
+                     paste(" Successfully authenticated via", auth_method),
+                     br(),
+                     tags$small("Project ID: ", values$project_id),
+                     br(),
+                     tags$small("Using bigrquery v", as.character(packageVersion("bigrquery"))),
+                     br(),
+                     tags$small("✓ Default VM credentials cleared (if applicable)"))
+          })
+        }
+      }
+      
     }, error = function(e) {
-      output$auth_status <- renderUI({
-        tags$div(class = "status-error",
-                 tags$i(class = "fa fa-times-circle"), 
-                 " Error: Invalid JSON format - ", e$message)
-      })
-      return()
-    })
-    
-    values$project_id <- trimws(input$project_id)
-    values$json_path <- json_path
-    
-    # Test connection
-    output$auth_status <- renderUI({
-      tags$div(class = "status-info",
-               tags$i(class = "fa fa-spinner fa-spin"), 
-               " Testing BigQuery connection...")
-    })
-    
-    connection_result <- test_bq_connection(values$project_id, json_path)
-    
-    if (connection_result$success) {
-      values$authenticated <- TRUE
-      output$auth_status <- renderUI({
-        tags$div(class = "status-success",
-                 tags$i(class = "fa fa-check-circle"), 
-                 " Successfully authenticated with BigQuery!",
-                 tags$br(),
-                 tags$small("Project ID: ", values$project_id),
-                 tags$br(),
-                 tags$small("Using service account credentials"))
-      })
-    } else {
       values$authenticated <- FALSE
       output$auth_status <- renderUI({
         tags$div(class = "status-error",
                  tags$i(class = "fa fa-times-circle"), 
-                 " Authentication failed:",
+                 " Authentication failed: ", 
                  tags$br(),
-                 tags$small("Error details: ", connection_result$error),
+                 tags$small(e$message),
                  tags$br(),
                  tags$br(),
-                 "Please check:",
-                 tags$br(),
-                 "• JSON file is valid service account key",
-                 tags$br(), 
-                 "• Project ID is correct",
-                 tags$br(),
-                 "• Service account has BigQuery permissions",
-                 tags$br(),
-                 "• Google Cloud SDK is properly installed")
+                 tags$small("On GCP VMs: Ensure service account has BigQuery permissions in the target project"))
       })
-    }
+    })
   })
   
-  # Clear query
+  # Clear query functionality
   observeEvent(input$clear_query, {
     updateTextAreaInput(session, "sql_query", value = "")
   })
   
-  # Execute query
+  # Query execution logic
   observeEvent(input$run_query, {
     
+    # Check authentication
     if (!values$authenticated) {
       output$query_status <- renderUI({
         tags$div(class = "status-error",
                  tags$i(class = "fa fa-exclamation-triangle"), 
-                 " Please authenticate first")
+                 " Please authenticate first in the GCP Authentication tab")
       })
       return()
     }
     
+    # Check if query is provided
     if (is.null(input$sql_query) || trimws(input$sql_query) == "") {
       output$query_status <- renderUI({
         tags$div(class = "status-error",
@@ -468,44 +515,72 @@ server <- function(input, output, session) {
       return()
     }
     
+    # Show loading status
     output$query_status <- renderUI({
       tags$div(class = "status-info",
                tags$i(class = "fa fa-spinner fa-spin"), 
-               " Executing query...")
+               " Executing query... Please wait.")
     })
     
     tryCatch({
-      result_data <- execute_bq_with_json(values$project_id, input$sql_query, values$json_path)
+      # Execute BigQuery using bigrquery
+      query_job <- bq_project_query(
+        x = values$project_id,
+        query = input$sql_query,
+        use_legacy_sql = FALSE
+      )
+      
+      # Download results with user-specified max_rows
+      max_rows_value <- if(is.null(input$max_rows) || input$max_rows <= 0) 1000 else input$max_rows
+      
+      # Try different parameter names for different bigrquery versions
+      result_data <- tryCatch({
+        bq_table_download(query_job, n_max = max_rows_value)
+      }, error = function(e) {
+        # Fallback for older versions
+        tryCatch({
+          bq_table_download(query_job, max_results = max_rows_value)
+        }, error = function(e2) {
+          # Last resort - download without limit specification
+          bq_table_download(query_job)
+        })
+      })
+      
       values$query_results <- result_data
       
+      # Success message
       output$query_status <- renderUI({
         tags$div(class = "status-success",
                  tags$i(class = "fa fa-check-circle"), 
-                 " Query executed successfully!")
+                 paste(" Query executed successfully! Retrieved", nrow(result_data), "rows."))
       })
       
     }, error = function(e) {
       output$query_status <- renderUI({
         tags$div(class = "status-error",
                  tags$i(class = "fa fa-times-circle"), 
-                 " Query failed: ", e$message)
+                 " Query failed: ",
+                 tags$br(),
+                 tags$small(e$message))
       })
       values$query_results <- NULL
     })
   })
   
-  # Results info
+  # Display results info
   output$results_info <- renderUI({
     if (!is.null(values$query_results)) {
       tags$p(
         tags$strong("Results: "), 
         nrow(values$query_results), " rows × ", 
-        ncol(values$query_results), " columns"
+        ncol(values$query_results), " columns",
+        tags$br(),
+        tags$small("Displaying up to ", input$max_rows, " rows")
       )
     }
   })
   
-  # Results table
+  # Display results table
   output$results_table <- DT::renderDataTable({
     if (!is.null(values$query_results)) {
       DT::datatable(
@@ -516,10 +591,14 @@ server <- function(input, output, session) {
           pageLength = 25,
           searching = TRUE,
           ordering = TRUE,
-          lengthMenu = c(10, 25, 50, 100)
+          lengthMenu = c(10, 25, 50, 100, -1),
+          lengthChange = TRUE,
+          info = TRUE,
+          autoWidth = TRUE
         ),
         class = 'cell-border stripe hover compact',
-        rownames = FALSE
+        rownames = FALSE,
+        filter = 'top'
       )
     }
   })
@@ -536,14 +615,13 @@ server <- function(input, output, session) {
     }
   )
   
-  # Clean up temporary files
+  # Clean up temporary files when session ends
   session$onSessionEnded(function() {
-    if (!is.null(values$json_path) && grepl("tmp", values$json_path)) {
-      if (file.exists(values$json_path)) {
-        unlink(values$json_path)
-      }
+    if (!is.null(values$temp_file_path) && file.exists(values$temp_file_path)) {
+      unlink(values$temp_file_path)
     }
   })
 }
 
+# Run the application
 shinyApp(ui = ui, server = server)
