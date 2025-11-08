@@ -1,9 +1,9 @@
-# Book Summary Management Dashboard with BigQuery Integration
-# Enhanced with Bulk Import functionality
+# Business Model Canvas Dashboard with BigQuery Integration
+# Author: Generated for Business Strategy Management
+# Date: 2025
 
 library(shiny)
 library(shinydashboard)
-library(plotly)
 library(DT)
 library(dplyr)
 library(jsonlite)
@@ -12,15 +12,13 @@ library(stringr)
 
 # Define UI
 ui <- dashboardPage(
-  dashboardHeader(title = "Book Summary Manager - BigQuery"),
+  dashboardHeader(title = "Business Model Canvas Manager"),
   
   dashboardSidebar(
     sidebarMenu(
       menuItem("BigQuery Authentication", tabName = "auth", icon = icon("key")),
-      menuItem("Bulk Import Summary", tabName = "bulk_import", icon = icon("file-import")),
-      menuItem("Add Book Summary", tabName = "add_summary", icon = icon("book")),
-      menuItem("Browse Summaries", tabName = "browse", icon = icon("search")),
-      menuItem("View Details", tabName = "details", icon = icon("eye"))
+      menuItem("Bulk Import Canvas", tabName = "bulk_import", icon = icon("file-import")),
+      menuItem("Business Model Canvas", tabName = "canvas_view", icon = icon("th"))
     )
   ),
   
@@ -202,53 +200,15 @@ ui <- dashboardPage(
           color: white !important;
         }
         
-        /* Value boxes */
-        .small-box {
-          border-radius: 12px !important;
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
-          transition: transform 0.2s ease;
-        }
-        
-        .small-box:hover {
-          transform: translateY(-3px);
-        }
-        
-        .small-box.bg-blue { 
-          background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important; 
-        }
-        
-        .small-box.bg-green { 
-          background: linear-gradient(135deg, #00A39A 0%, #008A82 100%) !important; 
-        }
-        
-        .small-box.bg-yellow { 
-          background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important; 
-        }
-        
-        .small-box.bg-aqua { 
-          background: linear-gradient(135deg, #00A39A 0%, #008A82 100%) !important; 
-        }
-        
-        .small-box.bg-purple { 
-          background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%) !important; 
-        }
-        
         /* Text areas */
         textarea.form-control {
           min-height: 100px;
         }
         
         #bulk_text {
-          min-height: 500px !important;
+          min-height: 400px !important;
           font-family: 'Courier New', monospace;
           font-size: 13px;
-        }
-        
-        /* DataTables */
-        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-          background: linear-gradient(135deg, #008A82 0%, #00A39A 100%) !important;
-          border: none !important;
-          color: white !important;
         }
         
         /* Alert styling */
@@ -258,10 +218,30 @@ ui <- dashboardPage(
           border-radius: 8px;
         }
         
-        /* File input styling */
-        .btn-file {
-          background: linear-gradient(135deg, #008A82 0%, #00A39A 100%) !important;
-          color: white !important;
+        /* Canvas box styling */
+        .canvas-box {
+          background: #ffffff;
+          border: 2px solid #008A82;
+          border-radius: 8px;
+          padding: 15px;
+          min-height: 200px;
+          margin-bottom: 15px;
+          box-shadow: 0 2px 8px rgba(0, 138, 130, 0.15);
+        }
+        
+        .canvas-box h4 {
+          color: #002C3C;
+          font-weight: bold;
+          margin-top: 0;
+          padding-bottom: 10px;
+          border-bottom: 2px solid #00A39A;
+        }
+        
+        .canvas-box p {
+          font-size: 14px;
+          line-height: 1.6;
+          color: #2c3e50;
+          margin-top: 10px;
         }
         
         /* Preview section */
@@ -274,59 +254,11 @@ ui <- dashboardPage(
           max-height: 400px;
           overflow-y: auto;
         }
-        
-        # ADD to the existing CSS in tags$head section (inside the HTML() function)
-
-        /* Detail content styling */
-        #detailMainContent {
-          font-family: 'Century Gothic', 'Trebuchet MS', 'Arial', sans-serif !important;
-          font-size: 16px !important;
-          line-height: 1.8 !important;
-          color: #2c3e50 !important;
-          text-align: justify !important;
-          white-space: pre-wrap !important;
-          word-wrap: break-word !important;
-        }
-        
-        #detailChapter, #detailSection {
-          font-family: 'Century Gothic', 'Arial', sans-serif !important;
-          font-size: 14px !important;
-          color: #2c3e50 !important;
-          background-color: transparent !important;
-          border: none !important;
-          padding: 5px !important;
-          margin: 0 !important;
-        }
-        
-        #selectionInfo {
-          font-family: 'Courier New', monospace !important;
-          font-size: 13px !important;
-          background-color: #f8f9fa !important;
-          padding: 10px !important;
-          border-radius: 6px !important;
-          border-left: 3px solid #008A82 !important;
-        }
-        
-        /* Detail page headings */
-        #detailBookName {
-          font-family: 'Century Gothic', 'Arial', sans-serif !important;
-          font-size: 28px !important;
-          font-weight: bold !important;
-          color: #002C3C !important;
-          margin-bottom: 5px !important;
-        }
-        
-        #detailAuthor {
-          font-family: 'Century Gothic', 'Arial', sans-serif !important;
-          font-size: 20px !important;
-          color: #008A82 !important;
-          font-style: italic !important;
-        }
       "))
     ),
     
     tabItems(
-      # Authentication Tab
+      # Tab 1: Authentication
       tabItem(tabName = "auth",
               fluidRow(
                 box(
@@ -343,14 +275,12 @@ ui <- dashboardPage(
                   
                   fluidRow(
                     column(6,
-                           # Service Account JSON File
                            h5("Upload Service Account JSON File:"),
                            fileInput("json_file", 
                                      "Select JSON File:",
                                      accept = ".json",
                                      width = "100%"),
                            
-                           # Manual JSON Input (alternative)
                            h5("Or paste JSON content:"),
                            textAreaInput("json_text", 
                                          "JSON Content:",
@@ -359,7 +289,6 @@ ui <- dashboardPage(
                                          placeholder = "Paste your service account JSON here...")
                     ),
                     column(6,
-                           # Project ID and Dataset
                            h5("BigQuery Project Configuration"),
                            textInput("project_id", 
                                      "Project ID:",
@@ -369,13 +298,13 @@ ui <- dashboardPage(
                            textInput("dataset_id", 
                                      "Dataset ID:",
                                      placeholder = "your_dataset_id",
-                                     value = "Wonderfulp_March",
+                                     value = "business_strategy",
                                      width = "100%"),
                            
                            textInput("table_id", 
                                      "Table ID:",
                                      placeholder = "table_name",
-                                     value = "book_summaries_test2",
+                                     value = "business_model_canvas",
                                      width = "100%"),
                            
                            p(style = "color: #7f8c8d; font-size: 12px;", 
@@ -383,19 +312,16 @@ ui <- dashboardPage(
                     )
                   ),
                   
-                  # Authentication Button
                   br(),
                   actionButton("authenticate", 
                                "Connect to BigQuery", 
                                class = "btn-primary btn-lg",
                                icon = icon("plug")),
                   
-                  # Status Display
                   hr(),
                   h4("Connection Status"),
                   htmlOutput("auth_status"),
                   
-                  # Package Info
                   hr(),
                   h5("Package Information:"),
                   verbatimTextOutput("package_info")
@@ -403,52 +329,74 @@ ui <- dashboardPage(
               )
       ),
       
-      # Bulk Import Tab
+      # Tab 2: Bulk Import
       tabItem(tabName = "bulk_import",
               fluidRow(
                 box(
-                  title = "Bulk Import Book Summary", 
+                  title = "Business Model Canvas - Bulk Import", 
                   status = "primary", 
                   solidHeader = TRUE, 
                   width = 12,
                   
-                  h4("Import Complete Book Summary"),
-                  p("Paste a complete book summary following the format: [book_name], [author], [chapter], [section], [main_details], [numeric_data]"),
+                  h4("Import Business Model Canvas Data"),
+                  p("Enter your business identification and paste the 9 building blocks of your Business Model Canvas."),
+                  
+                  fluidRow(
+                    column(4,
+                           textInput("business_area", 
+                                     "Business Area (max 32 chars):", 
+                                     placeholder = "e.g., Technology, Healthcare",
+                                     width = "100%")
+                    ),
+                    column(4,
+                           textInput("project", 
+                                     "Project (max 32 chars):", 
+                                     placeholder = "e.g., Mobile App Development",
+                                     width = "100%")
+                    ),
+                    column(4,
+                           textInput("business_focus", 
+                                     "Business Focus (max 32 chars):", 
+                                     placeholder = "e.g., B2B SaaS",
+                                     width = "100%")
+                    )
+                  ),
+                  
+                  br(),
                   
                   div(class = "alert alert-info",
-                      tags$strong("Format Requirements:"),
+                      tags$strong("Format Requirements for Bulk Import:"),
                       tags$ul(
-                        tags$li("Book name and author should appear at the top in brackets: **[Book Title]** and **[Author Name]**"),
-                        tags$li("Each chapter entry should have: **[chapter]**, **[section]**, **[main_details]**, **[numeric_data]**"),
-                        tags$li("Separate entries with blank lines"),
-                        tags$li("Use brackets [] around field markers"),
-                        tags$li("Numeric data should be comma-separated numbers")
+                        tags$li("Start each section with its title in brackets: [Key Partners], [Key Activities], etc."),
+                        tags$li("Content should follow immediately after each title"),
+                        tags$li("Separate sections with blank lines"),
+                        tags$li("Required sections: Key Partners, Key Activities, Key Resources, Value Propositions, Customer Relationships, Channels, Customer Segments, Cost Structure, Revenue Streams")
                       )
                   ),
                   
                   textAreaInput("bulk_text", 
-                                "Paste Book Summary Here:",
-                                height = "500px",
+                                "Paste Business Model Canvas Content:",
+                                height = "400px",
                                 width = "100%",
-                                placeholder = "**[Book Title]**\n**[Author Name]**\n\n**[chapter]**: Chapter 1: Title\n**[section]**: All Sections\n**[main_details]**: Summary text here...\n**[numeric_data]**: 10,20,30,40\n\n**[chapter]**: Chapter 2: Title\n..."),
+                                placeholder = "[Key Partners]\nYour key partners content here...\n\n[Key Activities]\nYour key activities content here...\n\n[Key Resources]\nYour key resources content here...\n\n[Value Propositions]\nYour value propositions content here...\n\n[Customer Relationships]\nYour customer relationships content here...\n\n[Channels]\nYour channels content here...\n\n[Customer Segments]\nYour customer segments content here...\n\n[Cost Structure]\nYour cost structure content here...\n\n[Revenue Streams]\nYour revenue streams content here..."),
                   
                   fluidRow(
                     column(4,
-                           actionButton("parseSummary", 
-                                        "Parse Summary", 
+                           actionButton("parseCanvas", 
+                                        "Parse Canvas Data", 
                                         class = "btn btn-info btn-lg",
                                         icon = icon("cogs"),
                                         width = "100%")
                     ),
                     column(4,
-                           actionButton("submitBulk", 
+                           actionButton("submitCanvas", 
                                         "Submit to BigQuery", 
                                         class = "btn btn-success btn-lg",
                                         icon = icon("cloud-upload-alt"),
                                         width = "100%")
                     ),
                     column(4,
-                           actionButton("clearBulk", 
+                           actionButton("clearCanvas", 
                                         "Clear All", 
                                         class = "btn btn-danger",
                                         icon = icon("trash"),
@@ -463,7 +411,7 @@ ui <- dashboardPage(
               
               fluidRow(
                 box(
-                  title = "Parsed Data Preview", 
+                  title = "Parsed Canvas Preview", 
                   status = "info", 
                   solidHeader = TRUE, 
                   width = 12,
@@ -477,174 +425,104 @@ ui <- dashboardPage(
               )
       ),
       
-      # Add Book Summary Tab
-      tabItem(tabName = "add_summary",
+      # Tab 3: Business Model Canvas View
+      tabItem(tabName = "canvas_view",
               fluidRow(
                 box(
-                  title = "Add New Book Summary", 
+                  title = "Select Business Model Canvas", 
                   status = "primary", 
                   solidHeader = TRUE, 
-                  width = 8,
+                  width = 12,
                   
-                  textInput("book_name", "Book Name:", 
-                            placeholder = "Enter book title"),
-                  
-                  textInput("author", "Author:", 
-                            placeholder = "Enter author name"),
-                  
-                  textInput("chapter", "Chapter:", 
-                            placeholder = "e.g., Chapter 1 or Introduction"),
-                  
-                  textInput("section", "Section:", 
-                            placeholder = "e.g., Section 1.1"),
-                  
-                  textAreaInput("main_details", "Main Details:", 
-                                placeholder = "Enter summary, key points, or main content...",
-                                rows = 8),
-                  
-                  textInput("numeric_data", "Numeric Data (comma-separated):", 
-                            placeholder = "e.g., 10,25,30,45,60,75,80"),
-                  
-                  p(style = "color: #7f8c8d; font-size: 12px;", 
-                    "Enter numeric values separated by commas. These will be used for visualization."),
-                  
-                  br(),
-                  
-                  actionButton("submitSummary", "Submit Summary", 
-                               class = "btn btn-success btn-lg", 
-                               icon = icon("save"),
-                               width = "100%"),
-                  
-                  br(), br(),
-                  htmlOutput("submitStatus")
+                  fluidRow(
+                    column(3,
+                           selectInput("select_business_area", 
+                                       "Business Area:", 
+                                       choices = NULL,
+                                       width = "100%")
+                    ),
+                    column(3,
+                           selectInput("select_project", 
+                                       "Project:", 
+                                       choices = NULL,
+                                       width = "100%")
+                    ),
+                    column(3,
+                           selectInput("select_business_focus", 
+                                       "Business Focus:", 
+                                       choices = NULL,
+                                       width = "100%")
+                    ),
+                    column(3,
+                           br(),
+                           actionButton("loadCanvas", 
+                                        "Load Canvas", 
+                                        class = "btn btn-success btn-lg",
+                                        icon = icon("download"),
+                                        width = "100%")
+                    )
+                  )
+                )
+              ),
+              
+              # Business Model Canvas Layout
+              fluidRow(
+                # Left Column
+                column(3,
+                       div(class = "canvas-box",
+                           h4("Key Partners"),
+                           htmlOutput("canvas_key_partners")
+                       ),
+                       div(class = "canvas-box",
+                           h4("Key Activities"),
+                           htmlOutput("canvas_key_activities")
+                       ),
+                       div(class = "canvas-box",
+                           h4("Key Resources"),
+                           htmlOutput("canvas_key_resources")
+                       )
                 ),
                 
-                box(
-                  title = "Quick Stats", 
-                  status = "info", 
-                  solidHeader = TRUE, 
-                  width = 4,
-                  
-                  valueBoxOutput("totalBooks", width = 12),
-                  valueBoxOutput("totalChapters", width = 12),
-                  valueBoxOutput("totalSummaries", width = 12)
-                )
-              )
-      ),
-      
-      # Browse Summaries Tab
-      tabItem(tabName = "browse",
-              fluidRow(
-                box(
-                  title = "All Book Summaries", 
-                  status = "primary", 
-                  solidHeader = TRUE, 
-                  width = 12,
-                  
-                  fluidRow(
-                    column(3,
-                           actionButton("refreshTable", "Refresh Table", 
-                                        class = "btn btn-primary",
-                                        icon = icon("sync"))
-                    ),
-                    column(3,
-                           downloadButton("downloadSummaries", "Download CSV", 
-                                          class = "btn btn-info")
-                    ),
-                    column(6,
-                           numericInput("max_browse_rows", "Max Rows to Display:", 
-                                        value = 100, min = 10, max = 1000, step = 10)
-                    )
-                  ),
-                  
-                  br(),
-                  htmlOutput("browseStatus"),
-                  br(),
-                  
-                  DT::dataTableOutput("summariesTable")
-                )
-              )
-      ),
-      
-      # View Details Tab - REPLACE THIS SECTION
-      tabItem(tabName = "details",
-              fluidRow(
-                box(
-                  title = "Navigation Controls", 
-                  status = "primary", 
-                  solidHeader = TRUE, 
-                  width = 12,
-                  
-                  fluidRow(
-                    column(4,
-                           selectInput("filterBook", "Select Book:", 
-                                       choices = NULL,
-                                       width = "100%")
-                    ),
-                    column(4,
-                           selectInput("filterChapter", "Select Chapter:", 
-                                       choices = NULL,
-                                       width = "100%")
-                    ),
-                    column(4,
-                           selectInput("filterSection", "Select Section:", 
-                                       choices = NULL,
-                                       width = "100%")
-                    )
-                  ),
-                  
-                  br(),
-                  actionButton("loadDetails", "Load Details", 
-                               class = "btn btn-success btn-lg",
-                               icon = icon("eye"),
-                               width = "100%"),
-                  
-                  br(), br(),
-                  h5("Current Selection:"),
-                  verbatimTextOutput("selectionInfo")
+                # Middle Column
+                column(3,
+                       div(class = "canvas-box",
+                           h4("Value Propositions"),
+                           htmlOutput("canvas_value_propositions")
+                       )
+                ),
+                
+                column(3,
+                       div(class = "canvas-box",
+                           h4("Customer Relationships"),
+                           htmlOutput("canvas_customer_relationships")
+                       ),
+                       div(class = "canvas-box",
+                           h4("Channels"),
+                           htmlOutput("canvas_channels")
+                       )
+                ),
+                
+                # Right Column
+                column(3,
+                       div(class = "canvas-box",
+                           h4("Customer Segments"),
+                           htmlOutput("canvas_customer_segments")
+                       )
                 )
               ),
               
               fluidRow(
-                box(
-                  title = "Summary Details", 
-                  status = "primary", 
-                  solidHeader = TRUE, 
-                  width = 12,
-                  
-                  h3(textOutput("detailBookName"), style = "color: #002C3C; font-weight: bold;"),
-                  h4(textOutput("detailAuthor"), style = "color: #008A82;"),
-                  hr(),
-                  
-                  fluidRow(
-                    column(6,
-                           h5("Chapter:", style = "color: #008A82; font-weight: bold;"),
-                           div(style = "background-color: #f8f9fa; padding: 10px; border-radius: 8px; border-left: 4px solid #008A82;",
-                               verbatimTextOutput("detailChapter"))
-                    ),
-                    column(6,
-                           h5("Section:", style = "color: #008A82; font-weight: bold;"),
-                           div(style = "background-color: #f8f9fa; padding: 10px; border-radius: 8px; border-left: 4px solid #00A39A;",
-                               verbatimTextOutput("detailSection"))
-                    )
-                  ),
-                  
-                  br(),
-                  h4("Main Content:", style = "color: #002C3C; font-weight: bold;"),
-                  div(style = "background-color: #ffffff; padding: 20px; border-radius: 8px; border: 2px solid #008A82; min-height: 400px;",
-                      div(style = "font-family: 'Century Gothic', 'Arial', sans-serif; font-size: 16px; line-height: 1.8; color: #2c3e50; text-align: justify;",
-                          textOutput("detailMainContent")))
-                )
-              ),
-              
-              fluidRow(
-                box(
-                  title = "Numeric Data Visualization", 
-                  status = "info", 
-                  solidHeader = TRUE, 
-                  width = 12,
-                  
-                  plotlyOutput("numericChart", height = "500px")
+                column(6,
+                       div(class = "canvas-box",
+                           h4("Cost Structure"),
+                           htmlOutput("canvas_cost_structure")
+                       )
+                ),
+                column(6,
+                       div(class = "canvas-box",
+                           h4("Revenue Streams"),
+                           htmlOutput("canvas_revenue_streams")
+                       )
                 )
               )
       )
@@ -662,10 +540,9 @@ server <- function(input, output, session) {
     dataset_id = NULL,
     table_id = NULL,
     full_table_id = NULL,
-    summaries_data = NULL,
-    current_selection = NULL,
     temp_file_path = NULL,
-    parsed_data = NULL
+    parsed_canvas = NULL,
+    current_canvas = NULL
   )
   
   # Display package information
@@ -722,50 +599,41 @@ server <- function(input, output, session) {
       # Method 1: JSON file upload
       if (!is.null(input$json_file) && !is.null(input$json_file$datapath)) {
         
-        # Validate JSON file
         json_content <- tryCatch({
           fromJSON(input$json_file$datapath)
         }, error = function(e) {
           stop("Invalid JSON file format: ", e$message)
         })
         
-        # Check required fields
         required_fields <- c("type", "project_id", "private_key", "client_email")
         missing_fields <- setdiff(required_fields, names(json_content))
         if (length(missing_fields) > 0) {
           stop("Missing required fields in JSON: ", paste(missing_fields, collapse = ", "))
         }
         
-        # Force authentication with this specific JSON file
         bq_auth(path = input$json_file$datapath, cache = FALSE)
-        
         auth_successful <- TRUE
         auth_method <- "JSON file upload"
         
       } else if (!is.null(input$json_text) && trimws(input$json_text) != "") {
         
-        # Validate JSON format
         json_content <- tryCatch({
           fromJSON(input$json_text)
         }, error = function(e) {
           stop("Invalid JSON format in text input: ", e$message)
         })
         
-        # Check required fields
         required_fields <- c("type", "project_id", "private_key", "client_email")
         missing_fields <- setdiff(required_fields, names(json_content))
         if (length(missing_fields) > 0) {
           stop("Missing required fields in JSON: ", paste(missing_fields, collapse = ", "))
         }
         
-        # Create temporary file
         temp_file <- tempfile(fileext = ".json")
         writeLines(input$json_text, temp_file)
         values$temp_file_path <- temp_file
         
-        # Force authentication
         bq_auth(path = temp_file, cache = FALSE)
-        
         auth_successful <- TRUE
         auth_method <- "manual JSON input"
         
@@ -779,7 +647,6 @@ server <- function(input, output, session) {
         values$table_id <- trimws(input$table_id)
         values$full_table_id <- paste0(values$project_id, ".", values$dataset_id, ".", values$table_id)
         
-        # Test the connection
         test_result <- tryCatch({
           datasets <- bq_project_datasets(values$project_id)
           TRUE
@@ -791,20 +658,27 @@ server <- function(input, output, session) {
           # Create table if it doesn't exist
           create_table_query <- sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
-              id INT64,
-              book_name STRING NOT NULL,
-              author STRING,
-              chapter STRING,
-              section STRING,
-              main_details STRING,
-              numeric_data STRING,
-              created_at TIMESTAMP
+              canvas_id STRING NOT NULL,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+              updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+              business_area STRING,
+              project STRING,
+              business_focus STRING,
+              key_partners STRING,
+              key_activities STRING,
+              key_resources STRING,
+              value_propositions STRING,
+              customer_relationships STRING,
+              channels STRING,
+              customer_segments STRING,
+              cost_structure STRING,
+              revenue_streams STRING
             )", values$full_table_id)
           
           tryCatch({
             bq_project_query(values$project_id, create_table_query)
           }, error = function(e) {
-            # Table might already exist, that's okay
+            # Table might already exist
           })
           
           values$authenticated <- TRUE
@@ -820,15 +694,14 @@ server <- function(input, output, session) {
                      br(),
                      tags$small("Table ID: ", values$table_id),
                      br(),
-                     tags$small("Full Table Path: ", values$full_table_id),
-                     br(),
-                     tags$small("Using bigrquery v", as.character(packageVersion("bigrquery"))))
+                     tags$small("Full Table Path: ", values$full_table_id))
           })
           
           showNotification("✓ BigQuery connection established!", type = "message")
           
-          # Update navigation choices
-          updateNavigationChoices()
+          # Load default canvas and update dropdowns
+          loadDefaultCanvas()
+          updateCanvasDropdowns()
         }
       }
       
@@ -845,14 +718,139 @@ server <- function(input, output, session) {
     })
   })
   
-  # Parse bulk summary - ROBUST VERSION
-  observeEvent(input$parseSummary, {
+  # Load default canvas content
+  loadDefaultCanvas <- function() {
+    default_canvas <- list(
+      key_partners = "<p><strong>Strategic Alliances:</strong> Technology partners providing infrastructure and platforms</p><p><strong>Suppliers:</strong> Cloud service providers (AWS, Google Cloud, Azure)</p><p><strong>Key Partners:</strong> Software development agencies, API providers, and integration partners</p>",
+      
+      key_activities = "<p><strong>Platform Development:</strong> Building and maintaining the core technology platform</p><p><strong>Customer Support:</strong> Providing technical assistance and account management</p><p><strong>Marketing & Sales:</strong> Lead generation, customer acquisition, and retention activities</p>",
+      
+      key_resources = "<p><strong>Human Resources:</strong> Skilled development team, sales staff, and customer support</p><p><strong>Technology:</strong> Proprietary software, cloud infrastructure, and development tools</p><p><strong>Financial:</strong> Operating capital and investment funding</p>",
+      
+      value_propositions = "<p><strong>Core Value:</strong> Streamlined business operations through integrated software solutions</p><p><strong>Benefits:</strong> Increased efficiency, cost reduction, and scalability</p><p><strong>Differentiation:</strong> User-friendly interface, customizable features, and excellent customer support</p>",
+      
+      customer_relationships = "<p><strong>Personal Assistance:</strong> Dedicated account managers for enterprise clients</p><p><strong>Self-Service:</strong> Comprehensive knowledge base and documentation</p><p><strong>Automated Services:</strong> AI-powered chatbots and automated onboarding</p>",
+      
+      channels = "<p><strong>Direct Sales:</strong> Inside sales team and field representatives</p><p><strong>Online:</strong> Company website, mobile app, and online marketplace</p><p><strong>Partnerships:</strong> Reseller network and integration partners</p>",
+      
+      customer_segments = "<p><strong>Primary Segment:</strong> Small to medium-sized businesses (SMBs)</p><p><strong>Secondary Segment:</strong> Enterprise organizations</p><p><strong>Niche Markets:</strong> Industry-specific solutions for healthcare, retail, and manufacturing</p>",
+      
+      cost_structure = "<p><strong>Fixed Costs:</strong> Salaries, office space, and infrastructure maintenance</p><p><strong>Variable Costs:</strong> Cloud hosting fees, marketing expenses, and customer acquisition costs</p><p><strong>Major Investments:</strong> Product development, R&D, and market expansion</p>",
+      
+      revenue_streams = "<p><strong>Subscription Revenue:</strong> Monthly and annual SaaS subscriptions</p><p><strong>Professional Services:</strong> Implementation, training, and consulting fees</p><p><strong>Additional Revenue:</strong> Premium features, add-ons, and marketplace commissions</p>"
+    )
+    
+    output$canvas_key_partners <- renderUI(HTML(default_canvas$key_partners))
+    output$canvas_key_activities <- renderUI(HTML(default_canvas$key_activities))
+    output$canvas_key_resources <- renderUI(HTML(default_canvas$key_resources))
+    output$canvas_value_propositions <- renderUI(HTML(default_canvas$value_propositions))
+    output$canvas_customer_relationships <- renderUI(HTML(default_canvas$customer_relationships))
+    output$canvas_channels <- renderUI(HTML(default_canvas$channels))
+    output$canvas_customer_segments <- renderUI(HTML(default_canvas$customer_segments))
+    output$canvas_cost_structure <- renderUI(HTML(default_canvas$cost_structure))
+    output$canvas_revenue_streams <- renderUI(HTML(default_canvas$revenue_streams))
+  }
+  
+  # Update canvas dropdowns
+  updateCanvasDropdowns <- function() {
+    if (!values$authenticated) return()
+    
+    tryCatch({
+      # Get unique business areas
+      query <- sprintf("SELECT DISTINCT business_area FROM `%s` WHERE business_area IS NOT NULL ORDER BY business_area", 
+                       values$full_table_id)
+      job <- bq_project_query(values$project_id, query)
+      result <- bq_table_download(job)
+      
+      if (nrow(result) > 0) {
+        updateSelectInput(session, "select_business_area", 
+                          choices = c("Select..." = "", result$business_area))
+      }
+    }, error = function(e) {
+      # Table might be empty
+    })
+  }
+  
+  # Update project dropdown when business area is selected
+  observeEvent(input$select_business_area, {
+    if (input$select_business_area == "" || !values$authenticated) return()
+    
+    tryCatch({
+      business_area_clean <- gsub("'", "\\\\'", input$select_business_area)
+      query <- sprintf("SELECT DISTINCT project FROM `%s` WHERE business_area = '%s' AND project IS NOT NULL ORDER BY project", 
+                       values$full_table_id, business_area_clean)
+      job <- bq_project_query(values$project_id, query)
+      result <- bq_table_download(job)
+      
+      if (nrow(result) > 0) {
+        updateSelectInput(session, "select_project", 
+                          choices = c("Select..." = "", result$project))
+      } else {
+        updateSelectInput(session, "select_project", choices = c("No projects available" = ""))
+      }
+    }, error = function(e) {
+      showNotification(paste("Error loading projects:", e$message), type = "error")
+    })
+  })
+  
+  # Update business focus dropdown when project is selected
+  observeEvent(input$select_project, {
+    if (input$select_project == "" || !values$authenticated) return()
+    
+    tryCatch({
+      business_area_clean <- gsub("'", "\\\\'", input$select_business_area)
+      project_clean <- gsub("'", "\\\\'", input$select_project)
+      query <- sprintf("SELECT DISTINCT business_focus FROM `%s` WHERE business_area = '%s' AND project = '%s' AND business_focus IS NOT NULL ORDER BY business_focus", 
+                       values$full_table_id, business_area_clean, project_clean)
+      job <- bq_project_query(values$project_id, query)
+      result <- bq_table_download(job)
+      
+      if (nrow(result) > 0) {
+        updateSelectInput(session, "select_business_focus", 
+                          choices = c("Select..." = "", result$business_focus))
+      } else {
+        updateSelectInput(session, "select_business_focus", choices = c("No business focus available" = ""))
+      }
+    }, error = function(e) {
+      showNotification(paste("Error loading business focus:", e$message), type = "error")
+    })
+  })
+  
+  # Parse canvas data
+  observeEvent(input$parseCanvas, {
     
     if (is.null(input$bulk_text) || trimws(input$bulk_text) == "") {
       output$bulkStatus <- renderUI({
         tags$div(class = "status-error",
                  tags$i(class = "fa fa-exclamation-triangle"),
-                 " Please paste a book summary to parse")
+                 " Please paste canvas content to parse")
+      })
+      return()
+    }
+    
+    if (is.null(input$business_area) || trimws(input$business_area) == "") {
+      output$bulkStatus <- renderUI({
+        tags$div(class = "status-error",
+                 tags$i(class = "fa fa-exclamation-triangle"),
+                 " Please provide Business Area")
+      })
+      return()
+    }
+    
+    if (is.null(input$project) || trimws(input$project) == "") {
+      output$bulkStatus <- renderUI({
+        tags$div(class = "status-error",
+                 tags$i(class = "fa fa-exclamation-triangle"),
+                 " Please provide Project name")
+      })
+      return()
+    }
+    
+    if (is.null(input$business_focus) || trimws(input$business_focus) == "") {
+      output$bulkStatus <- renderUI({
+        tags$div(class = "status-error",
+                 tags$i(class = "fa fa-exclamation-triangle"),
+                 " Please provide Business Focus")
       })
       return()
     }
@@ -860,138 +858,100 @@ server <- function(input, output, session) {
     output$bulkStatus <- renderUI({
       tags$div(class = "status-info",
                tags$i(class = "fa fa-spinner fa-spin"), 
-               " Parsing summary text...")
+               " Parsing canvas data...")
     })
     
     tryCatch({
       text <- input$bulk_text
-      lines <- strsplit(text, "\n")[[1]]
       
-      # Extract book name and author from the top
-      book_name <- NULL
-      author <- NULL
+      # Parse the 9 sections
+      key_partners <- str_match(text, "(?i)\\[Key Partners\\]\\s*\n([\\s\\S]*?)(?=\n\\[|$)")[,2]
+      key_activities <- str_match(text, "(?i)\\[Key Activities\\]\\s*\n([\\s\\S]*?)(?=\n\\[|$)")[,2]
+      key_resources <- str_match(text, "(?i)\\[Key Resources\\]\\s*\n([\\s\\S]*?)(?=\n\\[|$)")[,2]
+      value_propositions <- str_match(text, "(?i)\\[Value Propositions\\]\\s*\n([\\s\\S]*?)(?=\n\\[|$)")[,2]
+      customer_relationships <- str_match(text, "(?i)\\[Customer Relationships\\]\\s*\n([\\s\\S]*?)(?=\n\\[|$)")[,2]
+      channels <- str_match(text, "(?i)\\[Channels\\]\\s*\n([\\s\\S]*?)(?=\n\\[|$)")[,2]
+      customer_segments <- str_match(text, "(?i)\\[Customer Segments\\]\\s*\n([\\s\\S]*?)(?=\n\\[|$)")[,2]
+      cost_structure <- str_match(text, "(?i)\\[Cost Structure\\]\\s*\n([\\s\\S]*?)(?=\n\\[|$)")[,2]
+      revenue_streams <- str_match(text, "(?i)\\[Revenue Streams\\]\\s*\n([\\s\\S]*?)(?=\n\\[|$)")[,2]
       
-      # Look for lines starting with [ ] brackets (book name and author)
-      for (i in 1:min(15, length(lines))) {
-        line <- trimws(lines[i])
-        
-        # Check for [Book Name] pattern
-        if (grepl("^\\[.*\\]$", line) && is.null(book_name)) {
-          book_name <- gsub("^\\[|\\]$", "", line)
-          next
-        }
-        
-        # Check for [Author] pattern (second bracketed line)
-        if (grepl("^\\[.*\\]$", line) && !is.null(book_name) && is.null(author)) {
-          author <- gsub("^\\[|\\]$", "", line)
-          break
-        }
+      # Check if all sections are found
+      missing_sections <- c()
+      if (is.na(key_partners)) missing_sections <- c(missing_sections, "Key Partners")
+      if (is.na(key_activities)) missing_sections <- c(missing_sections, "Key Activities")
+      if (is.na(key_resources)) missing_sections <- c(missing_sections, "Key Resources")
+      if (is.na(value_propositions)) missing_sections <- c(missing_sections, "Value Propositions")
+      if (is.na(customer_relationships)) missing_sections <- c(missing_sections, "Customer Relationships")
+      if (is.na(channels)) missing_sections <- c(missing_sections, "Channels")
+      if (is.na(customer_segments)) missing_sections <- c(missing_sections, "Customer Segments")
+      if (is.na(cost_structure)) missing_sections <- c(missing_sections, "Cost Structure")
+      if (is.na(revenue_streams)) missing_sections <- c(missing_sections, "Revenue Streams")
+      
+      if (length(missing_sections) > 0) {
+        stop(paste("Missing sections:", paste(missing_sections, collapse = ", "), 
+                   "\n\nPlease ensure all 9 sections are included with proper [Section Name] headers."))
       }
       
-      if (is.null(book_name) || is.null(author)) {
-        stop("Could not find book name and author. Please ensure they are at the top in format: [Book Name] and [Author Name]")
-      }
-      
-      # Parse entries
-      entries <- list()
-      current_entry <- list()
-      
-      for (i in 1:length(lines)) {
-        line <- trimws(lines[i])
-        
-        # Skip empty lines and book/author declaration lines
-        if (line == "" || (grepl("^\\[.*\\]$", line) && i <= 15)) {
-          next
-        }
-        
-        # Check for chapter line
-        if (grepl("^\\[chapter\\]:", line)) {
-          # Save previous entry if complete
-          if (length(current_entry) == 4) {
-            entries[[length(entries) + 1]] <- current_entry
-            current_entry <- list()
-          }
-          
-          current_entry$chapter <- trimws(sub("^\\[chapter\\]:\\s*", "", line))
-        }
-        
-        # Check for section line
-        else if (grepl("^\\[section\\]:", line)) {
-          current_entry$section <- trimws(sub("^\\[section\\]:\\s*", "", line))
-        }
-        
-        # Check for main_details line
-        else if (grepl("^\\[main_details\\]:", line)) {
-          current_entry$main_details <- trimws(sub("^\\[main_details\\]:\\s*", "", line))
-        }
-        
-        # Check for numeric_data line
-        else if (grepl("^\\[numeric_data\\]:", line)) {
-          current_entry$numeric_data <- trimws(sub("^\\[numeric_data\\]:\\s*", "", line))
-        }
-      }
-      
-      # Add last entry if complete
-      if (length(current_entry) == 4) {
-        entries[[length(entries) + 1]] <- current_entry
-      }
-      
-      if (length(entries) == 0) {
-        stop("No valid entries found. Please check the format. Expected format:\n[Book Name]\n[Author]\n\n[chapter]: Chapter 1\n[section]: All Sections\n[main_details]: Summary text\n[numeric_data]: 1,2,3")
-      }
-      
-      # Create data frame
-      parsed_df <- data.frame(
-        book_name = rep(book_name, length(entries)),
-        author = rep(author, length(entries)),
-        chapter = sapply(entries, function(x) x$chapter),
-        section = sapply(entries, function(x) x$section),
-        main_details = sapply(entries, function(x) x$main_details),
-        numeric_data = sapply(entries, function(x) x$numeric_data),
-        stringsAsFactors = FALSE
+      # Store parsed data
+      values$parsed_canvas <- list(
+        business_area = substr(trimws(input$business_area), 1, 32),
+        project = substr(trimws(input$project), 1, 32),
+        business_focus = substr(trimws(input$business_focus), 1, 32),
+        key_partners = trimws(key_partners),
+        key_activities = trimws(key_activities),
+        key_resources = trimws(key_resources),
+        value_propositions = trimws(value_propositions),
+        customer_relationships = trimws(customer_relationships),
+        channels = trimws(channels),
+        customer_segments = trimws(customer_segments),
+        cost_structure = trimws(cost_structure),
+        revenue_streams = trimws(revenue_streams)
       )
-      
-      values$parsed_data <- parsed_df
       
       output$bulkStatus <- renderUI({
         tags$div(class = "status-success",
                  tags$i(class = "fa fa-check-circle"),
-                 paste(" Successfully parsed", nrow(parsed_df), "entries!"),
+                 " Successfully parsed Business Model Canvas!",
                  br(),
-                 tags$small("Book: ", book_name, " by ", author))
+                 tags$small("Business Area: ", values$parsed_canvas$business_area),
+                 br(),
+                 tags$small("Project: ", values$parsed_canvas$project),
+                 br(),
+                 tags$small("Business Focus: ", values$parsed_canvas$business_focus))
       })
       
       output$parseInfo <- renderUI({
         tags$p(
-          tags$strong("Parsed Data Summary:"),
+          tags$strong("Parsed Canvas Summary:"),
           br(),
-          paste("Book:", book_name),
+          paste("Business Area:", values$parsed_canvas$business_area),
           br(),
-          paste("Author:", author),
+          paste("Project:", values$parsed_canvas$project),
           br(),
-          paste("Total Entries:", nrow(parsed_df)),
+          paste("Business Focus:", values$parsed_canvas$business_focus),
           br(),
-          paste("Chapters:", length(unique(parsed_df$chapter)))
+          "All 9 building blocks successfully parsed"
         )
       })
       
       output$parsedPreview <- renderText({
-        preview_text <- ""
-        for (i in 1:min(3, nrow(parsed_df))) {
-          preview_text <- paste0(preview_text,
-                                 "Entry ", i, ":\n",
-                                 "  Chapter: ", parsed_df$chapter[i], "\n",
-                                 "  Section: ", parsed_df$section[i], "\n",
-                                 "  Details: ", substr(parsed_df$main_details[i], 1, 100), "...\n",
-                                 "  Numeric Data: ", parsed_df$numeric_data[i], "\n\n")
-        }
-        if (nrow(parsed_df) > 3) {
-          preview_text <- paste0(preview_text, "... and ", nrow(parsed_df) - 3, " more entries")
-        }
-        preview_text
+        paste0(
+          "Business Area: ", values$parsed_canvas$business_area, "\n",
+          "Project: ", values$parsed_canvas$project, "\n",
+          "Business Focus: ", values$parsed_canvas$business_focus, "\n\n",
+          "Key Partners: ", substr(values$parsed_canvas$key_partners, 1, 100), "...\n\n",
+          "Key Activities: ", substr(values$parsed_canvas$key_activities, 1, 100), "...\n\n",
+          "Key Resources: ", substr(values$parsed_canvas$key_resources, 1, 100), "...\n\n",
+          "Value Propositions: ", substr(values$parsed_canvas$value_propositions, 1, 100), "...\n\n",
+          "Customer Relationships: ", substr(values$parsed_canvas$customer_relationships, 1, 100), "...\n\n",
+          "Channels: ", substr(values$parsed_canvas$channels, 1, 100), "...\n\n",
+          "Customer Segments: ", substr(values$parsed_canvas$customer_segments, 1, 100), "...\n\n",
+          "Cost Structure: ", substr(values$parsed_canvas$cost_structure, 1, 100), "...\n\n",
+          "Revenue Streams: ", substr(values$parsed_canvas$revenue_streams, 1, 100), "..."
+        )
       })
       
-      showNotification(paste("✓ Parsed", nrow(parsed_df), "entries successfully!"), type = "message")
+      showNotification("✓ Canvas parsed successfully!", type = "message")
       
     }, error = function(e) {
       output$bulkStatus <- renderUI({
@@ -1001,15 +961,15 @@ server <- function(input, output, session) {
                  br(),
                  tags$small(e$message))
       })
-      values$parsed_data <- NULL
+      values$parsed_canvas <- NULL
       output$parseInfo <- renderUI(NULL)
       output$parsedPreview <- renderText("")
       showNotification(paste("Error:", e$message), type = "error")
     })
   })
   
-  # Submit bulk data to BigQuery
-  observeEvent(input$submitBulk, {
+  # Submit canvas to BigQuery
+  observeEvent(input$submitCanvas, {
     
     if (!values$authenticated) {
       output$bulkStatus <- renderUI({
@@ -1020,11 +980,11 @@ server <- function(input, output, session) {
       return()
     }
     
-    if (is.null(values$parsed_data)) {
+    if (is.null(values$parsed_canvas)) {
       output$bulkStatus <- renderUI({
         tags$div(class = "status-error",
                  tags$i(class = "fa fa-exclamation-triangle"),
-                 " Please parse the summary first by clicking 'Parse Summary'")
+                 " Please parse the canvas first by clicking 'Parse Canvas Data'")
       })
       return()
     }
@@ -1036,80 +996,81 @@ server <- function(input, output, session) {
     })
     
     tryCatch({
-      parsed_df <- values$parsed_data
+      # Generate unique canvas ID
+      canvas_id <- paste0(
+        gsub("[^A-Za-z0-9]", "_", values$parsed_canvas$business_area), "_",
+        gsub("[^A-Za-z0-9]", "_", values$parsed_canvas$project), "_",
+        gsub("[^A-Za-z0-9]", "_", values$parsed_canvas$business_focus), "_",
+        format(Sys.time(), "%Y%m%d%H%M%S")
+      )
       
-      # Get starting ID
-      id_query <- sprintf("SELECT COALESCE(MAX(id), 0) as max_id FROM `%s`", 
-                          values$full_table_id)
-      id_job <- bq_project_query(values$project_id, id_query)
-      id_result <- bq_table_download(id_job)
-      next_id <- id_result$max_id[1] + 1
+      # Escape single quotes in all fields
+      canvas_id_clean <- gsub("'", "\\\\'", canvas_id)
+      business_area_clean <- gsub("'", "\\\\'", values$parsed_canvas$business_area)
+      project_clean <- gsub("'", "\\\\'", values$parsed_canvas$project)
+      business_focus_clean <- gsub("'", "\\\\'", values$parsed_canvas$business_focus)
+      key_partners_clean <- gsub("'", "\\\\'", values$parsed_canvas$key_partners)
+      key_activities_clean <- gsub("'", "\\\\'", values$parsed_canvas$key_activities)
+      key_resources_clean <- gsub("'", "\\\\'", values$parsed_canvas$key_resources)
+      value_propositions_clean <- gsub("'", "\\\\'", values$parsed_canvas$value_propositions)
+      customer_relationships_clean <- gsub("'", "\\\\'", values$parsed_canvas$customer_relationships)
+      channels_clean <- gsub("'", "\\\\'", values$parsed_canvas$channels)
+      customer_segments_clean <- gsub("'", "\\\\'", values$parsed_canvas$customer_segments)
+      cost_structure_clean <- gsub("'", "\\\\'", values$parsed_canvas$cost_structure)
+      revenue_streams_clean <- gsub("'", "\\\\'", values$parsed_canvas$revenue_streams)
       
-      success_count <- 0
-      error_count <- 0
+      insert_query <- sprintf("
+        INSERT INTO `%s` 
+        (canvas_id, created_at, updated_at, business_area, project, business_focus, 
+         key_partners, key_activities, key_resources, value_propositions, 
+         customer_relationships, channels, customer_segments, cost_structure, revenue_streams) 
+        VALUES (
+          '%s',
+          CURRENT_TIMESTAMP(),
+          CURRENT_TIMESTAMP(),
+          '%s',
+          '%s',
+          '%s',
+          '%s',
+          '%s',
+          '%s',
+          '%s',
+          '%s',
+          '%s',
+          '%s',
+          '%s',
+          '%s'
+        )",
+                              values$full_table_id,
+                              canvas_id_clean,
+                              business_area_clean,
+                              project_clean,
+                              business_focus_clean,
+                              key_partners_clean,
+                              key_activities_clean,
+                              key_resources_clean,
+                              value_propositions_clean,
+                              customer_relationships_clean,
+                              channels_clean,
+                              customer_segments_clean,
+                              cost_structure_clean,
+                              revenue_streams_clean
+      )
       
-      # Insert each entry
-      for (i in 1:nrow(parsed_df)) {
-        tryCatch({
-          # Escape single quotes
-          book_name_clean <- gsub("'", "\\\\'", parsed_df$book_name[i])
-          author_clean <- gsub("'", "\\\\'", parsed_df$author[i])
-          chapter_clean <- gsub("'", "\\\\'", parsed_df$chapter[i])
-          section_clean <- gsub("'", "\\\\'", parsed_df$section[i])
-          main_details_clean <- gsub("'", "\\\\'", parsed_df$main_details[i])
-          numeric_data_clean <- gsub("'", "\\\\'", parsed_df$numeric_data[i])
-          
-          insert_query <- sprintf("
-            INSERT INTO `%s` 
-            (id, book_name, author, chapter, section, main_details, numeric_data, created_at) 
-            VALUES (
-              %d, 
-              '%s', 
-              '%s', 
-              '%s', 
-              '%s', 
-              '%s', 
-              '%s', 
-              CURRENT_TIMESTAMP()
-            )",
-                                  values$full_table_id,
-                                  next_id + i - 1,
-                                  book_name_clean,
-                                  author_clean,
-                                  chapter_clean,
-                                  section_clean,
-                                  main_details_clean,
-                                  numeric_data_clean
-          )
-          
-          bq_project_query(values$project_id, insert_query)
-          success_count <- success_count + 1
-          
-        }, error = function(e) {
-          error_count <- error_count + 1
-        })
-      }
+      bq_project_query(values$project_id, insert_query)
       
-      if (success_count == nrow(parsed_df)) {
-        output$bulkStatus <- renderUI({
-          tags$div(class = "status-success",
-                   tags$i(class = "fa fa-check-circle"),
-                   paste(" Successfully submitted all", success_count, "entries to BigQuery!"),
-                   br(),
-                   tags$small("Book: ", parsed_df$book_name[1], " by ", parsed_df$author[1]))
-        })
-        showNotification(paste("✓ All", success_count, "entries submitted successfully!"), type = "message")
-      } else {
-        output$bulkStatus <- renderUI({
-          tags$div(class = "status-warning",
-                   tags$i(class = "fa fa-exclamation-triangle"),
-                   paste(" Submitted", success_count, "entries.", error_count, "failed."))
-        })
-        showNotification(paste("Partial success:", success_count, "of", nrow(parsed_df), "submitted"), type = "warning")
-      }
+      output$bulkStatus <- renderUI({
+        tags$div(class = "status-success",
+                 tags$i(class = "fa fa-check-circle"),
+                 " Successfully submitted Business Model Canvas to BigQuery!",
+                 br(),
+                 tags$small("Canvas ID: ", canvas_id))
+      })
       
-      # Update navigation choices
-      updateNavigationChoices()
+      showNotification("✓ Canvas submitted successfully!", type = "message")
+      
+      # Update dropdowns
+      updateCanvasDropdowns()
       
     }, error = function(e) {
       output$bulkStatus <- renderUI({
@@ -1124,626 +1085,85 @@ server <- function(input, output, session) {
   })
   
   # Clear bulk text
-  observeEvent(input$clearBulk, {
+  observeEvent(input$clearCanvas, {
+    updateTextInput(session, "business_area", value = "")
+    updateTextInput(session, "project", value = "")
+    updateTextInput(session, "business_focus", value = "")
     updateTextAreaInput(session, "bulk_text", value = "")
-    values$parsed_data <- NULL
+    values$parsed_canvas <- NULL
     output$bulkStatus <- renderUI({
       tags$div(class = "status-info",
                tags$i(class = "fa fa-info-circle"),
-               " Text area cleared. Ready for new input.")
+               " All fields cleared. Ready for new input.")
     })
     output$parseInfo <- renderUI(NULL)
     output$parsedPreview <- renderText("")
   })
   
-  # Function to update navigation choices
-  updateNavigationChoices <- function() {
-    if (!values$authenticated) return()
+  # Load canvas from BigQuery
+  observeEvent(input$loadCanvas, {
     
-    tryCatch({
-      # Get unique books
-      books_query <- sprintf("
-        SELECT DISTINCT book_name 
-        FROM `%s` 
-        ORDER BY book_name", 
-                             values$full_table_id)
-      
-      job <- bq_project_query(values$project_id, books_query)
-      books <- bq_table_download(job)
-      
-      if (nrow(books) > 0) {
-        updateSelectInput(session, "filterBook", 
-                          choices = c("Select a book" = "", books$book_name))
-      }
-      
-    }, error = function(e) {
-      # Table might be empty, that's okay
-    })
-  }
-  
-  # Update chapters when book is selected
-  observeEvent(input$filterBook, {
-    if (input$filterBook == "" || !values$authenticated) return()
-    
-    tryCatch({
-      chapters_query <- sprintf("
-        SELECT DISTINCT chapter 
-        FROM `%s` 
-        WHERE book_name = '%s' 
-        ORDER BY chapter", 
-                                values$full_table_id,
-                                input$filterBook)
-      
-      job <- bq_project_query(values$project_id, chapters_query)
-      chapters <- bq_table_download(job)
-      
-      if (nrow(chapters) > 0) {
-        updateSelectInput(session, "filterChapter", 
-                          choices = c("Select a chapter" = "", chapters$chapter))
-      } else {
-        updateSelectInput(session, "filterChapter", 
-                          choices = "No chapters available")
-      }
-      
-    }, error = function(e) {
-      showNotification(paste("Error loading chapters:", e$message), type = "error")
-    })
-  })
-  
-  # Update sections when chapter is selected
-  observeEvent(input$filterChapter, {
-    if (input$filterChapter == "" || !values$authenticated) return()
-    
-    tryCatch({
-      sections_query <- sprintf("
-        SELECT DISTINCT section 
-        FROM `%s` 
-        WHERE book_name = '%s' AND chapter = '%s' 
-        ORDER BY section", 
-                                values$full_table_id,
-                                input$filterBook,
-                                input$filterChapter)
-      
-      job <- bq_project_query(values$project_id, sections_query)
-      sections <- bq_table_download(job)
-      
-      if (nrow(sections) > 0) {
-        updateSelectInput(session, "filterSection", 
-                          choices = c("Select a section" = "", sections$section))
-      } else {
-        updateSelectInput(session, "filterSection", 
-                          choices = "No sections available")
-      }
-      
-    }, error = function(e) {
-      showNotification(paste("Error loading sections:", e$message), type = "error")
-    })
-  })
-  
-  # Submit new summary (single entry)
-  observeEvent(input$submitSummary, {
-    if (!values$authenticated) {
-      output$submitStatus <- renderUI({
-        tags$div(class = "status-error", 
-                 tags$i(class = "fa fa-exclamation-triangle"),
-                 " Please authenticate first in the BigQuery Authentication tab")
-      })
-      return()
-    }
-    
-    # Validate inputs
-    if (input$book_name == "" || input$author == "") {
-      output$submitStatus <- renderUI({
-        tags$div(class = "status-error", 
-                 tags$i(class = "fa fa-exclamation-triangle"),
-                 " Book Name and Author are required fields.")
-      })
-      return()
-    }
-    
-    # Show processing status
-    output$submitStatus <- renderUI({
-      tags$div(class = "status-info",
-               tags$i(class = "fa fa-spinner fa-spin"), 
-               " Submitting to BigQuery... Please wait.")
-    })
-    
-    tryCatch({
-      # Generate ID
-      id_query <- sprintf("SELECT COALESCE(MAX(id), 0) + 1 as next_id FROM `%s`", 
-                          values$full_table_id)
-      id_job <- bq_project_query(values$project_id, id_query)
-      id_result <- bq_table_download(id_job)
-      next_id <- id_result$next_id[1]
-      
-      # Escape single quotes in text fields
-      book_name_clean <- gsub("'", "\\\\'", input$book_name)
-      author_clean <- gsub("'", "\\\\'", input$author)
-      chapter_clean <- gsub("'", "\\\\'", input$chapter)
-      section_clean <- gsub("'", "\\\\'", input$section)
-      main_details_clean <- gsub("'", "\\\\'", input$main_details)
-      numeric_data_clean <- gsub("'", "\\\\'", input$numeric_data)
-      
-      # Insert query
-      insert_query <- sprintf("
-        INSERT INTO `%s` 
-        (id, book_name, author, chapter, section, main_details, numeric_data, created_at) 
-        VALUES (
-          %d, 
-          '%s', 
-          '%s', 
-          '%s', 
-          '%s', 
-          '%s', 
-          '%s', 
-          CURRENT_TIMESTAMP()
-        )",
-                              values$full_table_id,
-                              next_id,
-                              book_name_clean,
-                              author_clean,
-                              chapter_clean,
-                              section_clean,
-                              main_details_clean,
-                              numeric_data_clean
-      )
-      
-      bq_project_query(values$project_id, insert_query)
-      
-      output$submitStatus <- renderUI({
-        tags$div(class = "status-success",
-                 tags$i(class = "fa fa-check-circle"),
-                 " Success! Book summary has been added to BigQuery.")
-      })
-      
-      showNotification("✓ Summary added successfully!", type = "message")
-      
-      # Clear inputs
-      updateTextInput(session, "book_name", value = "")
-      updateTextInput(session, "author", value = "")
-      updateTextInput(session, "chapter", value = "")
-      updateTextInput(session, "section", value = "")
-      updateTextInput(session, "main_details", value = "")
-      updateTextInput(session, "numeric_data", value = "")
-      
-      # Update navigation choices
-      updateNavigationChoices()
-      
-    }, error = function(e) {
-      output$submitStatus <- renderUI({
-        tags$div(class = "status-error",
-                 tags$i(class = "fa fa-times-circle"),
-                 " Error: Failed to add summary",
-                 tags$br(),
-                 tags$small(e$message))
-      })
-      showNotification(paste("Error:", e$message), type = "error")
-    })
-  })
-  
-  # Value boxes for quick stats
-  output$totalBooks <- renderValueBox({
-    if (!values$authenticated) {
-      valueBox(
-        value = "N/A",
-        subtitle = "Total Unique Books",
-        icon = icon("book"),
-        color = "blue"
-      )
-    } else {
-      tryCatch({
-        query <- sprintf("SELECT COUNT(DISTINCT book_name) as count FROM `%s`", 
-                         values$full_table_id)
-        job <- bq_project_query(values$project_id, query)
-        result <- bq_table_download(job)
-        
-        valueBox(
-          value = result$count,
-          subtitle = "Total Unique Books",
-          icon = icon("book"),
-          color = "blue"
-        )
-      }, error = function(e) {
-        valueBox(
-          value = 0,
-          subtitle = "Total Unique Books",
-          icon = icon("book"),
-          color = "blue"
-        )
-      })
-    }
-  })
-  
-  output$totalChapters <- renderValueBox({
-    if (!values$authenticated) {
-      valueBox(
-        value = "N/A",
-        subtitle = "Total Chapters",
-        icon = icon("list"),
-        color = "green"
-      )
-    } else {
-      tryCatch({
-        query <- sprintf("
-          SELECT COUNT(DISTINCT CONCAT(book_name, '-', chapter)) as count 
-          FROM `%s`", 
-                         values$full_table_id)
-        job <- bq_project_query(values$project_id, query)
-        result <- bq_table_download(job)
-        
-        valueBox(
-          value = result$count,
-          subtitle = "Total Chapters",
-          icon = icon("list"),
-          color = "green"
-        )
-      }, error = function(e) {
-        valueBox(
-          value = 0,
-          subtitle = "Total Chapters",
-          icon = icon("list"),
-          color = "green"
-        )
-      })
-    }
-  })
-  
-  output$totalSummaries <- renderValueBox({
-    if (!values$authenticated) {
-      valueBox(
-        value = "N/A",
-        subtitle = "Total Summaries",
-        icon = icon("file-alt"),
-        color = "yellow"
-      )
-    } else {
-      tryCatch({
-        query <- sprintf("SELECT COUNT(*) as count FROM `%s`", 
-                         values$full_table_id)
-        job <- bq_project_query(values$project_id, query)
-        result <- bq_table_download(job)
-        
-        valueBox(
-          value = result$count,
-          subtitle = "Total Summaries",
-          icon = icon("file-alt"),
-          color = "yellow"
-        )
-      }, error = function(e) {
-        valueBox(
-          value = 0,
-          subtitle = "Total Summaries",
-          icon = icon("file-alt"),
-          color = "yellow"
-        )
-      })
-    }
-  })
-  
-  # Browse summaries table
-  observeEvent(input$refreshTable, {
-    if (!values$authenticated) {
-      output$browseStatus <- renderUI({
-        tags$div(class = "status-error",
-                 tags$i(class = "fa fa-exclamation-triangle"), 
-                 " Please authenticate first in the BigQuery Authentication tab")
-      })
-      return()
-    }
-    
-    output$browseStatus <- renderUI({
-      tags$div(class = "status-info",
-               tags$i(class = "fa fa-spinner fa-spin"), 
-               " Loading data from BigQuery...")
-    })
-    
-    tryCatch({
-      max_rows <- if(is.null(input$max_browse_rows)) 100 else input$max_browse_rows
-      
-      query <- sprintf("
-        SELECT 
-          id, 
-          book_name, 
-          author, 
-          chapter, 
-          section, 
-          SUBSTR(main_details, 1, 100) as preview,
-          numeric_data,
-          created_at 
-        FROM `%s` 
-        ORDER BY created_at DESC
-        LIMIT %d", 
-                       values$full_table_id,
-                       max_rows)
-      
-      job <- bq_project_query(values$project_id, query)
-      values$summaries_data <- bq_table_download(job)
-      
-      output$browseStatus <- renderUI({
-        tags$div(class = "status-success",
-                 tags$i(class = "fa fa-check-circle"), 
-                 paste(" Loaded", nrow(values$summaries_data), "records from BigQuery"))
-      })
-      
-      showNotification("✓ Table refreshed successfully!", type = "message")
-      
-    }, error = function(e) {
-      output$browseStatus <- renderUI({
-        tags$div(class = "status-error",
-                 tags$i(class = "fa fa-times-circle"), 
-                 " Error loading data: ",
-                 tags$br(),
-                 tags$small(e$message))
-      })
-      showNotification(paste("Error:", e$message), type = "error")
-    })
-  })
-  
-  # Render summaries table
-  output$summariesTable <- renderDT({
-    if (is.null(values$summaries_data)) {
-      return(datatable(data.frame(Message = "Click 'Refresh Table' to load data")))
-    }
-    
-    datatable(values$summaries_data,
-              options = list(
-                pageLength = 25,
-                scrollX = TRUE,
-                scrollY = "500px",
-                searching = TRUE,
-                ordering = TRUE,
-                lengthMenu = c(10, 25, 50, 100),
-                dom = 'Bfrtip'
-              ),
-              class = 'cell-border stripe hover compact',
-              rownames = FALSE,
-              filter = 'top')
-  })
-  
-  # Auto-refresh table on authentication
-  observe({
-    if (values$authenticated && is.null(values$summaries_data)) {
-      tryCatch({
-        query <- sprintf("
-          SELECT 
-            id, 
-            book_name, 
-            author, 
-            chapter, 
-            section, 
-            SUBSTR(main_details, 1, 100) as preview,
-            numeric_data,
-            created_at 
-          FROM `%s` 
-          ORDER BY created_at DESC
-          LIMIT 100", 
-                         values$full_table_id)
-        
-        job <- bq_project_query(values$project_id, query)
-        values$summaries_data <- bq_table_download(job)
-        
-      }, error = function(e) {
-        # Silently fail on initial load
-      })
-    }
-  })
-  
-  # Download handler
-  output$downloadSummaries <- downloadHandler(
-    filename = function() {
-      paste0("book_summaries_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".csv")
-    },
-    content = function(file) {
-      if (!is.null(values$summaries_data)) {
-        write.csv(values$summaries_data, file, row.names = FALSE)
-      }
-    }
-  )
-  
-  # Load details when button clicked
-  observeEvent(input$loadDetails, {
     if (!values$authenticated) {
       showNotification("Please authenticate first", type = "error")
       return()
     }
     
-    if (input$filterBook == "" || input$filterChapter == "" || input$filterSection == "") {
-      showNotification("Please select Book, Chapter, and Section", type = "warning")
+    if (input$select_business_area == "" || input$select_project == "" || input$select_business_focus == "") {
+      showNotification("Please select Business Area, Project, and Business Focus", type = "warning")
       return()
     }
     
     tryCatch({
       # Escape single quotes
-      book_clean <- gsub("'", "\\\\'", input$filterBook)
-      chapter_clean <- gsub("'", "\\\\'", input$filterChapter)
-      section_clean <- gsub("'", "\\\\'", input$filterSection)
+      business_area_clean <- gsub("'", "\\\\'", input$select_business_area)
+      project_clean <- gsub("'", "\\\\'", input$select_project)
+      business_focus_clean <- gsub("'", "\\\\'", input$select_business_focus)
       
-      detail_query <- sprintf("
+      query <- sprintf("
         SELECT * FROM `%s` 
-        WHERE book_name = '%s' 
-        AND chapter = '%s' 
-        AND section = '%s' 
-        ORDER BY created_at DESC 
+        WHERE business_area = '%s' 
+        AND project = '%s' 
+        AND business_focus = '%s' 
+        ORDER BY updated_at DESC 
         LIMIT 1",
-                              values$full_table_id,
-                              book_clean,
-                              chapter_clean,
-                              section_clean
+                       values$full_table_id,
+                       business_area_clean,
+                       project_clean,
+                       business_focus_clean
       )
       
-      job <- bq_project_query(values$project_id, detail_query)
+      job <- bq_project_query(values$project_id, query)
       result <- bq_table_download(job)
       
       if (nrow(result) > 0) {
-        values$current_selection <- result
-        showNotification("✓ Details loaded successfully!", type = "message")
+        values$current_canvas <- result
+        
+        # Update canvas displays
+        output$canvas_key_partners <- renderUI(HTML(gsub("\n", "<br>", result$key_partners)))
+        output$canvas_key_activities <- renderUI(HTML(gsub("\n", "<br>", result$key_activities)))
+        output$canvas_key_resources <- renderUI(HTML(gsub("\n", "<br>", result$key_resources)))
+        output$canvas_value_propositions <- renderUI(HTML(gsub("\n", "<br>", result$value_propositions)))
+        output$canvas_customer_relationships <- renderUI(HTML(gsub("\n", "<br>", result$customer_relationships)))
+        output$canvas_channels <- renderUI(HTML(gsub("\n", "<br>", result$channels)))
+        output$canvas_customer_segments <- renderUI(HTML(gsub("\n", "<br>", result$customer_segments)))
+        output$canvas_cost_structure <- renderUI(HTML(gsub("\n", "<br>", result$cost_structure)))
+        output$canvas_revenue_streams <- renderUI(HTML(gsub("\n", "<br>", result$revenue_streams)))
+        
+        showNotification("✓ Canvas loaded successfully!", type = "message")
       } else {
-        showNotification("No matching record found", type = "warning")
-        values$current_selection <- NULL
+        showNotification("No canvas found for this selection", type = "warning")
+        loadDefaultCanvas()
       }
       
     }, error = function(e) {
-      showNotification(paste("Error loading details:", e$message), type = "error")
-      values$current_selection <- NULL
+      showNotification(paste("Error loading canvas:", e$message), type = "error")
+      loadDefaultCanvas()
     })
   })
   
-  # Display current selection info
-  output$selectionInfo <- renderText({
-    if (is.null(values$current_selection)) {
-      return("No selection loaded")
-    }
-    
-    paste(
-      paste("Book:", values$current_selection$book_name),
-      paste("Chapter:", values$current_selection$chapter),
-      paste("Section:", values$current_selection$section),
-      paste("ID:", values$current_selection$id),
-      sep = "\n"
-    )
-  })
-  
-  # Detail outputs
-  output$detailBookName <- renderText({
-    if (is.null(values$current_selection)) return("No book selected")
-    values$current_selection$book_name
-  })
-  
-  output$detailAuthor <- renderText({
-    if (is.null(values$current_selection)) return("")
-    paste("by", values$current_selection$author)
-  })
-  
-  output$detailChapter <- renderText({
-    if (is.null(values$current_selection)) return("No data")
-    values$current_selection$chapter
-  })
-  
-  output$detailSection <- renderText({
-    if (is.null(values$current_selection)) return("No data")
-    values$current_selection$section
-  })
-  
-  output$detailMainContent <- renderText({
-    if (is.null(values$current_selection)) return("No content loaded. Please select a book, chapter, and section, then click 'Load Details'.")
-    values$current_selection$main_details
-  })
-  
-  
-  # Numeric chart
-  output$numericChart <- renderPlotly({
-    if (is.null(values$current_selection) || 
-        is.na(values$current_selection$numeric_data) ||
-        values$current_selection$numeric_data == "") {
-      return(plot_ly() %>% 
-               layout(title = "No numeric data available for visualization",
-                      plot_bgcolor = "white",
-                      paper_bgcolor = "white",
-                      font = list(color = "#2c3e50")))
-    }
-    
-    tryCatch({
-      # Parse numeric data
-      numeric_values <- as.numeric(unlist(strsplit(values$current_selection$numeric_data, ",")))
-      
-      if (length(numeric_values) == 0 || all(is.na(numeric_values))) {
-        return(plot_ly() %>% 
-                 layout(title = "Invalid numeric data format",
-                        plot_bgcolor = "white",
-                        paper_bgcolor = "white",
-                        font = list(color = "#2c3e50")))
-      }
-      
-      # Create data frame for plotting
-      data_df <- data.frame(
-        Index = 1:length(numeric_values),
-        Value = numeric_values
-      )
-      
-      # Create interactive plot with dual visualization
-      p <- plot_ly(data_df) %>%
-        # Add bar chart
-        add_bars(x = ~Index, y = ~Value, 
-                 name = "Values",
-                 marker = list(color = "#3498db", opacity = 0.6),
-                 hovertemplate = "Point %{x}<br>Value: %{y}<extra></extra>") %>%
-        # Add line chart overlay
-        add_lines(x = ~Index, y = ~Value, 
-                  name = "Trend",
-                  line = list(color = "#008A82", width = 3),
-                  hovertemplate = "Point %{x}<br>Value: %{y}<extra></extra>") %>%
-        # Add markers
-        add_markers(x = ~Index, y = ~Value, 
-                    name = "Data Points",
-                    marker = list(color = "#00A39A", size = 10, 
-                                  line = list(color = "#002C3C", width = 2)),
-                    hovertemplate = "Point %{x}<br>Value: %{y}<extra></extra>") %>%
-        layout(
-          title = list(
-            text = paste("<b>Numeric Data Visualization</b><br>", 
-                         values$current_selection$book_name,
-                         "-", values$current_selection$chapter),
-            font = list(color = "#002C3C", size = 16)
-          ),
-          xaxis = list(
-            title = "Data Point Index",
-            titlefont = list(color = "#2c3e50"),
-            gridcolor = "#ecf0f1",
-            showgrid = TRUE
-          ),
-          yaxis = list(
-            title = "Value",
-            titlefont = list(color = "#2c3e50"),
-            gridcolor = "#ecf0f1",
-            showgrid = TRUE
-          ),
-          plot_bgcolor = "white",
-          paper_bgcolor = "white",
-          hovermode = "x unified",
-          showlegend = TRUE,
-          legend = list(
-            x = 0.7,
-            y = 1,
-            bgcolor = "rgba(255, 255, 255, 0.8)",
-            bordercolor = "#008A82",
-            borderwidth = 2
-          )
-        )
-      
-      # Add statistical annotations
-      mean_val <- mean(numeric_values, na.rm = TRUE)
-      max_val <- max(numeric_values, na.rm = TRUE)
-      min_val <- min(numeric_values, na.rm = TRUE)
-      
-      p <- p %>% 
-        add_annotations(
-          x = 0.02, y = 0.98, 
-          xref = "paper", yref = "paper",
-          text = paste0("<b>Statistics:</b><br>",
-                        "Mean: ", round(mean_val, 2), "<br>",
-                        "Max: ", round(max_val, 2), "<br>",
-                        "Min: ", round(min_val, 2), "<br>",
-                        "Points: ", length(numeric_values)),
-          showarrow = FALSE,
-          xanchor = "left",
-          yanchor = "top",
-          align = "left",
-          bgcolor = "rgba(255, 255, 255, 0.9)",
-          bordercolor = "#008A82",
-          borderwidth = 2,
-          borderpad = 10,
-          font = list(size = 11, color = "#2c3e50")
-        )
-      
-      p
-      
-    }, error = function(e) {
-      plot_ly() %>% 
-        layout(title = paste("Error creating chart:", e$message),
-               plot_bgcolor = "white",
-               paper_bgcolor = "white",
-               font = list(color = "#e74c3c"))
-    })
+  # Initialize with default canvas on startup
+  observe({
+    loadDefaultCanvas()
   })
   
   # Clean up temporary files when session ends

@@ -81,6 +81,8 @@ rsconnect::deployApp(
   appName = "c_resources_connectivity_bq",
   forceUpdate = TRUE
 )
+rsconnect::deployApp('C:/101_Code/R/Health&Nutrition/SaraiMazu_MetodologiaCostosYPrecios/')
+rsconnect::deployApp('C:/101_Code/R/Health&Nutrition/SaraiMazu-Relato-Fotografico/')
 rsconnect::deployApp('C:/101_Code/R/Skills/Productivity/10x_productivity/')
 rsconnect::deployApp('C:/101_Code/R/Health&Nutrition/SaraiMazu_MenuDegustacionTest/')
 rsconnect::deployApp('C:/101_Code/R/Health&Nutrition/SaraiMazu_MenuDegustacion_Nov/')
