@@ -1,9 +1,13 @@
 {
     "sortOrder": [
         {
+            "columnIndex": 4,
+            "ascending": false
+        },
+        {
             "columnIndex": 2,
             "ascending": true
         }
     ],
-    "path": "C:/101_Code/R/Entrepreneurship&Pitching/db_business_model_generation"
+    "path": "C:/101_Code/R/StrategicPlanning&Execution/Contacts&MessagesNetworking"
 }

@@ -14,7 +14,7 @@ tryCatch({
   volumes <- c(Home = fs::path_home(), getVolumes()())
 }, error = function(e) {
   # Fallback if fs package or getVolumes fails
-  volumes <- c(Home = "~", Root = "/")
+  volumes <- c(Home = path.expand("~"), Root = "/")
 })
 
 # Define UI
@@ -114,6 +114,16 @@ ui <- dashboardPage(
         background-color: #00A39A !important;
         border-color: #00A39A !important;
       }
+      .directory-display {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 10px;
+        min-height: 40px;
+        font-family: monospace;
+        color: #495057;
+        word-break: break-all;
+      }
     ")),
     
     tabItems(
@@ -144,12 +154,15 @@ ui <- dashboardPage(
                     column(12,
                            h4("Output Directory"),
                            fluidRow(
-                             column(8,
-                                    verbatimTextOutput("selected_output_dir", placeholder = TRUE)
+                             column(9,
+                                    div(class = "directory-display",
+                                        textOutput("selected_output_dir"))
                              ),
-                             column(4,
-                                    shinyDirButton("output_dir_select", "Choose Directory", 
-                                                   "Select output directory", class = "btn-primary")
+                             column(3,
+                                    shinyDirButton("output_dir_select", "Browse", 
+                                                   "Select output directory", 
+                                                   class = "btn-primary",
+                                                   style = "width: 100%;")
                              )
                            )
                     )
@@ -160,11 +173,13 @@ ui <- dashboardPage(
                   fluidRow(
                     column(6,
                            actionButton("analyze_pdf", "Analyze PDF", 
-                                        class = "btn-primary btn-lg")
+                                        class = "btn-primary btn-lg",
+                                        style = "width: 100%;")
                     ),
                     column(6,
                            actionButton("split_pdf", "Split PDF", 
-                                        class = "btn-primary btn-lg")
+                                        class = "btn-primary btn-lg",
+                                        style = "width: 100%;")
                     )
                   )
                 )
@@ -207,6 +222,8 @@ ui <- dashboardPage(
                   width = 12,
                   
                   h4("Select PDF Files to Merge"),
+                  p("Upload PDF files in the order you want them merged.", 
+                    style = "color: #6c757d; font-style: italic;"),
                   
                   fluidRow(
                     column(6,
@@ -231,29 +248,34 @@ ui <- dashboardPage(
                     column(6,
                            h4("Output File"),
                            textInput("merge_filename", "Output Filename:",
-                                     placeholder = "Enter filename (e.g., merged_document.pdf)",
+                                     placeholder = "merged_document.pdf",
                                      value = "merged_document.pdf")
                     ),
                     column(6,
                            h4("Output Directory"),
                            fluidRow(
-                             column(8,
-                                    verbatimTextOutput("selected_merge_dir", placeholder = TRUE)
+                             column(9,
+                                    div(class = "directory-display",
+                                        textOutput("selected_merge_dir"))
                              ),
-                             column(4,
+                             column(3,
                                     br(),
-                                    shinyDirButton("merge_dir_select", "Choose Directory", 
-                                                   "Select output directory", class = "btn-primary")
+                                    shinyDirButton("merge_dir_select", "Browse", 
+                                                   "Select output directory", 
+                                                   class = "btn-primary",
+                                                   style = "width: 100%;")
                              )
                            )
                     )
                   ),
                   
+                  br(),
+                  
                   fluidRow(
                     column(12,
-                           br(),
                            actionButton("merge_pdfs", "Merge PDFs", 
-                                        class = "btn-primary btn-lg")
+                                        class = "btn-primary btn-lg",
+                                        style = "width: 100%;")
                     )
                   )
                 )
@@ -294,9 +316,9 @@ ui <- dashboardPage(
 # Define Server
 server <- function(input, output, session) {
   
-  # Configure directory choosers
-  shinyDirChoose(input, "output_dir_select", roots = volumes, session = session)
-  shinyDirChoose(input, "merge_dir_select", roots = volumes, session = session)
+  # Configure directory choosers with proper roots
+  shinyDirChoose(input, "output_dir_select", roots = volumes, session = session, restrictions = system.file(package = "base"))
+  shinyDirChoose(input, "merge_dir_select", roots = volumes, session = session, restrictions = system.file(package = "base"))
   
   # Reactive values
   values <- reactiveValues(
@@ -304,32 +326,36 @@ server <- function(input, output, session) {
     pdf_name = NULL,
     split_plan = NULL,
     output_directory = NULL,
-    merge_directory = NULL
+    merge_directory = NULL,
+    merge_status_text = "Ready to merge PDFs. Select at least 2 files and output path, then click 'Merge PDFs'."
   )
   
-  # Directory selection observers
+  # Directory selection observer for splitter
   observe({
     if(!is.null(input$output_dir_select) && !is.integer(input$output_dir_select)) {
       tryCatch({
         selected_path <- parseDirPath(volumes, input$output_dir_select)
         if(length(selected_path) > 0 && selected_path != "") {
-          values$output_directory <- selected_path
+          values$output_directory <- as.character(selected_path)
+          showNotification("Output directory selected successfully!", type = "message", duration = 2)
         }
       }, error = function(e) {
-        showNotification("Error selecting directory. Please try again.", type = "warning")
+        showNotification(paste("Error selecting directory:", e$message), type = "warning")
       })
     }
   })
   
+  # Directory selection observer for merger
   observe({
     if(!is.null(input$merge_dir_select) && !is.integer(input$merge_dir_select)) {
       tryCatch({
         selected_path <- parseDirPath(volumes, input$merge_dir_select)
         if(length(selected_path) > 0 && selected_path != "") {
-          values$merge_directory <- selected_path
+          values$merge_directory <- as.character(selected_path)
+          showNotification("Output directory selected successfully!", type = "message", duration = 2)
         }
       }, error = function(e) {
-        showNotification("Error selecting directory. Please try again.", type = "warning")
+        showNotification(paste("Error selecting directory:", e$message), type = "warning")
       })
     }
   })
@@ -337,44 +363,37 @@ server <- function(input, output, session) {
   # Display selected directories
   output$selected_output_dir <- renderText({
     if(is.null(values$output_directory) || length(values$output_directory) == 0) {
-      "No directory selected"
+      "No directory selected - Click 'Browse' to select"
     } else {
-      paste("Selected:", values$output_directory)
+      values$output_directory
     }
   })
   
   output$selected_merge_dir <- renderText({
     if(is.null(values$merge_directory) || length(values$merge_directory) == 0) {
-      "No directory selected"
+      "No directory selected - Click 'Browse' to select"
     } else {
-      paste("Selected:", values$merge_directory)
+      values$merge_directory
     }
   })
+  
   # PDF Splitter Logic
   observeEvent(input$analyze_pdf, {
     req(input$input_pdf)
     
-    # Show analysis notification
     showNotification("Analyzing PDF... Please wait.", 
                      type = "message", duration = NULL, id = "analyzing_pdf")
     
-    # Reset previous values
     values$pdf_pages <- NULL
     values$pdf_name <- NULL
     values$split_plan <- NULL
     
     tryCatch({
-      # Validate input file
       if(is.null(input$input_pdf) || is.null(input$input_pdf$datapath)) {
         stop("No PDF file selected or file path is invalid")
       }
       
       pdf_path <- input$input_pdf$datapath
-      
-      # Multiple validation checks
-      if(length(pdf_path) == 0 || pdf_path == "" || is.na(pdf_path)) {
-        stop("PDF file path is empty or invalid")
-      }
       
       if(!file.exists(pdf_path)) {
         stop("PDF file does not exist at the specified path")
@@ -385,15 +404,9 @@ server <- function(input, output, session) {
         stop("PDF file is empty or cannot be read")
       }
       
-      # Validate filename
-      if(is.null(input$input_pdf$name) || input$input_pdf$name == "" || length(input$input_pdf$name) == 0) {
-        stop("PDF filename is invalid")
-      }
-      
-      # Try multiple methods to analyze the PDF
+      # Get page count
       pdf_pages_count <- NULL
       
-      # Method 1: Try pdf_length first (more reliable for some PDFs)
       tryCatch({
         pdf_pages_count <- pdf_length(pdf_path)
         if(!is.null(pdf_pages_count) && length(pdf_pages_count) > 0 && !is.na(pdf_pages_count) && pdf_pages_count > 0) {
@@ -405,7 +418,6 @@ server <- function(input, output, session) {
         pdf_pages_count <- NULL
       })
       
-      # Method 2: Try pdf_info if pdf_length failed
       if(is.null(pdf_pages_count)) {
         tryCatch({
           pdf_info_result <- pdf_info(pdf_path)
@@ -419,27 +431,19 @@ server <- function(input, output, session) {
         })
       }
       
-      # Final validation of page count
       if(is.null(values$pdf_pages) || length(values$pdf_pages) == 0 || is.na(values$pdf_pages) || values$pdf_pages <= 0) {
         stop("Could not determine valid page count for PDF")
       }
       
-      # Extract filename safely
       pdf_filename <- input$input_pdf$name
       values$pdf_name <- tools::file_path_sans_ext(pdf_filename)
       
-      # Validate extracted name
       if(is.null(values$pdf_name) || length(values$pdf_name) == 0 || values$pdf_name == "") {
         values$pdf_name <- paste0("document_", format(Sys.time(), "%Y%m%d_%H%M%S"))
       }
       
-      # Calculate split plan with validation
       total_pages <- as.numeric(values$pdf_pages)
       num_parts <- as.numeric(input$num_parts)
-      
-      if(is.na(total_pages) || is.na(num_parts) || total_pages <= 0 || num_parts <= 0) {
-        stop("Invalid page count or number of parts")
-      }
       
       if(total_pages < num_parts) {
         showNotification(paste("Warning: PDF has only", total_pages, "pages but you requested", num_parts, "parts. Adjusting to", total_pages, "parts."), type = "warning")
@@ -448,7 +452,6 @@ server <- function(input, output, session) {
       
       pages_per_part <- ceiling(total_pages / num_parts)
       
-      # Create split plan safely
       split_plan <- data.frame(
         Part = 1:num_parts,
         Start_Page = numeric(num_parts),
@@ -468,12 +471,10 @@ server <- function(input, output, session) {
       
       values$split_plan <- split_plan
       
-      # Remove analysis notification
       removeNotification("analyzing_pdf")
       showNotification(paste("PDF analysis completed! Found", total_pages, "pages."), type = "message")
       
     }, error = function(e) {
-      # Clean up on error
       values$pdf_pages <- NULL
       values$pdf_name <- NULL
       values$split_plan <- NULL
@@ -489,7 +490,6 @@ server <- function(input, output, session) {
     })
   })
   
-  # Display PDF info
   output$pdf_info <- renderText({
     if(is.null(values$pdf_pages)) {
       "No PDF analyzed yet. Please select a PDF file and click 'Analyze PDF'."
@@ -500,14 +500,13 @@ server <- function(input, output, session) {
     }
   })
   
-  # Display split preview
   output$split_preview <- renderText({
     if(is.null(values$split_plan)) {
       "Analysis required before preview."
     } else {
       preview_text <- "Split Plan:\n\n"
       for(i in 1:nrow(values$split_plan)) {
-        part_name <- paste0(values$pdf_name, "_", i, ".pdf")
+        part_name <- paste0(values$pdf_name, "_part", i, ".pdf")
         preview_text <- paste0(preview_text,
                                "Part ", i, ": ", part_name, "\n",
                                "  Pages: ", values$split_plan$Start_Page[i], 
@@ -518,16 +517,14 @@ server <- function(input, output, session) {
     }
   })
   
-  # Split PDF
   observeEvent(input$split_pdf, {
     req(input$input_pdf, values$split_plan)
     
     if(is.null(values$output_directory) || length(values$output_directory) == 0 || values$output_directory == "") {
-      showNotification("Please select an output directory.", type = "warning")
+      showNotification("Please select an output directory first.", type = "warning")
       return()
     }
     
-    # Show processing notification for large files
     showNotification("Processing PDF... This may take a while for large files.", 
                      type = "message", duration = NULL, id = "processing_split")
     
@@ -535,36 +532,31 @@ server <- function(input, output, session) {
       pdf_path <- input$input_pdf$datapath
       output_dir <- values$output_directory
       
-      # Create output directory if it doesn't exist
       if(!dir.exists(output_dir)) {
         dir.create(output_dir, recursive = TRUE)
       }
       
-      # Split the PDF (only process parts with valid page ranges)
       valid_parts <- which(!is.na(values$split_plan$Start_Page))
       
       for(i in valid_parts) {
         start_page <- values$split_plan$Start_Page[i]
         end_page <- values$split_plan$End_Page[i]
-        output_file <- file.path(output_dir, paste0(values$pdf_name, "_", i, ".pdf"))
+        output_file <- file.path(output_dir, paste0(values$pdf_name, "_part", i, ".pdf"))
         
-        # Use qpdf to split - optimized for large files
         qpdf::pdf_subset(pdf_path, pages = start_page:end_page, output = output_file)
         
-        # Update progress
         showNotification(paste("Completed part", i, "of", length(valid_parts)), 
-                         type = "message", duration = 3)
+                         type = "message", duration = 2)
       }
       
-      # Remove processing notification
       removeNotification("processing_split")
       
       showNotification(paste("PDF successfully split into", length(valid_parts), "parts!"), 
-                       type = "message")
+                       type = "message", duration = 5)
       
     }, error = function(e) {
       removeNotification("processing_split")
-      showNotification(paste("Error splitting PDF:", e$message), type = "error")
+      showNotification(paste("Error splitting PDF:", e$message), type = "error", duration = 10)
     })
   })
   
@@ -578,18 +570,26 @@ server <- function(input, output, session) {
     selected_files <- Filter(function(x) !is.null(x), files)
     
     if(length(selected_files) == 0) {
-      "No PDF files selected for merging."
+      "No PDF files selected for merging.\n\nPlease upload at least 2 PDF files in the order you want them merged."
     } else {
       summary_text <- paste0("Selected Files (", length(selected_files), "):\n\n")
       for(i in 1:length(selected_files)) {
-        summary_text <- paste0(summary_text, i, ". ", selected_files[[i]]$name, "\n")
+        file_info <- selected_files[[i]]
+        file_size <- round(file.size(file_info$datapath) / 1024 / 1024, 2)
+        summary_text <- paste0(summary_text, i, ". ", file_info$name, 
+                               " (", file_size, " MB)\n")
       }
+      
+      if(length(selected_files) < 2) {
+        summary_text <- paste0(summary_text, "\n⚠ Please select at least 2 files to merge.")
+      }
+      
       summary_text
     }
   })
   
-  # Merge PDFs
   observeEvent(input$merge_pdfs, {
+    # Get all selected files
     files <- list(
       input$merge_pdf1, input$merge_pdf2, input$merge_pdf3, 
       input$merge_pdf4, input$merge_pdf5
@@ -597,30 +597,44 @@ server <- function(input, output, session) {
     
     selected_files <- Filter(function(x) !is.null(x), files)
     
+    # Validation checks
     if(length(selected_files) < 2) {
-      showNotification("Please select at least 2 PDF files to merge.", type = "warning")
+      showNotification("Please select at least 2 PDF files to merge.", type = "warning", duration = 5)
+      values$merge_status_text <- "❌ Error: At least 2 PDF files are required for merging."
       return()
     }
     
     if(is.null(values$merge_directory) || length(values$merge_directory) == 0 || values$merge_directory == "") {
-      showNotification("Please select an output directory.", type = "warning")
+      showNotification("Please select an output directory first.", type = "warning", duration = 5)
+      values$merge_status_text <- "❌ Error: No output directory selected. Click 'Browse' to select one."
       return()
     }
     
-    if(is.null(input$merge_filename) || input$merge_filename == "") {
-      showNotification("Please specify an output filename.", type = "warning")
+    if(is.null(input$merge_filename) || input$merge_filename == "" || trimws(input$merge_filename) == "") {
+      showNotification("Please specify an output filename.", type = "warning", duration = 5)
+      values$merge_status_text <- "❌ Error: No output filename specified."
       return()
     }
     
-    # Show processing notification for large files
+    # Show processing notification
     showNotification("Merging PDFs... This may take a while for large files.", 
                      type = "message", duration = NULL, id = "processing_merge")
     
+    values$merge_status_text <- paste0("Processing ", length(selected_files), " PDF files...")
+    
     tryCatch({
+      # Get file paths
       file_paths <- sapply(selected_files, function(x) x$datapath)
       
+      # Validate all files exist
+      for(i in 1:length(file_paths)) {
+        if(!file.exists(file_paths[i])) {
+          stop(paste("File", i, "does not exist or cannot be accessed"))
+        }
+      }
+      
       # Create full output path
-      output_filename <- input$merge_filename
+      output_filename <- trimws(input$merge_filename)
       if(!grepl("\\.pdf$", output_filename, ignore.case = TRUE)) {
         output_filename <- paste0(output_filename, ".pdf")
       }
@@ -631,24 +645,46 @@ server <- function(input, output, session) {
         dir.create(values$merge_directory, recursive = TRUE)
       }
       
-      # Merge PDFs using qpdf - optimized for large files
-      qpdf::pdf_combine(file_paths, output = output_path)
+      # Check if output file already exists
+      if(file.exists(output_path)) {
+        showNotification("Warning: Output file already exists and will be overwritten.", 
+                         type = "warning", duration = 3)
+      }
+      
+      # Merge PDFs using qpdf
+      qpdf::pdf_combine(input = file_paths, output = output_path)
+      
+      # Verify the output file was created
+      if(!file.exists(output_path)) {
+        stop("Merge appeared to complete but output file was not created")
+      }
+      
+      output_size <- round(file.size(output_path) / 1024 / 1024, 2)
       
       # Remove processing notification
       removeNotification("processing_merge")
       
+      success_msg <- paste0("✅ Successfully merged ", length(selected_files), 
+                            " PDF files!\n\nOutput: ", basename(output_path), 
+                            " (", output_size, " MB)\nLocation: ", values$merge_directory)
+      
+      values$merge_status_text <- success_msg
+      
       showNotification(paste("PDFs successfully merged into:", basename(output_path)), 
-                       type = "message")
+                       type = "message", duration = 5)
       
     }, error = function(e) {
       removeNotification("processing_merge")
-      showNotification(paste("Error merging PDFs:", e$message), type = "error")
+      
+      error_msg <- paste0("❌ Error merging PDFs:\n", e$message)
+      values$merge_status_text <- error_msg
+      
+      showNotification(paste("Error merging PDFs:", e$message), type = "error", duration = 10)
     })
   })
   
-  # Merge status
   output$merge_status <- renderText({
-    "Ready to merge PDFs. Select files and output path, then click 'Merge PDFs'."
+    values$merge_status_text
   })
 }
 

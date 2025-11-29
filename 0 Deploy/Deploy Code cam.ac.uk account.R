@@ -2,6 +2,8 @@
 ## jz account 
 ## https://www.shinyapps.io/
 
+library(rsconnect)
+
 rsconnect::removeAccount("oy68gf-frank-zr") #jfz22@cam 3 apps for banking and LAT trading
 rsconnect::removeAccount("haaf4j-theone-andonly") #jfz.003a 4 apps include priv credit
 rsconnect::removeAccount("aa-partner") #neofranz_leblanc, 4 apps including investors, 5am, currency
@@ -81,6 +83,8 @@ rsconnect::deployApp(
   appName = "c_resources_connectivity_bq",
   forceUpdate = TRUE
 )
+
+rsconnect::deployApp('C:/101_Code/R/Atera A Shiny Apps Site/energy_planning_geo_a/')
 rsconnect::deployApp('C:/101_Code/R/Health&Nutrition/SaraiMazu_MetodologiaCostosYPrecios/')
 rsconnect::deployApp('C:/101_Code/R/Health&Nutrition/SaraiMazu-Relato-Fotografico/')
 rsconnect::deployApp('C:/101_Code/R/Skills/Productivity/10x_productivity/')
