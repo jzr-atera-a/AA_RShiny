@@ -5,6 +5,6 @@ account: atera-analytics
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 15118570
-bundleId: 10669144
+bundleId: 11245848
 url: https://atera-analytics.shinyapps.io/energy_planning_geo/
 version: 1

@@ -79,10 +79,11 @@ ui <- dashboardPage(
     ),
     
     sidebarMenu(
-      menuItem("Audio Transcription", tabName = "transcription", icon = icon("microphone")),
-      menuItem("Analytics Dashboard", tabName = "analytics", icon = icon("chart-bar")),
+      menuItem("Audio Converter", tabName = "converter", icon = icon("exchange-alt")),
+      menuItem("File Splitter", tabName = "splitter", icon = icon("scissors")),
       menuItem("Settings", tabName = "settings", icon = icon("cog")),
-      menuItem("Audio Converter", tabName = "converter", icon = icon("exchange-alt"))
+      menuItem("Audio Transcription", tabName = "transcription", icon = icon("microphone")),
+      menuItem("Analytics Dashboard", tabName = "analytics", icon = icon("chart-bar"))
     )
   ),
   
