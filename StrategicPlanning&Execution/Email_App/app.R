@@ -174,7 +174,7 @@ ui <- dashboardPage(
                   hr(),
                   
                   fluidRow(
-                    column(6, textInput("smtp_username", "Email Address:", value = "ali.b@atera-analytics.co.uk")),
+                    column(6, textInput("smtp_username", "Email Address:", value = "")),
                     column(6, passwordInput("smtp_password", "Password:", value = ""))
                   ),
                   
