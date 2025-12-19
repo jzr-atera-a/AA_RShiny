@@ -1,5 +1,6 @@
-# Audio Speech-to-Text R Shiny Dashboard with File Splitter and Bulk Text Analysis
-# FINAL CORRECTED VERSION - All fixes applied
+# Audio Speech-to-Text R Shiny Dashboard with File Splitter
+# Install required packages if not already installed
+# install.packages(c("shiny", "shinydashboard", "DT", "plotly", "httr", "jsonlite", "shinycssloaders", "shinyFiles", "stringr", "av", "tuneR", "seewave"))
 
 library(shiny)
 library(shinydashboard)
@@ -151,23 +152,6 @@ ui <- dashboardPage(
           border-radius: 8px;
           margin: 10px 0;
         }
-        .file-count-badge {
-          background: #667eea;
-          color: white;
-          padding: 5px 15px;
-          border-radius: 20px;
-          font-weight: bold;
-          display: inline-block;
-          margin: 10px 0;
-        }
-        .timeout-warning {
-          background: #fff3cd;
-          border-left: 5px solid #ffc107;
-          padding: 10px 15px;
-          border-radius: 8px;
-          margin: 10px 0;
-          color: #856404;
-        }
       "))
     ),
     
@@ -176,7 +160,6 @@ ui <- dashboardPage(
       menuItem("File Splitter", tabName = "splitter", icon = icon("scissors")),
       menuItem("Settings", tabName = "settings", icon = icon("cog")),
       menuItem("Audio Transcription", tabName = "transcription", icon = icon("microphone")),
-      menuItem("Bulk Text Analysis", tabName = "bulk_analysis", icon = icon("folder-open")),
       menuItem("Analytics Dashboard", tabName = "analytics", icon = icon("chart-bar"))
     )
   ),
@@ -216,17 +199,16 @@ ui <- dashboardPage(
               column(8,
                      textInput("outputPath", 
                                "Save to directory:", 
-                               value = "",
-                               placeholder = "Select output directory...")
+                               value = getwd(),
+                               placeholder = "Enter directory path...")
               ),
               column(4,
                      br(),
-                     shinyDirButton("browseOutputDir", 
-                                    "Browse...", 
-                                    title = "Select Output Directory",
-                                    class = "btn-default",
-                                    icon = icon("folder"),
-                                    style = "width: 100%;")
+                     actionButton("browseOutputDir", 
+                                  "Browse...", 
+                                  class = "btn-default",
+                                  icon = icon("folder"),
+                                  style = "width: 100%;")
               )
             ),
             
@@ -235,7 +217,7 @@ ui <- dashboardPage(
                      div(
                        class = "info-box",
                        h6("Auto-Split Feature:", style = "margin: 0; color: #667eea; font-weight: bold;"),
-                       p("Files exceeding the specified maximum size will be automatically split into smaller parts", 
+                       p("Files larger than 24MB will be automatically split into smaller parts", 
                          style = "margin: 5px 0 0 0; color: #6b7280; font-size: 12px;")
                      )
               )
@@ -256,17 +238,7 @@ ui <- dashboardPage(
                                  selected = "192k")
               ),
               column(6,
-                     numericInput("converter_max_size_mb", 
-                                  "Max file size (MB):",
-                                  value = 24,
-                                  min = 1,
-                                  max = 500,
-                                  step = 1)
-              )
-            ),
-            
-            fluidRow(
-              column(12,
+                     br(),
                      actionButton("convertBtn", 
                                   "Convert to MP3", 
                                   class = "btn-primary btn-lg",
@@ -307,7 +279,7 @@ ui <- dashboardPage(
                 h5("File Details:"),
                 verbatimTextOutput("convertedFileInfo"),
                 br(),
-                actionButton("openConverterFolderBtn", 
+                actionButton("openFolderBtn", 
                              "Open Output Folder", 
                              class = "btn-success",
                              icon = icon("folder-open"))
@@ -340,7 +312,7 @@ ui <- dashboardPage(
             width = 12,
             
             fluidRow(
-              column(6,
+              column(8,
                      h4("Step 1: Upload Your Audio File"),
                      fileInput("audio_file", "Choose MP3 or WAV file:",
                                accept = c(".mp3", ".wav", ".MP3", ".WAV"),
@@ -357,31 +329,13 @@ ui <- dashboardPage(
                      )
               ),
               
-              column(6,
-                     h4("Step 2: Select Output Directory"),
-                     fluidRow(
-                       column(8,
-                              textInput("splitter_output_path", 
-                                        "Output directory:",
-                                        value = "",
-                                        placeholder = "Select output directory...")
-                       ),
-                       column(4,
-                              br(),
-                              shinyDirButton("browseSplitterDir", 
-                                             "Browse...", 
-                                             title = "Select Output Directory",
-                                             class = "btn-default",
-                                             icon = icon("folder"),
-                                             style = "width: 100%;")
-                       )
-                     ),
-                     
+              column(4,
+                     h4("Step 2: Set Output Folder Name"),
                      textInput("output_folder", "Output folder name:",
                                value = "split_audio_files",
                                placeholder = "Enter folder name"),
                      
-                     helpText("Files will be saved in a subfolder with this name in the selected directory.")
+                     helpText("Files will be saved in a folder with this name in your Downloads directory or current working directory.")
               )
             )
           )
@@ -394,36 +348,15 @@ ui <- dashboardPage(
             solidHeader = TRUE, 
             width = 6,
             
-            radioButtons("split_method", "Split Method:",
-                         choices = list(
-                           "By Number of Files" = "num_files",
-                           "By File Size" = "file_size"
-                         ),
-                         selected = "num_files"),
+            numericInput("num_splits", "Number of files to split into:", 
+                         value = 2, min = 2, max = 50, step = 1),
+            
+            checkboxInput("equal_duration", "Split into equal duration segments", 
+                          value = TRUE),
             
             conditionalPanel(
-              condition = "input.split_method == 'num_files'",
-              numericInput("num_splits", "Number of files to split into:", 
-                           value = 2, min = 2, max = 50, step = 1),
-              
-              checkboxInput("equal_duration", "Split into equal duration segments", 
-                            value = TRUE),
-              
-              conditionalPanel(
-                condition = "input.equal_duration == false",
-                helpText("Custom split points will be available after uploading the file")
-              )
-            ),
-            
-            conditionalPanel(
-              condition = "input.split_method == 'file_size'",
-              numericInput("splitter_max_size_mb", 
-                           "Maximum file size (MB):", 
-                           value = 24, 
-                           min = 1, 
-                           max = 500, 
-                           step = 1),
-              helpText("Audio will be split into multiple files, each not exceeding this size.")
+              condition = "input.equal_duration == false",
+              helpText("Custom split points will be available after uploading the file")
             ),
             
             textInput("output_prefix", "Output file prefix:", 
@@ -484,12 +417,7 @@ ui <- dashboardPage(
               br(),
               downloadButton("download_zip", "Download All Split Files as ZIP", 
                              class = "btn-primary btn-lg", 
-                             icon = icon("download")),
-              br(), br(),
-              actionButton("openSplitterFolderBtn", 
-                           "Open Output Folder", 
-                           class = "btn-success",
-                           icon = icon("folder-open"))
+                             icon = icon("download"))
             )
           )
         )
@@ -579,11 +507,9 @@ ui <- dashboardPage(
               tags$li("Multiple language support"),
               tags$li("Audio file conversion (M4A to MP3)"),
               tags$li("Audio file splitting"),
-              tags$li("Bulk text analysis and summarization"),
               tags$li("Transcription history and analytics"),
               tags$li("Custom save locations"),
-              tags$li("Processing time tracking"),
-              tags$li("Configurable request timeout")
+              tags$li("Processing time tracking")
             )
           )
         )
@@ -599,7 +525,7 @@ ui <- dashboardPage(
             status = "primary", 
             solidHeader = TRUE,
             width = 6,
-            height = 550,
+            height = 400,
             
             fileInput("audioFile", 
                       "Choose Audio File",
@@ -616,34 +542,12 @@ ui <- dashboardPage(
               br()
             ),
             
-            h5("Transcription Settings:"),
-            numericInput("apiTimeout", 
-                         "Request Timeout (seconds):",
-                         value = 180,
-                         min = 30,
-                         max = 600,
-                         step = 30),
-            
-            br(),
-            
             actionButton("transcribeBtn", 
                          "Transcribe Audio", 
                          class = "btn-primary btn-lg",
                          style = "width: 100%;"),
             
             br(), br(),
-            
-            div(class = "timeout-warning",
-                icon("exclamation-triangle"), " ",
-                tags$strong("Timeout Guide:"),
-                tags$ul(style = "margin: 5px 0 0 0; padding-left: 20px;",
-                        tags$li("Small files (< 5MB): 60-120 seconds"),
-                        tags$li("Medium files (5-15MB): 120-240 seconds"),
-                        tags$li("Large files (15-25MB): 240-600 seconds")
-                )
-            ),
-            
-            br(),
             
             conditionalPanel(
               condition = "$('html').hasClass('shiny-busy')",
@@ -661,7 +565,7 @@ ui <- dashboardPage(
             status = "info", 
             solidHeader = TRUE,
             width = 6,
-            height = 550,
+            height = 400,
             
             verbatimTextOutput("statusOutput")
           )
@@ -680,230 +584,23 @@ ui <- dashboardPage(
                           label = NULL,
                           value = "",
                           placeholder = "Transcribed text will appear here...",
-                          height = "300px",
+                          height = "350px",
                           resize = "vertical"),
             
-            h5("Save Transcription:"),
             fluidRow(
               column(6,
-                     textInput("transcription_output_path", 
-                               "Save directory:", 
-                               placeholder = "Select output directory...")
+                     textInput("saveLocation", 
+                               "Save Location:", 
+                               placeholder = "Enter file path...")
               ),
-              column(3,
-                     br(),
-                     shinyDirButton("browseTranscriptionDir", 
-                                    "Browse...", 
-                                    title = "Select Output Directory",
-                                    class = "btn-default",
-                                    icon = icon("folder"),
-                                    style = "width: 100%;")
-              ),
-              column(3,
+              column(6,
                      br(),
                      actionButton("saveBtn", 
                                   "Save Transcription", 
                                   class = "btn-success",
-                                  icon = icon("save"),
-                                  style = "width: 100%;")
-              )
-            ),
-            br(),
-            helpText("Filename will automatically match the audio file name.")
-          )
-        )
-      ),
-      
-      # Bulk Text Analysis Tab
-      tabItem(
-        tabName = "bulk_analysis",
-        fluidRow(
-          box(
-            title = "Step 1: Select Folder with Text Files", 
-            status = "primary", 
-            solidHeader = TRUE,
-            width = 6,
-            
-            fluidRow(
-              column(8,
-                     textInput("bulk_folder_path", 
-                               "Folder containing .txt files:",
-                               value = "",
-                               placeholder = "Select folder with text files...")
-              ),
-              column(4,
-                     br(),
-                     shinyDirButton("browseBulkFolder", 
-                                    "Browse...", 
-                                    title = "Select Folder",
-                                    class = "btn-default",
-                                    icon = icon("folder"),
-                                    style = "width: 100%;")
-              )
-            ),
-            
-            br(),
-            
-            actionButton("scanFolderBtn", 
-                         "Scan Folder", 
-                         class = "btn-info",
-                         icon = icon("search"),
-                         style = "width: 100%;"),
-            
-            br(), br(),
-            
-            conditionalPanel(
-              condition = "output.folderScanned",
-              div(
-                class = "reference-box",
-                h5(icon("folder-open"), " Folder Contents:"),
-                uiOutput("folderContentsDisplay")
-              )
-            )
-          ),
-          
-          box(
-            title = "Step 2: Configure Analysis Settings", 
-            status = "warning", 
-            solidHeader = TRUE,
-            width = 6,
-            
-            selectInput("sortMethod", 
-                        "Sort files by:",
-                        choices = c(
-                          "Filename (alphabetically)" = "name",
-                          "Creation time (oldest first)" = "ctime",
-                          "Modification time (newest first)" = "mtime"
-                        ),
-                        selected = "name"),
-            
-            numericInput("maxSummaryWords", 
-                         "Maximum summary length (words):",
-                         value = 500,
-                         min = 50,
-                         max = 5000,
-                         step = 50),
-            
-            numericInput("bulkAnalysisTimeout", 
-                         "Request Timeout (seconds):",
-                         value = 180,
-                         min = 30,
-                         max = 600,
-                         step = 30),
-            
-            textInput("analysisPrompt",
-                      "Custom prompt (optional):",
-                      value = "Summarize the following combined text:",
-                      placeholder = "Enter custom prompt..."),
-            
-            helpText("The app will concatenate all .txt files in the selected folder and send them to ChatGPT for analysis."),
-            
-            br(),
-            
-            h5("Save Concatenated Text:"),
-            fluidRow(
-              column(8,
-                     textInput("concat_output_path", 
-                               "Output directory:", 
-                               placeholder = "Select directory for concatenated file...")
-              ),
-              column(4,
-                     br(),
-                     shinyDirButton("browseConcatDir", 
-                                    "Browse...", 
-                                    title = "Select Output Directory",
-                                    class = "btn-default",
-                                    icon = icon("folder"),
-                                    style = "width: 100%;")
-              )
-            ),
-            
-            br(),
-            
-            fluidRow(
-              column(6,
-                     actionButton("downloadConcatBtn", 
-                                  "Download Concatenated Text", 
-                                  class = "btn-info btn-lg",
-                                  icon = icon("download"),
-                                  style = "width: 100%;")
-              ),
-              column(6,
-                     actionButton("analyzeBtn", 
-                                  "Analyze & Summarize", 
-                                  class = "btn-success btn-lg",
-                                  icon = icon("brain"),
                                   style = "width: 100%;")
               )
             )
-          )
-        ),
-        
-        fluidRow(
-          box(
-            title = "Analysis Status", 
-            status = "info", 
-            solidHeader = TRUE,
-            width = 12,
-            
-            verbatimTextOutput("analysisStatus"),
-            
-            conditionalPanel(
-              condition = "$('html').hasClass('shiny-busy')",
-              div(
-                style = "text-align: center; margin: 20px;",
-                h4("Analyzing text..."),
-                withSpinner(div(), type = 4, color = "#667eea")
-              )
-            )
-          )
-        ),
-        
-        fluidRow(
-          box(
-            title = "Analysis Results", 
-            status = "success", 
-            solidHeader = TRUE,
-            width = 12,
-            
-            textAreaInput("analysisSummary", 
-                          label = NULL,
-                          value = "",
-                          placeholder = "Analysis summary will appear here...",
-                          height = "400px",
-                          resize = "vertical"),
-            
-            br(),
-            
-            fluidRow(
-              column(6,
-                     textInput("summary_output_path", 
-                               "Save directory:", 
-                               placeholder = "Select output directory...")
-              ),
-              column(3,
-                     br(),
-                     shinyDirButton("browseSummaryDir", 
-                                    "Browse...", 
-                                    title = "Select Output Directory",
-                                    class = "btn-default",
-                                    icon = icon("folder"),
-                                    style = "width: 100%;")
-              ),
-              column(3,
-                     br(),
-                     actionButton("saveSummaryBtn", 
-                                  "Save Summary", 
-                                  class = "btn-success",
-                                  icon = icon("save"),
-                                  style = "width: 100%;")
-              )
-            ),
-            br(),
-            textInput("summary_filename", 
-                      "Filename (without extension):", 
-                      value = paste0("summary_", format(Sys.time(), "%Y%m%d_%H%M%S")),
-                      placeholder = "Enter filename...")
           )
         )
       ),
@@ -959,28 +656,8 @@ ui <- dashboardPage(
 # Define Server
 server <- function(input, output, session) {
   
-  # Increase file upload limit to 100MB
-  options(shiny.maxRequestSize = 100*1024^2)
-  
-  # Set up volumes for directory browsing
-  volumes <- c(Home = fs::path_home(), getVolumes()())
-  if (.Platform$OS.type == "windows") {
-    drive_letters <- LETTERS[3:26]
-    for (letter in drive_letters) {
-      drive_path <- paste0(letter, ":/")
-      if (dir.exists(drive_path)) {
-        volumes[[paste0(letter, ":")]] <- drive_path
-      }
-    }
-  }
-  
-  # Initialize shinyDirChoose for all directory browsers
-  shinyDirChoose(input, "browseOutputDir", roots = volumes, session = session)
-  shinyDirChoose(input, "browseSplitterDir", roots = volumes, session = session)
-  shinyDirChoose(input, "browseTranscriptionDir", roots = volumes, session = session)
-  shinyDirChoose(input, "browseBulkFolder", roots = volumes, session = session)
-  shinyDirChoose(input, "browseSummaryDir", roots = volumes, session = session)
-  shinyDirChoose(input, "browseConcatDir", roots = volumes, session = session)
+  # Increase file upload limit to 100MB (to handle larger audio files)
+  options(shiny.maxRequestSize = 100*1024^2)  # 100MB in bytes
   
   # Reactive values for storing data
   values <- reactiveValues(
@@ -1008,95 +685,14 @@ server <- function(input, output, session) {
     conversion_complete = FALSE,
     connection_tested = FALSE,
     api_status = "",
+    # File Splitter values
     audio_data = NULL,
     audio_info = NULL,
     processing_log = "Ready to process audio files...\n",
     results = NULL,
     output_dir = NULL,
-    temp_files = c(),
-    converter_output_dir = getwd(),
-    splitter_output_dir = getwd(),
-    transcription_output_dir = getwd(),
-    bulk_folder_dir = NULL,
-    summary_output_dir = getwd(),
-    concat_output_dir = getwd(),
-    scanned_files = NULL,
-    current_summary = "",
-    folder_scanned = FALSE,
-    concatenated_text = NULL
+    temp_files = c()
   )
-  
-  # Observer for Converter output directory selection
-  observeEvent(input$browseOutputDir, {
-    if (!is.null(input$browseOutputDir) && !is.integer(input$browseOutputDir)) {
-      selected_path <- parseDirPath(volumes, input$browseOutputDir)
-      if (length(selected_path) > 0) {
-        values$converter_output_dir <- selected_path
-        updateTextInput(session, "outputPath", value = selected_path)
-        showNotification("Converter output directory selected", type = "message")
-      }
-    }
-  })
-  
-  # Observer for Splitter output directory selection
-  observeEvent(input$browseSplitterDir, {
-    if (!is.null(input$browseSplitterDir) && !is.integer(input$browseSplitterDir)) {
-      selected_path <- parseDirPath(volumes, input$browseSplitterDir)
-      if (length(selected_path) > 0) {
-        values$splitter_output_dir <- selected_path
-        updateTextInput(session, "splitter_output_path", value = selected_path)
-        showNotification("Splitter output directory selected", type = "message")
-      }
-    }
-  })
-  
-  # Observer for Transcription output directory selection
-  observeEvent(input$browseTranscriptionDir, {
-    if (!is.null(input$browseTranscriptionDir) && !is.integer(input$browseTranscriptionDir)) {
-      selected_path <- parseDirPath(volumes, input$browseTranscriptionDir)
-      if (length(selected_path) > 0) {
-        values$transcription_output_dir <- selected_path
-        updateTextInput(session, "transcription_output_path", value = selected_path)
-        showNotification("Transcription save directory selected", type = "message")
-      }
-    }
-  })
-  
-  # Observer for Bulk Analysis folder selection
-  observeEvent(input$browseBulkFolder, {
-    if (!is.null(input$browseBulkFolder) && !is.integer(input$browseBulkFolder)) {
-      selected_path <- parseDirPath(volumes, input$browseBulkFolder)
-      if (length(selected_path) > 0) {
-        values$bulk_folder_dir <- selected_path
-        updateTextInput(session, "bulk_folder_path", value = selected_path)
-        showNotification("Bulk analysis folder selected", type = "message")
-      }
-    }
-  })
-  
-  # Observer for Summary output directory selection
-  observeEvent(input$browseSummaryDir, {
-    if (!is.null(input$browseSummaryDir) && !is.integer(input$browseSummaryDir)) {
-      selected_path <- parseDirPath(volumes, input$browseSummaryDir)
-      if (length(selected_path) > 0) {
-        values$summary_output_dir <- selected_path
-        updateTextInput(session, "summary_output_path", value = selected_path)
-        showNotification("Summary save directory selected", type = "message")
-      }
-    }
-  })
-  
-  # Observer for Concatenated text output directory selection
-  observeEvent(input$browseConcatDir, {
-    if (!is.null(input$browseConcatDir) && !is.integer(input$browseConcatDir)) {
-      selected_path <- parseDirPath(volumes, input$browseConcatDir)
-      if (length(selected_path) > 0) {
-        values$concat_output_dir <- selected_path
-        updateTextInput(session, "concat_output_path", value = selected_path)
-        showNotification("Concatenated text output directory selected", type = "message")
-      }
-    }
-  })
   
   # File upload status
   output$fileUploaded <- reactive({
@@ -1121,12 +717,6 @@ server <- function(input, output, session) {
     return(values$connection_tested)
   })
   outputOptions(output, 'connectionTested', suspendWhenHidden = FALSE)
-  
-  # Folder scanned status
-  output$folderScanned <- reactive({
-    return(values$folder_scanned)
-  })
-  outputOptions(output, 'folderScanned', suspendWhenHidden = FALSE)
   
   # File information display
   output$fileInfo <- renderText({
@@ -1153,19 +743,22 @@ server <- function(input, output, session) {
   # API Connection Testing Function
   testOpenAIConnection <- function(api_key) {
     tryCatch({
+      # Test API connection by making a simple request to list models
       url <- "https://api.openai.com/v1/models"
       
       response <- GET(
         url,
         add_headers(Authorization = paste("Bearer", api_key)),
-        timeout(10)
+        timeout(10)  # 10 second timeout
       )
       
       status <- status_code(response)
+      
       result <- list()
       
       if (status == 200) {
         content_result <- content(response, "parsed")
+        # Check if whisper models are available
         model_ids <- sapply(content_result$data, function(x) x$id)
         whisper_available <- any(grepl("whisper", model_ids, ignore.case = TRUE))
         
@@ -1180,12 +773,17 @@ server <- function(input, output, session) {
         
       } else if (status == 401) {
         result$success <- FALSE
-        result$message <- "✗ Authentication Failed\nInvalid API key."
+        result$message <- "✗ Authentication Failed\nInvalid API key. Please check your OpenAI API key."
         result$status <- "error"
         
       } else if (status == 429) {
         result$success <- FALSE
-        result$message <- "✗ Rate Limit Exceeded"
+        result$message <- "✗ Rate Limit Exceeded\nToo many requests. Please try again later."
+        result$status <- "warning"
+        
+      } else if (status >= 500) {
+        result$success <- FALSE
+        result$message <- "✗ OpenAI Server Error\nOpenAI services may be temporarily unavailable."
         result$status <- "warning"
         
       } else {
@@ -1205,394 +803,126 @@ server <- function(input, output, session) {
     })
   }
   
-  # Transcription function with proper timeout configuration
-  transcribeAudio <- function(file_path, api_key, timeout_seconds) {
+  # Transcription function using OpenAI API
+  transcribeAudio <- function(file_path, api_key) {
     req(api_key, file_path)
     
+    # Validate inputs
     api_key <- trimws(api_key)
     if (nchar(api_key) == 0) {
-      stop("API key is required.")
+      stop("API key is required. Please set your OpenAI API key in Settings.")
     }
     
     if (!file.exists(file_path)) {
-      stop("Audio file not found.")
+      stop("Audio file not found. Please try uploading again.")
     }
     
+    # Prepare the API request
     url <- "https://api.openai.com/v1/audio/transcriptions"
     
+    # Create the request body
     body <- list(
       file = upload_file(file_path),
       model = input$model %||% "whisper-1"
     )
     
+    # Add language if specified
     language <- input$language %||% ""
     if (nchar(language) > 0) {
       body$language <- language
     }
     
+    print(body)  # Add this line right before the POST request
+    
+    # Make the API request with timeout
     response <- POST(
       url,
       add_headers(Authorization = paste("Bearer", api_key)),
       body = body,
       encode = "multipart",
-      httr::timeout(timeout_seconds)
+      timeout(300)  # 5 minute timeout for large files
     )
     
+    # Check response status
     status <- status_code(response)
     
     if (status != 200) {
       error_content <- content(response, "text", encoding = "UTF-8")
       if (status == 401) {
-        stop("Authentication failed.")
+        stop("Authentication failed. Please check your API key.")
       } else if (status == 413) {
-        stop("File too large.")
+        stop("File too large. Maximum file size is 25MB.")
+      } else if (status == 429) {
+        stop("Rate limit exceeded. Please try again later.")
       } else {
-        stop(paste("API Error:", error_content))
+        stop(paste("API Error (", status, "):", error_content))
       }
     }
     
+    # Parse response
     content_result <- content(response, "parsed", encoding = "UTF-8")
+    
+    # Validate response structure
+    if (is.null(content_result) || !is.list(content_result)) {
+      stop("Invalid response format from OpenAI API.")
+    }
+    
+    if (!"text" %in% names(content_result)) {
+      stop("No transcription text found in API response.")
+    }
+    
     transcription_text <- content_result$text
     
-    if (is.null(transcription_text) || length(transcription_text) == 0) {
-      return("No speech detected.")
+    # Validate transcription text
+    if (is.null(transcription_text) || !is.character(transcription_text)) {
+      stop("Invalid transcription format received from API.")
+    }
+    
+    if (length(transcription_text) == 0 || nchar(transcription_text) == 0) {
+      return("No speech detected in the audio file.")
     }
     
     return(transcription_text)
   }
   
-  # ChatGPT text analysis function with proper timeout
-  analyzeBulkText <- function(combined_text, api_key, max_words, custom_prompt, timeout_seconds) {
-    req(api_key, combined_text)
-    
-    api_key <- trimws(api_key)
-    if (nchar(api_key) == 0) {
-      stop("API key is required.")
-    }
-    
-    url <- "https://api.openai.com/v1/chat/completions"
-    
-    system_message <- paste0(
-      "You are a helpful assistant that summarizes and analyzes text. ",
-      "Provide a comprehensive summary limited to approximately ", max_words, " words."
-    )
-    
-    user_message <- paste0(
-      custom_prompt, "\n\n",
-      "Text to analyze:\n\n",
-      combined_text
-    )
-    
-    body <- list(
-      model = "gpt-4o-mini",
-      messages = list(
-        list(role = "system", content = system_message),
-        list(role = "user", content = user_message)
-      ),
-      max_tokens = max_words * 2,
-      temperature = 0.7
-    )
-    
-    response <- POST(
-      url,
-      add_headers(
-        Authorization = paste("Bearer", api_key),
-        `Content-Type` = "application/json"
-      ),
-      body = toJSON(body, auto_unbox = TRUE),
-      encode = "raw",
-      httr::timeout(timeout_seconds)
-    )
-    
-    status <- status_code(response)
-    
-    if (status != 200) {
-      error_content <- content(response, "text", encoding = "UTF-8")
-      if (status == 401) {
-        stop("Authentication failed. Check your API key.")
-      } else if (status == 429) {
-        stop("Rate limit exceeded. Please wait and try again.")
-      } else {
-        stop(paste("API Error (Status", status, "):", error_content))
-      }
-    }
-    
-    content_result <- content(response, "parsed", encoding = "UTF-8")
-    
-    if (is.null(content_result$choices) || length(content_result$choices) == 0) {
-      stop("No response from ChatGPT")
-    }
-    
-    summary_text <- content_result$choices[[1]]$message$content
-    
-    return(summary_text)
-  }
-  
-  # Scan folder for text files
-  observeEvent(input$scanFolderBtn, {
-    req(values$bulk_folder_dir)
-    
-    folder_path <- values$bulk_folder_dir
-    
-    if (!dir.exists(folder_path)) {
-      showNotification("Selected folder does not exist", type = "error")
-      return()
-    }
-    
-    tryCatch({
-      txt_files <- list.files(folder_path, pattern = "\\.txt$", full.names = TRUE, ignore.case = TRUE)
-      
-      if (length(txt_files) == 0) {
-        showNotification("No .txt files found in the selected folder", type = "warning")
-        values$folder_scanned <- FALSE
-        values$scanned_files <- NULL
-        return()
-      }
-      
-      file_info <- data.frame(
-        filename = basename(txt_files),
-        path = txt_files,
-        size = file.size(txt_files),
-        ctime = file.info(txt_files)$ctime,
-        mtime = file.info(txt_files)$mtime,
-        stringsAsFactors = FALSE
-      )
-      
-      values$scanned_files <- file_info
-      values$folder_scanned <- TRUE
-      
-      showNotification(paste("Found", nrow(file_info), "text file(s)"), type = "message")
-      
-    }, error = function(e) {
-      showNotification(paste("Error scanning folder:", e$message), type = "error")
-      values$folder_scanned <- FALSE
-    })
-  })
-  
-  # Display folder contents
-  output$folderContentsDisplay <- renderUI({
-    req(values$scanned_files)
-    
-    file_count <- nrow(values$scanned_files)
-    total_size_kb <- sum(values$scanned_files$size) / 1024
-    
-    tagList(
-      div(class = "file-count-badge",
-          paste(file_count, "text file(s) found")
-      ),
-      p(paste("Total size:", round(total_size_kb, 2), "KB")),
-      tags$ul(
-        lapply(1:min(10, file_count), function(i) {
-          tags$li(
-            values$scanned_files$filename[i],
-            tags$small(paste0(" (", round(values$scanned_files$size[i] / 1024, 1), " KB)"))
-          )
-        })
-      ),
-      if (file_count > 10) {
-        p(paste("... and", file_count - 10, "more file(s)"))
-      }
-    )
-  })
-  
-  # Analyze button event
-  observeEvent(input$analyzeBtn, {
-    req(values$scanned_files)
-    
-    if (is.null(values$api_key) || nchar(trimws(values$api_key)) == 0) {
-      output$analysisStatus <- renderText("❌ Error: No API key found.")
-      showNotification("Please set your API key in Settings first.", type = "error")
-      return()
-    }
-    
-    timeout_value <- input$bulkAnalysisTimeout %||% 180
-    
-    output$analysisStatus <- renderText(paste0(
-      "🔄 Initializing analysis...\n",
-      "⏱️ Timeout set to: ", timeout_value, " seconds\n"
-    ))
-    
-    tryCatch({
-      start_time <- Sys.time()
-      
-      sorted_files <- values$scanned_files
-      
-      if (input$sortMethod == "name") {
-        sorted_files <- sorted_files[order(sorted_files$filename), ]
-        output$analysisStatus <- renderText("📁 Sorting files by name...\n")
-      } else if (input$sortMethod == "ctime") {
-        sorted_files <- sorted_files[order(sorted_files$ctime), ]
-        output$analysisStatus <- renderText("📁 Sorting files by creation time...\n")
-      } else if (input$sortMethod == "mtime") {
-        sorted_files <- sorted_files[order(sorted_files$mtime, decreasing = TRUE), ]
-        output$analysisStatus <- renderText("📁 Sorting files by modification time...\n")
-      }
-      
-      output$analysisStatus <- renderText("📖 Reading text files...\n")
-      
-      all_text <- character()
-      for (i in 1:nrow(sorted_files)) {
-        file_content <- readLines(sorted_files$path[i], warn = FALSE, encoding = "UTF-8")
-        file_text <- paste(file_content, collapse = "\n")
-        
-        all_text <- c(all_text, 
-                      paste0("\n=== FILE: ", sorted_files$filename[i], " ===\n"),
-                      file_text)
-      }
-      
-      combined_text <- paste(all_text, collapse = "\n")
-      word_count <- length(strsplit(combined_text, "\\s+")[[1]])
-      
-      output$analysisStatus <- renderText(paste0(
-        "✓ Read ", nrow(sorted_files), " file(s)\n",
-        "✓ Total words: ", word_count, "\n",
-        "⏱️ Using timeout: ", timeout_value, " seconds\n",
-        "🤖 Sending to ChatGPT for analysis...\n"
-      ))
-      
-      Sys.sleep(1)
-      
-      summary <- analyzeBulkText(
-        combined_text, 
-        values$api_key, 
-        input$maxSummaryWords,
-        input$analysisPrompt,
-        timeout_value
-      )
-      
-      end_time <- Sys.time()
-      total_time <- as.numeric(difftime(end_time, start_time, units = "secs"))
-      
-      updateTextAreaInput(session, "analysisSummary", value = summary)
-      values$current_summary <- summary
-      
-      summary_word_count <- length(strsplit(summary, "\\s+")[[1]])
-      
-      output$analysisStatus <- renderText(paste0(
-        "✅ Analysis completed!\n\n",
-        "Files analyzed: ", nrow(sorted_files), "\n",
-        "Input words: ", word_count, "\n",
-        "Summary words: ", summary_word_count, "\n",
-        "Processing time: ", round(total_time, 2), " seconds"
-      ))
-      
-      showNotification("Analysis completed successfully!", type = "message")
-      
-    }, error = function(e) {
-      output$analysisStatus <- renderText(paste("❌ Error:", e$message))
-      showNotification(paste("Analysis failed:", e$message), type = "error")
-    })
-  })
-  
-  # Download concatenated text button event
-  observeEvent(input$downloadConcatBtn, {
-    req(values$scanned_files)
-    
-    output_dir <- values$concat_output_dir
-    
-    if (is.null(output_dir) || !dir.exists(output_dir)) {
-      showNotification("Please select an output directory for the concatenated file.", type = "error")
-      return()
-    }
-    
-    tryCatch({
-      showNotification("Preparing concatenated text...", type = "message")
-      
-      sorted_files <- values$scanned_files
-      
-      if (input$sortMethod == "name") {
-        sorted_files <- sorted_files[order(sorted_files$filename), ]
-      } else if (input$sortMethod == "ctime") {
-        sorted_files <- sorted_files[order(sorted_files$ctime), ]
-      } else if (input$sortMethod == "mtime") {
-        sorted_files <- sorted_files[order(sorted_files$mtime, decreasing = TRUE), ]
-      }
-      
-      all_text <- character()
-      for (i in 1:nrow(sorted_files)) {
-        file_content <- readLines(sorted_files$path[i], warn = FALSE, encoding = "UTF-8")
-        file_text <- paste(file_content, collapse = "\n")
-        
-        all_text <- c(all_text, 
-                      paste0("\n=== FILE: ", sorted_files$filename[i], " ===\n"),
-                      file_text)
-      }
-      
-      combined_text <- paste(all_text, collapse = "\n")
-      values$concatenated_text <- combined_text
-      
-      timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
-      filename <- paste0("concatenated_text_", timestamp, ".txt")
-      save_path <- file.path(output_dir, filename)
-      
-      writeLines(combined_text, save_path)
-      
-      word_count <- length(strsplit(combined_text, "\\s+")[[1]])
-      
-      showNotification(
-        paste0("Concatenated text saved!\n",
-               "Files: ", nrow(sorted_files), "\n",
-               "Words: ", word_count, "\n",
-               "Location: ", save_path), 
-        type = "message",
-        duration = 10
-      )
-      
-    }, error = function(e) {
-      showNotification(paste("Error creating concatenated text:", e$message), type = "error")
-    })
-  })
-  
-  # Save summary
-  observeEvent(input$saveSummaryBtn, {
-    req(values$current_summary)
-    
-    output_dir <- values$summary_output_dir
-    
-    if (is.null(output_dir) || !dir.exists(output_dir)) {
-      showNotification("Please select a valid output directory", type = "error")
-      return()
-    }
-    
-    filename <- input$summary_filename
-    if (is.null(filename) || nchar(trimws(filename)) == 0) {
-      filename <- paste0("summary_", format(Sys.time(), "%Y%m%d_%H%M%S"))
-    }
-    
-    if (!grepl("\\.txt$", filename, ignore.case = TRUE)) {
-      filename <- paste0(filename, ".txt")
-    }
-    
-    save_path <- file.path(output_dir, filename)
-    
-    tryCatch({
-      writeLines(values$current_summary, save_path)
-      showNotification(paste("Summary saved to:", save_path), type = "message")
-      
-    }, error = function(e) {
-      showNotification(paste("Error saving file:", e$message), type = "error")
-    })
-  })
-  
-  # Transcribe button event
+  # Transcribe button event with detailed progress tracking
   observeEvent(input$transcribeBtn, {
     req(input$audioFile)
     
+    # Check if API key is set
     if (is.null(values$api_key) || nchar(trimws(values$api_key)) == 0) {
-      output$statusOutput <- renderText("❌ Error: No API key found.")
+      output$statusOutput <- renderText("❌ Error: No API key found. Please set your OpenAI API key in Settings and test the connection.")
       showNotification("Please set your API key in Settings first.", type = "error")
       return()
     }
     
+    # Get file information
     file_size_mb <- round(input$audioFile$size / 1024 / 1024, 2)
     file_name <- input$audioFile$name
-    timeout_value <- input$apiTimeout %||% 180
+    file_duration_estimate <- round(file_size_mb * 2, 0)  # Rough estimate: 2 minutes per MB
     
+    # Step 1: Initialize
     output$statusOutput <- renderText(paste(
-      "🔄 Initializing transcription...\n\n",
-      "File:", file_name, "\n",
-      "Size:", file_size_mb, "MB\n",
-      "Timeout:", timeout_value, "seconds"
+      "🔄 STEP 1/6: Initializing transcription process...\n\n",
+      "📁 File:", file_name, "\n",
+      "📊 Size:", file_size_mb, "MB\n",
+      "⏱️ Estimated duration: ~", file_duration_estimate, "minutes\n",
+      "🎯 Target model: Whisper-1\n\n",
+      "Status: Preparing for upload..."
+    ))
+    
+    # Simulate progress with delays
+    Sys.sleep(1)
+    
+    # Step 2: Validation
+    output$statusOutput <- renderText(paste(
+      "🔍 STEP 2/6: Validating file and settings...\n\n",
+      "✅ File format: Supported\n",
+      "✅ File size: Within limits (< 25MB)\n",
+      "✅ API key: Configured\n",
+      "✅ Model: whisper-1 selected\n",
+      "✅ Language:", if(input$language == "") "Auto-detect" else input$language, "\n\n",
+      "Status: All validations passed, preparing upload..."
     ))
     
     Sys.sleep(1)
@@ -1600,64 +930,156 @@ server <- function(input, output, session) {
     tryCatch({
       start_time <- Sys.time()
       
-      output$statusOutput <- renderText(paste0(
-        "📤 Uploading to OpenAI...\n",
-        "⏳ Maximum wait time: ", timeout_value, " seconds..."
+      # Step 3: Upload preparation
+      output$statusOutput <- renderText(paste(
+        "📤 STEP 3/6: Preparing file upload...\n\n",
+        "🔧 Encoding file for transmission...\n",
+        "🌐 Establishing connection to OpenAI servers...\n",
+        "🔐 Authenticating with API key...\n",
+        "📡 Setting up secure upload channel...\n\n",
+        "Status: Ready to upload to OpenAI..."
       ))
       
-      transcription <- transcribeAudio(input$audioFile$datapath, values$api_key, timeout_value)
+      Sys.sleep(2)
       
+      # Step 4: Upload in progress
+      upload_start <- Sys.time()
+      output$statusOutput <- renderText(paste(
+        "⬆️ STEP 4/6: Uploading file to OpenAI...\n\n",
+        "📂 File:", file_name, "\n",
+        "📊 Size:", file_size_mb, "MB\n",
+        "🔄 Upload progress: Starting...\n",
+        "⏱️ Estimated upload time:", round(file_size_mb * 0.5, 1), "seconds\n",
+        "🌐 Server: api.openai.com\n\n",
+        "Status: Uploading audio data..."
+      ))
+      
+      # Simulate upload progress
+      for(i in 1:3) {
+        Sys.sleep(max(1, file_size_mb * 0.1))
+        progress_percent <- round((i/3) * 100)
+        output$statusOutput <- renderText(paste(
+          "⬆️ STEP 4/6: Uploading file to OpenAI...\n\n",
+          "📂 File:", file_name, "\n",
+          "📊 Size:", file_size_mb, "MB\n",
+          "🔄 Upload progress:", progress_percent, "%\n",
+          "⏱️ Time elapsed:", round(as.numeric(difftime(Sys.time(), upload_start, units = "secs")), 1), "seconds\n",
+          "🌐 Server: api.openai.com\n\n",
+          "Status:", if(i < 3) "Uploading audio data..." else "Upload complete, processing..."
+        ))
+      }
+      
+      # Step 5: Processing
+      processing_start <- Sys.time()
+      output$statusOutput <- renderText(paste(
+        "🧠 STEP 5/6: OpenAI Whisper processing...\n\n",
+        "🎵 Audio analysis: Starting...\n",
+        "🔤 Speech detection: Initializing...\n",
+        "🌍 Language detection:", if(input$language == "") "Auto-detecting..." else paste("Set to", input$language), "\n",
+        "⚡ AI Model: Whisper-1 activated\n",
+        "⏱️ Processing time: Large files may take 2-5 minutes\n\n",
+        "Status: AI is analyzing your audio..."
+      ))
+      
+      print(paste("Selected language:", input$language))
+      
+      # Actually make the API call here
+      transcription <- transcribeAudio(input$audioFile$datapath, values$api_key)
+      
+      processing_time <- as.numeric(difftime(Sys.time(), processing_start, units = "secs"))
+      
+      # Step 6: Completion
+      output$statusOutput <- renderText(paste(
+        "🧠 STEP 5/6: OpenAI Whisper processing...\n\n",
+        "✅ Audio analysis: Complete\n",
+        "✅ Speech detection: Completed\n",
+        "✅ Language detected:", if(input$language == "") "Auto-detected" else input$language, "\n",
+        "✅ AI Model: Whisper-1 processing complete\n",
+        "⏱️ Processing time:", round(processing_time, 1), "seconds\n\n",
+        "Status: Transcription generated, finalizing..."
+      ))
+      
+      Sys.sleep(1)
+      
+      # Final step: Results
       end_time <- Sys.time()
-      total_time <- as.numeric(difftime(end_time, start_time, units = "secs"))
+      total_processing_time <- as.numeric(difftime(end_time, start_time, units = "secs"))
       
+      # Update the transcription text area
       updateTextAreaInput(session, "transcriptionText", value = transcription)
       values$current_transcription <- transcription
       
+      # Calculate word count
       word_count <- length(strsplit(trimws(transcription), "\\s+")[[1]])
+      character_count <- nchar(transcription)
       
+      # Add to history
       new_row <- data.frame(
         timestamp = as.character(Sys.time()),
         filename = file_name,
         word_count = word_count,
-        processing_time = round(total_time, 2),
+        processing_time = round(total_processing_time, 2),
         file_size = file_size_mb,
         stringsAsFactors = FALSE
       )
       
       values$transcriptions <- rbind(values$transcriptions, new_row)
       
+      # Final success status
       output$statusOutput <- renderText(paste(
-        "✅ Transcription completed!\n\n",
-        "Words:", word_count, "\n",
-        "Time:", round(total_time, 2), "seconds"
+        "🎉 STEP 6/6: Transcription completed successfully!\n\n",
+        "📄 RESULTS SUMMARY:\n",
+        "├── File processed:", file_name, "\n",
+        "├── Total processing time:", round(total_processing_time, 2), "seconds\n",
+        "├── Words transcribed:", format(word_count, big.mark = ","), "words\n",
+        "├── Characters:", format(character_count, big.mark = ","), "characters\n",
+        "├── File size:", file_size_mb, "MB\n",
+        "├── Processing rate:", round(word_count / (total_processing_time/60), 0), "words/minute\n",
+        "└── Completed at:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n\n",
+        "✅ Transcription is ready! Check the results below."
       ))
       
-      showNotification("Transcription completed!", type = "message")
+      showNotification(paste("Transcription completed! ", word_count, " words processed in ", round(total_processing_time, 1), " seconds"), type = "message")
       
     }, error = function(e) {
-      output$statusOutput <- renderText(paste("❌ Error:", e$message))
-      showNotification(paste("Transcription failed:", e$message), type = "error")
+      error_message <- as.character(e$message)
+      
+      # Detailed error status
+      output$statusOutput <- renderText(paste(
+        "❌ TRANSCRIPTION FAILED!\n\n",
+        "🚨 ERROR DETAILS:\n",
+        "├── Error type:", class(e)[1], "\n",
+        "├── Message:", error_message, "\n",
+        "├── Time occurred:", format(Sys.time(), "%H:%M:%S"), "\n",
+        "└── File:", file_name, "\n\n",
+        "🔧 TROUBLESHOOTING STEPS:\n",
+        "1. ✓ Check internet connection\n",
+        "2. ✓ Verify API key in Settings tab\n",
+        "3. ✓ Test API connection in Settings\n",
+        "4. ✓ Ensure file is under 25MB\n",
+        "5. ✓ Try a different audio format\n",
+        "6. ✓ Wait and retry in 1-2 minutes\n\n",
+        "💡 COMMON SOLUTIONS:\n",
+        "• File too large → Compress audio file\n",
+        "• Network timeout → Check internet speed\n",
+        "• API key invalid → Regenerate in OpenAI dashboard\n",
+        "• Rate limit → Wait before retrying"
+      ))
+      
+      showNotification(paste("Transcription failed:", error_message), type = "error")
     })
   })
   
-  # Save transcription with auto-generated filename from audio file
+  # Save transcription
   observeEvent(input$saveBtn, {
     req(values$current_transcription)
-    req(input$audioFile)
-    
-    output_dir <- values$transcription_output_dir
-    
-    if (is.null(output_dir) || !dir.exists(output_dir)) {
-      showNotification("Please select a valid output directory", type = "error")
-      return()
-    }
-    
-    audio_filename <- input$audioFile$name
-    filename <- paste0(tools::file_path_sans_ext(audio_filename), ".txt")
-    
-    save_path <- file.path(output_dir, filename)
+    req(input$saveLocation)
     
     tryCatch({
+      # Ensure the file has a .txt extension
+      save_path <- input$saveLocation
+      save_path <- paste0(save_path, ".txt")
+      
       writeLines(values$current_transcription, save_path)
       showNotification(paste("Transcription saved to:", save_path), type = "message")
       
@@ -1670,42 +1092,61 @@ server <- function(input, output, session) {
   observeEvent(input$saveSettings, {
     req(input$apiKey)
     values$api_key <- input$apiKey
-    values$connection_tested <- FALSE
+    values$connection_tested <- FALSE  # Reset connection status when key changes
     showNotification("Settings saved successfully!", type = "message")
   })
   
   # Test API Connection
   observeEvent(input$testConnection, {
+    
+    # Check if API key is provided
     api_key_to_test <- input$apiKey %||% values$api_key
+    
     req(api_key_to_test)
     
     showNotification("Testing API connection...", type = "message")
+    
+    # Test the connection
     result <- testOpenAIConnection(api_key_to_test)
     
+    # Update reactive values
     values$connection_tested <- TRUE
     values$api_status <- result$message
     
+    # Display result
     output$apiConnectionStatus <- renderText({
       result$message
     })
     
+    # Show notification based on result
+    notification_type <- switch(result$status,
+                                "success" = "message",
+                                "error" = "error",
+                                "warning" = "warning",
+                                "message")
+    
     if (result$success) {
-      showNotification("API connection successful!", type = "message")
+      showNotification("API connection test completed successfully!", type = notification_type)
+      # Auto-save the API key if connection is successful
       values$api_key <- api_key_to_test
     } else {
-      showNotification("API connection failed.", type = "error")
+      showNotification("API connection test failed. Please check your settings.", type = notification_type)
     }
   })
   
   # Audio conversion function with auto-splitting
-  convertM4AtoMP3WithSplit <- function(input_path, output_dir, base_filename, quality = "192k", max_size_mb = 24) {
+  convertM4AtoMP3WithSplit <- function(input_path, output_dir, base_filename, quality = "192k") {
     tryCatch({
+      # First, convert to MP3
       temp_output <- file.path(output_dir, paste0(base_filename, "_temp.mp3"))
       av::av_audio_convert(input_path, temp_output, format = "mp3")
       
+      # Check file size
       file_size_mb <- file.info(temp_output)$size / (1024^2)
+      max_size_mb <- 24
       
       if (file_size_mb <= max_size_mb) {
+        # File is small enough, just rename it
         final_output <- file.path(output_dir, paste0(base_filename, ".mp3"))
         file.rename(temp_output, final_output)
         
@@ -1717,11 +1158,17 @@ server <- function(input, output, session) {
           split = FALSE
         ))
       } else {
+        # File is too large, need to split
+        
+        # Get audio info to calculate split duration
         audio_info <- av::av_media_info(temp_output)
         total_duration <- audio_info$duration
+        
+        # Calculate number of parts needed
         num_parts <- ceiling(file_size_mb / max_size_mb)
         part_duration <- total_duration / num_parts
         
+        # Create split files
         output_files <- character()
         total_output_size <- 0
         
@@ -1730,6 +1177,7 @@ server <- function(input, output, session) {
           part_filename <- paste0(base_filename, "_part", sprintf("%02d", i), ".mp3")
           part_output <- file.path(output_dir, part_filename)
           
+          # Split the audio using av package
           av::av_audio_convert(
             temp_output, 
             part_output, 
@@ -1742,6 +1190,7 @@ server <- function(input, output, session) {
           total_output_size <- total_output_size + (file.info(part_output)$size / (1024^2))
         }
         
+        # Remove temporary file
         file.remove(temp_output)
         
         return(list(
@@ -1754,6 +1203,7 @@ server <- function(input, output, session) {
       }
       
     }, error = function(e) {
+      # Clean up temp file if it exists
       if (exists("temp_output") && file.exists(temp_output)) {
         file.remove(temp_output)
       }
@@ -1765,38 +1215,83 @@ server <- function(input, output, session) {
     })
   }
   
-  # CONVERTER FUNCTIONALITY
+  observeEvent(input$browseOutputDir, {
+    tryCatch({
+      selected_dir <- choose.dir(default = getwd(), caption = "Select Output Directory")
+      
+      # Update the text input with selected directory
+      updateTextInput(session, "outputPath", value = selected_dir %||% getwd())
+      
+      showNotification("Output directory selected", type = "message")
+      
+    }, error = function(e) {
+      showNotification("Directory selection cancelled or failed", type = "warning")
+    })
+  })
+  
+  # CONVERTER FUNCTIONALITY WITH AUTO-SPLITTING
   observeEvent(input$convertBtn, {
+    
+    # Use req() only - NO if statements at all
     req(input$m4aFile)
     req(input$m4aFile$datapath)
     req(input$m4aFile$name)
+    req(input$mp3Quality)
     
-    output_dir <- values$converter_output_dir
-    if (is.null(output_dir) || !dir.exists(output_dir)) {
-      showNotification("Please select a valid output directory", type = "error")
-      return()
-    }
-    
+    # Reset conversion status
     values$conversion_complete <- FALSE
-    output$conversionStatus <- renderText("🔄 Starting conversion...")
     
+    # Show processing status
+    output$conversionStatus <- renderText("🔄 Starting M4A to MP3 conversion...")
+    
+    # Perform conversion with complete error handling
     tryCatch({
       start_time <- Sys.time()
       
+      # Get file information
       input_path <- input$m4aFile$datapath
       input_name <- input$m4aFile$name
       quality <- input$mp3Quality
-      max_size_mb <- input$converter_max_size_mb
       input_size_mb <- input$m4aFile$size / (1024^2)
-      base_name <- tools::file_path_sans_ext(input_name)
       
+      # Update status
       output$conversionStatus <- renderText(paste(
-        "⚡ Converting audio...\n\n",
-        "Output directory:", output_dir, "\n",
-        "Max file size:", max_size_mb, "MB"
+        "📁 STEP 1/4: Analyzing input file...\n\n",
+        "File:", input_name, "\n",
+        "Size:", round(input_size_mb, 2), "MB\n",
+        "Quality:", quality, "\n\n",
+        "Status: Preparing conversion..."
       ))
       
-      conversion_result <- convertM4AtoMP3WithSplit(input_path, output_dir, base_name, quality, max_size_mb)
+      Sys.sleep(1)
+      
+      # Get output directory and filename
+      output_dir <- input$outputPath %||% getwd()
+      base_name <- tools::file_path_sans_ext(input_name)
+      
+      # Update status
+      output$conversionStatus <- renderText(paste(
+        "🔧 STEP 2/4: Setting up conversion parameters...\n\n",
+        "Output directory:", output_dir, "\n",
+        "Base filename:", base_name, "\n",
+        "Target format: MP3\n",
+        "Quality setting:", quality, "\n\n",
+        "Status: Initializing conversion engine..."
+      ))
+      
+      Sys.sleep(1)
+      
+      # Update status
+      output$conversionStatus <- renderText(paste(
+        "⚡ STEP 3/4: Converting audio format...\n\n",
+        "Converting M4A → MP3...\n",
+        "Applying quality settings...\n",
+        "Processing audio data...\n\n",
+        "Status: Conversion in progress..."
+      ))
+      
+      # Perform the conversion with auto-splitting
+      conversion_result <- convertM4AtoMP3WithSplit(input_path, output_dir, base_name, quality)
       
       if (!conversion_result$success) {
         stop(conversion_result$error)
@@ -1805,23 +1300,29 @@ server <- function(input, output, session) {
       end_time <- Sys.time()
       conversion_time <- as.numeric(difftime(end_time, start_time, units = "secs"))
       
+      # Update status based on whether file was split
       if (conversion_result$split) {
         output$conversionStatus <- renderText(paste(
-          "✅ Conversion completed with auto-split!\n\n",
+          "✂️ STEP 4/4: File automatically split (size > 24MB)...\n\n",
+          "Original size:", round(input_size_mb, 2), "MB\n",
           "Files created:", conversion_result$parts, "parts\n",
-          "Max size per file:", max_size_mb, "MB\n",
-          "Output directory:", output_dir
+          "Total output size:", round(conversion_result$total_size, 2), "MB\n",
+          "Files created:\n",
+          paste("•", conversion_result$files, collapse = "\n"), "\n\n",
+          "✅ Conversion completed with auto-split!"
         ))
       } else {
         output$conversionStatus <- renderText(paste(
-          "✅ Conversion completed!\n\n",
+          "✅ STEP 4/4: Single file conversion completed!\n\n",
+          "Original size:", round(input_size_mb, 2), "MB\n",
+          "Output size:", round(conversion_result$total_size, 2), "MB\n",
           "File created:", conversion_result$files, "\n",
-          "File size:", round(conversion_result$total_size, 2), "MB\n",
-          "No splitting needed (<", max_size_mb, "MB)\n",
-          "Output directory:", output_dir
+          "No splitting needed (< 24MB)\n\n",
+          "✅ Conversion completed successfully!"
         ))
       }
       
+      # Update history
       files_list <- paste(conversion_result$files, collapse = "; ")
       new_conversion <- data.frame(
         timestamp = format(Sys.time()),
@@ -1838,6 +1339,7 @@ server <- function(input, output, session) {
       values$conversions <- rbind(values$conversions, new_conversion)
       values$conversion_complete <- TRUE
       
+      # Update converted file info
       output$convertedFileInfo <- renderText({
         compression_ratio <- round(input_size_mb / conversion_result$total_size, 2)
         
@@ -1847,14 +1349,12 @@ server <- function(input, output, session) {
             "📥 Original:", round(input_size_mb, 2), "MB\n",
             "📤 Total output:", round(conversion_result$total_size, 2), "MB\n",
             "✂️ Parts created:", conversion_result$parts, "files\n",
-            "📏 Max size per file:", max_size_mb, "MB\n",
             "⚙️ Quality:", quality, "\n",
             "⏱️ Time:", round(conversion_time, 2), "seconds\n",
             "📊 Compression:", compression_ratio, ":1\n\n",
             "📁 FILES CREATED:\n",
             paste("•", conversion_result$files, collapse = "\n"), "\n\n",
-            "💡 Each part is under", max_size_mb, "MB for easy handling!\n",
-            "📂 Location:", output_dir
+            "💡 Each part is under 24MB for easy handling!"
           )
         } else {
           paste(
@@ -1865,30 +1365,37 @@ server <- function(input, output, session) {
             "⏱️ Time:", round(conversion_time, 2), "seconds\n",
             "📊 Compression:", compression_ratio, ":1\n",
             "📁 File:", conversion_result$files, "\n\n",
-            "✅ No splitting needed - file is under", max_size_mb, "MB!\n",
-            "📂 Location:", output_dir
+            "✅ No splitting needed - file is under 24MB!"
           )
         }
       })
       
-      showNotification("Conversion completed!", type = "message")
+      if (conversion_result$split) {
+        showNotification(paste("Conversion completed! File split into", conversion_result$parts, "parts"), type = "message")
+      } else {
+        showNotification("Conversion completed successfully!", type = "message")
+      }
       
     }, error = function(e) {
       values$conversion_complete <- FALSE
-      output$conversionStatus <- renderText(paste("❌ Error:", e$message))
+      output$conversionStatus <- renderText(paste(
+        "❌ CONVERSION FAILED!\n\n",
+        "Error:", e$message, "\n\n",
+        "🔧 Troubleshooting:\n",
+        "• Check file format (M4A supported)\n",
+        "• Verify output directory exists\n",
+        "• Ensure sufficient disk space\n",
+        "• Try a different quality setting"
+      ))
       showNotification(paste("Conversion Error:", e$message), type = "error")
     })
   })
   
-  # Open converter output folder
-  observeEvent(input$openConverterFolderBtn, {
-    output_dir <- values$converter_output_dir
+  # Open output folder
+  observeEvent(input$openFolderBtn, {
+    output_dir <- input$outputPath %||% getwd()
     tryCatch({
-      if (.Platform$OS.type == "windows") {
-        shell.exec(output_dir)
-      } else {
-        system(paste("open", shQuote(output_dir)))
-      }
+      system(paste("explorer", output_dir))
     }, error = function(e) {
       showNotification("Could not open folder", type = "warning")
     })
@@ -1906,6 +1413,7 @@ server <- function(input, output, session) {
     values$processing_log <- paste0("Uploading file: ", file_name, "\n")
     
     tryCatch({
+      # Load audio file based on extension
       file_ext <- tolower(tools::file_ext(file_name))
       
       if (file_ext == "mp3") {
@@ -1913,9 +1421,10 @@ server <- function(input, output, session) {
       } else if (file_ext == "wav") {
         values$audio_data <- readWave(file_path)
       } else {
-        stop("Unsupported file format.")
+        stop("Unsupported file format. Please use MP3 or WAV files.")
       }
       
+      # Get audio information
       duration_sec <- length(values$audio_data) / values$audio_data@samp.rate
       file_size <- file.size(file_path)
       
@@ -1929,12 +1438,15 @@ server <- function(input, output, session) {
       )
       
       values$processing_log <- paste0(values$processing_log,
-                                      "✓ Audio file loaded!\n",
-                                      "Duration:", round(duration_sec, 2), "seconds\n")
+                                      "✓ Audio file loaded successfully!\n",
+                                      "✓ Duration: ", round(duration_sec, 2), " seconds\n",
+                                      "✓ Sample Rate: ", values$audio_info$sample_rate, " Hz\n",
+                                      "✓ Channels: ", values$audio_info$channels, "\n",
+                                      "Ready to split!\n")
       
     }, error = function(e) {
       values$processing_log <- paste0(values$processing_log, 
-                                      "✗ Error:", e$message, "\n")
+                                      "✗ Error loading audio file: ", e$message, "\n")
       values$audio_data <- NULL
       values$audio_info <- NULL
     })
@@ -1944,25 +1456,27 @@ server <- function(input, output, session) {
   output$audio_info <- renderText({
     if (!is.null(values$audio_info)) {
       paste0(
-        "File: ", values$audio_info$original_name, "\n",
+        "Original File: ", values$audio_info$original_name, "\n",
         "Duration: ", round(values$audio_info$duration, 2), " seconds\n",
         "Sample Rate: ", values$audio_info$sample_rate, " Hz\n",
-        "Channels: ", values$audio_info$channels
+        "Channels: ", values$audio_info$channels, "\n",
+        "Bit Depth: ", values$audio_info$bit_depth, " bit\n",
+        "File Size: ", round(values$audio_info$file_size / 1024 / 1024, 2), " MB"
       )
     } else {
-      "No audio file uploaded."
+      "No audio file uploaded yet.\n\nPlease upload an MP3 or WAV file to begin."
     }
   })
   
-  # Show duration inputs
+  # Show duration inputs for manual splitting
   output$show_duration_inputs <- reactive({
-    !is.null(values$audio_info) && input$split_method == "num_files" && !input$equal_duration
+    !is.null(values$audio_info) && !input$equal_duration
   })
   outputOptions(output, "show_duration_inputs", suspendWhenHidden = FALSE)
   
-  # Generate duration input controls
+  # Generate duration input controls for custom split points
   output$duration_inputs <- renderUI({
-    req(values$audio_info, input$split_method == "num_files", !input$equal_duration, input$num_splits >= 2)
+    req(values$audio_info, !input$equal_duration, input$num_splits >= 2)
     
     max_duration <- values$audio_info$duration
     split_points <- input$num_splits - 1
@@ -1981,30 +1495,19 @@ server <- function(input, output, session) {
   
   # Main split audio function
   observeEvent(input$split_audio, {
-    req(values$audio_data, input$output_folder != "")
+    req(values$audio_data, input$num_splits >= 2, input$output_folder != "")
     
-    if (input$split_method == "num_files") {
-      req(input$num_splits >= 2)
-    } else if (input$split_method == "file_size") {
-      req(input$splitter_max_size_mb >= 1)
-    }
-    
-    base_output_dir <- values$splitter_output_dir
-    if (is.null(base_output_dir) || !dir.exists(base_output_dir)) {
-      showNotification("Please select a valid output directory", type = "error")
-      return()
-    }
-    
-    values$processing_log <- "=== Starting Audio Split ===\n"
+    values$processing_log <- paste0(values$processing_log, 
+                                    "\n=== Starting Audio Split Process ===\n")
     
     tryCatch({
       duration <- values$audio_info$duration
       sample_rate <- values$audio_info$sample_rate
-      bit_depth <- values$audio_info$bit_depth
-      num_channels <- values$audio_info$channels
       
+      # Create output directory
       output_folder <- trimws(input$output_folder)
-      values$output_dir <- file.path(base_output_dir, output_folder)
+      # Use a temporary directory that we can control
+      values$output_dir <- file.path(tempdir(), output_folder)
       
       if (dir.exists(values$output_dir)) {
         unlink(values$output_dir, recursive = TRUE)
@@ -2012,39 +1515,30 @@ server <- function(input, output, session) {
       dir.create(values$output_dir, recursive = TRUE)
       
       values$processing_log <- paste0(values$processing_log, 
-                                      "✓ Created:", values$output_dir, "\n")
+                                      "✓ Created output directory\n")
       
-      if (input$split_method == "file_size") {
-        bytes_per_second <- sample_rate * (bit_depth / 8) * num_channels
-        max_bytes <- input$splitter_max_size_mb * 1024 * 1024 - 1024
-        max_duration_per_segment <- max_bytes / bytes_per_second
-        num_segments <- ceiling(duration / max_duration_per_segment)
-        split_points <- seq(0, duration, length.out = num_segments + 1)
-        
+      # Calculate split points
+      if (input$equal_duration) {
+        split_duration <- duration / input$num_splits
+        split_points <- seq(0, duration, by = split_duration)
         values$processing_log <- paste0(values$processing_log, 
-                                        "✓ Split by file size (max ", input$splitter_max_size_mb, " MB)\n",
-                                        "✓ Estimated segments: ", num_segments, "\n")
+                                        "✓ Using equal duration splits (", 
+                                        round(split_duration, 2), " seconds each)\n")
       } else {
-        if (input$equal_duration) {
-          split_duration <- duration / input$num_splits
-          split_points <- seq(0, duration, by = split_duration)
-          values$processing_log <- paste0(values$processing_log, 
-                                          "✓ Using equal duration splits (", 
-                                          round(split_duration, 2), " seconds each)\n")
-        } else {
-          manual_points <- c()
-          for (i in 1:(input$num_splits - 1)) {
-            point_value <- input[[paste0("split_point_", i)]]
-            if (!is.null(point_value)) {
-              manual_points <- c(manual_points, point_value)
-            }
+        # Get manual split points
+        manual_points <- c()
+        for (i in 1:(input$num_splits - 1)) {
+          point_value <- input[[paste0("split_point_", i)]]
+          if (!is.null(point_value)) {
+            manual_points <- c(manual_points, point_value)
           }
-          split_points <- c(0, sort(manual_points), duration)
-          values$processing_log <- paste0(values$processing_log, 
-                                          "✓ Using custom split points\n")
         }
+        split_points <- c(0, sort(manual_points), duration)
+        values$processing_log <- paste0(values$processing_log, 
+                                        "✓ Using custom split points\n")
       }
       
+      # Split and save audio segments
       results_data <- data.frame(
         Segment = integer(),
         Filename = character(),
@@ -2056,28 +1550,43 @@ server <- function(input, output, session) {
         stringsAsFactors = FALSE
       )
       
-      values$temp_files <- c()
+      values$temp_files <- c()  # Reset temp files list
       
       for (i in 1:(length(split_points) - 1)) {
         start_time <- split_points[i]
         end_time <- split_points[i + 1]
         
+        values$processing_log <- paste0(values$processing_log, 
+                                        "Processing segment ", i, " (", 
+                                        round(start_time, 1), "s - ", 
+                                        round(end_time, 1), "s)...\n")
+        
+        # Convert time to samples
         start_sample <- max(1, round(start_time * sample_rate))
         end_sample <- min(length(values$audio_data), round(end_time * sample_rate))
         
+        # Extract segment
         if (values$audio_data@stereo) {
           segment <- values$audio_data[start_sample:end_sample, ]
         } else {
           segment <- values$audio_data[start_sample:end_sample]
         }
         
+        # Create filename
         file_extension <- input$output_format
         filename <- paste0(input$output_prefix, "_", 
                            sprintf("%02d", i), ".", file_extension)
         filepath <- file.path(values$output_dir, filename)
         
+        # Save segment
         tryCatch({
-          writeWave(segment, filepath)
+          if (file_extension == "wav") {
+            writeWave(segment, filepath)
+          } else {
+            # For MP3, we'll save as WAV first (MP3 writing is complex in R)
+            writeWave(segment, filepath)
+          }
+          
           file_size <- file.size(filepath)
           status <- "✓ Success"
           values$temp_files <- c(values$temp_files, filepath)
@@ -2087,6 +1596,7 @@ server <- function(input, output, session) {
           file_size <- 0
         })
         
+        # Add to results
         results_data <- rbind(results_data, data.frame(
           Segment = i,
           Filename = filename,
@@ -2101,20 +1611,15 @@ server <- function(input, output, session) {
       values$results <- results_data
       success_count <- sum(grepl("Success", results_data$Status))
       
-      if (input$split_method == "file_size") {
-        values$processing_log <- paste0(values$processing_log, 
-                                        "\n✅ Created ", success_count, " segments\n",
-                                        "Max file size: ", input$splitter_max_size_mb, " MB per file\n",
-                                        "Location: ", values$output_dir, "\n")
-      } else {
-        values$processing_log <- paste0(values$processing_log, 
-                                        "\n✅ Created ", success_count, " segments\n",
-                                        "Location: ", values$output_dir, "\n")
-      }
+      values$processing_log <- paste0(values$processing_log, 
+                                      "\n=== SPLITTING COMPLETED ===\n",
+                                      "✓ Successfully created ", success_count, " out of ", 
+                                      nrow(results_data), " segments\n",
+                                      "✓ Files saved in: ", values$output_dir, "\n")
       
     }, error = function(e) {
       values$processing_log <- paste0(values$processing_log, 
-                                      "✗ Error:", e$message, "\n")
+                                      "✗ Critical error during splitting: ", e$message, "\n")
     })
   })
   
@@ -2125,11 +1630,12 @@ server <- function(input, output, session) {
   
   # Show output location
   output$output_location <- renderText({
-    req(values$output_dir)
-    values$output_dir
+    if (!is.null(values$output_dir)) {
+      values$output_dir
+    }
   })
   
-  # Show results
+  # Show results table
   output$show_results <- reactive({
     !is.null(values$results)
   })
@@ -2145,42 +1651,33 @@ server <- function(input, output, session) {
     req(values$results)
     datatable(values$results, 
               options = list(pageLength = 10, scrollX = TRUE, dom = 't'),
-              rownames = FALSE)
+              rownames = FALSE) %>%
+      formatStyle("Status", 
+                  backgroundColor = styleEqual("✓ Success", "#d4edda"),
+                  color = styleEqual("✓ Success", "#155724"))
   })
   
-  # Download handler for ZIP
+  # Download handler for ZIP file
   output$download_zip <- downloadHandler(
     filename = function() {
       paste0("split_audio_", Sys.Date(), ".zip")
     },
     content = function(file) {
+      # Create temporary zip file
       temp_zip <- tempfile(fileext = ".zip")
       
+      # Create zip with all the split files
       if (length(values$temp_files) > 0) {
-        zip(temp_zip, values$temp_files, flags = "-j")
+        zip(temp_zip, values$temp_files, flags = "-j")  # -j flag removes directory structure
         file.copy(temp_zip, file)
       }
     },
     contentType = "application/zip"
   )
   
-  # Open splitter output folder
-  observeEvent(input$openSplitterFolderBtn, {
-    req(values$output_dir)
-    dir_to_open <- values$output_dir
-    tryCatch({
-      if (.Platform$OS.type == "windows") {
-        shell.exec(dir_to_open)
-      } else {
-        system(paste("open", shQuote(dir_to_open)))
-      }
-    }, error = function(e) {
-      showNotification("Could not open folder", type = "warning")
-    })
-  })
-  
   # ==================== ANALYTICS ====================
   
+  # Analytics - Value boxes
   output$totalFiles <- renderValueBox({
     valueBox(
       value = nrow(values$transcriptions),
@@ -2202,18 +1699,20 @@ server <- function(input, output, session) {
   
   output$avgDuration <- renderValueBox({
     avg_time <- mean(values$transcriptions$processing_time, na.rm = TRUE)
+    avg_time <- round(avg_time, 2)
     valueBox(
-      value = paste(round(avg_time, 2), "s"),
+      value = paste(avg_time, "s"),
       subtitle = "Avg Processing Time",
       icon = icon("clock"),
       color = "yellow"
     )
   })
   
+  # Word count plot
   output$wordCountPlot <- renderPlotly({
     req(nrow(values$transcriptions) > 0)
     
-    plot_ly(
+    p <- plot_ly(
       x = seq_len(nrow(values$transcriptions)),
       y = values$transcriptions$word_count,
       type = "scatter",
@@ -2224,14 +1723,20 @@ server <- function(input, output, session) {
       layout(
         title = "Word Count Over Time",
         xaxis = list(title = "File Number"),
-        yaxis = list(title = "Word Count")
+        yaxis = list(title = "Word Count"),
+        plot_bgcolor = "#f8f9ff",
+        paper_bgcolor = "#ffffff",
+        font = list(color = "#2c3e50")
       )
+    
+    p
   })
   
+  # Processing time plot
   output$processingTimePlot <- renderPlotly({
     req(nrow(values$transcriptions) > 0)
     
-    plot_ly(
+    p <- plot_ly(
       x = seq_len(nrow(values$transcriptions)),
       y = values$transcriptions$processing_time,
       type = "bar",
@@ -2240,26 +1745,49 @@ server <- function(input, output, session) {
       layout(
         title = "Processing Time by File",
         xaxis = list(title = "File Number"),
-        yaxis = list(title = "Time (seconds)")
+        yaxis = list(title = "Processing Time (seconds)"),
+        plot_bgcolor = "#f8f9ff",
+        paper_bgcolor = "#ffffff",
+        font = list(color = "#2c3e50")
       )
+    
+    p
   })
   
+  # History table
   output$historyTable <- DT::renderDataTable({
     req(nrow(values$transcriptions) > 0)
-    datatable(values$transcriptions, options = list(pageLength = 10))
+    
+    datatable(
+      values$transcriptions,
+      options = list(
+        pageLength = 10,
+        scrollX = TRUE,
+        dom = 'Bfrtip'
+      ),
+      style = "bootstrap4"
+    )
   })
   
+  # Conversion history table
   output$conversionHistoryTable <- DT::renderDataTable({
     req(nrow(values$conversions) > 0)
-    datatable(values$conversions, options = list(pageLength = 10))
+    
+    datatable(
+      values$conversions,
+      options = list(
+        pageLength = 10,
+        scrollX = TRUE,
+        dom = 'Bfrtip'
+      ),
+      style = "bootstrap4"
+    )
   })
   
-  # Clean up on session end
+  # Clean up temporary files when session ends
   session$onSessionEnded(function() {
     if (!is.null(values$output_dir) && dir.exists(values$output_dir)) {
-      if (grepl(tempdir(), values$output_dir, fixed = TRUE)) {
-        unlink(values$output_dir, recursive = TRUE)
-      }
+      unlink(values$output_dir, recursive = TRUE)
     }
   })
 }

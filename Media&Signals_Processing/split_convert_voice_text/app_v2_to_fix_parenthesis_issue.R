@@ -834,6 +834,8 @@ ui <- dashboardPage(
                                   class = "btn-success btn-lg",
                                   icon = icon("brain"),
                                   style = "width: 100%;")
+                  )
+                )
               )
             )
           )
@@ -1205,7 +1207,7 @@ server <- function(input, output, session) {
     })
   }
   
-  # Transcription function with proper timeout configuration
+  # FIXED: Transcription function with proper timeout configuration
   transcribeAudio <- function(file_path, api_key, timeout_seconds) {
     req(api_key, file_path)
     
@@ -1230,12 +1232,13 @@ server <- function(input, output, session) {
       body$language <- language
     }
     
+    # CORRECTED: Proper timeout implementation using httr's timeout function
     response <- POST(
       url,
       add_headers(Authorization = paste("Bearer", api_key)),
       body = body,
       encode = "multipart",
-      httr::timeout(timeout_seconds)
+      httr::timeout(timeout_seconds)  # FIXED: Using httr::timeout() correctly
     )
     
     status <- status_code(response)
@@ -1261,7 +1264,7 @@ server <- function(input, output, session) {
     return(transcription_text)
   }
   
-  # ChatGPT text analysis function with proper timeout
+  # FIXED: ChatGPT text analysis function with proper timeout
   analyzeBulkText <- function(combined_text, api_key, max_words, custom_prompt, timeout_seconds) {
     req(api_key, combined_text)
     
@@ -1293,6 +1296,7 @@ server <- function(input, output, session) {
       temperature = 0.7
     )
     
+    # CORRECTED: Proper timeout implementation using httr's timeout function
     response <- POST(
       url,
       add_headers(
@@ -1301,7 +1305,7 @@ server <- function(input, output, session) {
       ),
       body = toJSON(body, auto_unbox = TRUE),
       encode = "raw",
-      httr::timeout(timeout_seconds)
+      httr::timeout(timeout_seconds)  # FIXED: Using httr::timeout() correctly
     )
     
     status <- status_code(response)
@@ -1340,6 +1344,7 @@ server <- function(input, output, session) {
     }
     
     tryCatch({
+      # Find all .txt files in the folder
       txt_files <- list.files(folder_path, pattern = "\\.txt$", full.names = TRUE, ignore.case = TRUE)
       
       if (length(txt_files) == 0) {
@@ -1349,6 +1354,7 @@ server <- function(input, output, session) {
         return()
       }
       
+      # Get file information
       file_info <- data.frame(
         filename = basename(txt_files),
         path = txt_files,
@@ -1395,7 +1401,7 @@ server <- function(input, output, session) {
     )
   })
   
-  # Analyze button event
+  # Analyze button event - uses BULK ANALYSIS timeout
   observeEvent(input$analyzeBtn, {
     req(values$scanned_files)
     
@@ -1405,6 +1411,7 @@ server <- function(input, output, session) {
       return()
     }
     
+    # Use the BULK ANALYSIS timeout value (NOT transcription timeout)
     timeout_value <- input$bulkAnalysisTimeout %||% 180
     
     output$analysisStatus <- renderText(paste0(
@@ -1415,6 +1422,7 @@ server <- function(input, output, session) {
     tryCatch({
       start_time <- Sys.time()
       
+      # Sort files according to user preference
       sorted_files <- values$scanned_files
       
       if (input$sortMethod == "name") {
@@ -1428,6 +1436,7 @@ server <- function(input, output, session) {
         output$analysisStatus <- renderText("📁 Sorting files by modification time...\n")
       }
       
+      # Read and concatenate all text files
       output$analysisStatus <- renderText("📖 Reading text files...\n")
       
       all_text <- character()
@@ -1435,6 +1444,7 @@ server <- function(input, output, session) {
         file_content <- readLines(sorted_files$path[i], warn = FALSE, encoding = "UTF-8")
         file_text <- paste(file_content, collapse = "\n")
         
+        # Add file header
         all_text <- c(all_text, 
                       paste0("\n=== FILE: ", sorted_files$filename[i], " ===\n"),
                       file_text)
@@ -1452,12 +1462,13 @@ server <- function(input, output, session) {
       
       Sys.sleep(1)
       
+      # Send to ChatGPT for analysis with BULK ANALYSIS timeout
       summary <- analyzeBulkText(
         combined_text, 
         values$api_key, 
         input$maxSummaryWords,
         input$analysisPrompt,
-        timeout_value
+        timeout_value  # Using BULK ANALYSIS timeout
       )
       
       end_time <- Sys.time()
@@ -1498,6 +1509,7 @@ server <- function(input, output, session) {
     tryCatch({
       showNotification("Preparing concatenated text...", type = "message")
       
+      # Sort files according to user preference
       sorted_files <- values$scanned_files
       
       if (input$sortMethod == "name") {
@@ -1508,11 +1520,13 @@ server <- function(input, output, session) {
         sorted_files <- sorted_files[order(sorted_files$mtime, decreasing = TRUE), ]
       }
       
+      # Read and concatenate all text files
       all_text <- character()
       for (i in 1:nrow(sorted_files)) {
         file_content <- readLines(sorted_files$path[i], warn = FALSE, encoding = "UTF-8")
         file_text <- paste(file_content, collapse = "\n")
         
+        # Add file header
         all_text <- c(all_text, 
                       paste0("\n=== FILE: ", sorted_files$filename[i], " ===\n"),
                       file_text)
@@ -1521,10 +1535,12 @@ server <- function(input, output, session) {
       combined_text <- paste(all_text, collapse = "\n")
       values$concatenated_text <- combined_text
       
+      # Generate filename
       timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
       filename <- paste0("concatenated_text_", timestamp, ".txt")
       save_path <- file.path(output_dir, filename)
       
+      # Save the concatenated text
       writeLines(combined_text, save_path)
       
       word_count <- length(strsplit(combined_text, "\\s+")[[1]])
@@ -1574,7 +1590,7 @@ server <- function(input, output, session) {
     })
   })
   
-  # Transcribe button event
+  # Transcribe button event - uses TRANSCRIPTION timeout
   observeEvent(input$transcribeBtn, {
     req(input$audioFile)
     
@@ -1605,6 +1621,7 @@ server <- function(input, output, session) {
         "⏳ Maximum wait time: ", timeout_value, " seconds..."
       ))
       
+      # Pass user-specified timeout to transcription function
       transcription <- transcribeAudio(input$audioFile$datapath, values$api_key, timeout_value)
       
       end_time <- Sys.time()
@@ -1640,7 +1657,7 @@ server <- function(input, output, session) {
     })
   })
   
-  # Save transcription with auto-generated filename from audio file
+  # FIXED: Save transcription with auto-generated filename from audio file
   observeEvent(input$saveBtn, {
     req(values$current_transcription)
     req(input$audioFile)
@@ -1652,6 +1669,7 @@ server <- function(input, output, session) {
       return()
     }
     
+    # Use the original audio filename without extension, append .txt
     audio_filename <- input$audioFile$name
     filename <- paste0(tools::file_path_sans_ext(audio_filename), ".txt")
     
