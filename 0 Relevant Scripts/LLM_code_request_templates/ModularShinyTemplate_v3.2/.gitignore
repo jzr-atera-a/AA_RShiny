@@ -1,0 +1,32 @@
+# R
+.Rhistory
+.RData
+.Rproj.user
+*.Rproj
+
+# Shiny
+rsconnect/
+.shiny_history
+
+# Data (optional - uncomment to ignore data files)
+# data/
+# *.csv
+# *.xlsx
+# *.rds
+
+# API Keys (NEVER commit these!)
+.env
+*.key
+credentials.json
+api_keys.txt
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log

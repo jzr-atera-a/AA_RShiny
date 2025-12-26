@@ -1,0 +1,33 @@
+# modules/_module_registry.yml
+# Module Registry - Control Center
+# Change 'enabled' to true/false to enable/disable modules
+
+modules:
+  api_config:
+    enabled: true
+    priority: 1
+    description: "API Configuration & Credentials"
+  
+  dashboard:
+    enabled: true
+    priority: 10
+    description: "Main Dashboard with Overview"
+  
+  data_viewer:
+    enabled: true
+    priority: 20
+    description: "Data Viewing & Filtering"
+
+# Application metadata
+app:
+  name: "Modular Dashboard v3.0"
+  version: "3.0.0"
+  description: "Simplified modular Shiny template"
+  author: "Your Name"
+
+# Global settings
+settings:
+  auto_install: false
+  check_versions: true
+  verbose: true
+  dev_mode: false

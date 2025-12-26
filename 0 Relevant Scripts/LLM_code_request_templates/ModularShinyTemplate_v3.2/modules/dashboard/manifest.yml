@@ -1,0 +1,18 @@
+module:
+  id: "dashboard"
+  name: "Dashboard"
+  description: "Main dashboard with overview and metrics"
+  version: "1.0.0"
+  
+  enabled: true
+  
+  menu:
+    label: "Dashboard"
+    icon: "dashboard"
+    tabname: "dashboard"
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - ggplot2
