@@ -1,0 +1,62 @@
+module:
+  id: "bigquery_auth"
+  name: "BigQuery Authentication"
+  description: "Google Cloud Platform BigQuery authentication and connection management"
+  version: "1.0.0"
+  author: "Business Canvas Manager"
+  
+  enabled: true
+  
+  menu:
+    label: "BigQuery Authentication"
+    icon: "key"
+    tabname: "bigquery_auth"
+    badge:
+      label: null
+      color: null
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - bigrquery
+      - jsonlite
+    
+    package_versions:
+      bigrquery: ">= 1.4.0"
+  
+  outputs:
+    - id: "auth_status"
+      type: "html"
+      description: "Authentication status display"
+    - id: "package_info"
+      type: "text"
+      description: "Package version information"
+  
+  inputs:
+    - id: "json_file"
+      type: "file"
+      description: "Service account JSON file upload"
+    - id: "json_text"
+      type: "textarea"
+      description: "Manual JSON content input"
+    - id: "project_id"
+      type: "text"
+      description: "GCP Project ID"
+    - id: "dataset_id"
+      type: "text"
+      description: "BigQuery Dataset ID"
+    - id: "table_id"
+      type: "text"
+      description: "BigQuery Table ID"
+    - id: "authenticate"
+      type: "button"
+      description: "Authentication trigger button"
+  
+  api:
+    required: []
+    optional: []
+  
+  data:
+    required: []
+    optional: []

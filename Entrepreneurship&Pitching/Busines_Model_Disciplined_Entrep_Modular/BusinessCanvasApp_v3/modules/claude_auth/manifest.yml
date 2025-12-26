@@ -1,0 +1,59 @@
+module:
+  id: "claude_auth"
+  name: "Claude API Connection"
+  description: "Configure and test Claude API connection"
+  version: "1.0.0"
+  author: "Business Canvas Manager"
+  
+  enabled: true
+  
+  menu:
+    label: "Claude API Connection"
+    icon: "robot"
+    tabname: "claude_auth"
+    badge:
+      label: null
+      color: null
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - httr
+      - jsonlite
+    
+    package_versions:
+      httr: ">= 1.4.0"
+  
+  outputs:
+    - id: "connection_status"
+      type: "html"
+      description: "Connection status display"
+    - id: "test_output"
+      type: "text"
+      description: "API test response"
+  
+  inputs:
+    - id: "api_key"
+      type: "password"
+      description: "Claude API key"
+    - id: "model_select"
+      type: "select"
+      description: "Claude model selection"
+    - id: "connect_claude"
+      type: "button"
+      description: "Connect button"
+    - id: "test_prompt"
+      type: "text"
+      description: "Test prompt input"
+    - id: "test_claude"
+      type: "button"
+      description: "Test API button"
+  
+  api:
+    required: []
+    optional: []
+  
+  data:
+    required: []
+    optional: []

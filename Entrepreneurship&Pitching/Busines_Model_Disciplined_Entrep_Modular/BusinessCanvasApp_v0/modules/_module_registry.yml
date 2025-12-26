@@ -1,0 +1,61 @@
+# modules/_module_registry.yml
+# Central Module Registry - THE CONTROL CENTER
+# Change 'enabled: true/false' to enable/disable modules
+
+modules:
+  # Authentication Modules (load first)
+  claude_auth:
+    enabled: true
+    priority: 1
+    description: "Claude API authentication and connection management"
+  
+  bigquery_auth:
+    enabled: true
+    priority: 2
+    description: "BigQuery authentication and project configuration"
+  
+  # Generation Modules
+  generate_bm_canvas:
+    enabled: true
+    priority: 10
+    description: "Generate Business Model Canvas with Claude AI"
+  
+  generate_de_canvas:
+    enabled: true
+    priority: 11
+    description: "Generate Disciplined Entrepreneurship Canvas with Claude AI"
+  
+  generate_de_roadmap:
+    enabled: true
+    priority: 12
+    description: "Generate DE 24-step Roadmap with Claude AI"
+  
+  # Visualization Modules
+  view_bm_canvas:
+    enabled: true
+    priority: 20
+    description: "View and display Business Model Canvas"
+  
+  view_de_canvas:
+    enabled: true
+    priority: 21
+    description: "View and display Disciplined Entrepreneurship Canvas"
+  
+  view_de_roadmap:
+    enabled: true
+    priority: 22
+    description: "View and display DE Roadmap"
+
+# Global settings
+settings:
+  auto_install: false              # Don't auto-install packages
+  check_versions: true
+  verbose: true                    # Show loading messages
+  dev_mode: false
+
+# Application metadata
+app:
+  name: "Business Canvas Manager"
+  version: "2.0.0"
+  description: "Modular Business Model Canvas and Disciplined Entrepreneurship Platform"
+  author: "Business Strategy Team"

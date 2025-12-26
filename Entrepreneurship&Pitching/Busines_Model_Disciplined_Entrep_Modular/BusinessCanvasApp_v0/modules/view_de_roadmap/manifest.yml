@@ -1,0 +1,30 @@
+module:
+  id: "view_de_roadmap"
+  name: "Disciplined Ent. Roadmap"
+  description: "View DE Roadmap"
+  version: "1.0.0"
+  author: "Business Strategy Team"
+  
+  enabled: true
+  
+  menu:
+    label: "Disciplined Ent. Roadmap"
+    icon: "road"
+    tabname: "view_de_roadmap"
+    badge:
+      label: null
+      color: null
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+  
+  outputs: []
+  inputs: []
+  api:
+    required: []
+    optional: []
+  data:
+    required: []
+    optional: []

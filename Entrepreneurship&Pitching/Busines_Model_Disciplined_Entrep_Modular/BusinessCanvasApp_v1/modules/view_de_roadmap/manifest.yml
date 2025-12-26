@@ -1,0 +1,12 @@
+module:
+  id: "view_de_roadmap"
+  name: "Disciplined Ent. Roadmap"
+  description: "View 24-step roadmap from BigQuery"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Disciplined Ent. Roadmap"
+    icon: "road"
+    tabname: "view_de_roadmap"
+  dependencies:
+    packages: [shiny, shinydashboard, bigrquery]

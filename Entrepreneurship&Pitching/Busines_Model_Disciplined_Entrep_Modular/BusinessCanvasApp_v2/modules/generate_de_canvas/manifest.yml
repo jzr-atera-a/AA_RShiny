@@ -1,0 +1,68 @@
+module:
+  id: "generate_de_canvas"
+  name: "Generate DE Canvas"
+  description: "AI-powered Disciplined Entrepreneurship Canvas generation using Claude API"
+  version: "1.0.0"
+  author: "Business Canvas Manager"
+  
+  enabled: true
+  
+  menu:
+    label: "Generate DE Canvas"
+    icon: "file-upload"
+    tabname: "generate_de_canvas"
+    badge:
+      label: null
+      color: null
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - httr
+      - jsonlite
+      - stringr
+      - bigrquery
+    
+    package_versions:
+      httr: ">= 1.4.0"
+  
+  outputs:
+    - id: "de_generate_status"
+      type: "html"
+    - id: "de_claude_output"
+      type: "textarea"
+    - id: "deBulkStatus"
+      type: "html"
+    - id: "deParseInfo"
+      type: "html"
+    - id: "deParsedPreview"
+      type: "text"
+  
+  inputs:
+    - id: "de_business_area"
+      type: "text"
+    - id: "de_project"
+      type: "text"
+    - id: "de_business_focus"
+      type: "text"
+    - id: "de_business_description"
+      type: "textarea"
+    - id: "generate_de_canvas"
+      type: "button"
+    - id: "de_bulk_text"
+      type: "textarea"
+    - id: "parseDECanvas"
+      type: "button"
+    - id: "submitDECanvas"
+      type: "button"
+    - id: "clearDECanvas"
+      type: "button"
+  
+  api:
+    required: ["claude"]
+    optional: ["bigquery"]
+  
+  data:
+    required: []
+    optional: []

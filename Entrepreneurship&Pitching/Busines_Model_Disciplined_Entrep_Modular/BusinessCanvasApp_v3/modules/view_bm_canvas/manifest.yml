@@ -1,0 +1,14 @@
+module:
+  id: "view_bm_canvas"
+  name: "Business Model Canvas"
+  description: "View and display saved Business Model Canvas from BigQuery"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Business Model Canvas"
+    icon: "th"
+    tabname: "view_bm_canvas"
+  dependencies:
+    packages: [shiny, shinydashboard, bigrquery, dplyr]
+  api:
+    required: ["bigquery"]
