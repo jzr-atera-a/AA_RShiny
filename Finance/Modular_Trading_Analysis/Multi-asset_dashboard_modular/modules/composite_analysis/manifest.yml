@@ -1,0 +1,24 @@
+module:
+  id: "composite_analysis"
+  name: "Composite Analysis"
+  description: "Multi-asset comparison and correlation analysis"
+  version: "1.0.0"
+  author: "Asset Dashboard Team"
+  enabled: true
+  menu:
+    label: "Composite Analysis"
+    icon: "layer-group"
+    tabname: "composite_analysis"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: 
+      - shiny
+      - shinydashboard
+      - plotly
+      - DT
+      - dplyr
+      - TTR
+      - shinycssloaders
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: ["asset_data"], optional: []}

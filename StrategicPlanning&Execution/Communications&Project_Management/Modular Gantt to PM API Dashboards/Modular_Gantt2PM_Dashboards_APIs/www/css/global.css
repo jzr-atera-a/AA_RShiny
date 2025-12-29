@@ -1,0 +1,312 @@
+/* ====================================
+   CORPORATE TEAL/CYAN THEME
+   Book Summary Complete Suite v3.0
+   ==================================== */
+
+/* Main Backgrounds */
+.content-wrapper, .right-side {
+  background: linear-gradient(135deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+  min-height: 100vh;
+}
+.sidebar, .main-sidebar {
+  background: linear-gradient(180deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+}
+
+/* Sidebar Menu */
+.sidebar .sidebar-menu > li > a {
+  color: #ffffff !important;
+  border-left: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+.sidebar .sidebar-menu > li.active > a,
+.sidebar .sidebar-menu > li:hover > a {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-left: 3px solid #00A39A !important;
+}
+
+/* Header */
+.main-header, .main-header .navbar {
+  background: linear-gradient(135deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+}
+.main-header .logo {
+  background: linear-gradient(135deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+/* Boxes */
+.box {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 25px rgba(0, 44, 60, 0.2) !important;
+  margin-bottom: 20px;
+  transition: transform 0.2s ease;
+}
+.box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(0, 44, 60, 0.3) !important;
+}
+.box-header {
+  background: linear-gradient(135deg, #008A82 0%, #00A39A 100%) !important;
+  color: white !important;
+  border-radius: 12px 12px 0 0 !important;
+  padding: 15px 20px;
+}
+.box-header > .box-title {
+  color: #ffffff !important;
+  font-weight: 600;
+  font-size: 16px;
+}
+.box-body {
+  background-color: #ffffff !important;
+  padding: 20px;
+}
+
+/* Status Boxes */
+.status-success {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%) !important;
+  color: #155724 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #00A39A !important;
+  margin: 10px 0;
+}
+.status-error {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%) !important;
+  color: #721c24 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #e74c3c !important;
+  margin: 10px 0;
+}
+.status-info {
+  background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%) !important;
+  color: #0c5460 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #17a2b8 !important;
+  margin: 10px 0;
+}
+.status-warning {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%) !important;
+  color: #856404 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #f39c12 !important;
+  margin: 10px 0;
+}
+
+/* Form Controls */
+.form-control {
+  border-radius: 8px !important;
+  border: 2px solid #ddd !important;
+  transition: border-color 0.3s ease;
+}
+.form-control:focus {
+  border-color: #008A82 !important;
+  box-shadow: 0 0 0 3px rgba(0, 138, 130, 0.1) !important;
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, #008A82 0%, #00A39A 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+  font-weight: 600;
+  transition: transform 0.2s ease;
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #006b63 0%, #007d75 100%) !important;
+  transform: translateY(-1px);
+}
+.btn-success {
+  background: linear-gradient(135deg, #00A39A 0%, #008A82 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+  font-weight: 600;
+}
+.btn-info {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+  font-weight: 600;
+}
+.btn-danger {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+}
+.btn-warning {
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+}
+
+/* Small Boxes */
+.small-box {
+  border-radius: 12px !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+  transition: transform 0.2s ease;
+}
+.small-box:hover {
+  transform: translateY(-3px);
+}
+.small-box.bg-aqua { 
+  background: linear-gradient(135deg, #00A39A 0%, #008A82 100%) !important; 
+}
+.small-box.bg-blue { 
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important; 
+}
+.small-box.bg-green { 
+  background: linear-gradient(135deg, #27ae60 0%, #229954 100%) !important; 
+}
+.small-box.bg-yellow { 
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important; 
+}
+
+/* Text Areas */
+textarea.form-control {
+  min-height: 100px;
+}
+#summary_upload_text, #generated_summary {
+  min-height: 500px !important;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
+
+/* Preview & Visualization */
+.preview-section {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 10px 0;
+  border-left: 4px solid #008A82;
+  max-height: 400px;
+  overflow-y: auto;
+}
+.viz-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 15px 0;
+  box-shadow: 0 4px 15px rgba(0, 44, 60, 0.15);
+  border-left: 5px solid #008A82;
+}
+.viz-card h3 {
+  color: #008A82;
+  margin-top: 0;
+  font-weight: 600;
+}
+.viz-card .chapter-title {
+  font-size: 1.3em;
+  color: #002C3C;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+.viz-card .section-tag {
+  display: inline-block;
+  background: linear-gradient(135deg, #00A39A 0%, #008A82 100%);
+  color: white;
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 0.85em;
+  margin: 5px 5px 5px 0;
+}
+.viz-card .details-text {
+  line-height: 1.8;
+  color: #2c3e50;
+  margin: 15px 0;
+  text-align: justify;
+}
+
+/* Metrics */
+.metric-box {
+  display: inline-block;
+  background: linear-gradient(135deg, #e8f5f4 0%, #d4edea 100%);
+  padding: 10px 20px;
+  border-radius: 8px;
+  margin: 5px;
+  border: 2px solid #00A39A;
+}
+.metric-label {
+  font-size: 0.8em;
+  color: #666;
+  text-transform: uppercase;
+}
+.metric-value {
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #008A82;
+}
+
+/* Book/Document Header */
+.book-header {
+  background: linear-gradient(135deg, #002C3C 0%, #008A82 100%);
+  color: white;
+  padding: 25px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 20px rgba(0, 44, 60, 0.3);
+}
+.book-header h2 {
+  margin: 0 0 10px 0;
+  font-size: 2em;
+}
+.book-header .author {
+  font-size: 1.2em;
+  opacity: 0.9;
+}
+
+/* Alerts */
+.alert-info {
+  background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%) !important;
+  border-left: 4px solid #17a2b8 !important;
+  border-radius: 8px;
+}
+
+/* Loading */
+#loading_spinner {
+  color: #008A82;
+}
+
+/* Formula & Reference Boxes */
+.formula-box {
+  margin-top: 15px;
+  padding: 15px;
+  background: linear-gradient(135deg, #e8f5f4 0%, #d4edea 100%);
+  border-left: 4px solid #008A82;
+  border-radius: 8px;
+}
+.formula-box h5 {
+  color: #008A82;
+  margin-top: 0;
+  font-weight: 600;
+}
+.reference-box {
+  margin-top: 15px;
+  padding: 15px;
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  border-left: 4px solid #f39c12;
+  border-radius: 8px;
+}
+.reference-box h5 {
+  color: #f39c12;
+  margin-top: 0;
+  font-weight: 600;
+}
+.reference-box a {
+  color: #008A82;
+  font-weight: bold;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+.reference-box a:hover {
+  color: #00A39A;
+  text-decoration: underline;
+}

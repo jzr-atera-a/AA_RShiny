@@ -1,0 +1,14 @@
+module:
+  dependencies:
+    packages:
+    - shiny
+    - shinydashboard
+    - httr
+    - jsonlite
+  enabled: true
+  id: claude_config
+  menu:
+    icon: robot
+    label: Claude API Config
+    tabname: claude_config
+  name: Claude API Configuration

@@ -1,0 +1,14 @@
+module:
+  dependencies:
+    packages:
+    - shiny
+    - shinydashboard
+    - httr
+    - jsonlite
+  enabled: true
+  id: api_config
+  menu:
+    icon: key
+    label: OpenAPI Configuration
+    tabname: api_config
+  name: OpenAI API Configuration

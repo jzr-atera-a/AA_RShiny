@@ -1,0 +1,17 @@
+module:
+  id: "db_connection"
+  name: "Database Connection"
+  description: "MySQL database connection and data loading"
+  version: "1.0.0"
+  author: "FX Team"
+  enabled: true
+  menu:
+    label: "Database Connection"
+    icon: "database"
+    tabname: "db_connection"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, DT, dplyr, lubridate, shinycssloaders, DBI, RMySQL, tidyr]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

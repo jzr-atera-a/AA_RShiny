@@ -1,0 +1,17 @@
+module:
+  id: "correlation_matrix"
+  name: "Correlation Matrix"
+  description: "Currency correlation analysis"
+  version: "1.0.0"
+  author: "FX Team"
+  enabled: true
+  menu:
+    label: "Correlation Matrix"
+    icon: "project-diagram"
+    tabname: "correlation_matrix"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, plotly, dplyr, tidyr, shinycssloaders]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

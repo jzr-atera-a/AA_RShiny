@@ -1,0 +1,13 @@
+module:
+  dependencies:
+    packages:
+    - shiny
+    - shinydashboard
+    - openxlsx
+  enabled: true
+  id: project_details
+  menu:
+    icon: file-text
+    label: Project Details
+    tabname: project_details
+  name: Project Details

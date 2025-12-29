@@ -1,0 +1,10 @@
+module:
+  id: "email_send"
+  name: "Send Email Notifications"
+  enabled: true
+  menu:
+    label: "Send Email Notifications"
+    icon: "mail-bulk"
+    tabname: "email_send"
+  dependencies:
+    packages: [shiny, shinydashboard, blastula, DT, dplyr]

@@ -1,0 +1,20 @@
+module:
+  id: "bulk_analysis"
+  name: "Bulk Text Analysis"
+  description: "Analyze multiple text files with ChatGPT"
+  version: "1.0.0"
+  enabled: true
+  
+  menu:
+    label: "Bulk Text Analysis"
+    icon: "folder-open"
+    tabname: "bulk_analysis"
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinycssloaders
+      - shinyFiles
+      - httr
+      - jsonlite

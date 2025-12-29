@@ -1,0 +1,15 @@
+module:
+  id: "settings"
+  name: "API Settings"
+  description: "OpenAI API configuration"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Settings"
+    icon: "cog"
+    tabname: "settings"
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - httr

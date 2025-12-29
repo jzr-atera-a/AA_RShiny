@@ -1,0 +1,20 @@
+module:
+  id: "transcription"
+  name: "Audio Transcription"
+  description: "Transcribe audio using OpenAI Whisper API"
+  version: "1.0.0"
+  enabled: true
+  
+  menu:
+    label: "Audio Transcription"
+    icon: "microphone"
+    tabname: "transcription"
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinycssloaders
+      - shinyFiles
+      - httr
+      - jsonlite

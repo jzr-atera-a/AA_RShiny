@@ -1,0 +1,17 @@
+module:
+  id: "market_overview"
+  name: "Market Overview"
+  description: "Market statistics and overview"
+  version: "1.0.0"
+  author: "FX Team"
+  enabled: true
+  menu:
+    label: "Market Overview"
+    icon: "chart-line"
+    tabname: "market_overview"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, plotly, dplyr, DT, shinycssloaders]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

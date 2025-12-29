@@ -1,0 +1,20 @@
+module:
+  id: "splitter"
+  name: "File Splitter"
+  description: "Split audio files by size or segments"
+  version: "1.0.0"
+  enabled: true
+  
+  menu:
+    label: "File Splitter"
+    icon: "scissors"
+    tabname: "splitter"
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - DT
+      - shinyFiles
+      - tuneR
+      - seewave

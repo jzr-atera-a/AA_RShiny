@@ -1,0 +1,34 @@
+module:
+  id: "api_configuration"
+  name: "API Configuration"
+  description: "Configure Trello and Jira API credentials"
+  version: "1.0.0"
+  author: "Gantt Converter Team"
+  
+  enabled: true
+  
+  menu:
+    label: "API Configuration"
+    icon: "key"
+    tabname: "config"
+    badge:
+      label: null
+      color: null
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - httr
+      - jsonlite
+    
+    package_versions:
+      httr: ">= 1.4.0"
+  
+  api:
+    required: []
+    optional: []
+  
+  data:
+    required: []
+    optional: []

@@ -1,0 +1,21 @@
+module:
+  id: "bq_config"
+  name: "BigQuery Settings"
+  description: "Configure Google BigQuery connection for data storage"
+  version: "1.0.0"
+  author: "Contact Manager Team"
+  
+  enabled: true
+  
+  menu:
+    label: "BigQuery Settings"
+    icon: "database"
+    tabname: "bq_config"
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - bigrquery
+      - DBI
+      - glue

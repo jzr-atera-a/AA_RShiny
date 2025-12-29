@@ -1,0 +1,15 @@
+module:
+  dependencies:
+    packages:
+    - shiny
+    - shinydashboard
+    - httr
+    - jsonlite
+    - rsvg
+  enabled: true
+  id: diagram_generator
+  menu:
+    icon: chart-line
+    label: Diagram Generator
+    tabname: diagram_gen
+  name: Diagram Generator

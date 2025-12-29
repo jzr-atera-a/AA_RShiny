@@ -1,0 +1,13 @@
+module:
+  dependencies:
+    packages:
+    - shiny
+    - shinydashboard
+    - openxlsx
+  enabled: true
+  id: team_impact
+  menu:
+    icon: users
+    label: Team & Impact
+    tabname: team_impact
+  name: Team & Impact

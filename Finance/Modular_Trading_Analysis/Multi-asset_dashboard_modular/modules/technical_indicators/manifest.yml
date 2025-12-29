@@ -1,0 +1,24 @@
+module:
+  id: "technical_indicators"
+  name: "Technical Indicators"
+  description: "Technical indicators including RSI MACD and Bollinger Bands"
+  version: "1.0.0"
+  author: "Asset Dashboard Team"
+  enabled: true
+  menu:
+    label: "Technical Indicators"
+    icon: "chart-bar"
+    tabname: "technical_indicators"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: 
+      - shiny
+      - shinydashboard
+      - plotly
+      - DT
+      - dplyr
+      - TTR
+      - shinycssloaders
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: ["asset_data"], optional: []}

@@ -1,0 +1,25 @@
+app:
+  name: Project Application Assistant
+  version: 4.0.0
+modules:
+  api_config:
+    enabled: true
+    priority: 1
+  business_case:
+    enabled: true
+    priority: 11
+  claude_config:
+    enabled: true
+    priority: 2
+  claude_diagrams:
+    enabled: true
+    priority: 14
+  diagram_generator:
+    enabled: true
+    priority: 13
+  project_details:
+    enabled: true
+    priority: 10
+  team_impact:
+    enabled: true
+    priority: 12
