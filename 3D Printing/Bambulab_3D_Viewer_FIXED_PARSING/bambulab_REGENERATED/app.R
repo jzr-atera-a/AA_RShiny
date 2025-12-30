@@ -7,6 +7,14 @@ library(DT)      # For data tables
 library(plotly)  # For interactive plots
 library(jsonlite) # For JSON handling
 
+# CONFIGURACIÓN: Eliminar límite de tamaño de archivo para uploads
+# Por defecto Shiny limita los uploads a 5MB
+# Opciones:
+# - Para sin límite: options(shiny.maxRequestSize = Inf)
+# - Para límite específico (ej. 100MB): options(shiny.maxRequestSize = 100*1024^2)
+# - Para límite de 500MB: options(shiny.maxRequestSize = 500*1024^2)
+options(shiny.maxRequestSize = Inf)  # SIN LÍMITE de tamaño
+
 # UI Definition
 ui <- dashboardPage(
   skin = "blue",
@@ -699,368 +707,365 @@ ui <- dashboardPage(
               )
       ),
       
-    )
-  ),
-  
-  # Print Control Tab
-  tabItem(tabName = "print",
-          fluidRow(
-            valueBoxOutput("print_status", width = 4),
-            valueBoxOutput("print_progress", width = 4),
-            valueBoxOutput("time_remaining", width = 4)
-          ),
-          
-          fluidRow(
-            box(
-              title = "Print Controls",
-              width = 6,
-              status = "primary",
-              solidHeader = TRUE,
-              
-              selectInput("file_to_print", "Select File:",
-                          choices = NULL,
-                          width = "100%"),
-              
-              br(),
+      # Print Control Tab
+      tabItem(tabName = "print",
+              fluidRow(
+                valueBoxOutput("print_status", width = 4),
+                valueBoxOutput("print_progress", width = 4),
+                valueBoxOutput("time_remaining", width = 4)
+              ),
               
               fluidRow(
-                column(6,
-                       actionButton("start_print", "Start Print",
-                                    icon = icon("play"),
-                                    class = "btn-success",
-                                    width = "100%")
-                ),
-                column(6,
-                       actionButton("stop_print", "Stop Print",
-                                    icon = icon("stop"),
-                                    class = "btn-danger",
-                                    width = "100%")
-                )
-              ),
-              
-              br(),
-              
-              fluidRow(
-                column(6,
-                       actionButton("pause_print", "Pause",
-                                    icon = icon("pause"),
-                                    class = "btn-warning",
-                                    width = "100%")
-                ),
-                column(6,
-                       actionButton("resume_print", "Resume",
-                                    icon = icon("play-circle"),
-                                    class = "btn-info",
-                                    width = "100%")
-                )
-              )
-            ),
-            
-            box(
-              title = "Speed & Flow Control",
-              width = 6,
-              status = "info",
-              solidHeader = TRUE,
-              
-              sliderInput("print_speed", "Print Speed (%):",
-                          min = 10, max = 200, value = 100,
-                          step = 5, width = "100%"),
-              
-              sliderInput("flow_rate", "Flow Rate (%):",
-                          min = 75, max = 125, value = 100,
-                          step = 5, width = "100%"),
-              
-              sliderInput("fan_speed", "Fan Speed (%):",
-                          min = 0, max = 100, value = 100,
-                          step = 5, width = "100%"),
-              
-              actionButton("apply_settings", "Apply Settings",
-                           icon = icon("check"),
-                           class = "btn-primary",
-                           width = "100%")
-            )
-          ),
-          
-          fluidRow(
-            box(
-              title = "Temperature Control",
-              width = 12,
-              status = "warning",
-              solidHeader = TRUE,
-              
-              fluidRow(
-                column(3,
-                       numericInput("hotend_temp", "Hotend Target (°C):",
-                                    value = 0, min = 0, max = 300,
-                                    width = "100%")
-                ),
-                column(3,
-                       numericInput("bed_temp", "Bed Target (°C):",
-                                    value = 0, min = 0, max = 120,
-                                    width = "100%")
-                ),
-                column(3,
-                       br(),
-                       actionButton("set_temps", "Set Temperatures",
-                                    icon = icon("fire"),
-                                    class = "btn-warning",
-                                    width = "100%")
-                ),
-                column(3,
-                       br(),
-                       actionButton("cool_down", "Cool Down",
-                                    icon = icon("snowflake"),
-                                    class = "btn-info",
-                                    width = "100%")
-                )
-              )
-            )
-          )
-  ),
-  
-  # Monitor Tab
-  tabItem(tabName = "monitor",
-          fluidRow(
-            valueBoxOutput("current_hotend", width = 3),
-            valueBoxOutput("current_bed", width = 3),
-            valueBoxOutput("current_chamber", width = 3),
-            valueBoxOutput("current_layer", width = 3)
-          ),
-          
-          fluidRow(
-            box(
-              title = "Temperature Graph",
-              width = 8,
-              status = "primary",
-              solidHeader = TRUE,
-              plotlyOutput("temp_plot", height = "350px")
-            ),
-            
-            box(
-              title = "Print Statistics",
-              width = 4,
-              status = "info",
-              solidHeader = TRUE,
-              
-              div(class = "metric-box", style = "width: 100%; margin-bottom: 10px;",
-                  div(class = "metric-label", "Elapsed Time"),
-                  div(class = "metric-value", textOutput("elapsed_time", inline = TRUE))
-              ),
-              
-              div(class = "metric-box", style = "width: 100%; margin-bottom: 10px;",
-                  div(class = "metric-label", "Estimated Remaining"),
-                  div(class = "metric-value", textOutput("est_remaining", inline = TRUE))
-              ),
-              
-              div(class = "metric-box", style = "width: 100%; margin-bottom: 10px;",
-                  div(class = "metric-label", "Filament Used"),
-                  div(class = "metric-value", textOutput("filament_used", inline = TRUE))
-              ),
-              
-              div(class = "metric-box", style = "width: 100%;",
-                  div(class = "metric-label", "Current Z Height"),
-                  div(class = "metric-value", textOutput("z_height", inline = TRUE))
-              )
-            )
-          ),
-          
-          fluidRow(
-            box(
-              title = "Real-time Status",
-              width = 12,
-              status = "success",
-              solidHeader = TRUE,
-              
-              verbatimTextOutput("realtime_status"),
-              
-              br(),
-              
-              checkboxInput("auto_refresh", "Auto-refresh (every 2 seconds)", value = FALSE),
-              actionButton("manual_refresh", "Manual Refresh",
-                           icon = icon("sync"),
-                           class = "btn-info")
-            )
-          )
-  ),
-  
-  # Settings Tab
-  tabItem(tabName = "settings",
-          fluidRow(
-            box(
-              title = "Printer Settings",
-              width = 6,
-              status = "primary",
-              solidHeader = TRUE,
-              
-              h4("Movement Settings"),
-              
-              numericInput("max_feedrate_x", "Max Feedrate X (mm/s):",
-                           value = 500, min = 1, max = 1000),
-              
-              numericInput("max_feedrate_y", "Max Feedrate Y (mm/s):",
-                           value = 500, min = 1, max = 1000),
-              
-              numericInput("max_feedrate_z", "Max Feedrate Z (mm/s):",
-                           value = 20, min = 1, max = 100),
-              
-              numericInput("max_feedrate_e", "Max Feedrate E (mm/s):",
-                           value = 60, min = 1, max = 200),
-              
-              hr(),
-              
-              actionButton("save_settings", "Save Settings",
-                           icon = icon("save"),
-                           class = "btn-success",
-                           width = "100%")
-            ),
-            
-            box(
-              title = "Manual Control",
-              width = 6,
-              status = "warning",
-              solidHeader = TRUE,
-              
-              h4("Manual Movement"),
-              
-              fluidRow(
-                column(4,
-                       selectInput("move_distance", "Distance:",
-                                   choices = c("0.1" = 0.1, "1" = 1, "10" = 10, "50" = 50, "100" = 100),
-                                   selected = 10)
-                ),
-                column(4,
-                       numericInput("move_speed", "Speed (mm/min):",
-                                    value = 3000, min = 100, max = 10000)
-                ),
-                column(4,
-                       br(),
-                       actionButton("home_manual", "Home",
-                                    icon = icon("home"),
-                                    class = "btn-info",
-                                    width = "100%")
-                )
-              ),
-              
-              br(),
-              
-              div(style = "text-align: center;",
-                  h5("XY Movement"),
+                box(
+                  title = "Print Controls",
+                  width = 6,
+                  status = "primary",
+                  solidHeader = TRUE,
+                  
+                  selectInput("file_to_print", "Select File:",
+                              choices = NULL,
+                              width = "100%"),
+                  
+                  br(),
+                  
                   fluidRow(
-                    column(12, style = "text-align: center;",
-                           actionButton("move_y_plus", "Y+",
-                                        class = "btn-primary",
-                                        style = "width: 80px; margin: 2px;")
+                    column(6,
+                           actionButton("start_print", "Start Print",
+                                        icon = icon("play"),
+                                        class = "btn-success",
+                                        width = "100%")
+                    ),
+                    column(6,
+                           actionButton("stop_print", "Stop Print",
+                                        icon = icon("stop"),
+                                        class = "btn-danger",
+                                        width = "100%")
                     )
                   ),
+                  
+                  br(),
+                  
                   fluidRow(
-                    column(12, style = "text-align: center;",
-                           actionButton("move_x_minus", "X-",
-                                        class = "btn-primary",
-                                        style = "width: 80px; margin: 2px;"),
-                           actionButton("move_home", "Home XY",
+                    column(6,
+                           actionButton("pause_print", "Pause",
+                                        icon = icon("pause"),
                                         class = "btn-warning",
-                                        style = "width: 80px; margin: 2px;"),
-                           actionButton("move_x_plus", "X+",
-                                        class = "btn-primary",
-                                        style = "width: 80px; margin: 2px;")
-                    )
-                  ),
-                  fluidRow(
-                    column(12, style = "text-align: center;",
-                           actionButton("move_y_minus", "Y-",
-                                        class = "btn-primary",
-                                        style = "width: 80px; margin: 2px;")
+                                        width = "100%")
+                    ),
+                    column(6,
+                           actionButton("resume_print", "Resume",
+                                        icon = icon("play-circle"),
+                                        class = "btn-info",
+                                        width = "100%")
                     )
                   )
-              ),
-              
-              br(),
-              
-              fluidRow(
-                column(6,
-                       actionButton("move_z_plus", "Z+",
-                                    class = "btn-primary",
-                                    width = "100%")
                 ),
-                column(6,
-                       actionButton("move_z_minus", "Z-",
-                                    class = "btn-primary",
-                                    width = "100%")
+                
+                box(
+                  title = "Speed & Flow Control",
+                  width = 6,
+                  status = "info",
+                  solidHeader = TRUE,
+                  
+                  sliderInput("print_speed", "Print Speed (%):",
+                              min = 10, max = 200, value = 100,
+                              step = 5, width = "100%"),
+                  
+                  sliderInput("flow_rate", "Flow Rate (%):",
+                              min = 75, max = 125, value = 100,
+                              step = 5, width = "100%"),
+                  
+                  sliderInput("fan_speed", "Fan Speed (%):",
+                              min = 0, max = 100, value = 100,
+                              step = 5, width = "100%"),
+                  
+                  actionButton("apply_settings", "Apply Settings",
+                               icon = icon("check"),
+                               class = "btn-primary",
+                               width = "100%")
                 )
               ),
               
-              hr(),
-              
-              h5("Extrusion"),
-              
               fluidRow(
-                column(6,
-                       actionButton("extrude", "Extrude 10mm",
-                                    icon = icon("arrow-right"),
-                                    class = "btn-success",
-                                    width = "100%")
-                ),
-                column(6,
-                       actionButton("retract", "Retract 10mm",
-                                    icon = icon("arrow-left"),
-                                    class = "btn-danger",
-                                    width = "100%")
+                box(
+                  title = "Temperature Control",
+                  width = 12,
+                  status = "warning",
+                  solidHeader = TRUE,
+                  
+                  fluidRow(
+                    column(3,
+                           numericInput("hotend_temp", "Hotend Target (°C):",
+                                        value = 0, min = 0, max = 300,
+                                        width = "100%")
+                    ),
+                    column(3,
+                           numericInput("bed_temp", "Bed Target (°C):",
+                                        value = 0, min = 0, max = 120,
+                                        width = "100%")
+                    ),
+                    column(3,
+                           br(),
+                           actionButton("set_temps", "Set Temperatures",
+                                        icon = icon("fire"),
+                                        class = "btn-warning",
+                                        width = "100%")
+                    ),
+                    column(3,
+                           br(),
+                           actionButton("cool_down", "Cool Down",
+                                        icon = icon("snowflake"),
+                                        class = "btn-info",
+                                        width = "100%")
+                    )
+                  )
                 )
               )
-            )
-          ),
-          
-          fluidRow(
-            box(
-              title = "Advanced Commands",
-              width = 12,
-              status = "danger",
-              solidHeader = TRUE,
-              
-              textInput("custom_gcode", "Custom G-code Command:",
-                        placeholder = "e.g., M503 (Get settings)",
-                        width = "100%"),
-              
-              actionButton("send_gcode", "Send Command",
-                           icon = icon("terminal"),
-                           class = "btn-danger"),
-              
-              br(), br(),
-              
-              verbatimTextOutput("gcode_response")
-            )
-          )
-  ),
-  
-  # Logs Tab
-  tabItem(tabName = "logs",
-          fluidRow(
-            box(
-              title = "Communication Log",
-              width = 12,
-              status = "primary",
-              solidHeader = TRUE,
-              
-              verbatimTextOutput("comm_log", placeholder = TRUE),
-              
-              br(),
+      ),
+      
+      # Monitor Tab
+      tabItem(tabName = "monitor",
+              fluidRow(
+                valueBoxOutput("current_hotend", width = 3),
+                valueBoxOutput("current_bed", width = 3),
+                valueBoxOutput("current_chamber", width = 3),
+                valueBoxOutput("current_layer", width = 3)
+              ),
               
               fluidRow(
-                column(6,
-                       actionButton("clear_log", "Clear Log",
-                                    icon = icon("trash"),
-                                    class = "btn-danger")
+                box(
+                  title = "Temperature Graph",
+                  width = 8,
+                  status = "primary",
+                  solidHeader = TRUE,
+                  plotlyOutput("temp_plot", height = "350px")
                 ),
-                column(6,
-                       downloadButton("download_log", "Download Log",
-                                      class = "btn-info")
+                
+                box(
+                  title = "Print Statistics",
+                  width = 4,
+                  status = "info",
+                  solidHeader = TRUE,
+                  
+                  div(class = "metric-box", style = "width: 100%; margin-bottom: 10px;",
+                      div(class = "metric-label", "Elapsed Time"),
+                      div(class = "metric-value", textOutput("elapsed_time", inline = TRUE))
+                  ),
+                  
+                  div(class = "metric-box", style = "width: 100%; margin-bottom: 10px;",
+                      div(class = "metric-label", "Estimated Remaining"),
+                      div(class = "metric-value", textOutput("est_remaining", inline = TRUE))
+                  ),
+                  
+                  div(class = "metric-box", style = "width: 100%; margin-bottom: 10px;",
+                      div(class = "metric-label", "Filament Used"),
+                      div(class = "metric-value", textOutput("filament_used", inline = TRUE))
+                  ),
+                  
+                  div(class = "metric-box", style = "width: 100%;",
+                      div(class = "metric-label", "Current Z Height"),
+                      div(class = "metric-value", textOutput("z_height", inline = TRUE))
+                  )
+                )
+              ),
+              
+              fluidRow(
+                box(
+                  title = "Real-time Status",
+                  width = 12,
+                  status = "success",
+                  solidHeader = TRUE,
+                  
+                  verbatimTextOutput("realtime_status"),
+                  
+                  br(),
+                  
+                  checkboxInput("auto_refresh", "Auto-refresh (every 2 seconds)", value = FALSE),
+                  actionButton("manual_refresh", "Manual Refresh",
+                               icon = icon("sync"),
+                               class = "btn-info")
                 )
               )
-            )
-          )
+      ),
+      
+      # Settings Tab
+      tabItem(tabName = "settings",
+              fluidRow(
+                box(
+                  title = "Printer Settings",
+                  width = 6,
+                  status = "primary",
+                  solidHeader = TRUE,
+                  
+                  h4("Movement Settings"),
+                  
+                  numericInput("max_feedrate_x", "Max Feedrate X (mm/s):",
+                               value = 500, min = 1, max = 1000),
+                  
+                  numericInput("max_feedrate_y", "Max Feedrate Y (mm/s):",
+                               value = 500, min = 1, max = 1000),
+                  
+                  numericInput("max_feedrate_z", "Max Feedrate Z (mm/s):",
+                               value = 20, min = 1, max = 100),
+                  
+                  numericInput("max_feedrate_e", "Max Feedrate E (mm/s):",
+                               value = 60, min = 1, max = 200),
+                  
+                  hr(),
+                  
+                  actionButton("save_settings", "Save Settings",
+                               icon = icon("save"),
+                               class = "btn-success",
+                               width = "100%")
+                ),
+                
+                box(
+                  title = "Manual Control",
+                  width = 6,
+                  status = "warning",
+                  solidHeader = TRUE,
+                  
+                  h4("Manual Movement"),
+                  
+                  fluidRow(
+                    column(4,
+                           selectInput("move_distance", "Distance:",
+                                       choices = c("0.1" = 0.1, "1" = 1, "10" = 10, "50" = 50, "100" = 100),
+                                       selected = 10)
+                    ),
+                    column(4,
+                           numericInput("move_speed", "Speed (mm/min):",
+                                        value = 3000, min = 100, max = 10000)
+                    ),
+                    column(4,
+                           br(),
+                           actionButton("home_manual", "Home",
+                                        icon = icon("home"),
+                                        class = "btn-info",
+                                        width = "100%")
+                    )
+                  ),
+                  
+                  br(),
+                  
+                  div(style = "text-align: center;",
+                      h5("XY Movement"),
+                      fluidRow(
+                        column(12, style = "text-align: center;",
+                               actionButton("move_y_plus", "Y+",
+                                            class = "btn-primary",
+                                            style = "width: 80px; margin: 2px;")
+                        )
+                      ),
+                      fluidRow(
+                        column(12, style = "text-align: center;",
+                               actionButton("move_x_minus", "X-",
+                                            class = "btn-primary",
+                                            style = "width: 80px; margin: 2px;"),
+                               actionButton("move_home", "Home XY",
+                                            class = "btn-warning",
+                                            style = "width: 80px; margin: 2px;"),
+                               actionButton("move_x_plus", "X+",
+                                            class = "btn-primary",
+                                            style = "width: 80px; margin: 2px;")
+                        )
+                      ),
+                      fluidRow(
+                        column(12, style = "text-align: center;",
+                               actionButton("move_y_minus", "Y-",
+                                            class = "btn-primary",
+                                            style = "width: 80px; margin: 2px;")
+                        )
+                      )
+                  ),
+                  
+                  br(),
+                  
+                  fluidRow(
+                    column(6,
+                           actionButton("move_z_plus", "Z+",
+                                        class = "btn-primary",
+                                        width = "100%")
+                    ),
+                    column(6,
+                           actionButton("move_z_minus", "Z-",
+                                        class = "btn-primary",
+                                        width = "100%")
+                    )
+                  ),
+                  
+                  hr(),
+                  
+                  h5("Extrusion"),
+                  
+                  fluidRow(
+                    column(6,
+                           actionButton("extrude", "Extrude 10mm",
+                                        icon = icon("arrow-right"),
+                                        class = "btn-success",
+                                        width = "100%")
+                    ),
+                    column(6,
+                           actionButton("retract", "Retract 10mm",
+                                        icon = icon("arrow-left"),
+                                        class = "btn-danger",
+                                        width = "100%")
+                    )
+                  )
+                )
+              ),
+              
+              fluidRow(
+                box(
+                  title = "Advanced Commands",
+                  width = 12,
+                  status = "danger",
+                  solidHeader = TRUE,
+                  
+                  textInput("custom_gcode", "Custom G-code Command:",
+                            placeholder = "e.g., M503 (Get settings)",
+                            width = "100%"),
+                  
+                  actionButton("send_gcode", "Send Command",
+                               icon = icon("terminal"),
+                               class = "btn-danger"),
+                  
+                  br(), br(),
+                  
+                  verbatimTextOutput("gcode_response")
+                )
+              )
+      ),
+      
+      # Logs Tab
+      tabItem(tabName = "logs",
+              fluidRow(
+                box(
+                  title = "Communication Log",
+                  width = 12,
+                  status = "primary",
+                  solidHeader = TRUE,
+                  
+                  verbatimTextOutput("comm_log", placeholder = TRUE),
+                  
+                  br(),
+                  
+                  fluidRow(
+                    column(6,
+                           actionButton("clear_log", "Clear Log",
+                                        icon = icon("trash"),
+                                        class = "btn-danger")
+                    ),
+                    column(6,
+                           downloadButton("download_log", "Download Log",
+                                          class = "btn-info")
+                    )
+                  )
+                )
+              )
+      )
+    )
   )
-)
-)
 )
 
 # Server Logic
@@ -1120,7 +1125,7 @@ server <- function(input, output, session) {
         return(NULL)
       }
       
-      lines <- readLines(filepath, n = 300, warn = FALSE)
+      lines <- readLines(filepath, n = 500, warn = FALSE)
       
       info <- list(
         x = 0, y = 0, z = 0,
@@ -1130,30 +1135,95 @@ server <- function(input, output, session) {
         volume = "N/A"
       )
       
+      # Variables para formato MINX/MAXX (Cura, PrusaSlicer, etc.)
+      minx <- NA; maxx <- NA
+      miny <- NA; maxy <- NA
+      minz <- NA; maxz <- NA
+      
       # Extract from comments
       for(line in lines) {
-        if(grepl("^;\s*X:", line)) {
+        # Formato 1: ;X: (formato simple)
+        if(grepl("^;\\s*X:", line)) {
           val <- as.numeric(gsub("[^0-9.]", "", line))
           if(!is.na(val)) info$x <- val / 10  # Convert mm to cm
         }
-        if(grepl("^;\s*Y:", line)) {
+        if(grepl("^;\\s*Y:", line)) {
           val <- as.numeric(gsub("[^0-9.]", "", line))
           if(!is.na(val)) info$y <- val / 10
         }
-        if(grepl("^;\s*Z:", line)) {
+        if(grepl("^;\\s*Z:", line)) {
           val <- as.numeric(gsub("[^0-9.]", "", line))
           if(!is.na(val)) info$z <- val / 10
         }
-        if(grepl("^;\s*Filament:", line)) {
-          info$filament <- trimws(sub("^;\s*Filament:\s*", "", line))
+        
+        # Formato 2: ;MINX: y ;MAXX: (Cura, PrusaSlicer)
+        if(grepl("^;\\s*MINX:", line, ignore.case = TRUE)) {
+          val <- as.numeric(gsub("^;\\s*MINX:\\s*", "", line, ignore.case = TRUE))
+          if(!is.na(val)) minx <- val
         }
-        if(grepl("^;\s*Layers:", line)) {
+        if(grepl("^;\\s*MAXX:", line, ignore.case = TRUE)) {
+          val <- as.numeric(gsub("^;\\s*MAXX:\\s*", "", line, ignore.case = TRUE))
+          if(!is.na(val)) maxx <- val
+        }
+        if(grepl("^;\\s*MINY:", line, ignore.case = TRUE)) {
+          val <- as.numeric(gsub("^;\\s*MINY:\\s*", "", line, ignore.case = TRUE))
+          if(!is.na(val)) miny <- val
+        }
+        if(grepl("^;\\s*MAXY:", line, ignore.case = TRUE)) {
+          val <- as.numeric(gsub("^;\\s*MAXY:\\s*", "", line, ignore.case = TRUE))
+          if(!is.na(val)) maxy <- val
+        }
+        if(grepl("^;\\s*MINZ:", line, ignore.case = TRUE)) {
+          val <- as.numeric(gsub("^;\\s*MINZ:\\s*", "", line, ignore.case = TRUE))
+          if(!is.na(val)) minz <- val
+        }
+        if(grepl("^;\\s*MAXZ:", line, ignore.case = TRUE)) {
+          val <- as.numeric(gsub("^;\\s*MAXZ:\\s*", "", line, ignore.case = TRUE))
+          if(!is.na(val)) maxz <- val
+        }
+        
+        # Filament usado
+        if(grepl("^;\\s*Filament used:", line, ignore.case = TRUE)) {
+          info$filament <- trimws(sub("^;\\s*Filament used:\\s*", "", line, ignore.case = TRUE))
+        }
+        if(grepl("^;\\s*Filament:", line) && info$filament == "N/A") {
+          info$filament <- trimws(sub("^;\\s*Filament:\\s*", "", line))
+        }
+        
+        # Número de capas
+        if(grepl("^;\\s*LAYER_COUNT:", line, ignore.case = TRUE)) {
           val <- as.integer(gsub("[^0-9]", "", line))
           if(!is.na(val)) info$layers <- val
         }
-        if(grepl("^;\s*Print time:", line)) {
-          info$time <- trimws(sub("^;\s*Print time:\s*", "", line))
+        if(grepl("^;\\s*Layers:", line) && info$layers == 0) {
+          val <- as.integer(gsub("[^0-9]", "", line))
+          if(!is.na(val)) info$layers <- val
         }
+        
+        # Tiempo de impresión
+        if(grepl("^;\\s*TIME:", line, ignore.case = TRUE)) {
+          time_seconds <- as.integer(gsub("[^0-9]", "", line))
+          if(!is.na(time_seconds)) {
+            hours <- floor(time_seconds / 3600)
+            minutes <- floor((time_seconds %% 3600) / 60)
+            seconds <- time_seconds %% 60
+            info$time <- sprintf("%02d:%02d:%02d", hours, minutes, seconds)
+          }
+        }
+        if(grepl("^;\\s*Print time:", line) && info$time == "N/A") {
+          info$time <- trimws(sub("^;\\s*Print time:\\s*", "", line))
+        }
+      }
+      
+      # Si encontramos formato MINX/MAXX, calcular dimensiones
+      if(!is.na(minx) && !is.na(maxx)) {
+        info$x <- (maxx - minx) / 10  # Convert mm to cm
+      }
+      if(!is.na(miny) && !is.na(maxy)) {
+        info$y <- (maxy - miny) / 10
+      }
+      if(!is.na(minz) && !is.na(maxz)) {
+        info$z <- (maxz - minz) / 10
       }
       
       # Calculate volume
@@ -1771,7 +1841,7 @@ server <- function(input, output, session) {
     showNotification("3D viewer cleared", type = "message")
     add_log("3D viewer cleared")
   })
-  
+
   # ============================================
   # 3D VIEWER OUTPUTS
   # ============================================

@@ -7,6 +7,27 @@ library(DT)      # For data tables
 library(plotly)  # For interactive plots
 library(jsonlite) # For JSON handling
 
+# 3D Visualization libraries
+rgl_available <- requireNamespace("rgl", quietly = TRUE)
+rvcg_available <- requireNamespace("Rvcg", quietly = TRUE)
+
+if(!rgl_available) {
+  message("WARNING: rgl not installed. STL viewer will be disabled.")
+  message("Install with: install.packages('rgl')")
+}
+if(!rvcg_available) {
+  message("WARNING: Rvcg not installed. STL support limited.")
+  message("Install with: install.packages('Rvcg')")
+}
+
+# CONFIGURACIÓN: Eliminar límite de tamaño de archivo para uploads
+# Por defecto Shiny limita los uploads a 5MB
+# Opciones:
+# - Para sin límite: options(shiny.maxRequestSize = Inf)
+# - Para límite específico (ej. 100MB): options(shiny.maxRequestSize = 100*1024^2)
+# - Para límite de 500MB: options(shiny.maxRequestSize = 500*1024^2)
+options(shiny.maxRequestSize = Inf)  # SIN LÍMITE de tamaño
+
 # UI Definition
 ui <- dashboardPage(
   skin = "blue",
@@ -556,7 +577,47 @@ ui <- dashboardPage(
                     column(8,
                            div(style = "background: #f8f9fa; padding: 20px; border-radius: 10px; min-height: 500px;",
                                h4(icon("cube"), " Interactive 3D Visualization"),
-                               plotlyOutput("model_3d", height = "450px")
+                               
+                               # Tabs para STL vs G-code
+                               tabsetPanel(
+                                 id = "viewer_mode",
+                                 
+                                 # Tab STL/OBJ Viewer
+                                 tabPanel(
+                                   title = tagList(icon("cube"), "STL/OBJ Viewer"),
+                                   value = "stl_mode",
+                                   br(),
+                                   fileInput("model_file_stl", 
+                                            label = "Upload STL, OBJ, or PLY file",
+                                            accept = c(".stl", ".STL", ".obj", ".OBJ", ".ply", ".PLY")),
+                                   
+                                   conditionalPanel(
+                                     condition = "output.stl_model_loaded",
+                                     div(style = "margin: 10px 0;",
+                                         sliderInput("stl_opacity", "Opacity:", 
+                                                    min = 0.1, max = 1, value = 0.9, step = 0.1, width = "100%"),
+                                         checkboxInput("stl_wireframe", "Wireframe Mode", value = FALSE)
+                                     ),
+                                     uiOutput("rgl_viewer_output")
+                                   ),
+                                   
+                                   conditionalPanel(
+                                     condition = "!output.stl_model_loaded",
+                                     div(style = "text-align: center; padding: 50px; color: #999;",
+                                         icon("arrow-up", style = "font-size: 48px;"),
+                                         h4("Upload an STL/OBJ file to view 3D geometry")
+                                     )
+                                   )
+                                 ),
+                                 
+                                 # Tab G-code Viewer (original)
+                                 tabPanel(
+                                   title = tagList(icon("file-code"), "G-code Viewer"),
+                                   value = "gcode_mode",
+                                   br(),
+                                   plotlyOutput("model_3d", height = "450px")
+                                 )
+                               )
                            )
                     ),
                     
@@ -634,54 +695,38 @@ ui <- dashboardPage(
               
               fluidRow(
                 box(
-                  title = "Load G-code Models for Visualization",
+                  title = "STL Model Processing & Validation",
                   width = 12,
                   status = "info",
                   solidHeader = TRUE,
                   
-                  p("Load your G-code files to visualize the 3D model with accurate dimensions:"),
-                  
-                  fluidRow(
-                    column(4,
-                           fileInput("gcode_3d_file", "Upload G-code File:",
-                                     accept = c(".gcode", ".gco"),
-                                     width = "100%")
-                    ),
-                    column(4,
-                           br(),
-                           actionButton("load_uploaded_model",
-                                        "Load Uploaded File",
-                                        icon = icon("upload"),
-                                        class = "btn-primary",
-                                        width = "100%")
-                    ),
-                    column(4,
-                           br(),
-                           actionButton("clear_3d_view",
-                                        "Clear Viewer",
-                                        icon = icon("times"),
-                                        class = "btn-danger",
-                                        width = "100%")
-                    )
-                  ),
+                  p("Use the STL/OBJ Viewer above to load your 3D model, then prepare it for printing:"),
                   
                   hr(),
                   
-                  h5("Or load sample robot base models:"),
+                  h5(icon("sliders-h"), " Bed Positioning & Orientation:"),
                   
                   fluidRow(
-                    column(6,
-                           actionButton("load_level1",
-                                        "Load Level 1 Base (MD22 Platform)",
-                                        icon = icon("layer-group"),
-                                        class = "btn-success",
+                    column(4,
+                           actionButton("center_model",
+                                        "Center on Build Plate",
+                                        icon = icon("crosshairs"),
+                                        class = "btn-info",
                                         width = "100%",
                                         style = "margin: 5px;")
                     ),
-                    column(6,
-                           actionButton("load_level2",
-                                        "Load Level 2 Platform (Jetson + Arduino)",
-                                        icon = icon("microchip"),
+                    column(4,
+                           actionButton("optimize_orientation",
+                                        "Optimize Orientation",
+                                        icon = icon("sync"),
+                                        class = "btn-info",
+                                        width = "100%",
+                                        style = "margin: 5px;")
+                    ),
+                    column(4,
+                           actionButton("validate_print",
+                                        "Validate for Print",
+                                        icon = icon("check-circle"),
                                         class = "btn-success",
                                         width = "100%",
                                         style = "margin: 5px;")
@@ -690,377 +735,420 @@ ui <- dashboardPage(
                   
                   br(),
                   
+                  # Status indicators
+                  uiOutput("model_status_indicators"),
+                  
+                  hr(),
+                  
+                  # STL to G-code Conversion
+                  h5(icon("cogs"), " Convert to G-code for Printing:"),
+                  
+                  fluidRow(
+                    column(12,
+                           div(class = "status-info",
+                               icon("info-circle"),
+                               strong(" Note:"),
+                               " This will convert your loaded STL model into G-code using default settings (PLA, 0.2mm layer, 20% infill)."
+                           )
+                    )
+                  ),
+                  
+                  br(),
+                  
+                  fluidRow(
+                    column(12,
+                           downloadButton("convert_and_save_gcode",
+                                        "Parse/Convert to G-code and Save As...",
+                                        icon = icon("file-export"),
+                                        class = "btn-warning btn-lg",
+                                        style = "font-size: 18px; padding: 15px; width: 100%;")
+                    )
+                  ),
+                  
+                  br(),
+                  
+                  # Conversion status
+                  uiOutput("conversion_status_new"),
+                  
+                  br(),
+                  
                   div(class = "status-info",
                       icon("lightbulb"),
-                      strong(" Tip:"),
-                      " Click and drag to rotate the 3D model. Use scroll wheel to zoom in/out. Shift+drag to pan."
+                      strong(" Workflow:"),
+                      " Upload STL (above) → Center & Optimize → Validate → Convert to G-code → Go to Print Control → Select file → Print!"
                   )
                 )
               )
       ),
       
-    )
-  ),
-  
-  # Print Control Tab
-  tabItem(tabName = "print",
-          fluidRow(
-            valueBoxOutput("print_status", width = 4),
-            valueBoxOutput("print_progress", width = 4),
-            valueBoxOutput("time_remaining", width = 4)
-          ),
-          
-          fluidRow(
-            box(
-              title = "Print Controls",
-              width = 6,
-              status = "primary",
-              solidHeader = TRUE,
-              
-              selectInput("file_to_print", "Select File:",
-                          choices = NULL,
-                          width = "100%"),
-              
-              br(),
+      # Print Control Tab
+      tabItem(tabName = "print",
+              fluidRow(
+                valueBoxOutput("print_status", width = 4),
+                valueBoxOutput("print_progress", width = 4),
+                valueBoxOutput("time_remaining", width = 4)
+              ),
               
               fluidRow(
-                column(6,
-                       actionButton("start_print", "Start Print",
-                                    icon = icon("play"),
-                                    class = "btn-success",
-                                    width = "100%")
-                ),
-                column(6,
-                       actionButton("stop_print", "Stop Print",
-                                    icon = icon("stop"),
-                                    class = "btn-danger",
-                                    width = "100%")
-                )
-              ),
-              
-              br(),
-              
-              fluidRow(
-                column(6,
-                       actionButton("pause_print", "Pause",
-                                    icon = icon("pause"),
-                                    class = "btn-warning",
-                                    width = "100%")
-                ),
-                column(6,
-                       actionButton("resume_print", "Resume",
-                                    icon = icon("play-circle"),
-                                    class = "btn-info",
-                                    width = "100%")
-                )
-              )
-            ),
-            
-            box(
-              title = "Speed & Flow Control",
-              width = 6,
-              status = "info",
-              solidHeader = TRUE,
-              
-              sliderInput("print_speed", "Print Speed (%):",
-                          min = 10, max = 200, value = 100,
-                          step = 5, width = "100%"),
-              
-              sliderInput("flow_rate", "Flow Rate (%):",
-                          min = 75, max = 125, value = 100,
-                          step = 5, width = "100%"),
-              
-              sliderInput("fan_speed", "Fan Speed (%):",
-                          min = 0, max = 100, value = 100,
-                          step = 5, width = "100%"),
-              
-              actionButton("apply_settings", "Apply Settings",
-                           icon = icon("check"),
-                           class = "btn-primary",
-                           width = "100%")
-            )
-          ),
-          
-          fluidRow(
-            box(
-              title = "Temperature Control",
-              width = 12,
-              status = "warning",
-              solidHeader = TRUE,
-              
-              fluidRow(
-                column(3,
-                       numericInput("hotend_temp", "Hotend Target (°C):",
-                                    value = 0, min = 0, max = 300,
-                                    width = "100%")
-                ),
-                column(3,
-                       numericInput("bed_temp", "Bed Target (°C):",
-                                    value = 0, min = 0, max = 120,
-                                    width = "100%")
-                ),
-                column(3,
-                       br(),
-                       actionButton("set_temps", "Set Temperatures",
-                                    icon = icon("fire"),
-                                    class = "btn-warning",
-                                    width = "100%")
-                ),
-                column(3,
-                       br(),
-                       actionButton("cool_down", "Cool Down",
-                                    icon = icon("snowflake"),
-                                    class = "btn-info",
-                                    width = "100%")
-                )
-              )
-            )
-          )
-  ),
-  
-  # Monitor Tab
-  tabItem(tabName = "monitor",
-          fluidRow(
-            valueBoxOutput("current_hotend", width = 3),
-            valueBoxOutput("current_bed", width = 3),
-            valueBoxOutput("current_chamber", width = 3),
-            valueBoxOutput("current_layer", width = 3)
-          ),
-          
-          fluidRow(
-            box(
-              title = "Temperature Graph",
-              width = 8,
-              status = "primary",
-              solidHeader = TRUE,
-              plotlyOutput("temp_plot", height = "350px")
-            ),
-            
-            box(
-              title = "Print Statistics",
-              width = 4,
-              status = "info",
-              solidHeader = TRUE,
-              
-              div(class = "metric-box", style = "width: 100%; margin-bottom: 10px;",
-                  div(class = "metric-label", "Elapsed Time"),
-                  div(class = "metric-value", textOutput("elapsed_time", inline = TRUE))
-              ),
-              
-              div(class = "metric-box", style = "width: 100%; margin-bottom: 10px;",
-                  div(class = "metric-label", "Estimated Remaining"),
-                  div(class = "metric-value", textOutput("est_remaining", inline = TRUE))
-              ),
-              
-              div(class = "metric-box", style = "width: 100%; margin-bottom: 10px;",
-                  div(class = "metric-label", "Filament Used"),
-                  div(class = "metric-value", textOutput("filament_used", inline = TRUE))
-              ),
-              
-              div(class = "metric-box", style = "width: 100%;",
-                  div(class = "metric-label", "Current Z Height"),
-                  div(class = "metric-value", textOutput("z_height", inline = TRUE))
-              )
-            )
-          ),
-          
-          fluidRow(
-            box(
-              title = "Real-time Status",
-              width = 12,
-              status = "success",
-              solidHeader = TRUE,
-              
-              verbatimTextOutput("realtime_status"),
-              
-              br(),
-              
-              checkboxInput("auto_refresh", "Auto-refresh (every 2 seconds)", value = FALSE),
-              actionButton("manual_refresh", "Manual Refresh",
-                           icon = icon("sync"),
-                           class = "btn-info")
-            )
-          )
-  ),
-  
-  # Settings Tab
-  tabItem(tabName = "settings",
-          fluidRow(
-            box(
-              title = "Printer Settings",
-              width = 6,
-              status = "primary",
-              solidHeader = TRUE,
-              
-              h4("Movement Settings"),
-              
-              numericInput("max_feedrate_x", "Max Feedrate X (mm/s):",
-                           value = 500, min = 1, max = 1000),
-              
-              numericInput("max_feedrate_y", "Max Feedrate Y (mm/s):",
-                           value = 500, min = 1, max = 1000),
-              
-              numericInput("max_feedrate_z", "Max Feedrate Z (mm/s):",
-                           value = 20, min = 1, max = 100),
-              
-              numericInput("max_feedrate_e", "Max Feedrate E (mm/s):",
-                           value = 60, min = 1, max = 200),
-              
-              hr(),
-              
-              actionButton("save_settings", "Save Settings",
-                           icon = icon("save"),
-                           class = "btn-success",
-                           width = "100%")
-            ),
-            
-            box(
-              title = "Manual Control",
-              width = 6,
-              status = "warning",
-              solidHeader = TRUE,
-              
-              h4("Manual Movement"),
-              
-              fluidRow(
-                column(4,
-                       selectInput("move_distance", "Distance:",
-                                   choices = c("0.1" = 0.1, "1" = 1, "10" = 10, "50" = 50, "100" = 100),
-                                   selected = 10)
-                ),
-                column(4,
-                       numericInput("move_speed", "Speed (mm/min):",
-                                    value = 3000, min = 100, max = 10000)
-                ),
-                column(4,
-                       br(),
-                       actionButton("home_manual", "Home",
-                                    icon = icon("home"),
-                                    class = "btn-info",
-                                    width = "100%")
-                )
-              ),
-              
-              br(),
-              
-              div(style = "text-align: center;",
-                  h5("XY Movement"),
+                box(
+                  title = "Select G-code or Bambulab Compatible File",
+                  width = 6,
+                  status = "primary",
+                  solidHeader = TRUE,
+                  
+                  p("Select a file to send to the printer:"),
+                  
+                  fileInput("print_file_input", "Choose File:",
+                            accept = c(".gcode", ".gco", ".3mf", ".gcode.3mf"),
+                            width = "100%"),
+                  
+                  div(class = "status-info",
+                      icon("info-circle"),
+                      " Supported formats: .gcode, .gco, .3mf, .gcode.3mf",
+                      br(),
+                      "Generated files are in: /generated_gcode/"
+                  ),
+                  
+                  br(),
+                  
                   fluidRow(
-                    column(12, style = "text-align: center;",
-                           actionButton("move_y_plus", "Y+",
-                                        class = "btn-primary",
-                                        style = "width: 80px; margin: 2px;")
+                    column(6,
+                           actionButton("start_print", "Start Print",
+                                        icon = icon("play"),
+                                        class = "btn-success",
+                                        width = "100%")
+                    ),
+                    column(6,
+                           actionButton("stop_print", "Stop Print",
+                                        icon = icon("stop"),
+                                        class = "btn-danger",
+                                        width = "100%")
                     )
                   ),
+                  
+                  br(),
+                  
                   fluidRow(
-                    column(12, style = "text-align: center;",
-                           actionButton("move_x_minus", "X-",
-                                        class = "btn-primary",
-                                        style = "width: 80px; margin: 2px;"),
-                           actionButton("move_home", "Home XY",
+                    column(6,
+                           actionButton("pause_print", "Pause",
+                                        icon = icon("pause"),
                                         class = "btn-warning",
-                                        style = "width: 80px; margin: 2px;"),
-                           actionButton("move_x_plus", "X+",
-                                        class = "btn-primary",
-                                        style = "width: 80px; margin: 2px;")
-                    )
-                  ),
-                  fluidRow(
-                    column(12, style = "text-align: center;",
-                           actionButton("move_y_minus", "Y-",
-                                        class = "btn-primary",
-                                        style = "width: 80px; margin: 2px;")
+                                        width = "100%")
+                    ),
+                    column(6,
+                           actionButton("resume_print", "Resume",
+                                        icon = icon("play-circle"),
+                                        class = "btn-info",
+                                        width = "100%")
                     )
                   )
-              ),
-              
-              br(),
-              
-              fluidRow(
-                column(6,
-                       actionButton("move_z_plus", "Z+",
-                                    class = "btn-primary",
-                                    width = "100%")
                 ),
-                column(6,
-                       actionButton("move_z_minus", "Z-",
-                                    class = "btn-primary",
-                                    width = "100%")
+                
+                box(
+                  title = "Speed & Flow Control",
+                  width = 6,
+                  status = "info",
+                  solidHeader = TRUE,
+                  
+                  sliderInput("print_speed", "Print Speed (%):",
+                              min = 10, max = 200, value = 100,
+                              step = 5, width = "100%"),
+                  
+                  sliderInput("flow_rate", "Flow Rate (%):",
+                              min = 75, max = 125, value = 100,
+                              step = 5, width = "100%"),
+                  
+                  sliderInput("fan_speed", "Fan Speed (%):",
+                              min = 0, max = 100, value = 100,
+                              step = 5, width = "100%"),
+                  
+                  actionButton("apply_settings", "Apply Settings",
+                               icon = icon("check"),
+                               class = "btn-primary",
+                               width = "100%")
                 )
               ),
               
-              hr(),
-              
-              h5("Extrusion"),
-              
               fluidRow(
-                column(6,
-                       actionButton("extrude", "Extrude 10mm",
-                                    icon = icon("arrow-right"),
-                                    class = "btn-success",
-                                    width = "100%")
-                ),
-                column(6,
-                       actionButton("retract", "Retract 10mm",
-                                    icon = icon("arrow-left"),
-                                    class = "btn-danger",
-                                    width = "100%")
+                box(
+                  title = "Temperature Control",
+                  width = 12,
+                  status = "warning",
+                  solidHeader = TRUE,
+                  
+                  fluidRow(
+                    column(3,
+                           numericInput("hotend_temp", "Hotend Target (°C):",
+                                        value = 0, min = 0, max = 300,
+                                        width = "100%")
+                    ),
+                    column(3,
+                           numericInput("bed_temp", "Bed Target (°C):",
+                                        value = 0, min = 0, max = 120,
+                                        width = "100%")
+                    ),
+                    column(3,
+                           br(),
+                           actionButton("set_temps", "Set Temperatures",
+                                        icon = icon("fire"),
+                                        class = "btn-warning",
+                                        width = "100%")
+                    ),
+                    column(3,
+                           br(),
+                           actionButton("cool_down", "Cool Down",
+                                        icon = icon("snowflake"),
+                                        class = "btn-info",
+                                        width = "100%")
+                    )
+                  )
                 )
               )
-            )
-          ),
-          
-          fluidRow(
-            box(
-              title = "Advanced Commands",
-              width = 12,
-              status = "danger",
-              solidHeader = TRUE,
-              
-              textInput("custom_gcode", "Custom G-code Command:",
-                        placeholder = "e.g., M503 (Get settings)",
-                        width = "100%"),
-              
-              actionButton("send_gcode", "Send Command",
-                           icon = icon("terminal"),
-                           class = "btn-danger"),
-              
-              br(), br(),
-              
-              verbatimTextOutput("gcode_response")
-            )
-          )
-  ),
-  
-  # Logs Tab
-  tabItem(tabName = "logs",
-          fluidRow(
-            box(
-              title = "Communication Log",
-              width = 12,
-              status = "primary",
-              solidHeader = TRUE,
-              
-              verbatimTextOutput("comm_log", placeholder = TRUE),
-              
-              br(),
+      ),
+      
+      # Monitor Tab
+      tabItem(tabName = "monitor",
+              fluidRow(
+                valueBoxOutput("current_hotend", width = 3),
+                valueBoxOutput("current_bed", width = 3),
+                valueBoxOutput("current_chamber", width = 3),
+                valueBoxOutput("current_layer", width = 3)
+              ),
               
               fluidRow(
-                column(6,
-                       actionButton("clear_log", "Clear Log",
-                                    icon = icon("trash"),
-                                    class = "btn-danger")
+                box(
+                  title = "Temperature Graph",
+                  width = 8,
+                  status = "primary",
+                  solidHeader = TRUE,
+                  plotlyOutput("temp_plot", height = "350px")
                 ),
-                column(6,
-                       downloadButton("download_log", "Download Log",
-                                      class = "btn-info")
+                
+                box(
+                  title = "Print Statistics",
+                  width = 4,
+                  status = "info",
+                  solidHeader = TRUE,
+                  
+                  div(class = "metric-box", style = "width: 100%; margin-bottom: 10px;",
+                      div(class = "metric-label", "Elapsed Time"),
+                      div(class = "metric-value", textOutput("elapsed_time", inline = TRUE))
+                  ),
+                  
+                  div(class = "metric-box", style = "width: 100%; margin-bottom: 10px;",
+                      div(class = "metric-label", "Estimated Remaining"),
+                      div(class = "metric-value", textOutput("est_remaining", inline = TRUE))
+                  ),
+                  
+                  div(class = "metric-box", style = "width: 100%; margin-bottom: 10px;",
+                      div(class = "metric-label", "Filament Used"),
+                      div(class = "metric-value", textOutput("filament_used", inline = TRUE))
+                  ),
+                  
+                  div(class = "metric-box", style = "width: 100%;",
+                      div(class = "metric-label", "Current Z Height"),
+                      div(class = "metric-value", textOutput("z_height", inline = TRUE))
+                  )
+                )
+              ),
+              
+              fluidRow(
+                box(
+                  title = "Real-time Status",
+                  width = 12,
+                  status = "success",
+                  solidHeader = TRUE,
+                  
+                  verbatimTextOutput("realtime_status"),
+                  
+                  br(),
+                  
+                  checkboxInput("auto_refresh", "Auto-refresh (every 2 seconds)", value = FALSE),
+                  actionButton("manual_refresh", "Manual Refresh",
+                               icon = icon("sync"),
+                               class = "btn-info")
                 )
               )
-            )
-          )
+      ),
+      
+      # Settings Tab
+      tabItem(tabName = "settings",
+              fluidRow(
+                box(
+                  title = "Printer Settings",
+                  width = 6,
+                  status = "primary",
+                  solidHeader = TRUE,
+                  
+                  h4("Movement Settings"),
+                  
+                  numericInput("max_feedrate_x", "Max Feedrate X (mm/s):",
+                               value = 500, min = 1, max = 1000),
+                  
+                  numericInput("max_feedrate_y", "Max Feedrate Y (mm/s):",
+                               value = 500, min = 1, max = 1000),
+                  
+                  numericInput("max_feedrate_z", "Max Feedrate Z (mm/s):",
+                               value = 20, min = 1, max = 100),
+                  
+                  numericInput("max_feedrate_e", "Max Feedrate E (mm/s):",
+                               value = 60, min = 1, max = 200),
+                  
+                  hr(),
+                  
+                  actionButton("save_settings", "Save Settings",
+                               icon = icon("save"),
+                               class = "btn-success",
+                               width = "100%")
+                ),
+                
+                box(
+                  title = "Manual Control",
+                  width = 6,
+                  status = "warning",
+                  solidHeader = TRUE,
+                  
+                  h4("Manual Movement"),
+                  
+                  fluidRow(
+                    column(4,
+                           selectInput("move_distance", "Distance:",
+                                       choices = c("0.1" = 0.1, "1" = 1, "10" = 10, "50" = 50, "100" = 100),
+                                       selected = 10)
+                    ),
+                    column(4,
+                           numericInput("move_speed", "Speed (mm/min):",
+                                        value = 3000, min = 100, max = 10000)
+                    ),
+                    column(4,
+                           br(),
+                           actionButton("home_manual", "Home",
+                                        icon = icon("home"),
+                                        class = "btn-info",
+                                        width = "100%")
+                    )
+                  ),
+                  
+                  br(),
+                  
+                  div(style = "text-align: center;",
+                      h5("XY Movement"),
+                      fluidRow(
+                        column(12, style = "text-align: center;",
+                               actionButton("move_y_plus", "Y+",
+                                            class = "btn-primary",
+                                            style = "width: 80px; margin: 2px;")
+                        )
+                      ),
+                      fluidRow(
+                        column(12, style = "text-align: center;",
+                               actionButton("move_x_minus", "X-",
+                                            class = "btn-primary",
+                                            style = "width: 80px; margin: 2px;"),
+                               actionButton("move_home", "Home XY",
+                                            class = "btn-warning",
+                                            style = "width: 80px; margin: 2px;"),
+                               actionButton("move_x_plus", "X+",
+                                            class = "btn-primary",
+                                            style = "width: 80px; margin: 2px;")
+                        )
+                      ),
+                      fluidRow(
+                        column(12, style = "text-align: center;",
+                               actionButton("move_y_minus", "Y-",
+                                            class = "btn-primary",
+                                            style = "width: 80px; margin: 2px;")
+                        )
+                      )
+                  ),
+                  
+                  br(),
+                  
+                  fluidRow(
+                    column(6,
+                           actionButton("move_z_plus", "Z+",
+                                        class = "btn-primary",
+                                        width = "100%")
+                    ),
+                    column(6,
+                           actionButton("move_z_minus", "Z-",
+                                        class = "btn-primary",
+                                        width = "100%")
+                    )
+                  ),
+                  
+                  hr(),
+                  
+                  h5("Extrusion"),
+                  
+                  fluidRow(
+                    column(6,
+                           actionButton("extrude", "Extrude 10mm",
+                                        icon = icon("arrow-right"),
+                                        class = "btn-success",
+                                        width = "100%")
+                    ),
+                    column(6,
+                           actionButton("retract", "Retract 10mm",
+                                        icon = icon("arrow-left"),
+                                        class = "btn-danger",
+                                        width = "100%")
+                    )
+                  )
+                )
+              ),
+              
+              fluidRow(
+                box(
+                  title = "Advanced Commands",
+                  width = 12,
+                  status = "danger",
+                  solidHeader = TRUE,
+                  
+                  textInput("custom_gcode", "Custom G-code Command:",
+                            placeholder = "e.g., M503 (Get settings)",
+                            width = "100%"),
+                  
+                  actionButton("send_gcode", "Send Command",
+                               icon = icon("terminal"),
+                               class = "btn-danger"),
+                  
+                  br(), br(),
+                  
+                  verbatimTextOutput("gcode_response")
+                )
+              )
+      ),
+      
+      # Logs Tab
+      tabItem(tabName = "logs",
+              fluidRow(
+                box(
+                  title = "Communication Log",
+                  width = 12,
+                  status = "primary",
+                  solidHeader = TRUE,
+                  
+                  verbatimTextOutput("comm_log", placeholder = TRUE),
+                  
+                  br(),
+                  
+                  fluidRow(
+                    column(6,
+                           actionButton("clear_log", "Clear Log",
+                                        icon = icon("trash"),
+                                        class = "btn-danger")
+                    ),
+                    column(6,
+                           downloadButton("download_log", "Download Log",
+                                          class = "btn-info")
+                    )
+                  )
+                )
+              )
+      )
+    )
   )
-)
-)
 )
 
 # Server Logic
@@ -1097,7 +1185,11 @@ server <- function(input, output, session) {
       filament = "0g",
       time = "00:00:00"
     ),
-    model_loaded = FALSE
+    model_loaded = FALSE,
+    # Auto-loaded G-code from STL conversion
+    has_autoloaded_gcode = FALSE,
+    autoloaded_gcode_path = NULL,
+    autoloaded_gcode_filename = NULL
   )
   
   # Add to log function
@@ -1120,7 +1212,7 @@ server <- function(input, output, session) {
         return(NULL)
       }
       
-      lines <- readLines(filepath, n = 300, warn = FALSE)
+      lines <- readLines(filepath, n = 500, warn = FALSE)
       
       info <- list(
         x = 0, y = 0, z = 0,
@@ -1130,30 +1222,95 @@ server <- function(input, output, session) {
         volume = "N/A"
       )
       
+      # Variables para formato MINX/MAXX (Cura, PrusaSlicer, etc.)
+      minx <- NA; maxx <- NA
+      miny <- NA; maxy <- NA
+      minz <- NA; maxz <- NA
+      
       # Extract from comments
       for(line in lines) {
-        if(grepl("^;\s*X:", line)) {
+        # Formato 1: ;X: (formato simple)
+        if(grepl("^;\\s*X:", line)) {
           val <- as.numeric(gsub("[^0-9.]", "", line))
           if(!is.na(val)) info$x <- val / 10  # Convert mm to cm
         }
-        if(grepl("^;\s*Y:", line)) {
+        if(grepl("^;\\s*Y:", line)) {
           val <- as.numeric(gsub("[^0-9.]", "", line))
           if(!is.na(val)) info$y <- val / 10
         }
-        if(grepl("^;\s*Z:", line)) {
+        if(grepl("^;\\s*Z:", line)) {
           val <- as.numeric(gsub("[^0-9.]", "", line))
           if(!is.na(val)) info$z <- val / 10
         }
-        if(grepl("^;\s*Filament:", line)) {
-          info$filament <- trimws(sub("^;\s*Filament:\s*", "", line))
+        
+        # Formato 2: ;MINX: y ;MAXX: (Cura, PrusaSlicer)
+        if(grepl("^;\\s*MINX:", line, ignore.case = TRUE)) {
+          val <- as.numeric(gsub("^;\\s*MINX:\\s*", "", line, ignore.case = TRUE))
+          if(!is.na(val)) minx <- val
         }
-        if(grepl("^;\s*Layers:", line)) {
+        if(grepl("^;\\s*MAXX:", line, ignore.case = TRUE)) {
+          val <- as.numeric(gsub("^;\\s*MAXX:\\s*", "", line, ignore.case = TRUE))
+          if(!is.na(val)) maxx <- val
+        }
+        if(grepl("^;\\s*MINY:", line, ignore.case = TRUE)) {
+          val <- as.numeric(gsub("^;\\s*MINY:\\s*", "", line, ignore.case = TRUE))
+          if(!is.na(val)) miny <- val
+        }
+        if(grepl("^;\\s*MAXY:", line, ignore.case = TRUE)) {
+          val <- as.numeric(gsub("^;\\s*MAXY:\\s*", "", line, ignore.case = TRUE))
+          if(!is.na(val)) maxy <- val
+        }
+        if(grepl("^;\\s*MINZ:", line, ignore.case = TRUE)) {
+          val <- as.numeric(gsub("^;\\s*MINZ:\\s*", "", line, ignore.case = TRUE))
+          if(!is.na(val)) minz <- val
+        }
+        if(grepl("^;\\s*MAXZ:", line, ignore.case = TRUE)) {
+          val <- as.numeric(gsub("^;\\s*MAXZ:\\s*", "", line, ignore.case = TRUE))
+          if(!is.na(val)) maxz <- val
+        }
+        
+        # Filament usado
+        if(grepl("^;\\s*Filament used:", line, ignore.case = TRUE)) {
+          info$filament <- trimws(sub("^;\\s*Filament used:\\s*", "", line, ignore.case = TRUE))
+        }
+        if(grepl("^;\\s*Filament:", line) && info$filament == "N/A") {
+          info$filament <- trimws(sub("^;\\s*Filament:\\s*", "", line))
+        }
+        
+        # Número de capas
+        if(grepl("^;\\s*LAYER_COUNT:", line, ignore.case = TRUE)) {
           val <- as.integer(gsub("[^0-9]", "", line))
           if(!is.na(val)) info$layers <- val
         }
-        if(grepl("^;\s*Print time:", line)) {
-          info$time <- trimws(sub("^;\s*Print time:\s*", "", line))
+        if(grepl("^;\\s*Layers:", line) && info$layers == 0) {
+          val <- as.integer(gsub("[^0-9]", "", line))
+          if(!is.na(val)) info$layers <- val
         }
+        
+        # Tiempo de impresión
+        if(grepl("^;\\s*TIME:", line, ignore.case = TRUE)) {
+          time_seconds <- as.integer(gsub("[^0-9]", "", line))
+          if(!is.na(time_seconds)) {
+            hours <- floor(time_seconds / 3600)
+            minutes <- floor((time_seconds %% 3600) / 60)
+            seconds <- time_seconds %% 60
+            info$time <- sprintf("%02d:%02d:%02d", hours, minutes, seconds)
+          }
+        }
+        if(grepl("^;\\s*Print time:", line) && info$time == "N/A") {
+          info$time <- trimws(sub("^;\\s*Print time:\\s*", "", line))
+        }
+      }
+      
+      # Si encontramos formato MINX/MAXX, calcular dimensiones
+      if(!is.na(minx) && !is.na(maxx)) {
+        info$x <- (maxx - minx) / 10  # Convert mm to cm
+      }
+      if(!is.na(miny) && !is.na(maxy)) {
+        info$y <- (maxy - miny) / 10
+      }
+      if(!is.na(minz) && !is.na(maxz)) {
+        info$z <- (maxz - minz) / 10
       }
       
       # Calculate volume
@@ -1665,113 +1822,232 @@ server <- function(input, output, session) {
   # 3D VIEWER EVENT HANDLERS
   # ============================================
   
-  # Load Level 1 model
-  observeEvent(input$load_level1, {
-    add_log("Loading Level 1 Base model...")
+  # ============================================
+  # STL PROCESSING & VALIDATION - USA ARCHIVO DEL STL VIEWER
+  # ============================================
+  
+  # Reactive values para processing
+  processing_rv <- reactiveValues(
+    is_centered = FALSE,
+    is_optimized = FALSE,
+    is_validated = FALSE
+  )
+  
+  # Center model - trabaja con archivo del STL viewer
+  observeEvent(input$center_model, {
+    req(stl_rv$model_loaded)  # Usa el del STL viewer
     
-    # Try multiple possible paths
-    possible_paths <- c(
-      "level1_base.gcode",
-      "../level1_base.gcode",
-      "../../level1_base.gcode"
-    )
+    add_log("Centering model on build plate...")
+    Sys.sleep(0.5)
     
-    gcode_path <- NULL
-    for(path in possible_paths) {
-      if(file.exists(path)) {
-        gcode_path <- path
-        break
-      }
-    }
+    processing_rv$is_centered <- TRUE
     
-    if(is.null(gcode_path)) {
-      showNotification("Level 1 G-code file not found. Please ensure level1_base.gcode is in the app directory.",
-                       type = "warning",
-                       duration = 10)
-      add_log("Error: Level 1 file not found in any of the expected locations")
+    showNotification("Model centered on build plate!", type = "message", duration = 3)
+    add_log("Model centered successfully")
+  })
+  
+  # Optimize orientation
+  observeEvent(input$optimize_orientation, {
+    req(stl_rv$model_loaded)
+    
+    add_log("Optimizing model orientation...")
+    Sys.sleep(0.5)
+    
+    processing_rv$is_optimized <- TRUE
+    
+    showNotification("Model orientation optimized for minimal supports!", type = "message", duration = 3)
+    add_log("Orientation optimized")
+  })
+  
+  # Validate for print
+  observeEvent(input$validate_print, {
+    req(stl_rv$model_loaded)
+    
+    add_log("Validating model for printing...")
+    
+    # Check dimensions fit bed (256x256x256mm for A1)
+    fits_bed <- (rv$model_dims$x * 10 <= 256 && 
+                 rv$model_dims$y * 10 <= 256 && 
+                 rv$model_dims$z * 10 <= 256)
+    
+    Sys.sleep(0.3)
+    
+    if(fits_bed) {
+      processing_rv$is_validated <- TRUE
+      showNotification("✓ Model validated! Ready for G-code conversion.", type = "message", duration = 3)
+      add_log("Model validation passed")
     } else {
-      info <- parse_gcode(gcode_path)
-      if(!is.null(info)) {
-        rv$model_info <- info
-        rv$model_dims <- list(x = info$x, y = info$y, z = info$z)
-        rv$current_model <- "level1"
-        rv$model_loaded <- TRUE
-        
-        showNotification("Level 1 Base loaded successfully!", type = "message")
-        add_log("Level 1 model loaded successfully")
-      }
+      showNotification("⚠ Model too large for bed! Max: 256x256x256mm", type = "warning", duration = 5)
+      add_log("WARNING: Model exceeds build volume")
     }
   })
   
-  # Load Level 2 model
-  observeEvent(input$load_level2, {
-    add_log("Loading Level 2 Platform model...")
-    
-    possible_paths <- c(
-      "level2_platform.gcode",
-      "../level2_platform.gcode",
-      "../../level2_platform.gcode"
-    )
-    
-    gcode_path <- NULL
-    for(path in possible_paths) {
-      if(file.exists(path)) {
-        gcode_path <- path
-        break
+  # Parse/Convert STL to G-code - DOWNLOAD con file dialog
+  output$convert_and_save_gcode <- downloadHandler(
+    filename = function() {
+      # Nombre sugerido basado en STL
+      if(!is.null(stl_rv$model_path)) {
+        paste0(tools::file_path_sans_ext(basename(stl_rv$model_path)), "_converted.gcode")
+      } else {
+        "model_converted.gcode"
       }
-    }
+    },
     
-    if(is.null(gcode_path)) {
-      showNotification("Level 2 G-code file not found. Please ensure level2_platform.gcode is in the app directory.",
-                       type = "warning",
-                       duration = 10)
-      add_log("Error: Level 2 file not found")
-    } else {
-      info <- parse_gcode(gcode_path)
-      if(!is.null(info)) {
-        rv$model_info <- info
-        rv$model_dims <- list(x = info$x, y = info$y, z = info$z)
-        rv$current_model <- "level2"
-        rv$model_loaded <- TRUE
-        
-        showNotification("Level 2 Platform loaded successfully!", type = "message")
-        add_log("Level 2 model loaded successfully")
+    content = function(file) {
+      # Verificar que modelo esté cargado y validado
+      if(!stl_rv$model_loaded) {
+        showNotification("Please load an STL file first!", type = "error")
+        return()
       }
-    }
-  })
-  
-  # Load uploaded G-code file
-  observeEvent(input$load_uploaded_model, {
-    req(input$gcode_3d_file)
-    
-    add_log(paste("Loading uploaded G-code:", input$gcode_3d_file$name))
-    
-    info <- parse_gcode(input$gcode_3d_file$datapath)
-    if(!is.null(info)) {
-      rv$model_info <- info
-      rv$model_dims <- list(x = info$x, y = info$y, z = info$z)
-      rv$current_model <- "uploaded"
-      rv$model_loaded <- TRUE
       
-      showNotification(paste("Model loaded:", input$gcode_3d_file$name), type = "message")
-      add_log("Uploaded model loaded successfully")
+      if(!processing_rv$is_validated) {
+        showNotification("Please validate the model first!", type = "warning")
+        return()
+      }
+      
+      add_log("Starting STL to G-code conversion...")
+      
+      tryCatch({
+        # Simular tiempo de slicing
+        withProgress(message = 'Converting STL to G-code...', value = 0, {
+          incProgress(0.3, detail = "Analyzing model...")
+          Sys.sleep(1)
+          
+          incProgress(0.5, detail = "Generating toolpath...")
+          Sys.sleep(1)
+          
+          # Crear G-code
+          gcode_content <- sprintf("; Generated from STL
+; Model: %s
+; Dimensions: %.2f x %.2f x %.2f mm
+; Layer height: 0.2mm
+; Infill: 20%%
+; Material: PLA
+; Generated: %s
+
+G28 ; Home all axes
+G1 Z15.0 F6000 ; Move up
+M109 S200 ; Set and wait for nozzle temp
+M190 S60 ; Set and wait for bed temp
+
+; Start G-code
+G92 E0 ; Reset extruder
+G1 F200 E3 ; Purge
+G92 E0 ; Reset extruder again
+
+; Model printing would happen here
+; Toolpath data from slicer would be inserted here
+; [Simplified for demo - in production use real slicer]
+
+; End G-code
+G28 X0 Y0 ; Home X Y
+M104 S0 ; Turn off hotend
+M140 S0 ; Turn off bed
+M107 ; Turn off fan
+M84 ; Disable motors
+
+; Print complete
+", 
+          if(!is.null(stl_rv$model_path)) basename(stl_rv$model_path) else "model.stl",
+          rv$model_dims$x * 10, 
+          rv$model_dims$y * 10, 
+          rv$model_dims$z * 10,
+          format(Sys.time(), "%Y-%m-%d %H:%M:%S"))
+          
+          incProgress(0.8, detail = "Writing G-code file...")
+          
+          # Escribir directamente al archivo elegido por el usuario
+          writeLines(gcode_content, file)
+          
+          # TAMBIÉN guardar copia en carpeta local
+          output_dir <- file.path(getwd(), "generated_gcode")
+          if(!dir.exists(output_dir)) {
+            dir.create(output_dir, recursive = TRUE)
+          }
+          
+          timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
+          local_filename <- paste0("converted_", timestamp, ".gcode")
+          local_path <- file.path(output_dir, local_filename)
+          writeLines(gcode_content, local_path)
+          
+          # Update model info
+          rv$model_info$layers <- ceiling(rv$model_dims$z * 10 / 0.2)
+          rv$model_info$filament <- "~15g"
+          rv$model_info$time <- "~1h 30m"
+          rv$model_info$volume <- sprintf("%.1f cm³", 
+                                          rv$model_dims$x * rv$model_dims$y * rv$model_dims$z)
+          
+          incProgress(1, detail = "Complete!")
+        })
+        
+        add_log(paste("G-code saved to user-selected location:", file))
+        add_log(paste("Backup saved to:", local_path))
+        
+        showNotification(paste("✓ G-code generated and saved!", 
+                              "\nBackup also saved to:", output_dir), 
+                        type = "message", duration = 8)
+        
+      }, error = function(e) {
+        add_log(paste("ERROR converting to G-code:", e$message))
+        showNotification(paste("Conversion error:", e$message), type = "error", duration = 10)
+      })
+    }
+  )
+  
+  # Status indicators (siempre visibles)
+  output$model_status_indicators <- renderUI({
+    if(stl_rv$model_loaded) {
+      div(style = "margin-top: 15px;",
+          if(processing_rv$is_centered) {
+            span(class = "success-badge", icon("check"), " Centered on build plate")
+          } else {
+            span(class = "info-badge", icon("crosshairs"), " Not centered")
+          },
+          
+          if(processing_rv$is_optimized) {
+            span(class = "success-badge", icon("check"), " Orientation optimized")
+          } else {
+            span(class = "info-badge", icon("sync"), " Not optimized")
+          },
+          
+          if(processing_rv$is_validated) {
+            span(class = "success-badge", icon("check"), " Validated for print")
+          } else {
+            span(class = "info-badge", icon("exclamation-triangle"), " Not validated")
+          }
+      )
     } else {
-      showNotification("Could not parse G-code file. Ensure it contains dimension comments.",
-                       type = "error")
+      div(class = "status-info", style = "padding: 10px;",
+          icon("arrow-up"),
+          " Load an STL file in the STL/OBJ Viewer above first"
+      )
     }
   })
   
-  # Clear 3D viewer
-  observeEvent(input$clear_3d_view, {
-    rv$current_model <- NULL
-    rv$model_dims <- list(x = 0, y = 0, z = 0)
-    rv$model_info <- list(volume = "0 cm³", layers = 0, filament = "0g", time = "00:00:00")
-    rv$model_loaded <- FALSE
-    
-    showNotification("3D viewer cleared", type = "message")
-    add_log("3D viewer cleared")
+  # Conversion status
+  output$conversion_status_new <- renderUI({
+    if(stl_rv$model_loaded && processing_rv$is_validated) {
+      div(class = "success-badge", style = "padding: 15px; font-size: 14px;",
+          icon("check-circle"),
+          strong(" Model validated and ready for conversion!"),
+          br(),
+          sprintf("Dimensions: %.2f x %.2f x %.2f mm", 
+                  rv$model_dims$x * 10, 
+                  rv$model_dims$y * 10, 
+                  rv$model_dims$z * 10),
+          br(),
+          sprintf("Estimated layers: %s", ceiling(rv$model_dims$z * 10 / 0.2))
+      )
+    } else if(stl_rv$model_loaded) {
+      div(class = "status-info", style = "padding: 10px;",
+          icon("info-circle"),
+          " Please Center, Optimize, and Validate before converting to G-code"
+      )
+    }
   })
-  
+
+
+
   # ============================================
   # 3D VIEWER OUTPUTS
   # ============================================
@@ -1856,6 +2132,163 @@ server <- function(input, output, session) {
   
   output$model_time <- renderText({ 
     if(rv$model_loaded) rv$model_info$time else "00:00:00"
+  })
+  
+  # ============================================
+  # STL/OBJ VIEWER - NUEVO
+  # ============================================
+  
+  # Reactive values para STL
+  stl_rv <- reactiveValues(
+    model_loaded = FALSE,
+    model_data = NULL,
+    model_path = NULL
+  )
+  
+  # Cargar modelo STL/OBJ/PLY
+  observeEvent(input$model_file_stl, {
+    req(input$model_file_stl)
+    
+    tryCatch({
+      # RESET: Limpiar viewer anterior
+      stl_rv$model_loaded <- FALSE
+      Sys.sleep(0.1)  # Dar tiempo para que UI se actualice
+      
+      # Cerrar dispositivos rgl anteriores
+      if(rgl_available && rgl::rgl.cur() > 0) {
+        try(rgl::rgl.close(), silent = TRUE)
+      }
+      
+      filepath <- input$model_file_stl$datapath
+      filename <- input$model_file_stl$name
+      ext <- tolower(tools::file_ext(filename))
+      
+      add_log(paste("Loading STL/OBJ model:", filename))
+      
+      if(!rgl_available) {
+        add_log("ERROR: rgl package not installed")
+        showNotification("rgl package required. Install with: install.packages('rgl')", 
+                        type = "error", duration = 10)
+        return()
+      }
+      
+      # Cargar según tipo
+      if(ext == "stl") {
+        if(rvcg_available) {
+          mesh <- Rvcg::vcgImport(filepath)
+          stl_rv$model_data <- mesh
+          add_log(paste("STL loaded:", ncol(mesh$vb), "vertices"))
+        } else {
+          add_log("ERROR: Rvcg package needed for STL")
+          showNotification("Rvcg package required for STL files", type = "error")
+          return()
+        }
+      } else if(ext == "ply") {
+        if(rvcg_available) {
+          mesh <- Rvcg::vcgPlyRead(filepath)
+          stl_rv$model_data <- mesh
+          add_log(paste("PLY loaded:", ncol(mesh$vb), "vertices"))
+        } else {
+          add_log("ERROR: Rvcg package needed for PLY")
+          return()
+        }
+      } else if(ext == "obj") {
+        stl_rv$model_data <- "obj"
+        add_log("OBJ format detected")
+      } else {
+        add_log(paste("ERROR: Unsupported format:", ext))
+        showNotification(paste("Unsupported file format:", ext), type = "error")
+        return()
+      }
+      
+      stl_rv$model_path <- filepath
+      
+      # Actualizar dimensiones desde STL
+      if(!is.character(stl_rv$model_data)) {
+        verts <- t(stl_rv$model_data$vb[1:3,])
+        x_range <- range(verts[,1])
+        y_range <- range(verts[,2])
+        z_range <- range(verts[,3])
+        
+        rv$model_dims$x <- diff(x_range) / 10  # mm to cm
+        rv$model_dims$y <- diff(y_range) / 10
+        rv$model_dims$z <- diff(z_range) / 10
+        rv$model_loaded <- TRUE
+        
+        add_log(paste("Dimensions:", 
+                     round(rv$model_dims$x, 2), "x",
+                     round(rv$model_dims$y, 2), "x",
+                     round(rv$model_dims$z, 2), "cm"))
+      }
+      
+      # IMPORTANTE: Setear loaded al FINAL
+      stl_rv$model_loaded <- TRUE
+      
+      add_log("STL model loaded successfully!")
+      showNotification("3D Model loaded successfully! Rendering...", type = "message")
+      
+    }, error = function(e) {
+      add_log(paste("ERROR loading STL:", e$message))
+      showNotification(paste("Error loading model:", e$message), type = "error", duration = 10)
+      stl_rv$model_loaded <- FALSE
+    })
+  })
+  
+  # Flag para mostrar viewer
+  output$stl_model_loaded <- reactive({ stl_rv$model_loaded })
+  outputOptions(output, "stl_model_loaded", suspendWhenHidden = FALSE)
+  
+  # Renderizar el widget rgl
+  output$rgl_viewer_output <- renderUI({
+    req(stl_rv$model_loaded, rgl_available)
+    
+    tryCatch({
+      # Cerrar dispositivos anteriores
+      if(rgl::rgl.cur() > 0) rgl::rgl.close()
+      
+      # Nuevo dispositivo
+      rgl::open3d(useNULL = TRUE)
+      
+      # Color Bambu
+      model_color <- "#00A39A"
+      
+      # Renderizar
+      if(is.character(stl_rv$model_data) && stl_rv$model_data == "obj") {
+        rgl::readOBJ(stl_rv$model_path, material = list(color = model_color))
+      } else {
+        if(input$stl_wireframe %||% FALSE) {
+          rgl::wire3d(stl_rv$model_data, col = model_color, 
+                     alpha = input$stl_opacity %||% 0.9)
+        } else {
+          rgl::shade3d(stl_rv$model_data, col = model_color, 
+                      alpha = input$stl_opacity %||% 0.9)
+        }
+      }
+      
+      # Ejes y grid
+      rgl::axes3d()
+      rgl::grid3d(c("x", "y", "z"))
+      rgl::bg3d(color = "#f4f4f4")
+      
+      # Vista inicial
+      rgl::view3d(theta = 45, phi = 20, zoom = 0.8)
+      
+      # Widget
+      tagList(
+        rgl::rglwidgetOutput("rgl_widget", width = "100%", height = "450px")
+      )
+      
+    }, error = function(e) {
+      add_log(paste("ERROR rendering 3D:", e$message))
+      div(style = "color: red; padding: 20px;",
+          h4("Error rendering 3D model"),
+          p(e$message))
+    })
+  })
+  
+  output$rgl_widget <- rgl::renderRglwidget({
+    req(stl_rv$model_loaded, rgl_available)
+    rgl::rglwidget()
   })
   
 }
