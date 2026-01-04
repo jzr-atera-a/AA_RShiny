@@ -1,0 +1,16 @@
+module:
+  id: "lidar_data"
+  name: "LIDAR Elevation Data"
+  description: "Environment Agency LIDAR elevation data"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "4. LIDAR Data"
+    icon: "layer-group"
+    tabname: "lidar_data"
+  dependencies:
+    packages:
+      - raster
+      - sf
+      - httr
+      - leaflet

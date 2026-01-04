@@ -1,0 +1,16 @@
+module:
+  id: "arcgis_data"
+  name: "ArcGIS Living Atlas"
+  description: "Access ArcGIS Living Atlas imagery and elevation data"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "2. ArcGIS Atlas"
+    icon: "globe"
+    tabname: "arcgis_data"
+  dependencies:
+    packages:
+      - httr
+      - jsonlite
+      - sf
+      - leaflet

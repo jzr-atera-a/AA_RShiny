@@ -1,0 +1,68 @@
+# modules/_module_registry.yml
+# =============================
+# THE CONTROL CENTER - Enable/Disable Modules Here
+# Greenwich AV Project v1.0
+
+modules:
+  # OpenStreetMap Data Module
+  osm_data:
+    enabled: true
+    priority: 10
+    description: "Download buildings, roads, and POI from OpenStreetMap"
+  
+  # ArcGIS Living Atlas Module
+  arcgis_data:
+    enabled: true
+    priority: 20
+    description: "Access ArcGIS Living Atlas layers (buildings, imagery, elevation)"
+  
+  # UK Ordnance Survey Terrain Module
+  os_terrain:
+    enabled: true
+    priority: 30
+    description: "Download OS Terrain 50 and building heights"
+  
+  # Environment Agency LIDAR Module
+  lidar_data:
+    enabled: true
+    priority: 40
+    description: "Download LIDAR elevation data for Greenwich area"
+  
+  # Satellite Imagery Module
+  satellite_imagery:
+    enabled: true
+    priority: 50
+    description: "Download satellite imagery from Google Maps or Bing Maps"
+  
+  # Preview & Validation Module
+  preview_validation:
+    enabled: true
+    priority: 60
+    description: "Preview all layers and export data bundle"
+
+# Global Settings
+settings:
+  auto_install: false
+  check_versions: true
+  verbose: true
+  dev_mode: false
+  default_location: "Greenwich Peninsula, London"
+  default_bbox:
+    xmin: 0.0020
+    ymin: 51.5025
+    xmax: 0.0035
+    ymax: 51.5035
+
+# Application Metadata
+app:
+  name: "Greenwich AV Data Extractor"
+  version: "1.0.0"
+  description: "Extract geographic data for VR autonomous vehicle simulation"
+  author: "AV Development Team"
+  created: "2025"
+  target_platform: "Meta Quest 3 / Jetson Nano"
+  unity_import: true
+
+# To DISABLE a module: Change "enabled: true" to "enabled: false"
+# To ENABLE a module: Change "enabled: false" to "enabled: true"
+# Then restart the app
