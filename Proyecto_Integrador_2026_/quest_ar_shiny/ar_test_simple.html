@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quest 3 AR Test</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+        }
+        
+        #container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 20px;
+            max-width: 500px;
+        }
+        
+        button {
+            padding: 20px 50px;
+            font-size: 20px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        #status {
+            margin: 20px 0;
+            font-size: 18px;
+            min-height: 60px;
+        }
+        
+        .error { color: #ff6b6b; }
+        .success { color: #4ade80; }
+        .info { color: #fbbf24; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>🥽 Quest 3 AR Test</h1>
+        <div id="status">Checking AR support...</div>
+        <button id="startAR" disabled>Start AR Mode</button>
+        <button id="startVR" disabled>Start VR Mode (Fallback)</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script>
+        const statusDiv = document.getElementById('status');
+        const startARBtn = document.getElementById('startAR');
+        const startVRBtn = document.getElementById('startVR');
+        
+        function updateStatus(message, type = 'info') {
+            statusDiv.innerHTML = message;
+            statusDiv.className = type;
+            console.log(message);
+        }
+        
+        // Check WebXR support
+        if (navigator.xr) {
+            updateStatus('✓ WebXR API found! Checking AR support...', 'success');
+            
+            // Check AR support
+            navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
+                if (supported) {
+                    updateStatus('✓ AR is supported! Click button to start.', 'success');
+                    startARBtn.disabled = false;
+                } else {
+                    updateStatus('✗ AR not supported. Trying VR fallback...', 'error');
+                    
+                    // Check VR support as fallback
+                    navigator.xr.isSessionSupported('immersive-vr').then((vrSupported) => {
+                        if (vrSupported) {
+                            updateStatus('✓ VR is supported (AR not available). Click VR button.', 'info');
+                            startVRBtn.disabled = false;
+                        } else {
+                            updateStatus('✗ Neither AR nor VR is supported on this device.', 'error');
+                        }
+                    });
+                }
+            }).catch((error) => {
+                updateStatus('✗ Error checking AR: ' + error.message, 'error');
+            });
+        } else {
+            updateStatus('✗ WebXR not available. Try Meta Browser or update Quest firmware.', 'error');
+        }
+        
+        // AR mode
+        startARBtn.addEventListener('click', async () => {
+            updateStatus('Starting AR mode...', 'info');
+            
+            try {
+                const session = await navigator.xr.requestSession('immersive-ar', {
+                    requiredFeatures: ['local-floor'],
+                    optionalFeatures: ['hit-test', 'dom-overlay'],
+                    domOverlay: { root: document.body }
+                });
+                
+                updateStatus('✓ AR session started successfully!', 'success');
+                
+                // Setup renderer
+                const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+                renderer.xr.enabled = true;
+                document.body.appendChild(renderer.domElement);
+                
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+                
+                // Add a simple cube to test
+                const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+                const material = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+                const cube = new THREE.Mesh(geometry, material);
+                cube.position.set(0, 1.5, -1);
+                scene.add(cube);
+                
+                renderer.setAnimationLoop(() => {
+                    cube.rotation.x += 0.01;
+                    cube.rotation.y += 0.01;
+                    renderer.render(scene, camera);
+                });
+                
+                session.addEventListener('end', () => {
+                    updateStatus('AR session ended.', 'info');
+                    document.body.removeChild(renderer.domElement);
+                    renderer.setAnimationLoop(null);
+                });
+                
+            } catch (error) {
+                updateStatus('✗ AR failed: ' + error.message, 'error');
+                console.error('AR error:', error);
+            }
+        });
+        
+        // VR mode (fallback)
+        startVRBtn.addEventListener('click', async () => {
+            updateStatus('Starting VR mode...', 'info');
+            
+            try {
+                const session = await navigator.xr.requestSession('immersive-vr', {
+                    optionalFeatures: ['local-floor']
+                });
+                
+                updateStatus('✓ VR session started successfully!', 'success');
+                
+                const renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.xr.enabled = true;
+                document.body.appendChild(renderer.domElement);
+                
+                const scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x505050);
+                const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+                
+                const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+                const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                const cube = new THREE.Mesh(geometry, material);
+                cube.position.set(0, 1.5, -1);
+                scene.add(cube);
+                
+                renderer.setAnimationLoop(() => {
+                    cube.rotation.x += 0.01;
+                    cube.rotation.y += 0.01;
+                    renderer.render(scene, camera);
+                });
+                
+                session.addEventListener('end', () => {
+                    updateStatus('VR session ended.', 'info');
+                    document.body.removeChild(renderer.domElement);
+                    renderer.setAnimationLoop(null);
+                });
+                
+            } catch (error) {
+                updateStatus('✗ VR failed: ' + error.message, 'error');
+                console.error('VR error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

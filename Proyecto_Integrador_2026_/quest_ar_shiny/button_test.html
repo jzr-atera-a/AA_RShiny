@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Test</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+            flex-direction: column;
+        }
+        
+        button {
+            padding: 30px 60px;
+            font-size: 24px;
+            font-weight: bold;
+            background: #00ff00;
+            color: black;
+            border: 5px solid white;
+            border-radius: 20px;
+            cursor: pointer;
+            margin: 20px;
+        }
+        
+        #status {
+            font-size: 32px;
+            margin: 30px;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            min-width: 400px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔘 Quest 3 Button Test</h1>
+    
+    <div id="status">Waiting for button click...</div>
+    
+    <button onclick="testClick()">TEST BUTTON 1</button>
+    
+    <button id="test2">TEST BUTTON 2</button>
+    
+    <script>
+        let clickCount = 0;
+        
+        function testClick() {
+            clickCount++;
+            document.getElementById('status').innerHTML = '✅ Button 1 clicked! Count: ' + clickCount;
+            alert('Button 1 works!');
+        }
+        
+        document.getElementById('test2').addEventListener('click', function() {
+            clickCount++;
+            document.getElementById('status').innerHTML = '✅ Button 2 clicked! Count: ' + clickCount;
+            alert('Button 2 works!');
+        });
+        
+        console.log('Script loaded!');
+        console.log('Button 1:', document.querySelector('button'));
+        console.log('Button 2:', document.getElementById('test2'));
+    </script>
+</body>
+</html>

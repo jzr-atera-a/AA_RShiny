@@ -677,7 +677,7 @@ ui <- dashboardPage(
             br(),
             actionButton("save_bq", "Save BigQuery Settings", class = "btn-success", icon = icon("save")),
             actionButton("test_bq", "Test Connection & Load Data", class = "btn-info", icon = icon("database")),
-            actionButton("create_table_bq", "Create Empty Tables", class = "btn-warning", icon = icon("plus")),
+            
             br(), br(),
             uiOutput("bq_status_ui"),
             
@@ -1383,140 +1383,7 @@ server <- function(input, output, session) {
     })
   })
   
-  # Create BigQuery Tables
-  observeEvent(input$create_table_bq, {
-    if (!values$bq_configured) {
-      showNotification("Please save BigQuery settings first!", type = "error", duration = 3)
-      return()
-    }
-    
-    showNotification("Creating BigQuery tables...", type = "message", duration = NULL, id = "create_bq")
-    
-    tryCatch({
-      # Set up BigQuery authentication
-      if (!is.null(values$bq_credentials)) {
-        bigrquery::bq_auth(path = values$bq_credentials)
-      }
-      
-      # Connect to BigQuery
-      con <- dbConnect(
-        bigrquery::bigquery(),
-        project = values$bq_project,
-        dataset = values$bq_dataset,
-        billing = values$bq_project
-      )
-      
-      # Create business_contacts table
-      contacts_schema <- "
-    CREATE TABLE IF NOT EXISTS `{project}.{dataset}.{table}` (
-      contact_id STRING,
-      full_name STRING,
-      industry STRING,
-      company STRING,
-      job_title STRING,
-      location STRING,
-      country STRING,
-      email STRING,
-      phone STRING,
-      linkedin STRING,
-      areas_of_interest STRING,
-      university STRING,
-      academic_background STRING,
-      user_notes STRING,
-      last_interaction_date DATE,
-      created_at TIMESTAMP,
-      updated_at TIMESTAMP
-    )
-    "
-      
-      contacts_query <- glue::glue(contacts_schema, 
-                                   project = values$bq_project,
-                                   dataset = values$bq_dataset,
-                                   table = values$bq_table)
-      
-      dbExecute(con, contacts_query)
-      
-      # Create contact_communications table
-      comm_schema <- "
-    CREATE TABLE IF NOT EXISTS `{project}.{dataset}.{table}` (
-      message_id STRING,
-      contact_id STRING,
-      channel_type STRING,
-      communication_purpose STRING,
-      language STRING,
-      message_length STRING,
-      message_content STRING,
-      created_at TIMESTAMP
-    )
-    "
-      
-      comm_query <- glue::glue(comm_schema,
-                               project = values$bq_project,
-                               dataset = values$bq_dataset,
-                               table = values$bq_comm_table)
-      
-      dbExecute(con, comm_query)
-      
-      dbDisconnect(con)
-      
-      # Initialize empty local tables
-      values$contacts_data <- data.frame(
-        contact_id = character(),
-        full_name = character(),
-        industry = character(),
-        company = character(),
-        job_title = character(),
-        location = character(),
-        country = character(),
-        email = character(),
-        phone = character(),
-        linkedin = character(),
-        areas_of_interest = character(),
-        university = character(),
-        academic_background = character(),
-        user_notes = character(),
-        last_interaction_date = character(),
-        created_at = character(),
-        updated_at = character(),
-        stringsAsFactors = FALSE
-      )
-      
-      values$communications_data <- data.frame(
-        message_id = character(),
-        contact_id = character(),
-        channel_type = character(),
-        communication_purpose = character(),
-        language = character(),
-        message_length = character(),
-        message_content = character(),
-        created_at = character(),
-        stringsAsFactors = FALSE
-      )
-      
-      removeNotification(id = "create_bq")
-      
-      output$bq_status_ui <- renderUI({
-        div(class = "api-status-success",
-            icon("check-circle"), " Tables created successfully!",
-            tags$br(),
-            tags$small("Contacts: ", values$bq_project, ".", values$bq_dataset, ".", values$bq_table),
-            tags$br(),
-            tags$small("Communications: ", values$bq_project, ".", values$bq_dataset, ".", values$bq_comm_table))
-      })
-      
-      showNotification("BigQuery tables created successfully!", type = "message", duration = 5)
-      
-    }, error = function(e) {
-      removeNotification(id = "create_bq")
-      
-      output$bq_status_ui <- renderUI({
-        div(class = "api-status-error",
-            icon("exclamation-circle"), " Error creating tables: ", e$message)
-      })
-      
-      showNotification(paste("Error:", e$message), type = "error", duration = 10)
-    })
-  })
+
   
   # ============================================
   # TAB 3: SMTP Configuration

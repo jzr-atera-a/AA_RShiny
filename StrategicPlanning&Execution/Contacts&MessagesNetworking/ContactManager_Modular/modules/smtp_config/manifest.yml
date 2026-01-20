@@ -1,0 +1,18 @@
+module:
+  id: "smtp_config"
+  name: "SMTP Configuration"
+  description: "Configure SMTP email settings"
+  version: "1.0.0"
+  author: "Contact Manager Team"
+  
+  enabled: true
+  
+  menu:
+    label: "SMTP Configuration"
+    icon: "cog"
+    tabname: "smtp_config"
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard

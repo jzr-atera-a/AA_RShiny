@@ -1,0 +1,19 @@
+module:
+  id: "explore_contacts"
+  name: "Explore Contacts"
+  description: "Browse, filter, and manage contact database"
+  version: "1.0.0"
+  author: "Contact Manager Team"
+  
+  enabled: true
+  
+  menu:
+    label: "Explore Contacts"
+    icon: "search"
+    tabname: "explore_contacts"
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - DT
