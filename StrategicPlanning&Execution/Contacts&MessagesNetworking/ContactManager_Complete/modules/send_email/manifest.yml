@@ -1,0 +1,19 @@
+module:
+  id: "send_email"
+  name: "Send Email"
+  description: "Send emails with attachments via SMTP"
+  version: "1.0.0"
+  author: "Contact Manager Team"
+  
+  enabled: true
+  
+  menu:
+    label: "Send Email"
+    icon: "envelope"
+    tabname: "send_email"
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - base64enc

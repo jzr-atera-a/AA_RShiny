@@ -1,0 +1,48 @@
+# modules/_module_registry.yml
+# =============================
+# THE CONTROL CENTER - Enable/Disable Modules Here
+# EV Route Optimizer v3.0
+
+modules:
+  # BigQuery Connection Module
+  bigquery_connection:
+    enabled: true
+    priority: 1
+    description: "BigQuery authentication and charging point data"
+  
+  # Road Network Module
+  road_network:
+    enabled: true
+    priority: 10
+    description: "OpenStreetMap road network download and processing"
+  
+  # Route Optimizer Module
+  route_optimizer:
+    enabled: true
+    priority: 20
+    description: "Calculate optimal routes through charging stations"
+  
+  # Route Map Module
+  route_map:
+    enabled: true
+    priority: 30
+    description: "Interactive Leaflet map with route visualization"
+
+# Global Settings
+settings:
+  auto_install: false
+  check_versions: true
+  verbose: true
+  dev_mode: false
+
+# Application Metadata
+app:
+  name: "EV Route Optimizer"
+  version: "3.0.0"
+  description: "Modular EV/AV route optimization with charging station integration"
+  author: "Analytics Team"
+  created: "2024"
+
+# To DISABLE a module: Change "enabled: true" to "enabled: false"
+# To ENABLE a module: Change "enabled: false" to "enabled: true"
+# Then restart the app

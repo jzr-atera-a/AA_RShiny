@@ -1,0 +1,16 @@
+module:
+  dependencies:
+    packages:
+    - shiny
+    - shinydashboard
+    - httr
+    - jsonlite
+    - rsvg
+    - base64enc
+  enabled: true
+  id: claude_diagrams
+  menu:
+    icon: diagram-project
+    label: Claude Diagrams
+    tabname: claude_diagram_gen
+  name: Claude Diagrams

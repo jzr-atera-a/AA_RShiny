@@ -1,0 +1,18 @@
+module:
+  id: "bigquery_connection"
+  name: "BigQuery Setup"
+  description: "Authenticate with Google BigQuery and load EV charging point data"
+  version: "1.0.0"
+  author: "Analytics Team"
+  enabled: true
+  
+  menu:
+    label: "BigQuery Setup"
+    icon: "database"
+    tabname: "bigquery_connection"
+  
+  dependencies:
+    packages:
+      - bigrquery
+      - dplyr
+      - sf

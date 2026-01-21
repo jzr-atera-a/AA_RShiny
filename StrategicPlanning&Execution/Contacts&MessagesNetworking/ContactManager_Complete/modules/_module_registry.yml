@@ -1,0 +1,56 @@
+# modules/_module_registry.yml
+# Central Module Registry - THE CONTROL CENTER
+# Change 'enabled: false' to disable any module
+# =============================================
+
+modules:
+  # Configuration Modules (Load First)
+  api_config:
+    enabled: true
+    priority: 1
+    description: "OpenAI API configuration"
+  
+  bq_config:
+    enabled: true
+    priority: 2
+    description: "BigQuery authentication and configuration"
+  
+  smtp_config:
+    enabled: true
+    priority: 3
+    description: "SMTP email configuration"
+  
+  # Core Feature Modules
+  process_contact:
+    enabled: true
+    priority: 10
+    description: "Process and extract contact information using LLM"
+  
+  explore_contacts:
+    enabled: true
+    priority: 11
+    description: "Browse, filter, and manage contacts"
+  
+  customise_communication:
+    enabled: true
+    priority: 12
+    description: "Generate personalized communications with LLM"
+  
+  send_email:
+    enabled: true
+    priority: 13
+    description: "Send emails with attachments"
+
+# Global Settings
+settings:
+  auto_install: false
+  check_versions: true
+  verbose: true
+  dev_mode: false
+
+# Application Metadata
+app:
+  name: "Business Contact Manager"
+  version: "1.0.0"
+  description: "AI-powered contact management with personalized communication generation"
+  author: "Contact Manager Team"

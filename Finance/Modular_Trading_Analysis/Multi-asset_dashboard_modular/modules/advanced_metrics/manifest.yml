@@ -1,0 +1,24 @@
+module:
+  id: "advanced_metrics"
+  name: "Advanced Metrics"
+  description: "Advanced performance metrics Sharpe Sortino Calmar Omega ratios"
+  version: "1.0.0"
+  author: "Asset Dashboard Team"
+  enabled: true
+  menu:
+    label: "Advanced Metrics"
+    icon: "star"
+    tabname: "advanced_metrics"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: 
+      - shiny
+      - shinydashboard
+      - plotly
+      - DT
+      - dplyr
+      - TTR
+      - shinycssloaders
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: ["asset_data"], optional: []}

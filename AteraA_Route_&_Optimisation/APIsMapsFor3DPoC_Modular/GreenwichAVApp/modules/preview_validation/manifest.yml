@@ -1,0 +1,15 @@
+module:
+  id: "preview_validation"
+  name: "Preview & Export"
+  description: "Preview all layers, validate data, and export bundle"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "6. Preview & Export"
+    icon: "eye"
+    tabname: "preview_validation"
+  dependencies:
+    packages:
+      - leaflet
+      - sf
+      - jsonlite

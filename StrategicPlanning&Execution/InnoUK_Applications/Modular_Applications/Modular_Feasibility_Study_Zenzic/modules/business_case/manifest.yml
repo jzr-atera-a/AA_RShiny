@@ -1,0 +1,13 @@
+module:
+  dependencies:
+    packages:
+    - shiny
+    - shinydashboard
+    - openxlsx
+  enabled: true
+  id: business_case
+  menu:
+    icon: briefcase
+    label: Business Case
+    tabname: business_case
+  name: Business Case

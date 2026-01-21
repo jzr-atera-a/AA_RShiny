@@ -1,0 +1,10 @@
+module:
+  id: "email_contacts"
+  name: "Email Contacts"
+  enabled: true
+  menu:
+    label: "Email Contacts"
+    icon: "paper-plane"
+    tabname: "email_contacts"
+  dependencies:
+    packages: [shiny, shinydashboard, DT, blastula, dplyr]

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Quest 3 AR Controller</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            z-index: 100;
+            max-width: 400px;
+        }
+        
+        #status {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        
+        .connected { color: #4ade80; }
+        .disconnected { color: #ef4444; }
+        .connecting { color: #fbbf24; }
+        
+        .metric {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        
+        .metric-label {
+            color: #94a3b8;
+            display: inline-block;
+            width: 120px;
+        }
+        
+        .metric-value {
+            color: white;
+            font-weight: bold;
+            font-family: monospace;
+        }
+        
+        #connection-config {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            z-index: 200;
+        }
+        
+        #connection-config h2 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        
+        #connection-config input {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        #connection-config button {
+            width: 100%;
+            padding: 15px;
+            margin-top: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <!-- Connection Config -->
+    <div id="connection-config">
+        <h2>🎮 Connect to R Shiny</h2>
+        <p>Enter your computer's IP:</p>
+        <input type="text" id="shiny-ip" placeholder="192.168.100.2" value="192.168.100.2">
+        <button onclick="connectToShiny()">Connect</button>
+    </div>
+
+    <!-- Info Panel -->
+    <div id="info" class="hidden">
+        <div id="status" class="disconnected">⚫ Disconnected</div>
+        <div class="metric">
+            <span class="metric-label">Server:</span>
+            <span class="metric-value" id="server-address">-</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Commands:</span>
+            <span class="metric-value" id="command-count">0</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">AR Mode:</span>
+            <span class="metric-value" id="ar-status">Desktop</span>
+        </div>
+        <hr style="border-color: rgba(255,255,255,0.2); margin: 15px 0;">
+        <div class="metric">
+            <span class="metric-label">Controller 1:</span>
+            <span class="metric-value" id="c1-status">Inactive</span>
+        </div>
+        <div class="metric">
+            <span class="metric-label">Controller 2:</span>
+            <span class="metric-value" id="c2-status">Inactive</span>
+        </div>
+    </div>
+
+    <!-- Three.js with importmap (like cones example) -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        // Don't import ARButton - we'll create our own that works with HTTP
+
+        // ==============================================================================
+        // GLOBAL STATE
+        // ==============================================================================
+        let scene, camera, renderer, controller1, controller2;
+        let websocket = null;
+        let shinyIP = '';
+        let isConnected = false;
+        let commandCount = 0;
+        let isARMode = false;
+        
+        let controller1State = {
+            position: { x: 0, y: 0, z: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            grip: false,
+            trigger: false
+        };
+        
+        let controller2State = {
+            position: { x: 0, y: 0, z: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            grip: false,
+            trigger: false
+        };
+        
+        let currentVelocity = { linear: 0, angular: 0 };
+        let controllerGripped = false;
+        let gripStartPos = null;
+
+        // ==============================================================================
+        // CUSTOM AR BUTTON (Exact pattern from cones - no pre-checks)
+        // ==============================================================================
+        function createCustomARButton() {
+            const button = document.createElement('button');
+            button.id = 'ARButton';
+            button.textContent = 'START AR';
+            
+            button.style.position = 'absolute';
+            button.style.bottom = '20px';
+            button.style.left = '50%';
+            button.style.transform = 'translateX(-50%)';
+            button.style.padding = '20px 60px';
+            button.style.fontSize = '20px';
+            button.style.fontWeight = 'bold';
+            button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            button.style.color = 'white';
+            button.style.border = 'none';
+            button.style.borderRadius = '50px';
+            button.style.cursor = 'pointer';
+            button.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.5)';
+            button.style.zIndex = '999';
+            
+            button.onclick = () => {
+                // EXACT pattern from cones - just request, no checking
+                currentSession();
+            };
+            
+            async function currentSession() {
+                const sessionInit = {
+                    optionalFeatures: [ 'dom-overlay' ],
+                    domOverlay: { root: document.body }
+                };
+
+                const session = await navigator.xr.requestSession( 'immersive-ar', sessionInit );
+
+                session.addEventListener( 'end', onSessionEnded );
+
+                await renderer.xr.setSession( session );
+                button.textContent = 'EXIT AR';
+            }
+
+            function onSessionEnded() {
+                button.textContent = 'START AR';
+            }
+            
+            return button;
+        }
+
+        // ==============================================================================
+        // WEBSOCKET CONNECTION
+        // ==============================================================================
+        window.connectToShiny = function() {
+            shinyIP = document.getElementById('shiny-ip').value;
+            
+            if (!shinyIP) {
+                alert('Please enter IP address');
+                return;
+            }
+            
+            document.getElementById('connection-config').classList.add('hidden');
+            document.getElementById('info').classList.remove('hidden');
+            
+            updateStatus('connecting', 'Connecting...');
+            document.getElementById('server-address').textContent = shinyIP;
+            
+            const wsUrl = `ws://${shinyIP}:8080`;
+            websocket = new WebSocket(wsUrl);
+            
+            websocket.onopen = () => {
+                isConnected = true;
+                updateStatus('connected', '🟢 Connected');
+                console.log('Connected to R Shiny');
+                
+                // Initialize 3D scene AFTER connection
+                init3DScene();
+            };
+            
+            websocket.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'ack' && data.commands_received) {
+                        document.getElementById('command-count').textContent = data.commands_received;
+                    }
+                } catch (e) {
+                    console.error('Error parsing message:', e);
+                }
+            };
+            
+            websocket.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                updateStatus('disconnected', '🔴 Error');
+            };
+            
+            websocket.onclose = () => {
+                isConnected = false;
+                updateStatus('disconnected', '🔴 Disconnected');
+            };
+        };
+        
+        function updateStatus(statusClass, text) {
+            const statusEl = document.getElementById('status');
+            statusEl.className = statusClass;
+            statusEl.textContent = text;
+        }
+        
+        function sendControllerData() {
+            if (!websocket || websocket.readyState !== WebSocket.OPEN) return;
+            
+            const data = {
+                type: 'controller_data',
+                timestamp: Date.now(),
+                controller1: controller1State,
+                controller2: controller2State,
+                velocity: currentVelocity
+            };
+            
+            websocket.send(JSON.stringify(data));
+            commandCount++;
+        }
+
+        // ==============================================================================
+        // THREE.JS SCENE (Using pattern from cones example)
+        // ==============================================================================
+        function init3DScene() {
+            console.log('Initializing 3D scene...');
+            
+            const container = document.createElement('div');
+            document.body.appendChild(container);
+            
+            scene = new THREE.Scene();
+            
+            camera = new THREE.PerspectiveCamera(
+                70, 
+                window.innerWidth / window.innerHeight, 
+                0.01, 
+                20
+            );
+            
+            // Lighting (same as cones)
+            const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
+            light.position.set(0.5, 1, 0.25);
+            scene.add(light);
+            
+            // Renderer (same as cones)
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setAnimationLoop(animate);
+            renderer.xr.enabled = true;
+            container.appendChild(renderer.domElement);
+            
+            // Custom AR Button (works with HTTP)
+            const arButton = createCustomARButton();
+            document.body.appendChild(arButton);
+            
+            // Setup controllers
+            setupControllers();
+            
+            // Resize handler
+            window.addEventListener('resize', onWindowResize);
+            
+            console.log('3D scene initialized successfully');
+        }
+        
+        function setupControllers() {
+            // Controller 1
+            controller1 = renderer.xr.getController(0);
+            controller1.addEventListener('selectstart', () => onSelectStart(1));
+            controller1.addEventListener('selectend', () => onSelectEnd(1));
+            controller1.addEventListener('squeezestart', () => onSqueezeStart(1));
+            controller1.addEventListener('squeezeend', () => onSqueezeEnd(1));
+            scene.add(controller1);
+            
+            // Controller 2
+            controller2 = renderer.xr.getController(1);
+            controller2.addEventListener('selectstart', () => onSelectStart(2));
+            controller2.addEventListener('selectend', () => onSelectEnd(2));
+            controller2.addEventListener('squeezestart', () => onSqueezeStart(2));
+            controller2.addEventListener('squeezeend', () => onSqueezeEnd(2));
+            scene.add(controller2);
+            
+            console.log('Controllers setup complete');
+        }
+        
+        // ==============================================================================
+        // CONTROLLER EVENTS
+        // ==============================================================================
+        function onSelectStart(controllerNum) {
+            if (controllerNum === 1) {
+                controller1State.trigger = true;
+                document.getElementById('c1-status').textContent = 'TRIGGER';
+            } else {
+                controller2State.trigger = true;
+                document.getElementById('c2-status').textContent = 'TRIGGER';
+            }
+            sendControllerData();
+        }
+        
+        function onSelectEnd(controllerNum) {
+            if (controllerNum === 1) {
+                controller1State.trigger = false;
+                document.getElementById('c1-status').textContent = 'Active';
+            } else {
+                controller2State.trigger = false;
+                document.getElementById('c2-status').textContent = 'Active';
+            }
+            sendControllerData();
+        }
+        
+        function onSqueezeStart(controllerNum) {
+            if (controllerNum === 1) {
+                controller1State.grip = true;
+                document.getElementById('c1-status').textContent = 'GRIPPED 🟢';
+                controllerGripped = true;
+                gripStartPos = controller1.position.clone();
+            } else {
+                controller2State.grip = true;
+                document.getElementById('c2-status').textContent = 'GRIPPED 🟢';
+            }
+            sendControllerData();
+        }
+        
+        function onSqueezeEnd(controllerNum) {
+            if (controllerNum === 1) {
+                controller1State.grip = false;
+                document.getElementById('c1-status').textContent = 'Active';
+                controllerGripped = false;
+                gripStartPos = null;
+                currentVelocity = { linear: 0, angular: 0 };
+            } else {
+                controller2State.grip = false;
+                document.getElementById('c2-status').textContent = 'Active';
+            }
+            sendControllerData();
+        }
+        
+        // ==============================================================================
+        // ANIMATION LOOP
+        // ==============================================================================
+        function animate() {
+            // Update controller states
+            if (controller1) {
+                controller1State.position = {
+                    x: controller1.position.x,
+                    y: controller1.position.y,
+                    z: controller1.position.z
+                };
+                controller1State.rotation = {
+                    x: controller1.rotation.x,
+                    y: controller1.rotation.y,
+                    z: controller1.rotation.z
+                };
+            }
+            
+            if (controller2) {
+                controller2State.position = {
+                    x: controller2.position.x,
+                    y: controller2.position.y,
+                    z: controller2.position.z
+                };
+                controller2State.rotation = {
+                    x: controller2.rotation.x,
+                    y: controller2.rotation.y,
+                    z: controller2.rotation.z
+                };
+            }
+            
+            // Process grip control
+            if (controllerGripped && gripStartPos && controller1) {
+                const offset = controller1.position.clone().sub(gripStartPos);
+                
+                const linear = Math.max(-1, Math.min(1, -offset.z * 2));
+                const angular = Math.max(-1, Math.min(1, offset.x * 2));
+                
+                const deadzone = 0.1;
+                currentVelocity.linear = Math.abs(linear) > deadzone ? linear : 0;
+                currentVelocity.angular = Math.abs(angular) > deadzone ? angular : 0;
+            }
+            
+            // Send data at 20Hz
+            if (commandCount % 3 === 0) {
+                sendControllerData();
+            }
+            
+            // Check AR mode
+            if (renderer.xr.isPresenting && !isARMode) {
+                isARMode = true;
+                document.getElementById('ar-status').textContent = 'Active ✅';
+                console.log('AR mode activated');
+            } else if (!renderer.xr.isPresenting && isARMode) {
+                isARMode = false;
+                document.getElementById('ar-status').textContent = 'Desktop';
+                console.log('AR mode deactivated');
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        // ==============================================================================
+        // KEYBOARD CONTROLS (for desktop testing)
+        // ==============================================================================
+        let keys = {};
+        
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            updateKeyboardControls();
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+            updateKeyboardControls();
+        });
+        
+        function updateKeyboardControls() {
+            let linear = 0;
+            let angular = 0;
+            
+            if (keys['ArrowUp'] || keys['w']) linear += 1;
+            if (keys['ArrowDown'] || keys['s']) linear -= 1;
+            if (keys['ArrowLeft'] || keys['a']) angular -= 1;
+            if (keys['ArrowRight'] || keys['d']) angular += 1;
+            
+            if (linear !== 0 || angular !== 0) {
+                currentVelocity = { linear, angular };
+                sendControllerData();
+            } else if (currentVelocity.linear !== 0 || currentVelocity.angular !== 0) {
+                currentVelocity = { linear: 0, angular: 0 };
+                sendControllerData();
+            }
+        }
+    </script>
+</body>
+</html>

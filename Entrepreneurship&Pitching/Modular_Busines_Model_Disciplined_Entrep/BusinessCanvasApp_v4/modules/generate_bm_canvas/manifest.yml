@@ -1,0 +1,81 @@
+module:
+  id: "generate_bm_canvas"
+  name: "Generate BM Canvas"
+  description: "AI-powered Business Model Canvas generation using Claude API"
+  version: "1.0.0"
+  author: "Business Canvas Manager"
+  
+  enabled: true
+  
+  menu:
+    label: "Generate BM Canvas"
+    icon: "file-import"
+    tabname: "generate_bm_canvas"
+    badge:
+      label: null
+      color: null
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - httr
+      - jsonlite
+      - stringr
+    
+    package_versions:
+      httr: ">= 1.4.0"
+  
+  outputs:
+    - id: "generate_status"
+      type: "html"
+      description: "Generation status messages"
+    - id: "claude_output"
+      type: "textarea"
+      description: "Claude generated content"
+    - id: "bulkStatus"
+      type: "html"
+      description: "Parse and submit status"
+    - id: "parseInfo"
+      type: "html"
+      description: "Parsed canvas summary"
+    - id: "parsedPreview"
+      type: "text"
+      description: "Preview of parsed data"
+  
+  inputs:
+    - id: "business_area"
+      type: "text"
+      description: "Business area classification"
+    - id: "project"
+      type: "text"
+      description: "Project name"
+    - id: "business_focus"
+      type: "text"
+      description: "Business focus description"
+    - id: "business_description"
+      type: "textarea"
+      description: "Detailed business idea"
+    - id: "generate_bm_canvas"
+      type: "button"
+      description: "Generate with Claude"
+    - id: "bulk_text"
+      type: "textarea"
+      description: "Canvas content to parse"
+    - id: "parseCanvas"
+      type: "button"
+      description: "Parse canvas data"
+    - id: "submitCanvas"
+      type: "button"
+      description: "Submit to BigQuery"
+    - id: "clearCanvas"
+      type: "button"
+      description: "Clear all fields"
+  
+  api:
+    required: ["claude"]
+    optional: ["bigquery"]
+  
+  data:
+    required: []
+    optional: []

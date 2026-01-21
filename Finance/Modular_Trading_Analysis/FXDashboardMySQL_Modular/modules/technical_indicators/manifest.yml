@@ -1,0 +1,17 @@
+module:
+  id: "technical_indicators"
+  name: "Technical Indicators"
+  description: "Moving averages and technical analysis"
+  version: "1.0.0"
+  author: "FX Team"
+  enabled: true
+  menu:
+    label: "Technical Indicators"
+    icon: "chart-bar"
+    tabname: "technical_indicators"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, plotly, TTR, shinycssloaders]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

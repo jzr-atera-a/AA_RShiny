@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Quest 3 AR - R Shiny</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <style>
+            body {
+                margin: 0;
+                font-family: Monospace;
+                background-color: #000;
+                color: #fff;
+            }
+            #info {
+                position: absolute;
+                top: 10px;
+                width: 100%;
+                text-align: center;
+                z-index: 100;
+                display:block;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div id="info">
+            Quest 3 AR - Connected: <span id="conn-status">NO</span> | Commands: <span id="cmd-count">0</span>
+        </div>
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+                    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+                }
+            }
+        </script>
+
+        <script type="module">
+
+            import * as THREE from 'three';
+
+            let camera, scene, renderer;
+            let controller1, controller2; // Both controllers
+
+            // WebSocket for R Shiny
+            let websocket = null;
+            const SHINY_IP = '192.168.100.2';
+
+            init();
+            connectToShiny();
+
+            function connectToShiny() {
+                const wsUrl = `ws://${SHINY_IP}:8080`;
+                websocket = new WebSocket(wsUrl);
+                
+                websocket.onopen = () => {
+                    document.getElementById('conn-status').textContent = 'YES';
+                    console.log('Connected to R Shiny');
+                };
+                
+                websocket.onclose = () => {
+                    document.getElementById('conn-status').textContent = 'NO';
+                };
+                
+                websocket.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.commands_received) {
+                            document.getElementById('cmd-count').textContent = data.commands_received;
+                        }
+                    } catch (e) {}
+                };
+            }
+
+            function sendControllerData() {
+                if (!websocket || websocket.readyState !== WebSocket.OPEN) return;
+                
+                const data = {
+                    type: 'controller_data',
+                    timestamp: Date.now(),
+                    controller1: {
+                        position: {
+                            x: controller1.position.x,
+                            y: controller1.position.y,
+                            z: controller1.position.z
+                        },
+                        rotation: {
+                            x: controller1.rotation.x,
+                            y: controller1.rotation.y,
+                            z: controller1.rotation.z
+                        },
+                        grip: false,
+                        trigger: false
+                    },
+                    controller2: {
+                        position: {
+                            x: controller2.position.x,
+                            y: controller2.position.y,
+                            z: controller2.position.z
+                        },
+                        rotation: {
+                            x: controller2.rotation.x,
+                            y: controller2.rotation.y,
+                            z: controller2.rotation.z
+                        },
+                        grip: false,
+                        trigger: false
+                    },
+                    velocity: { linear: 0, angular: 0 }
+                };
+                
+                websocket.send(JSON.stringify(data));
+            }
+
+            function init() {
+
+                const container = document.createElement( 'div' );
+                document.body.appendChild( container );
+
+                scene = new THREE.Scene();
+
+                camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 20 );
+
+                const light = new THREE.HemisphereLight( 0xffffff, 0xbbbbff, 3 );
+                light.position.set( 0.5, 1, 0.25 );
+                scene.add( light );
+
+                //
+
+                renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
+                renderer.setPixelRatio( window.devicePixelRatio );
+                renderer.setSize( window.innerWidth, window.innerHeight );
+                renderer.setAnimationLoop( animate );
+                renderer.xr.enabled = true;
+                container.appendChild( renderer.domElement );
+
+                //
+
+                // Custom button (replaces ARButton.createButton)
+                const arButton = document.createElement('button');
+                arButton.textContent = 'START AR';
+                arButton.style.cssText = 'position:absolute;bottom:20px;padding:12px 24px;border:1px solid white;background:rgba(0,0,0,0.1);color:white;font:13px sans-serif;text-align:center;opacity:0.5;outline:none;z-index:999;cursor:pointer;left:calc(50% - 50px);width:100px;';
+                
+                arButton.onmouseenter = () => { arButton.style.opacity = '1.0'; };
+                arButton.onmouseleave = () => { arButton.style.opacity = '0.5'; };
+                
+                arButton.onclick = async () => {
+                    if ( !renderer.xr.isPresenting ) {
+                        const session = await navigator.xr.requestSession( 'immersive-ar', { optionalFeatures: [ 'local-floor', 'bounded-floor', 'hand-tracking', 'layers' ] } );
+                        session.addEventListener( 'end', () => {
+                            arButton.textContent = 'START AR';
+                            arButton.style.display = '';
+                        });
+                        await renderer.xr.setSession( session );
+                        arButton.textContent = 'STOP AR';
+                        arButton.style.display = 'none';
+                    }
+                };
+                
+                document.body.appendChild( arButton );
+
+                //
+
+                const geometry = new THREE.CylinderGeometry( 0, 0.05, 0.2, 32 ).rotateX( Math.PI / 2 );
+
+                function onSelect() {
+
+                    const material = new THREE.MeshPhongMaterial( { color: 0xffffff * Math.random() } );
+                    const mesh = new THREE.Mesh( geometry, material );
+                    
+                    // Use whichever controller triggered the event
+                    const controllerUsed = this;
+                    mesh.position.set( 0, 0, - 0.3 ).applyMatrix4( controllerUsed.matrixWorld );
+                    mesh.quaternion.setFromRotationMatrix( controllerUsed.matrixWorld );
+                    scene.add( mesh );
+
+                    // Send data to R Shiny
+                    sendControllerData();
+
+                }
+
+                // Controller 1 (Right hand - index 0)
+                controller1 = renderer.xr.getController( 0 );
+                controller1.addEventListener( 'select', onSelect );
+                scene.add( controller1 );
+
+                // Controller 2 (Left hand - index 1)
+                controller2 = renderer.xr.getController( 1 );
+                controller2.addEventListener( 'select', onSelect );
+                scene.add( controller2 );
+
+                //
+
+                window.addEventListener( 'resize', onWindowResize );
+
+            }
+
+            function onWindowResize() {
+
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+
+                renderer.setSize( window.innerWidth, window.innerHeight );
+
+            }
+
+            //
+
+            function animate() {
+
+                renderer.render( scene, camera );
+
+            }
+
+        </script>
+    </body>
+</html>

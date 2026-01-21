@@ -1,0 +1,18 @@
+module:
+  id: "osm_data"
+  name: "OpenStreetMap Data"
+  description: "Download buildings, roads, and points of interest from OpenStreetMap"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "1. OpenStreetMap"
+    icon: "map"
+    tabname: "osm_data"
+  dependencies:
+    packages:
+      - osmdata
+      - sf
+      - dplyr
+      - leaflet
+      - jsonlite
+      - tmaptools

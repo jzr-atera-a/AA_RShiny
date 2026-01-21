@@ -1,0 +1,17 @@
+module:
+  id: "volatility_analysis"
+  name: "Volatility Analysis"
+  description: "Volatility metrics and analysis"
+  version: "1.0.0"
+  author: "FX Team"
+  enabled: true
+  menu:
+    label: "Volatility Analysis"
+    icon: "wave-square"
+    tabname: "volatility_analysis"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, plotly, zoo, shinycssloaders]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

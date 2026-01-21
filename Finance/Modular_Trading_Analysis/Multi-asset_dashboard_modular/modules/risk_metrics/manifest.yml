@@ -1,0 +1,24 @@
+module:
+  id: "risk_metrics"
+  name: "Risk Metrics"
+  description: "Value at Risk Expected Shortfall and drawdown analysis"
+  version: "1.0.0"
+  author: "Asset Dashboard Team"
+  enabled: true
+  menu:
+    label: "Risk Metrics"
+    icon: "exclamation-triangle"
+    tabname: "risk_metrics"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: 
+      - shiny
+      - shinydashboard
+      - plotly
+      - DT
+      - dplyr
+      - TTR
+      - shinycssloaders
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: ["asset_data"], optional: []}

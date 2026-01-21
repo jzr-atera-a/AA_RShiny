@@ -1,0 +1,20 @@
+module:
+  id: "customise_communication"
+  name: "Customise Communication"
+  description: "Generate personalized communications with LLM"
+  version: "1.0.0"
+  author: "Contact Manager Team"
+  
+  enabled: true
+  
+  menu:
+    label: "Customise Communication"
+    icon: "comments"
+    tabname: "customise_communication"
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - httr
+      - jsonlite

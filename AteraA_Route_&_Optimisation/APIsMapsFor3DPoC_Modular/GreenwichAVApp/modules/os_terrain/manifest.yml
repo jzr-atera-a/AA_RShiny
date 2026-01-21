@@ -1,0 +1,15 @@
+module:
+  id: "os_terrain"
+  name: "OS Terrain Data"
+  description: "UK Ordnance Survey terrain and building heights"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "3. OS Terrain"
+    icon: "mountain"
+    tabname: "os_terrain"
+  dependencies:
+    packages:
+      - raster
+      - sf
+      - httr

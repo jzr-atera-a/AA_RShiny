@@ -1,0 +1,15 @@
+module:
+  id: "satellite_imagery"
+  name: "Satellite Imagery"
+  description: "Download satellite imagery from Google Maps or Bing Maps"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "5. Satellite Imagery"
+    icon: "satellite"
+    tabname: "satellite_imagery"
+  dependencies:
+    packages:
+      - httr
+      - leaflet
+      - raster

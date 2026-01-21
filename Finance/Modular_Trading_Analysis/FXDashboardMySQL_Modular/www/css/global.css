@@ -1,0 +1,10 @@
+.content-wrapper, .right-side { background: linear-gradient(135deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important; min-height: 100vh; }
+.sidebar, .main-sidebar { background: linear-gradient(180deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important; }
+.sidebar .sidebar-menu > li > a { color: #ffffff !important; }
+.box { border-radius: 12px !important; box-shadow: 0 8px 25px rgba(0, 44, 60, 0.2) !important; }
+.box-header { background: linear-gradient(135deg, #008A82 0%, #00A39A 100%) !important; color: white !important; }
+.connection-success { background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%) !important; color: #155724 !important; padding: 15px; border-radius: 12px !important; border-left: 4px solid #00A39A !important; }
+.data-warning { background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%) !important; color: #856404 !important; padding: 15px; border-radius: 12px !important; border-left: 4px solid #f39c12 !important; }
+.btn-primary { background: linear-gradient(135deg, #008A82 0%, #00A39A 100%) !important; border: none !important; color: white !important; }
+.small-box.bg-blue { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important; }
+.small-box.bg-green { background: linear-gradient(135deg, #00A39A 0%, #008A82 100%) !important; }

@@ -1,0 +1,23 @@
+module:
+  id: "process_contact"
+  name: "Process Contact"
+  description: "Extract contact information from documents using LLM"
+  version: "1.0.0"
+  author: "Contact Manager Team"
+  
+  enabled: true
+  
+  menu:
+    label: "Process Contact"
+    icon: "user-plus"
+    tabname: "process_contact"
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - DT
+      - pdftools
+      - readtext
+      - uuid
+      - jsonlite

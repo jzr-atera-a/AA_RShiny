@@ -1,0 +1,11 @@
+modules:
+  db_connection: { enabled: true, priority: 1 }
+  market_overview: { enabled: true, priority: 10 }
+  price_analysis: { enabled: true, priority: 11 }
+  technical_indicators: { enabled: true, priority: 12 }
+  volatility_analysis: { enabled: true, priority: 13 }
+  risk_metrics: { enabled: true, priority: 14 }
+  correlation_matrix: { enabled: true, priority: 15 }
+
+settings: { auto_install: false, check_versions: true, verbose: true, dev_mode: false }
+app: { name: "FX Analysis Dashboard", version: "2.0.0", description: "Modular FX analytics", author: "Trading Team" }

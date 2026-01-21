@@ -1,0 +1,17 @@
+module:
+  id: "price_analysis"
+  name: "Price Analysis"
+  description: "Price charts and analysis"
+  version: "1.0.0"
+  author: "FX Team"
+  enabled: true
+  menu:
+    label: "Price Analysis"
+    icon: "chart-area"
+    tabname: "price_analysis"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, plotly, dplyr, shinycssloaders]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

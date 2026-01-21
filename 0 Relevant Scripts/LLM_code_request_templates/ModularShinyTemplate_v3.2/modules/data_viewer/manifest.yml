@@ -1,0 +1,23 @@
+module:
+  id: "data_viewer"
+  name: "Data Viewer"
+  description: "View and filter data from BigQuery with cascading dropdowns"
+  version: "1.0.0"
+  
+  enabled: true
+  
+  menu:
+    label: "Data Viewer"
+    icon: "table"
+    tabname: "data_viewer"
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - DT
+      - bigrquery
+  
+  api:
+    required: []
+    optional: ["bigquery"]

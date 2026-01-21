@@ -1,0 +1,60 @@
+# modules/_module_registry.yml
+# Central Module Registry - THE CONTROL CENTER
+# Change 'enabled: false' to disable any module
+# =============================================
+
+modules:
+  # Core Analysis Modules
+  market_overview:
+    enabled: true
+    priority: 1
+    description: "Market overview with price and volume"
+  
+  price_analysis:
+    enabled: true
+    priority: 2
+    description: "Detailed price analysis with OHLC"
+  
+  technical_indicators:
+    enabled: true
+    priority: 3
+    description: "Technical indicators (RSI, MACD, Bollinger)"
+  
+  volatility_analysis:
+    enabled: true
+    priority: 4
+    description: "Volatility metrics and clustering"
+  
+  risk_metrics:
+    enabled: true
+    priority: 5
+    description: "Value at Risk and drawdown analysis"
+  
+  advanced_metrics:
+    enabled: true
+    priority: 6
+    description: "Sharpe, Sortino, Calmar ratios"
+  
+  hedging_strategies:
+    enabled: true
+    priority: 7
+    description: "Hedge analysis and effectiveness"
+  
+  composite_analysis:
+    enabled: true
+    priority: 8
+    description: "Multi-asset comparison"
+
+# Global Settings
+settings:
+  auto_install: false
+  check_versions: true
+  verbose: true
+  dev_mode: false
+
+# Application Metadata
+app:
+  name: "Multi-Asset Analysis Dashboard"
+  version: "1.0.0"
+  description: "Real-time cryptocurrency, private equity & commodity analysis"
+  author: "Asset Analysis Team"

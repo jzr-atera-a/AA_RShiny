@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>WebXR Diagnostic</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: monospace;
+            background: #000;
+            color: #0f0;
+            font-size: 14px;
+        }
+        .test {
+            margin: 15px 0;
+            padding: 15px;
+            background: #111;
+            border-left: 4px solid #0f0;
+        }
+        .pass { border-color: #0f0; }
+        .fail { border-color: #f00; color: #f00; }
+        .warn { border-color: #ff0; color: #ff0; }
+        h1 { color: #0ff; }
+        h2 { color: #0f0; margin-top: 20px; }
+        code { background: #222; padding: 2px 6px; }
+        button {
+            margin: 10px 5px;
+            padding: 12px 24px;
+            background: #1583d0;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 WebXR Diagnostic Tool</h1>
+    <p>This will test what's preventing AR from working...</p>
+
+    <h2>Test 1: Basic Browser Support</h2>
+    <div id="test1" class="test">Running...</div>
+
+    <h2>Test 2: Navigator.XR Availability</h2>
+    <div id="test2" class="test">Running...</div>
+
+    <h2>Test 3: AR Session Support</h2>
+    <div id="test3" class="test">Running...</div>
+
+    <h2>Test 4: CDN Access</h2>
+    <div id="test4" class="test">Running...</div>
+
+    <h2>Test 5: Three.js Module Loading</h2>
+    <div id="test5" class="test">Running...</div>
+
+    <h2>Test 6: Direct AR Request</h2>
+    <div id="test6" class="test">
+        <button id="ar-test-btn">Click to Test AR Session Request</button>
+        <div id="ar-result"></div>
+    </div>
+
+    <script>
+        // Test 1: Basic Browser Info
+        const test1 = document.getElementById('test1');
+        test1.innerHTML = `
+            <strong>✓ PASS:</strong> Basic JavaScript working<br>
+            User Agent: ${navigator.userAgent}<br>
+            Browser: ${navigator.vendor || 'Unknown'}<br>
+            Platform: ${navigator.platform}
+        `;
+        test1.className = 'test pass';
+
+        // Test 2: Navigator.XR
+        const test2 = document.getElementById('test2');
+        if (typeof navigator.xr !== 'undefined') {
+            test2.innerHTML = `<strong>✓ PASS:</strong> navigator.xr EXISTS<br>Type: ${typeof navigator.xr}`;
+            test2.className = 'test pass';
+        } else {
+            test2.innerHTML = `<strong>✗ FAIL:</strong> navigator.xr is UNDEFINED<br>
+                This means Meta Browser is NOT recognizing this page as WebXR-enabled.<br>
+                <strong>Possible causes:</strong><br>
+                1. Page not served with correct headers<br>
+                2. Browser security settings blocking WebXR<br>
+                3. Experimental features disabled`;
+            test2.className = 'test fail';
+        }
+
+        // Test 3: AR Session Support
+        const test3 = document.getElementById('test3');
+        if (navigator.xr) {
+            navigator.xr.isSessionSupported('immersive-ar').then(supported => {
+                if (supported) {
+                    test3.innerHTML = `<strong>✓ PASS:</strong> AR sessions ARE supported`;
+                    test3.className = 'test pass';
+                } else {
+                    test3.innerHTML = `<strong>✗ FAIL:</strong> AR sessions NOT supported<br>
+                        navigator.xr exists but AR mode is not available.<br>
+                        Check Quest settings for AR permissions.`;
+                    test3.className = 'test fail';
+                }
+            }).catch(error => {
+                test3.innerHTML = `<strong>✗ FAIL:</strong> Error checking AR support<br>Error: ${error.message}`;
+                test3.className = 'test fail';
+            });
+        } else {
+            test3.innerHTML = `<strong>⊘ SKIP:</strong> Cannot test (navigator.xr unavailable)`;
+            test3.className = 'test warn';
+        }
+
+        // Test 4: CDN Access
+        const test4 = document.getElementById('test4');
+        const cdnTest = new Image();
+        cdnTest.onload = () => {
+            test4.innerHTML = `<strong>✓ PASS:</strong> CDN (jsdelivr) is accessible`;
+            test4.className = 'test pass';
+        };
+        cdnTest.onerror = () => {
+            test4.innerHTML = `<strong>✗ FAIL:</strong> CDN (jsdelivr) is BLOCKED<br>
+                Quest cannot reach external CDN.<br>
+                This means Three.js from CDN won't load.`;
+            test4.className = 'test fail';
+        };
+        cdnTest.src = 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/screenshots/webgl_animation_keyframes.jpg';
+
+        // Test 5: Three.js Module Loading
+        const test5 = document.getElementById('test5');
+        test5.innerHTML = 'Testing Three.js module import...';
+    </script>
+
+    <!-- Importmap Test -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        const test5 = document.getElementById('test5');
+        try {
+            const THREE = await import('three');
+            test5.innerHTML = `<strong>✓ PASS:</strong> Three.js loaded from CDN<br>
+                Version: r${THREE.REVISION}<br>
+                THREE object exists: ${typeof THREE.Scene !== 'undefined'}`;
+            test5.className = 'test pass';
+        } catch (error) {
+            test5.innerHTML = `<strong>✗ FAIL:</strong> Three.js FAILED to load<br>
+                Error: ${error.message}<br>
+                <strong>This means ES6 modules from CDN are blocked or not supported.</strong>`;
+            test5.className = 'test fail';
+        }
+
+        // Test 6: Direct AR Request
+        document.getElementById('ar-test-btn').onclick = async () => {
+            const result = document.getElementById('ar-result');
+            result.innerHTML = '<br>Requesting AR session...';
+            
+            try {
+                if (!navigator.xr) {
+                    throw new Error('navigator.xr is undefined');
+                }
+                
+                const session = await navigator.xr.requestSession('immersive-ar', {
+                    optionalFeatures: ['dom-overlay'],
+                    domOverlay: { root: document.body }
+                });
+                
+                result.innerHTML = '<br><strong style="color:#0f0;">✓ SUCCESS!</strong> AR session created!<br>Session: ' + session;
+                
+                session.end();
+                
+            } catch (error) {
+                result.innerHTML = `<br><strong style="color:#f00;">✗ FAILED:</strong><br>
+                    Error: ${error.message}<br>
+                    Error name: ${error.name}<br>
+                    Stack: ${error.stack}`;
+            }
+        };
+    </script>
+
+    <h2>Summary</h2>
+    <div class="test">
+        <p>After all tests complete, look for RED (✗ FAIL) items above.</p>
+        <p><strong>Common failure patterns:</strong></p>
+        <ul>
+            <li><strong>Test 2 fails:</strong> Page not WebXR-enabled → Check Meta Browser settings or try HTTPS</li>
+            <li><strong>Test 4 fails:</strong> CDN blocked → Use local Three.js files instead</li>
+            <li><strong>Test 5 fails:</strong> ES6 modules blocked → Meta Browser might not support importmap from CDN</li>
+            <li><strong>All pass but Test 6 fails:</strong> Permission issue → Grant AR permissions in Quest settings</li>
+        </ul>
+    </div>
+</body>
+</html>

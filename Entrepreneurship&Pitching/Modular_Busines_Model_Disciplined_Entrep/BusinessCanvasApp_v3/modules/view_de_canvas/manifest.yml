@@ -1,0 +1,12 @@
+module:
+  id: "view_de_canvas"
+  name: "Disciplined Ent. Canvas"
+  description: "View saved DE Canvas from BigQuery"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Disciplined Ent. Canvas"
+    icon: "layer-group"
+    tabname: "view_de_canvas"
+  dependencies:
+    packages: [shiny, shinydashboard, bigrquery]

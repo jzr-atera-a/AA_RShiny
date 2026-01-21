@@ -1,0 +1,20 @@
+module:
+  id: "api_config"
+  name: "API Configuration"
+  description: "Configure OpenAI API credentials for LLM features"
+  version: "1.0.0"
+  author: "Contact Manager Team"
+  
+  enabled: true
+  
+  menu:
+    label: "API Configuration"
+    icon: "key"
+    tabname: "api_config"
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - httr
+      - jsonlite

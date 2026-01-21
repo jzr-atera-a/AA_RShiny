@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Quest 3 Actuator Controller</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <style>
+            body {
+                margin: 0;
+                font-family: monospace;
+            }
+            #info {
+                position: absolute;
+                top: 0;
+                width: 100%;
+                padding: 10px;
+                box-sizing: border-box;
+                text-align: center;
+                color: #fff;
+                background: rgba(0, 0, 0, 0.9);
+                font-size: 13px;
+                z-index: 1;
+            }
+            .status-good { color: #0f0; }
+            .status-bad { color: #f00; }
+            .status-warn { color: #ff0; }
+            .actuator-panel {
+                background: rgba(50, 50, 50, 0.95);
+                padding: 12px;
+                margin-top: 8px;
+                border-radius: 8px;
+                border: 2px solid #667eea;
+            }
+            .panel-title {
+                font-size: 16px;
+                color: #667eea;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+            .big-value {
+                font-size: 32px;
+                color: #ffa500;
+                font-weight: bold;
+                margin: 8px 0;
+            }
+            .control-info {
+                color: #4ade80;
+                font-size: 14px;
+                margin: 5px 0;
+            }
+            .button-indicator {
+                font-size: 20px;
+                display: inline-block;
+                margin: 0 10px;
+            }
+            .motor-panel {
+                border-color: #f59e0b;
+            }
+            .motor-panel .panel-title {
+                color: #f59e0b;
+            }
+            .motor-speed {
+                color: #f59e0b;
+            }
+            .debug-info {
+                font-size: 11px;
+                color: #888;
+                margin-top: 5px;
+            }
+            button {
+                position: absolute;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 15px 30px;
+                font-size: 16px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                z-index: 2;
+            }
+            button:hover {
+                background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            }
+        </style>
+    </head>
+    <body>
+        <div id="info">
+            <strong>Quest 3 → 4-Wheel Robot Actuator Control</strong><br>
+            Connected: <span id="conn-status" class="status-bad">NO</span> | 
+            Commands: <span id="cmd-count">0</span> | 
+            Controllers: <span id="controller-count" class="status-warn">0</span>
+            
+            <!-- Motor Panel (LEFT Joystick Y) -->
+            <div class="actuator-panel motor-panel">
+                <div class="panel-title">⚡ MOTORS (MD22) - LEFT JOYSTICK Y</div>
+                <div class="big-value motor-speed" id="motor-speed">0%</div>
+                <div class="control-info">Joystick Y: <span id="joy-y">0.000</span></div>
+                <div style="font-size: 11px;">Rest: STOP | Forward: 50-90% | Deadzone: ±10%</div>
+                <div class="debug-info">LEFT Status: <span id="left-status" class="status-warn">WAITING</span></div>
+            </div>
+            
+            <!-- Servo1 Panel (A/B Buttons) -->
+            <div class="actuator-panel">
+                <div class="panel-title">🎮 SERVO1 (Pin 8) - RIGHT A/B BUTTONS</div>
+                <div class="big-value" id="servo1-angle">90°</div>
+                <div class="control-info">
+                    <span class="button-indicator" id="btn-a">⚪ A</span>
+                    <span class="button-indicator" id="btn-b">⚪ B</span>
+                </div>
+                <div style="font-size: 11px;">A: Down to 40° | B: Up to 140°</div>
+                <div class="debug-info">RIGHT Status: <span id="right-status" class="status-warn">WAITING</span></div>
+            </div>
+            
+            <!-- Servo2 Panel (Joystick X) -->
+            <div class="actuator-panel">
+                <div class="panel-title">🕹️ SERVO2 (Pin 9) - RIGHT JOYSTICK X (STEERING)</div>
+                <div class="big-value" id="servo2-angle">90°</div>
+                <div class="control-info">Joystick X: <span id="joy-x">0.000</span></div>
+                <div style="font-size: 11px;">Left: 50° | Center: 90° | Right: 130°</div>
+            </div>
+        </div>
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+                    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+                }
+            }
+        </script>
+
+        <script type="module">
+            import * as THREE from 'three';
+
+            // ==================================================================
+            // CONFIGURATION
+            // ==================================================================
+            
+            const JETSON_IP = '192.168.100.10';  // Jetson Nano IP address
+            const WS_PORT = 8443;                // Python WSS server port
+            
+            // Motor configuration
+            const MOTOR_DEADZONE = 0.10;  // 10% deadzone
+            const MOTOR_MIN_PERCENT = 50;
+            const MOTOR_MAX_PERCENT = 90;
+            
+            // Debug flags
+            let debugMode = true;  // Set to false to disable console logging
+            
+            // ==================================================================
+            // WEBSOCKET CONNECTION
+            // ==================================================================
+            
+            let ws = null;
+            let wsConnected = false;
+            let commandCount = 0;
+
+            function connectToWebSocket() {
+                const wsUrl = `wss://${JETSON_IP}:${WS_PORT}`;
+                
+                console.log(`Connecting to WebSocket: ${wsUrl}`);
+                
+                try {
+                    ws = new WebSocket(wsUrl);
+                    
+                    ws.onopen = () => {
+                        console.log('✓ WebSocket connected!');
+                        wsConnected = true;
+                        document.getElementById('conn-status').textContent = 'YES';
+                        document.getElementById('conn-status').className = 'status-good';
+                    };
+                    
+                    ws.onerror = (error) => {
+                        console.error('✗ WebSocket error:', error);
+                        wsConnected = false;
+                        document.getElementById('conn-status').textContent = 'ERROR';
+                        document.getElementById('conn-status').className = 'status-bad';
+                    };
+                    
+                    ws.onclose = () => {
+                        console.log('✗ WebSocket closed');
+                        wsConnected = false;
+                        document.getElementById('conn-status').textContent = 'NO';
+                        document.getElementById('conn-status').className = 'status-bad';
+                        
+                        // Try to reconnect after 2 seconds
+                        setTimeout(connectToWebSocket, 2000);
+                    };
+
+                    ws.onmessage = (event) => {
+                        try {
+                            const data = JSON.parse(event.data);
+                            // Update UI with feedback from server
+                            if (data.servo1_angle !== undefined) {
+                                document.getElementById('servo1-angle').textContent = data.servo1_angle + '°';
+                            }
+                            if (data.servo2_angle !== undefined) {
+                                document.getElementById('servo2-angle').textContent = data.servo2_angle + '°';
+                            }
+                            if (data.motor_speed !== undefined) {
+                                document.getElementById('motor-speed').textContent = data.motor_speed + '%';
+                            }
+                        } catch (e) {
+                            console.error('Parse error:', e);
+                        }
+                    };
+                    
+                } catch (error) {
+                    console.error('Failed to create WebSocket:', error);
+                }
+            }
+
+            function joystickYToMotorSpeed(joystickY) {
+                /**
+                 * Map LEFT joystick Y to motor speed (50-90%)
+                 */
+                
+                // Apply deadzone
+                if (Math.abs(joystickY) < MOTOR_DEADZONE) {
+                    return 0;  // Stop motors
+                }
+                
+                // Only accept positive Y (forward motion)
+                if (joystickY <= 0) {
+                    return 0;  // No backward motion
+                }
+                
+                // Map positive Y (0.1 to 1.0) to speed (50% to 90%)
+                const adjustedY = (joystickY - MOTOR_DEADZONE) / (1.0 - MOTOR_DEADZONE);
+                const clampedY = Math.max(0.0, Math.min(1.0, adjustedY));
+                
+                // Map to motor speed range (50-90%)
+                const speed = MOTOR_MIN_PERCENT + clampedY * (MOTOR_MAX_PERCENT - MOTOR_MIN_PERCENT);
+                
+                return Math.round(speed);
+            }
+
+            function sendControllerData() {
+                if (!wsConnected || !ws || ws.readyState !== WebSocket.OPEN) {
+                    return;
+                }
+
+                try {
+                    // Get XR session input sources for button/joystick data
+                    const session = renderer.xr.getSession();
+                    const inputSources = session ? session.inputSources : [];
+                    
+                    // DEBUG: Log controller count
+                    if (debugMode && commandCount % 20 === 0) {
+                        console.log(`📊 Input Sources Count: ${inputSources.length}`);
+                    }
+                    
+                    // Update UI with controller count
+                    document.getElementById('controller-count').textContent = inputSources.length;
+                    if (inputSources.length >= 2) {
+                        document.getElementById('controller-count').className = 'status-good';
+                    }
+                    
+                    // Build controller data
+                    const data = {
+                        timestamp: Date.now(),
+                        controller0: {  // LEFT controller (for motors)
+                            position: {
+                                x: controller2.position.x,
+                                y: controller2.position.y,
+                                z: controller2.position.z
+                            },
+                            rotation: {
+                                x: controller2.rotation.x,
+                                y: controller2.rotation.y,
+                                z: controller2.rotation.z
+                            }
+                        },
+                        controller1: {  // RIGHT controller (for servos)
+                            position: {
+                                x: controller1.position.x,
+                                y: controller1.position.y,
+                                z: controller1.position.z
+                            },
+                            rotation: {
+                                x: controller1.rotation.x,
+                                y: controller1.rotation.y,
+                                z: controller1.rotation.z
+                            }
+                        }
+                    };
+                    
+                    // Track if we found LEFT and RIGHT controllers
+                    let leftControllerFound = false;
+                    let rightControllerFound = false;
+                    
+                    // Add gamepad data (buttons and joysticks)
+                    // Use HANDEDNESS for reliable controller detection
+                    inputSources.forEach((source, index) => {
+                        if (source.gamepad) {
+                            const gamepad = source.gamepad;
+                            
+                            // DEBUG: Log which controller we're processing
+                            if (debugMode && commandCount % 20 === 0) {
+                                console.log(`🎮 Processing controller index ${index}, handedness: ${source.handedness}`);
+                            }
+                            
+                            // Map based on HANDEDNESS (more reliable than index)
+                            let controllerKey;
+                            if (source.handedness === 'left') {
+                                controllerKey = 'controller0';
+                                leftControllerFound = true;
+                            } else if (source.handedness === 'right') {
+                                controllerKey = 'controller1';
+                                rightControllerFound = true;
+                            } else {
+                                // Fallback to index-based mapping
+                                controllerKey = index === 1 ? 'controller1' : 'controller0';
+                                if (index === 0) leftControllerFound = true;
+                                if (index === 1) rightControllerFound = true;
+                            }
+                            
+                            // Joystick axes (thumbstick)
+                            data[controllerKey].joystick = {
+                                x: gamepad.axes[2] || 0,  // Thumbstick X
+                                y: gamepad.axes[3] || 0   // Thumbstick Y
+                            };
+                            
+                            // DEBUG: Log joystick values
+                            if (debugMode && commandCount % 20 === 0) {
+                                console.log(`🕹️  ${controllerKey} joystick: X=${data[controllerKey].joystick.x.toFixed(3)}, Y=${data[controllerKey].joystick.y.toFixed(3)}`);
+                            }
+                            
+                            // Update UI with controller data
+                            if (controllerKey === 'controller0') {
+                                // LEFT controller - Motor control
+                                const joyY = data.controller0.joystick.y;
+                                document.getElementById('joy-y').textContent = joyY.toFixed(3);
+                                
+                                // Calculate and display expected motor speed
+                                const motorSpeed = joystickYToMotorSpeed(joyY);
+                                document.getElementById('motor-speed').textContent = motorSpeed + '%';
+                                
+                                // Update LEFT status
+                                document.getElementById('left-status').textContent = 'ACTIVE';
+                                document.getElementById('left-status').className = 'status-good';
+                            }
+                            
+                            if (controllerKey === 'controller1') {
+                                // RIGHT controller - Servo control
+                                const joyX = data.controller1.joystick.x;
+                                document.getElementById('joy-x').textContent = joyX.toFixed(3);
+                                
+                                // Calculate and display expected servo2 angle
+                                const normalized = (joyX + 1.0) / 2.0;
+                                const angle = 50 + normalized * 80; // 50-130° range
+                                document.getElementById('servo2-angle').textContent = Math.round(angle) + '°';
+                                
+                                // Update RIGHT status
+                                document.getElementById('right-status').textContent = 'ACTIVE';
+                                document.getElementById('right-status').className = 'status-good';
+                            }
+                            
+                            // Buttons
+                            data[controllerKey].buttons = {
+                                trigger: gamepad.buttons[0] ? gamepad.buttons[0].value : 0,
+                                grip: gamepad.buttons[1] ? gamepad.buttons[1].value : 0,
+                                thumbstick: gamepad.buttons[3] ? gamepad.buttons[3].pressed : false,
+                                a_x: gamepad.buttons[4] ? gamepad.buttons[4].pressed : false,
+                                b_y: gamepad.buttons[5] ? gamepad.buttons[5].pressed : false
+                            };
+                            
+                            // Update UI button indicators for RIGHT controller
+                            if (controllerKey === 'controller1') {
+                                const btnA = data.controller1.buttons.a_x;
+                                const btnB = data.controller1.buttons.b_y;
+                                
+                                document.getElementById('btn-a').textContent = btnA ? '🔴 A' : '⚪ A';
+                                document.getElementById('btn-b').textContent = btnB ? '🔴 B' : '⚪ B';
+                            }
+                        } else {
+                            // DEBUG: Controller has no gamepad
+                            if (debugMode && commandCount % 20 === 0) {
+                                console.log(`⚠️  Controller index ${index} has no gamepad data`);
+                            }
+                        }
+                    });
+                    
+                    // Update status indicators if controllers not found
+                    if (!leftControllerFound) {
+                        document.getElementById('left-status').textContent = 'NOT DETECTED';
+                        document.getElementById('left-status').className = 'status-bad';
+                    }
+                    
+                    if (!rightControllerFound) {
+                        document.getElementById('right-status').textContent = 'NOT DETECTED';
+                        document.getElementById('right-status').className = 'status-bad';
+                    }
+                    
+                    // DEBUG: Log final data being sent
+                    if (debugMode && commandCount % 20 === 0) {
+                        console.log('📤 Sending data:', {
+                            leftJoyY: data.controller0.joystick?.y,
+                            rightJoyX: data.controller1.joystick?.x,
+                            leftFound: leftControllerFound,
+                            rightFound: rightControllerFound
+                        });
+                    }
+
+                    ws.send(JSON.stringify(data));
+                    
+                    commandCount++;
+                    document.getElementById('cmd-count').textContent = commandCount;
+                    
+                } catch (error) {
+                    console.error('❌ Error sending data:', error);
+                }
+            }
+
+            // Connect to WebSocket immediately
+            connectToWebSocket();
+
+            // ==================================================================
+            // THREE.JS SETUP (AR with passthrough)
+            // ==================================================================
+
+            let camera, scene, renderer;
+            let controller1, controller2;
+
+            init();
+
+            function init() {
+                const container = document.createElement('div');
+                document.body.appendChild(container);
+
+                scene = new THREE.Scene();
+
+                camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+
+                const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
+                light.position.set(0.5, 1, 0.25);
+                scene.add(light);
+
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setAnimationLoop(animate);
+                renderer.xr.enabled = true;
+                container.appendChild(renderer.domElement);
+
+                // Custom AR button
+                const arButton = document.createElement('button');
+                arButton.textContent = 'START AR';
+                arButton.onclick = async () => {
+                    try {
+                        const session = await navigator.xr.requestSession('immersive-ar', { 
+                            optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking', 'layers'] 
+                        });
+                        await renderer.xr.setSession(session);
+                        console.log('✓ AR session started');
+                    } catch (error) {
+                        console.error('❌ AR Error:', error);
+                        alert('AR Error: ' + error.message);
+                    }
+                };
+                document.body.appendChild(arButton);
+
+                // Cone geometry for visual feedback
+                const geometry = new THREE.CylinderGeometry(0, 0.05, 0.2, 32).rotateX(Math.PI / 2);
+
+                function onSelect() {
+                    const material = new THREE.MeshPhongMaterial({ color: 0xffffff * Math.random() });
+                    const mesh = new THREE.Mesh(geometry, material);
+                    mesh.position.set(0, 0, -0.3).applyMatrix4(controller1.matrixWorld);
+                    mesh.quaternion.setFromRotationMatrix(controller1.matrixWorld);
+                    scene.add(mesh);
+                }
+
+                // Controllers - VERIFIED CORRECT MAPPING
+                // Quest reports: getController(0) = LEFT hand, getController(1) = RIGHT hand
+                controller1 = renderer.xr.getController(1);  // RIGHT controller
+                controller1.addEventListener('select', onSelect);
+                scene.add(controller1);
+
+                controller2 = renderer.xr.getController(0);  // LEFT controller
+                controller2.addEventListener('select', onSelect);
+                scene.add(controller2);
+
+                console.log('✓ Controllers initialized: controller1 (RIGHT), controller2 (LEFT)');
+
+                window.addEventListener('resize', onWindowResize);
+            }
+
+            function onWindowResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            // ==================================================================
+            // ANIMATION LOOP - Send data continuously
+            // ==================================================================
+            
+            let lastSendTime = 0;
+            const SEND_INTERVAL = 50; // Send every 50ms (20Hz)
+
+            function animate() {
+                // Send controller data at 20Hz when in AR
+                if (renderer.xr.isPresenting) {
+                    const now = Date.now();
+                    if (now - lastSendTime >= SEND_INTERVAL) {
+                        sendControllerData();
+                        lastSendTime = now;
+                    }
+                }
+                
+                renderer.render(scene, camera);
+            }
+
+        </script>
+    </body>
+</html>
