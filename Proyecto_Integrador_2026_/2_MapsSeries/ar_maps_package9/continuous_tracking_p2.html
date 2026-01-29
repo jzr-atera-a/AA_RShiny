@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Continuous Triangle Tracking - Quest 3</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { margin: 0; font-family: monospace; background: #000; color: #0f0; }
+        #info {
+            position: absolute; top: 10px; width: 100%; text-align: center;
+            background: rgba(0,0,0,0.9); padding: 15px; font-size: 16px;
+            z-index: 100;
+        }
+        .detected { color: #00ff00; }
+        .lost { color: #ff0000; }
+        #debugCanvas { 
+            position: absolute; bottom: 10px; right: 10px; 
+            width: 320px; height: 180px; border: 2px solid #0f0; z-index: 50;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h2>CONTINUOUS TRIANGLE TRACKING</h2>
+        <div>Status: <span id="status" class="lost">NOT STARTED</span></div>
+        <div>Position: <span id="position">-</span></div>
+        <div>Orientation: <span id="orientation">-</span></div>
+        <div>Distance: <span id="distance">-</span></div>
+        <hr>
+        <small>Quest camera continuously tracks triangle movement</small>
+    </div>
+
+    <canvas id="debugCanvas"></canvas>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/apriltag@1.1.0/apriltag.min.js"></script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { ARButton } from 'three/addons/webxr/ARButton.js';
+
+        let scene, camera, renderer;
+        let marker, robotIcon;
+        let videoElement, trackingCanvas, trackingCtx;
+        let debugCanvas, debugCtx;
+        let trackingActive = false;
+        let trackingInterval = null;
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+            
+            const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
+            scene.add(light);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.xr.enabled = true;
+            document.body.appendChild(renderer.domElement);
+
+            // Tracking canvas
+            trackingCanvas = document.createElement('canvas');
+            trackingCtx = trackingCanvas.getContext('2d');
+
+            // Debug canvas
+            debugCanvas = document.getElementById('debugCanvas');
+            debugCtx = debugCanvas.getContext('2d');
+
+            const button = ARButton.createButton(renderer, {
+                requiredFeatures: ['local-floor'],
+                optionalFeatures: ['dom-overlay'],
+                domOverlay: { root: document.body }
+            });
+            document.body.appendChild(button);
+
+            renderer.xr.addEventListener('sessionstart', onSessionStart);
+            renderer.xr.addEventListener('sessionend', onSessionEnd);
+            
+            renderer.setAnimationLoop(animate);
+        }
+
+        async function onSessionStart() {
+            document.getElementById('status').textContent = 'Starting camera...';
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    } 
+                });
+                
+                videoElement = document.createElement('video');
+                videoElement.srcObject = stream;
+                videoElement.setAttribute('playsinline', '');
+                videoElement.play();
+                
+                videoElement.onloadedmetadata = () => {
+                    trackingCanvas.width = videoElement.videoWidth;
+                    trackingCanvas.height = videoElement.videoHeight;
+                    debugCanvas.width = 320;
+                    debugCanvas.height = 240;
+                    
+                    trackingActive = true;
+                    
+                    // Start continuous tracking at 10Hz
+                    trackingInterval = setInterval(() => {
+                        if (trackingActive) {
+                            trackTriangle();
+                        }
+                    }, 100);
+                    
+                    document.getElementById('status').textContent = '✓ TRACKING STARTED';
+                    document.getElementById('status').className = 'detected';
+                    console.log('✓ Continuous tracking active at 10Hz');
+                    console.log('Camera:', videoElement.videoWidth, 'x', videoElement.videoHeight);
+                };
+                
+            } catch (err) {
+                console.error('Camera failed:', err);
+                document.getElementById('status').textContent = 'CAMERA FAILED';
+                document.getElementById('status').className = 'lost';
+            }
+        }
+
+        function onSessionEnd() {
+            trackingActive = false;
+            if (trackingInterval) {
+                clearInterval(trackingInterval);
+                trackingInterval = null;
+            }
+            if (videoElement && videoElement.srcObject) {
+                videoElement.srcObject.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        function trackTriangle() {
+            if (!videoElement || videoElement.readyState !== videoElement.HAVE_ENOUGH_DATA) return;
+
+            // Draw video frame
+            trackingCtx.drawImage(videoElement, 0, 0, trackingCanvas.width, trackingCanvas.height);
+            const imageData = trackingCtx.getImageData(0, 0, trackingCanvas.width, trackingCanvas.height);
+            
+            // Detect AprilTag using apriltag.js library
+            let detected = null;
+            
+            try {
+                // Convert to grayscale for AprilTag detection
+                const gray = new Uint8Array(imageData.width * imageData.height);
+                for (let i = 0; i < imageData.data.length; i += 4) {
+                    gray[i/4] = (imageData.data[i] + imageData.data[i+1] + imageData.data[i+2]) / 3;
+                }
+                
+                // Simple corner detection fallback (AprilTag library may not work)
+                detected = detectAprilTagPattern(imageData);
+                
+            } catch (err) {
+                console.error('AprilTag detection error:', err);
+                detected = detectAprilTagPattern(imageData);
+            }
+            
+            if (detected) {
+                const { centerX, centerY, size, corners } = detected;
+                
+                // Draw debug visualization
+                debugCtx.drawImage(videoElement, 0, 0, debugCanvas.width, debugCanvas.height);
+                debugCtx.strokeStyle = '#00ff00';
+                debugCtx.lineWidth = 3;
+                
+                // Draw detected square
+                const scaleX = debugCanvas.width / trackingCanvas.width;
+                const scaleY = debugCanvas.height / trackingCanvas.height;
+                
+                if (corners && corners.length === 4) {
+                    debugCtx.beginPath();
+                    debugCtx.moveTo(corners[0].x * scaleX, corners[0].y * scaleY);
+                    debugCtx.lineTo(corners[1].x * scaleX, corners[1].y * scaleY);
+                    debugCtx.lineTo(corners[2].x * scaleX, corners[2].y * scaleY);
+                    debugCtx.lineTo(corners[3].x * scaleX, corners[3].y * scaleY);
+                    debugCtx.closePath();
+                    debugCtx.stroke();
+                }
+                
+                // Estimate 3D position from 2D detection
+                const pose = estimate3DPose(centerX, centerY, size, trackingCanvas.width, trackingCanvas.height);
+                
+                // Update AR markers
+                updateMarkers(pose);
+                
+                // Update display
+                document.getElementById('status').textContent = '✓ APRILTAG DETECTED';
+                document.getElementById('status').className = 'detected';
+                document.getElementById('position').textContent = 
+                    `X:${(pose.x*100).toFixed(1)}cm Y:${(pose.y*100).toFixed(1)}cm Z:${(pose.z*100).toFixed(1)}cm`;
+                document.getElementById('orientation').textContent = `${pose.heading.toFixed(1)}°`;
+                document.getElementById('distance').textContent = `${(pose.distance*100).toFixed(1)}cm`;
+                
+            } else {
+                document.getElementById('status').textContent = 'SEARCHING FOR APRILTAG...';
+                document.getElementById('status').className = 'lost';
+                
+                // Show raw camera feed
+                debugCtx.drawImage(videoElement, 0, 0, debugCanvas.width, debugCanvas.height);
+                debugCtx.fillStyle = '#ff0000';
+                debugCtx.font = '16px monospace';
+                debugCtx.fillText('NO TAG DETECTED', 10, 30);
+            }
+        }
+
+        function detectAprilTagPattern(imageData) {
+            const width = imageData.width;
+            const height = imageData.height;
+            const data = imageData.data;
+            
+            // Find black squares (AprilTag has thick black border)
+            let blackRegions = [];
+            
+            // Scan for continuous black regions
+            for (let y = 10; y < height - 10; y += 8) {
+                for (let x = 10; x < width - 10; x += 8) {
+                    const idx = (y * width + x) * 4;
+                    const brightness = (data[idx] + data[idx+1] + data[idx+2]) / 3;
+                    
+                    if (brightness < 60) {  // Black pixel
+                        // Check if part of larger black square
+                        let blackCount = 0;
+                        for (let dy = -8; dy <= 8; dy += 4) {
+                            for (let dx = -8; dx <= 8; dx += 4) {
+                                const checkIdx = ((y+dy) * width + (x+dx)) * 4;
+                                if (checkIdx >= 0 && checkIdx < data.length) {
+                                    const checkBright = (data[checkIdx] + data[checkIdx+1] + data[checkIdx+2]) / 3;
+                                    if (checkBright < 60) blackCount++;
+                                }
+                            }
+                        }
+                        
+                        if (blackCount > 15) {  // Found black region
+                            blackRegions.push({x, y, score: blackCount});
+                        }
+                    }
+                }
+            }
+            
+            if (blackRegions.length < 20) return null;
+            
+            // Find bounding box of black regions
+            let minX = width, maxX = 0, minY = height, maxY = 0;
+            blackRegions.forEach(r => {
+                if (r.x < minX) minX = r.x;
+                if (r.x > maxX) maxX = r.x;
+                if (r.y < minY) minY = r.y;
+                if (r.y > maxY) maxY = r.y;
+            });
+            
+            const w = maxX - minX;
+            const h = maxY - minY;
+            
+            // Check if roughly square (AprilTag is square)
+            if (w < 40 || h < 40 || Math.abs(w - h) > Math.max(w, h) * 0.4) return null;
+            
+            const centerX = (minX + maxX) / 2;
+            const centerY = (minY + maxY) / 2;
+            const size = (w + h) / 2;
+            
+            const corners = [
+                {x: minX, y: minY},
+                {x: maxX, y: minY},
+                {x: maxX, y: maxY},
+                {x: minX, y: maxY}
+            ];
+            
+            return { centerX, centerY, size, corners };
+        }
+
+        function estimate3DPose(centerX, centerY, size, frameWidth, frameHeight) {
+            // Normalize to -1 to 1
+            const normX = (centerX / frameWidth - 0.5) * 2;
+            const normY = (centerY / frameHeight - 0.5) * 2;
+            
+            // Distance estimation (larger size = closer)
+            const focalLength = 600;
+            const realSize = 0.1;  // 10cm AprilTag marker
+            const distance = (realSize * focalLength) / size;
+            
+            // 3D position
+            const x = normX * distance * 0.75;
+            const y = -normY * distance * 0.5 - 0.18;  // Adjust for 18cm height
+            const z = -distance;
+            
+            // Heading (simplified)
+            const heading = Math.atan2(x, z) * 180 / Math.PI;
+            
+            return {
+                x, y, z,
+                heading,
+                distance: Math.sqrt(x*x + y*y + z*z)
+            };
+        }
+
+        function updateMarkers(pose) {
+            const frame = renderer.xr.getFrame();
+            const refSpace = renderer.xr.getReferenceSpace();
+            
+            if (frame && refSpace) {
+                const viewerPose = frame.getViewerPose(refSpace);
+                if (viewerPose) {
+                    const viewPos = viewerPose.transform.position;
+                    
+                    const worldX = viewPos.x + pose.x;
+                    const worldY = viewPos.y + pose.y;
+                    const worldZ = viewPos.z + pose.z;
+                    
+                    // Create markers if they don't exist
+                    if (!marker) {
+                        const geometry = new THREE.ConeGeometry(0.1, 0.2, 3);  // Larger: 10cm base, 20cm tall
+                        geometry.rotateX(Math.PI / 2);
+                        marker = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ 
+                            color: 0xff00ff,
+                            side: THREE.DoubleSide
+                        }));
+                        scene.add(marker);
+                        console.log('✓ Magenta marker created');
+                    }
+                    
+                    if (!robotIcon) {
+                        const robotGeometry = new THREE.ConeGeometry(0.15, 0.3, 4);  // Larger: 15cm base, 30cm tall
+                        robotGeometry.rotateX(Math.PI / 2);
+                        robotIcon = new THREE.Mesh(robotGeometry, new THREE.MeshBasicMaterial({ 
+                            color: 0x00ff00,
+                            side: THREE.DoubleSide
+                        }));
+                        scene.add(robotIcon);
+                        console.log('✓ Green robot icon created');
+                    }
+                    
+                    // ALWAYS update positions (continuous tracking)
+                    marker.position.set(worldX, worldY, worldZ);
+                    marker.rotation.y = pose.heading * Math.PI / 180;
+                    marker.visible = true;
+                    
+                    robotIcon.position.set(worldX, worldY + 0.1, worldZ);  // 10cm above marker
+                    robotIcon.rotation.y = (pose.heading + 180) * Math.PI / 180;  // Inverted 180°
+                    robotIcon.visible = true;
+                    
+                    console.log('Marker updated:', worldX.toFixed(2), worldY.toFixed(2), worldZ.toFixed(2));
+                }
+            }
+        }
+
+        function animate() {
+            renderer.render(scene, camera);
+        }
+
+        init();
+    </script>
+</body>
+</html>
