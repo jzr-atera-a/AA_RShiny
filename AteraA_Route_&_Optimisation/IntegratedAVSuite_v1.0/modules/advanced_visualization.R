@@ -3,7 +3,7 @@
 # Sends full route data to Quest 3 for AR floor projection
 
 # ============================================================================
-# UI FUNCTION - front end
+# UI FUNCTION 
 # ============================================================================
 
 advanced_visualization_ui <- function(id) {
