@@ -301,7 +301,7 @@ advanced_visualization_server <- function(id, api_manager) {
       }), collapse = ",")
       
       # Mapbox token
-      token <- "MAPBOX_TOKEN_REMOVED"
+      mapbox_token <- Sys.getenv("MAPBOX_TOKEN")
       
       # Static map URL
       mapUrl <- paste0(

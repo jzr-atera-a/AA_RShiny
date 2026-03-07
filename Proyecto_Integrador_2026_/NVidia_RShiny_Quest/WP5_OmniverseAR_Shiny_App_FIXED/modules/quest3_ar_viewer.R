@@ -301,7 +301,7 @@ quest3_ar_viewer_server <- function(id, api_manager) {
       }), collapse = ",")
       
       # Mapbox token
-      token <- "MAPBOX_TOKEN_REMOVED"
+      token <- Sys.getenv("MAPBOX_TOKEN")
       
       # Static map URL
       mapUrl <- paste0(
