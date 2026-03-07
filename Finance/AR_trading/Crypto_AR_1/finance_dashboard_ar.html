@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Finance AR Dashboard - BTC/USD</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', monospace; background: #000; color: #fff; }
+        #info {
+            position: absolute; top: 0; width: 100%; text-align: center; z-index: 100;
+            background: rgba(0, 20, 35, 0.92); padding: 8px 4px 6px; font-size: 11px;
+            pointer-events: none; border-bottom: 1px solid #00A39A;
+        }
+        #info strong { color: #00A39A; font-size: 13px; }
+        .s-good    { color: #00ff88; }
+        .s-bad     { color: #e74c3c; }
+        .s-warn    { color: #f39c12; }
+        .s-info    { color: #00ccff; }
+        .s-teal    { color: #00A39A; }
+        #metric-bar {
+            position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 20, 35, 0.9); border: 1px solid #00A39A;
+            border-radius: 8px; padding: 8px 16px; font-size: 12px;
+            pointer-events: none; text-align: center; min-width: 260px;
+            display: none;
+        }
+        #metric-bar.visible { display: block; }
+    </style>
+</head>
+<body>
+
+<div id="info">
+    <strong>⬡ FINANCE AR DASHBOARD — BTC/USD</strong><br/>
+    AR: <span id="ar-status" class="s-warn">NOT STARTED</span> &nbsp;|&nbsp;
+    Floor: <span id="floor-status" class="s-warn">Detecting...</span> &nbsp;|&nbsp;
+    Mode: <span id="mode-status" class="s-info">NONE</span><br/>
+    Price: <span id="price-status" class="s-good">$--</span> &nbsp;|&nbsp;
+    Vol30d: <span id="vol-status" class="s-warn">--%</span> &nbsp;|&nbsp;
+    RSI: <span id="rsi-status" class="s-teal">--</span>
+</div>
+
+<div id="metric-bar">
+    <span id="metric-content">Select a mode on the panel</span>
+</div>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { ARButton } from 'three/addons/webxr/ARButton.js';
+
+// ═══════════════════════════════════════════════════════════════════════
+// DEBUG LOG
+// ═══════════════════════════════════════════════════════════════════════
+function dbg(msg, level = 'INFO') {
+    console.log(`[${level}] ${msg}`);
+    fetch('/debug_log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg, level, timestamp: Date.now() })
+    }).catch(() => {});
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// SYNTHETIC BTC DATA GENERATION  (180 trading days)
+// ═══════════════════════════════════════════════════════════════════════
+let DATA = [];
+let LAST_PRICE = 0;
+let LAST_VOL   = 0;
+let LAST_RSI   = 0;
+
+function generateData() {
+    const N = 180;
+    let price = 42350;
+    // Simple seeded PRNG (LCG)
+    let seed = 314159;
+    const rand  = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+    const randn = () => Math.sqrt(-2 * Math.log(rand() + 1e-9)) * Math.cos(2 * Math.PI * rand());
+
+    for (let i = 0; i < N; i++) {
+        const vol  = 0.033 + rand() * 0.012;   // daily vol 3.3–4.5%
+        const r    = 0.0005 + vol * randn();
+        const open  = price;
+        const close = price * Math.exp(r);
+        const iVol  = vol * 0.4;
+        const high  = Math.max(open, close) * Math.exp(Math.abs(iVol * randn()));
+        const low   = Math.min(open, close) / Math.exp(Math.abs(iVol * randn()));
+        const volume = (12000 + rand() * 28000) * (1 + Math.abs(r) * 12);
+        DATA.push({ i, open, high, low, close, volume, r });
+        price = close;
+    }
+
+    // SMA 20 / SMA 50 / Bollinger Bands
+    for (let i = 0; i < N; i++) {
+        const w20 = DATA.slice(Math.max(0, i - 19), i + 1);
+        const w50 = DATA.slice(Math.max(0, i - 49), i + 1);
+        DATA[i].sma20 = w20.reduce((s, d) => s + d.close, 0) / w20.length;
+        DATA[i].sma50 = w50.reduce((s, d) => s + d.close, 0) / w50.length;
+        const m20 = DATA[i].sma20;
+        const std20 = Math.sqrt(w20.reduce((s, d) => s + (d.close - m20) ** 2, 0) / w20.length);
+        DATA[i].bbUpper = m20 + 2 * std20;
+        DATA[i].bbLower = m20 - 2 * std20;
+    }
+
+    // Rolling vol at multiple windows (10,20,30,45,60) → vol surface
+    const volWindows = [10, 20, 30, 45, 60];
+    for (let i = 0; i < N; i++) {
+        DATA[i].volByWindow = {};
+        for (const w of volWindows) {
+            const slice = DATA.slice(Math.max(0, i - w + 1), i + 1).map(d => d.r);
+            const mR = slice.reduce((s, v) => s + v, 0) / slice.length;
+            const v  = Math.sqrt(slice.reduce((s, v) => s + (v - mR) ** 2, 0) / slice.length);
+            DATA[i].volByWindow[w] = v * Math.sqrt(252) * 100;
+        }
+        DATA[i].vol30 = DATA[i].volByWindow[30];
+    }
+
+    // RSI (14)
+    for (let i = 0; i < N; i++) {
+        if (i < 14) { DATA[i].rsi = 50; continue; }
+        let g = 0, l = 0;
+        for (let j = i - 13; j <= i; j++) {
+            const r = DATA[j].r;
+            if (r > 0) g += r; else l -= r;
+        }
+        DATA[i].rsi = l === 0 ? 100 : 100 - 100 / (1 + g / l);
+    }
+
+    // MACD (12, 26, 9)
+    let e12 = DATA[0].close, e26 = DATA[0].close, sig = 0;
+    const k12 = 2/13, k26 = 2/27, k9 = 2/10;
+    for (let i = 0; i < N; i++) {
+        e12 = DATA[i].close * k12 + e12 * (1 - k12);
+        e26 = DATA[i].close * k26 + e26 * (1 - k26);
+        const macd = e12 - e26;
+        sig = i === 0 ? macd : macd * k9 + sig * (1 - k9);
+        DATA[i].macd     = macd;
+        DATA[i].macdSig  = sig;
+        DATA[i].macdHist = macd - sig;
+    }
+
+    LAST_PRICE = DATA[N-1].close;
+    LAST_VOL   = DATA[N-1].vol30;
+    LAST_RSI   = DATA[N-1].rsi;
+
+    // Update HUD
+    document.getElementById('price-status').textContent = '$' + Math.round(LAST_PRICE).toLocaleString();
+    document.getElementById('vol-status').textContent   = LAST_VOL.toFixed(1) + '%';
+    document.getElementById('rsi-status').textContent   = LAST_RSI.toFixed(1);
+
+    dbg(`Data generated: ${N} bars. Last price=$${Math.round(LAST_PRICE)}, Vol30=${LAST_VOL.toFixed(1)}%`);
+}
+
+generateData();
+
+// ═══════════════════════════════════════════════════════════════════════
+// THREE.JS STATE
+// ═══════════════════════════════════════════════════════════════════════
+let scene, camera, renderer;
+let controller0, controller1;
+let refSpace = null;
+
+// Floor
+let floorDetected = false;
+let floorY = 0;
+let userX = 0, userZ = 0;   // viewer XZ position captured at floor detection
+const MAP_SIZE    = 2.2;
+const FLOOR_OFFSET = 1.6;   // fallback: camera-to-floor estimate when local-floor unavailable
+
+// Control panel
+let controlPanel      = null;
+let controlMode       = 0;
+let lastLeftTrigPanel = false;
+
+// Floor chart planes (one per mode)
+let floorCharts = [null, null, null];
+
+// 3D chart groups (one per mode)
+let chart3D = [null, null, null];
+
+// 3D chart constants
+const CHART_Y     = 2.0;
+const CHART_SCALE = 0.8;
+
+// Panel buttons (UV coords for 3 modes + spacer)
+const PANEL_W = 1200, PANEL_H = 820;
+const MODE_ROWS = 3;
+const ROW_H     = 160;
+const ROW_TOP   = 100;
+
+// ═══════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════
+function init() {
+    scene  = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.01, 30);
+
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x224433, 3);
+    hemi.position.set(0, 2, 0);
+    scene.add(hemi);
+
+    const dirLight = new THREE.DirectionalLight(0x00A39A, 1.5);
+    dirLight.position.set(2, 4, 2);
+    scene.add(dirLight);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(devicePixelRatio);
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setAnimationLoop(animate);
+    renderer.xr.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    const arBtn = ARButton.createButton(renderer, {
+        requiredFeatures: ['local-floor'],
+        optionalFeatures: ['dom-overlay'],
+        domOverlay: { root: document.getElementById('info') }
+    });
+    document.body.appendChild(arBtn);
+
+    controller0 = renderer.xr.getController(0);
+    controller1 = renderer.xr.getController(1);
+    scene.add(controller0);
+    scene.add(controller1);
+
+    // Coloured rays
+    const rayGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,-3)]);
+    controller0.add(new THREE.Line(rayGeo, new THREE.LineBasicMaterial({ color: 0x00A39A })));
+    controller1.add(new THREE.Line(rayGeo, new THREE.LineBasicMaterial({ color: 0x00ccff })));
+
+    renderer.xr.addEventListener('sessionstart', () => {
+        dbg('AR SESSION STARTED');
+        document.getElementById('ar-status').textContent = 'ACTIVE';
+        document.getElementById('ar-status').className  = 's-good';
+        document.getElementById('metric-bar').classList.add('visible');
+    });
+    renderer.xr.addEventListener('sessionend', () => {
+        document.getElementById('ar-status').textContent = 'ENDED';
+        document.getElementById('ar-status').className  = 's-warn';
+    });
+
+    window.addEventListener('resize', () => {
+        camera.aspect = innerWidth / innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(innerWidth, innerHeight);
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// FLOOR DETECTION
+// ═══════════════════════════════════════════════════════════════════════
+function detectFloor(frame, xrRefSpace) {
+    const pose = frame.getViewerPose(xrRefSpace);
+    if (!pose) return;
+    if (!floorDetected) {
+        // Read head Y from transform matrix (column-major, index 13 = Y translation)
+        const headY = pose.transform.matrix[13];
+
+        // Force content at XZ origin where user stands
+        userX = 0;
+        userZ = 0;
+
+        // KEY HEURISTIC (from working trajectory_6modes reference):
+        // local-floor: floor=Y=0, head is ~1.5-1.8m above -> headY > 0.5
+        // viewer/local: head is near Y=0 -> headY ~= 0
+        if (Math.abs(headY) > 0.5) {
+            floorY = 0;                     // local-floor: floor IS at Y=0
+        } else {
+            floorY = headY - FLOOR_OFFSET;  // viewer/local: estimate from eye height
+        }
+
+        floorDetected = true;
+        dbg(`Floor detected headY=${headY.toFixed(3)} -> floorY=${floorY.toFixed(3)}`);
+        document.getElementById('floor-status').textContent = `Y=${floorY.toFixed(2)}m`;
+        document.getElementById('floor-status').className  = 's-good';
+        buildScene();
+    }
+}
+
+async function buildScene() {
+    dbg('Building finance AR scene...');
+    buildAllFloorCharts();
+    buildAll3DCharts();
+    buildControlPanel();
+    switchMode(0);
+    dbg('Scene build complete.');
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// ─── FLOOR CHARTS ─────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════
+
+function buildAllFloorCharts() {
+    const textures = [
+        drawCandlestickChart(),
+        drawTechnicalChart(),
+        drawVolatilityChart()
+    ];
+    textures.forEach((tex, idx) => {
+        tex.minFilter = tex.magFilter = THREE.LinearFilter;
+        const geo = new THREE.PlaneGeometry(1.5, 1.0);
+        geo.rotateX(-Math.PI / 2);
+        const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+            map: tex, transparent: true, opacity: 0.82, depthWrite: false
+        }));
+        mesh.position.set(userX, floorY + 0.002, userZ);
+        mesh.visible = false;
+        scene.add(mesh);
+        floorCharts[idx] = mesh;
+    });
+    dbg('Floor charts built.');
+}
+
+// ──────────────────────────────────────────────────
+// FLOOR MODE 0 – OHLC CANDLESTICK CHART
+// ──────────────────────────────────────────────────
+function drawCandlestickChart() {
+    const W = 2048, H = 1024;
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const ctx = c.getContext('2d');
+
+    // Background
+    ctx.fillStyle = '#050d18';
+    ctx.fillRect(0, 0, W, H);
+
+    // Grid
+    drawGrid(ctx, W, H, 8, 6, '#0a2030');
+
+    // Title
+    ctx.fillStyle = '#00A39A';
+    ctx.font = 'bold 38px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('BTC/USD  —  PRICE ANALYSIS  |  OHLC Candlestick  (180 days)', W/2, 44);
+
+    const PAD_L = 80, PAD_R = 40, PAD_T = 65, PAD_B = 180;
+    const chartW = W - PAD_L - PAD_R;
+    const chartH = (H - PAD_T - PAD_B) * 0.72;
+    const volH   = (H - PAD_T - PAD_B) * 0.22;
+    const volY   = PAD_T + chartH + 10;
+
+    // Price range
+    const prices = DATA.flatMap(d => [d.high, d.low]);
+    const pMin = Math.min(...prices), pMax = Math.max(...prices);
+    const pRange = pMax - pMin;
+    const px = (p) => PAD_L + ((p - pMin) / pRange) * chartW;   // NOT USED (Y axis is vertical)
+    const py = (p) => PAD_T + (1 - (p - pMin) / pRange) * chartH;
+
+    // Volume range
+    const vMax = Math.max(...DATA.map(d => d.volume));
+    const vy = (v) => volY + volH - (v / vMax) * volH;
+
+    const candleW = Math.max(2, chartW / DATA.length * 0.7);
+
+    DATA.forEach((d, i) => {
+        const x = PAD_L + (i / (DATA.length - 1)) * chartW;
+        const isGreen = d.close >= d.open;
+        const clr = isGreen ? '#00c97a' : '#e74c3c';
+
+        // Wick
+        ctx.strokeStyle = clr;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x, py(d.high));
+        ctx.lineTo(x, py(d.low));
+        ctx.stroke();
+
+        // Body
+        const yOpen  = py(d.open);
+        const yClose = py(d.close);
+        ctx.fillStyle = clr;
+        ctx.globalAlpha = 0.9;
+        ctx.fillRect(x - candleW/2, Math.min(yOpen, yClose), candleW, Math.abs(yClose - yOpen) || 1);
+        ctx.globalAlpha = 1;
+
+        // Volume bar
+        ctx.fillStyle = isGreen ? 'rgba(0,201,122,0.45)' : 'rgba(231,76,60,0.45)';
+        ctx.fillRect(x - candleW/2, vy(d.volume), candleW, volY + volH - vy(d.volume));
+    });
+
+    // SMA 20 line
+    ctx.strokeStyle = '#00ccff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    DATA.forEach((d, i) => {
+        const x = PAD_L + (i / (DATA.length - 1)) * chartW;
+        i === 0 ? ctx.moveTo(x, py(d.sma20)) : ctx.lineTo(x, py(d.sma20));
+    });
+    ctx.stroke();
+
+    // SMA 50 line
+    ctx.strokeStyle = '#f39c12';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    DATA.forEach((d, i) => {
+        const x = PAD_L + (i / (DATA.length - 1)) * chartW;
+        i === 0 ? ctx.moveTo(x, py(d.sma50)) : ctx.lineTo(x, py(d.sma50));
+    });
+    ctx.stroke();
+
+    // Bollinger bands (shaded area)
+    ctx.beginPath();
+    DATA.forEach((d, i) => {
+        const x = PAD_L + (i / (DATA.length - 1)) * chartW;
+        i === 0 ? ctx.moveTo(x, py(d.bbUpper)) : ctx.lineTo(x, py(d.bbUpper));
+    });
+    DATA.slice().reverse().forEach((d, i) => {
+        const ri = DATA.length - 1 - i;
+        const x = PAD_L + (ri / (DATA.length - 1)) * chartW;
+        ctx.lineTo(x, py(d.bbLower));
+    });
+    ctx.fillStyle = 'rgba(0,163,154,0.10)';
+    ctx.fill();
+
+    // Y-axis labels
+    ctx.fillStyle = '#8899aa';
+    ctx.font = '20px Arial';
+    ctx.textAlign = 'right';
+    for (let t = 0; t <= 5; t++) {
+        const p = pMin + (t/5) * pRange;
+        const y = py(p);
+        ctx.fillText('$' + Math.round(p).toLocaleString(), PAD_L - 4, y + 6);
+        ctx.strokeStyle = '#0a2030';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(W - PAD_R, y); ctx.stroke();
+    }
+
+    // X-axis date labels (every 30 days)
+    ctx.fillStyle = '#8899aa';
+    ctx.font = '18px Arial';
+    ctx.textAlign = 'center';
+    for (let i = 0; i < DATA.length; i += 30) {
+        const x = PAD_L + (i / (DATA.length - 1)) * chartW;
+        ctx.fillText('Day ' + i, x, H - PAD_B + 20);
+    }
+
+    // Legend
+    drawLegend(ctx, W - 280, PAD_T + 10, [
+        { label: 'SMA 20', color: '#00ccff' },
+        { label: 'SMA 50', color: '#f39c12' },
+        { label: 'BB Bands', color: 'rgba(0,163,154,0.6)' }
+    ]);
+
+    // Volume label
+    ctx.fillStyle = '#8899aa';
+    ctx.font = 'bold 20px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('VOLUME', PAD_L, volY - 6);
+
+    // Footer stats
+    const last = DATA[DATA.length-1];
+    const first = DATA[0];
+    const totalRet = ((last.close / first.close) - 1) * 100;
+    ctx.fillStyle = totalRet >= 0 ? '#00c97a' : '#e74c3c';
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(
+        `Price: $${Math.round(last.close).toLocaleString()}   |   180d Return: ${totalRet.toFixed(1)}%   |   High: $${Math.round(Math.max(...DATA.map(d=>d.high))).toLocaleString()}   |   Low: $${Math.round(Math.min(...DATA.map(d=>d.low))).toLocaleString()}`,
+        W/2, H - 30
+    );
+
+    return new THREE.CanvasTexture(c);
+}
+
+// ──────────────────────────────────────────────────
+// FLOOR MODE 1 – TECHNICAL INDICATORS
+// ──────────────────────────────────────────────────
+function drawTechnicalChart() {
+    const W = 2048, H = 1024;
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const ctx = c.getContext('2d');
+
+    ctx.fillStyle = '#050d18';
+    ctx.fillRect(0, 0, W, H);
+    drawGrid(ctx, W, H, 8, 6, '#0a2030');
+
+    ctx.fillStyle = '#00A39A';
+    ctx.font = 'bold 38px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('BTC/USD  —  TECHNICAL INDICATORS  |  SMA · Bollinger Bands · RSI · MACD', W/2, 44);
+
+    // ─ Top panel: Price + MA + BB (60% height)
+    const PAD_L = 80, PAD_R = 40, PAD_T = 65;
+    const chartW = W - PAD_L - PAD_R;
+    const priceH = (H - PAD_T) * 0.45;
+    const rsiH   = (H - PAD_T) * 0.18;
+    const macdH  = (H - PAD_T) * 0.18;
+    const rsiY   = PAD_T + priceH + 20;
+    const macdY  = rsiY + rsiH + 20;
+
+    const prices = DATA.flatMap(d => [d.bbUpper, d.bbLower]);
+    const pMin = Math.min(...prices) * 0.99;
+    const pMax = Math.max(...prices) * 1.01;
+    const py  = (p) => PAD_T + (1 - (p - pMin) / (pMax - pMin)) * priceH;
+    const x   = (i) => PAD_L + (i / (DATA.length - 1)) * chartW;
+
+    // BB shaded area
+    ctx.beginPath();
+    DATA.forEach((d, i) => i === 0 ? ctx.moveTo(x(i), py(d.bbUpper)) : ctx.lineTo(x(i), py(d.bbUpper)));
+    DATA.slice().reverse().forEach((d, i) => {
+        const ri = DATA.length - 1 - i;
+        ctx.lineTo(x(ri), py(d.bbLower));
+    });
+    ctx.fillStyle = 'rgba(0,163,154,0.12)';
+    ctx.fill();
+
+    // BB Upper/Lower lines
+    ['bbUpper', 'bbLower'].forEach(k => {
+        ctx.strokeStyle = '#005f5a';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        DATA.forEach((d, i) => i === 0 ? ctx.moveTo(x(i), py(d[k])) : ctx.lineTo(x(i), py(d[k])));
+        ctx.stroke();
+        ctx.setLineDash([]);
+    });
+
+    // Close price
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    DATA.forEach((d, i) => i === 0 ? ctx.moveTo(x(i), py(d.close)) : ctx.lineTo(x(i), py(d.close)));
+    ctx.stroke();
+
+    // SMA20
+    ctx.strokeStyle = '#00ccff';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    DATA.forEach((d, i) => i === 0 ? ctx.moveTo(x(i), py(d.sma20)) : ctx.lineTo(x(i), py(d.sma20)));
+    ctx.stroke();
+
+    // SMA50
+    ctx.strokeStyle = '#f39c12';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    DATA.forEach((d, i) => i === 0 ? ctx.moveTo(x(i), py(d.sma50)) : ctx.lineTo(x(i), py(d.sma50)));
+    ctx.stroke();
+
+    // Separator
+    ctx.strokeStyle = '#1a3040';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD_L, rsiY); ctx.lineTo(W - PAD_R, rsiY); ctx.stroke();
+
+    // RSI panel label
+    ctx.fillStyle = '#8899aa';
+    ctx.font = 'bold 20px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('RSI (14)', PAD_L, rsiY + 22);
+
+    // RSI overbought/oversold zones
+    const ry = (v) => rsiY + (1 - (v - 0) / 100) * rsiH;
+    [30, 50, 70].forEach(level => {
+        const y = ry(level);
+        ctx.strokeStyle = level === 50 ? '#1a3040' : (level === 70 ? 'rgba(231,76,60,0.4)' : 'rgba(0,201,122,0.4)');
+        ctx.lineWidth = 1;
+        ctx.setLineDash(level === 50 ? [] : [4, 4]);
+        ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(W - PAD_R, y); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = level === 70 ? '#e74c3c' : (level === 30 ? '#00c97a' : '#556677');
+        ctx.font = '17px Arial';
+        ctx.textAlign = 'right';
+        ctx.fillText(level, PAD_L - 4, y + 5);
+    });
+
+    // RSI line with gradient fill
+    const rsiGrad = ctx.createLinearGradient(0, rsiY, 0, rsiY + rsiH);
+    rsiGrad.addColorStop(0, 'rgba(231,76,60,0.6)');
+    rsiGrad.addColorStop(0.3, 'rgba(243,156,18,0.3)');
+    rsiGrad.addColorStop(0.7, 'rgba(0,201,122,0.3)');
+    rsiGrad.addColorStop(1, 'rgba(0,201,122,0.05)');
+
+    ctx.beginPath();
+    DATA.forEach((d, i) => i === 0 ? ctx.moveTo(x(i), ry(d.rsi)) : ctx.lineTo(x(i), ry(d.rsi)));
+    ctx.lineTo(x(DATA.length-1), rsiY + rsiH);
+    ctx.lineTo(x(0), rsiY + rsiH);
+    ctx.fillStyle = rsiGrad;
+    ctx.fill();
+
+    ctx.strokeStyle = '#a855f7';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    DATA.forEach((d, i) => i === 0 ? ctx.moveTo(x(i), ry(d.rsi)) : ctx.lineTo(x(i), ry(d.rsi)));
+    ctx.stroke();
+
+    // MACD panel
+    ctx.beginPath(); ctx.moveTo(PAD_L, macdY); ctx.lineTo(W - PAD_R, macdY); ctx.stroke();
+    ctx.fillStyle = '#8899aa';
+    ctx.font = 'bold 20px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('MACD (12,26,9)', PAD_L, macdY + 22);
+
+    const macdVals = DATA.flatMap(d => [d.macd, d.macdSig, d.macdHist]);
+    const macdMin = Math.min(...macdVals);
+    const macdMax = Math.max(...macdVals);
+    const macdRange = Math.max(Math.abs(macdMin), Math.abs(macdMax)) * 2;
+    const my = (v) => macdY + rsiH/2 - (v / macdRange) * rsiH;
+    const midY = macdY + rsiH / 2;
+
+    // Zero line
+    ctx.strokeStyle = '#1a3040';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD_L, midY); ctx.lineTo(W - PAD_R, midY); ctx.stroke();
+
+    // Histogram
+    const barW = Math.max(2, chartW / DATA.length * 0.7);
+    DATA.forEach((d, i) => {
+        const barX = x(i);
+        const isPos = d.macdHist >= 0;
+        ctx.fillStyle = isPos ? 'rgba(0,201,122,0.7)' : 'rgba(231,76,60,0.7)';
+        const top = Math.min(my(d.macdHist), midY);
+        const hgt = Math.abs(my(d.macdHist) - midY);
+        ctx.fillRect(barX - barW/2, top, barW, hgt || 1);
+    });
+
+    // MACD line
+    ctx.strokeStyle = '#00ccff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    DATA.forEach((d, i) => i === 0 ? ctx.moveTo(x(i), my(d.macd)) : ctx.lineTo(x(i), my(d.macd)));
+    ctx.stroke();
+
+    // Signal line
+    ctx.strokeStyle = '#f39c12';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    DATA.forEach((d, i) => i === 0 ? ctx.moveTo(x(i), my(d.macdSig)) : ctx.lineTo(x(i), my(d.macdSig)));
+    ctx.stroke();
+
+    // Price Y axis
+    ctx.fillStyle = '#8899aa';
+    ctx.font = '19px Arial';
+    ctx.textAlign = 'right';
+    for (let t = 0; t <= 4; t++) {
+        const p = pMin + (t/4) * (pMax - pMin);
+        const y = py(p);
+        ctx.fillText('$' + Math.round(p/1000) + 'K', PAD_L - 4, y + 6);
+    }
+
+    drawLegend(ctx, W - 310, PAD_T + 10, [
+        { label: 'Price',    color: '#ffffff' },
+        { label: 'SMA 20',   color: '#00ccff' },
+        { label: 'SMA 50',   color: '#f39c12' },
+        { label: 'BB Bands', color: 'rgba(0,163,154,0.6)' }
+    ]);
+
+    // Footer
+    const last = DATA[DATA.length-1];
+    const rsiLabel = last.rsi > 70 ? 'OVERBOUGHT' : (last.rsi < 30 ? 'OVERSOLD' : 'NEUTRAL');
+    const rsiCol   = last.rsi > 70 ? '#e74c3c' : (last.rsi < 30 ? '#00c97a' : '#f39c12');
+    ctx.fillStyle = rsiCol;
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(`RSI: ${last.rsi.toFixed(1)} (${rsiLabel})   |   SMA20: $${Math.round(last.sma20).toLocaleString()}   |   SMA50: $${Math.round(last.sma50).toLocaleString()}   |   MACD: ${last.macd.toFixed(0)}`, W/2, H - 18);
+
+    return new THREE.CanvasTexture(c);
+}
+
+// ──────────────────────────────────────────────────
+// FLOOR MODE 2 – VOLATILITY ANALYSIS
+// ──────────────────────────────────────────────────
+function drawVolatilityChart() {
+    const W = 2048, H = 1024;
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const ctx = c.getContext('2d');
+
+    ctx.fillStyle = '#050d18';
+    ctx.fillRect(0, 0, W, H);
+    drawGrid(ctx, W, H, 8, 6, '#0a2030');
+
+    ctx.fillStyle = '#00A39A';
+    ctx.font = 'bold 38px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('BTC/USD  —  VOLATILITY ANALYSIS  |  Rolling Vol · Regimes · VaR', W/2, 44);
+
+    const PAD_L = 80, PAD_R = 40, PAD_T = 65;
+    const chartW = W - PAD_L - PAD_R;
+    const volH   = (H - PAD_T) * 0.55;
+    const heatH  = (H - PAD_T) * 0.12;
+    const retH   = (H - PAD_T) * 0.20;
+    const heatY  = PAD_T + volH + 20;
+    const retY   = heatY + heatH + 20;
+
+    const vols   = DATA.map(d => d.vol30);
+    const vMin   = 0;
+    const vMax   = Math.max(...vols) * 1.1;
+    const vy     = (v) => PAD_T + (1 - (v - vMin) / (vMax - vMin)) * volH;
+    const xi     = (i) => PAD_L + (i / (DATA.length - 1)) * chartW;
+
+    // Regime zones
+    const zones = [
+        { lo: 0,  hi: 40, color: 'rgba(0,201,122,0.08)',  label: 'LOW (< 40%)' },
+        { lo: 40, hi: 80, color: 'rgba(243,156,18,0.08)', label: 'MEDIUM (40-80%)' },
+        { lo: 80, hi: vMax, color: 'rgba(231,76,60,0.08)', label: 'HIGH (> 80%)' }
+    ];
+    zones.forEach(z => {
+        const top = vy(Math.min(z.hi, vMax));
+        const bot = vy(Math.max(z.lo, vMin));
+        ctx.fillStyle = z.color;
+        ctx.fillRect(PAD_L, top, chartW, bot - top);
+    });
+
+    // Gridlines at key vol levels
+    [20, 40, 60, 80, 100].forEach(level => {
+        const y = vy(level);
+        if (y < PAD_T || y > PAD_T + volH) return;
+        ctx.strokeStyle = level === 40 ? 'rgba(243,156,18,0.4)' : (level === 80 ? 'rgba(231,76,60,0.4)' : '#0a2030');
+        ctx.lineWidth = level === 40 || level === 80 ? 1.5 : 1;
+        ctx.setLineDash(level === 40 || level === 80 ? [6, 4] : []);
+        ctx.beginPath(); ctx.moveTo(PAD_L, y); ctx.lineTo(W - PAD_R, y); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = level === 80 ? '#e74c3c' : (level === 40 ? '#f39c12' : '#556677');
+        ctx.font = '18px Arial';
+        ctx.textAlign = 'right';
+        ctx.fillText(level + '%', PAD_L - 4, y + 6);
+    });
+
+    // Gradient fill under vol curve
+    const grad = ctx.createLinearGradient(0, PAD_T, 0, PAD_T + volH);
+    grad.addColorStop(0,   'rgba(231,76,60,0.7)');
+    grad.addColorStop(0.4, 'rgba(243,156,18,0.5)');
+    grad.addColorStop(0.8, 'rgba(0,163,154,0.3)');
+    grad.addColorStop(1,   'rgba(0,163,154,0.05)');
+
+    ctx.beginPath();
+    DATA.forEach((d, i) => i === 0 ? ctx.moveTo(xi(i), vy(d.vol30)) : ctx.lineTo(xi(i), vy(d.vol30)));
+    ctx.lineTo(xi(DATA.length-1), PAD_T + volH);
+    ctx.lineTo(xi(0), PAD_T + volH);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Vol line
+    ctx.strokeStyle = '#ff6b35';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    DATA.forEach((d, i) => i === 0 ? ctx.moveTo(xi(i), vy(d.vol30)) : ctx.lineTo(xi(i), vy(d.vol30)));
+    ctx.stroke();
+
+    // VaR line (95%) — approx. daily vol * 1.645 annualized
+    const varLine = DATA.map(d => d.vol30 * 1.645 / Math.sqrt(252));  // daily VaR%
+    // Normalize to same scale for annotation — just mark the mean vol * 1.3
+    const varLevel = DATA.map(d => d.vol30).reduce((s, v) => s + v, 0) / DATA.length * 1.3;
+    ctx.strokeStyle = 'rgba(168,85,247,0.7)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([8, 5]);
+    ctx.beginPath();
+    ctx.moveTo(PAD_L, vy(varLevel));
+    ctx.lineTo(W - PAD_R, vy(varLevel));
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#a855f7';
+    ctx.font = 'bold 18px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('Avg Vol ×1.3 (VaR proxy)', PAD_L + 8, vy(varLevel) - 5);
+
+    // Regime heatmap strip
+    ctx.fillStyle = '#8899aa';
+    ctx.font = 'bold 20px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('VOL REGIME', PAD_L, heatY + 20);
+    const sw = chartW / DATA.length;
+    DATA.forEach((d, i) => {
+        const v = d.vol30;
+        const col = v > 80 ? `rgba(231,76,60,${Math.min(0.9, v/120)})` :
+                    v > 40 ? `rgba(243,156,18,${Math.min(0.85, v/100)})` :
+                             `rgba(0,201,122,${Math.min(0.7, 0.3 + v/100)})`;
+        ctx.fillStyle = col;
+        ctx.fillRect(PAD_L + i * sw, heatY + 28, sw + 1, heatH - 32);
+    });
+
+    // Returns bar chart
+    ctx.strokeStyle = '#1a3040';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD_L, retY); ctx.lineTo(W - PAD_R, retY); ctx.stroke();
+    ctx.fillStyle = '#8899aa';
+    ctx.font = 'bold 20px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('DAILY RETURNS', PAD_L, retY + 22);
+
+    const rMax = Math.max(...DATA.map(d => Math.abs(d.r)));
+    const midRetY = retY + retH / 2;
+    const barW2 = Math.max(2, chartW / DATA.length * 0.8);
+    DATA.forEach((d, i) => {
+        const bx = xi(i);
+        const bh = (Math.abs(d.r) / rMax) * (retH / 2);
+        ctx.fillStyle = d.r >= 0 ? 'rgba(0,201,122,0.75)' : 'rgba(231,76,60,0.75)';
+        if (d.r >= 0) ctx.fillRect(bx - barW2/2, midRetY - bh, barW2, bh);
+        else          ctx.fillRect(bx - barW2/2, midRetY,       barW2, bh);
+    });
+
+    // Footer stats
+    const last = DATA[DATA.length-1];
+    const meanVol = DATA.map(d => d.vol30).reduce((s,v) => s+v, 0) / DATA.length;
+    const maxVol  = Math.max(...DATA.map(d => d.vol30));
+    ctx.fillStyle = '#ff6b35';
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Current Vol: ${last.vol30.toFixed(1)}%   |   Mean: ${meanVol.toFixed(1)}%   |   Peak: ${maxVol.toFixed(1)}%   |   Regime: ${last.vol30 > 80 ? 'HIGH RISK' : last.vol30 > 40 ? 'ELEVATED' : 'CALM'}`,
+        W/2, H - 18);
+
+    return new THREE.CanvasTexture(c);
+}
+
+// ──────────────────────────────────────────────────
+// UTILITY HELPERS
+// ──────────────────────────────────────────────────
+function drawGrid(ctx, W, H, cols, rows, color) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 0.5;
+    for (let i = 1; i < cols; i++) {
+        const x = W / cols * i;
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let i = 1; i < rows; i++) {
+        const y = H / rows * i;
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+}
+
+function drawLegend(ctx, x, y, items) {
+    const boxW = 220, lineH = 28, pad = 10;
+    ctx.fillStyle = 'rgba(5,13,24,0.85)';
+    ctx.fillRect(x - pad, y - pad, boxW + pad*2, items.length * lineH + pad * 2);
+    ctx.strokeStyle = '#00A39A';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x - pad, y - pad, boxW + pad*2, items.length * lineH + pad * 2);
+    items.forEach((item, i) => {
+        const ly = y + i * lineH + 14;
+        ctx.fillStyle = item.color;
+        ctx.fillRect(x, ly - 10, 24, 14);
+        ctx.fillStyle = '#ccddee';
+        ctx.font = '18px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(item.label, x + 32, ly + 2);
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// ─── 3D CHARTS ────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════
+
+function buildAll3DCharts() {
+    chart3D[0] = buildReturnsBarChart3D();
+    chart3D[1] = buildTechnical3D();
+    chart3D[2] = buildVolSurface3D();
+    chart3D.forEach(g => {
+        g.visible = false;
+        scene.add(g);
+    });
+    dbg('3D charts built.');
+}
+
+// ──────────────────────────────────────────────────
+// 3D MODE 0 – Returns Bar Chart (floats at 2m)
+// ──────────────────────────────────────────────────
+function buildReturnsBarChart3D() {
+    const group = new THREE.Group();
+    const S     = CHART_SCALE;
+    const N     = 60; // last 60 days
+    const slice = DATA.slice(DATA.length - N);
+    const maxAbs = Math.max(...slice.map(d => Math.abs(d.r)));
+
+    // Chart base frame (thin lines)
+    const axMat = new THREE.LineBasicMaterial({ color: 0x00A39A });
+    const mkLine = (p1, p2) => {
+        const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...p1), new THREE.Vector3(...p2)]);
+        return new THREE.Line(g, axMat);
+    };
+    group.add(mkLine([0,0,0], [S,0,0]));
+    group.add(mkLine([0,0,0], [0,S,0]));
+    group.add(mkLine([0,0,0], [0,0,0.05]));
+
+    // Axis labels (sprites)
+    const makeLabel = (text, pos, col = '#00A39A') => {
+        const lc = document.createElement('canvas');
+        lc.width = 192; lc.height = 64;
+        const lctx = lc.getContext('2d');
+        lctx.fillStyle = col;
+        lctx.font = 'bold 28px Arial';
+        lctx.textAlign = 'center';
+        lctx.fillText(text, 96, 44);
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(lc), transparent: true }));
+        sp.position.set(...pos);
+        sp.scale.set(0.3, 0.1, 1);
+        group.add(sp);
+    };
+    makeLabel('TIME →', [S + 0.12, 0.02, 0]);
+    makeLabel('RETURN', [0.06, S + 0.08, 0]);
+    makeLabel('60-DAY DAILY RETURNS  |  BTC/USD', [S / 2, S + 0.22, 0], '#ffffff');
+
+    // Bars
+    const barW    = (S / N) * 0.7;
+    const barDepth = 0.04;
+    slice.forEach((d, i) => {
+        const h      = (Math.abs(d.r) / maxAbs) * S;
+        const isPos  = d.r >= 0;
+        const col    = isPos ? 0x00c97a : 0xe74c3c;
+        const geo    = new THREE.BoxGeometry(barW, Math.max(h, 0.005), barDepth);
+        const mat    = new THREE.MeshStandardMaterial({ color: col, roughness: 0.4, metalness: 0.3 });
+        const mesh   = new THREE.Mesh(geo, mat);
+        const bx     = (i / (N - 1)) * S;
+        mesh.position.set(bx, h / 2 * (isPos ? 1 : -1) + (isPos ? 0 : 0), 0);
+        group.add(mesh);
+    });
+
+    // Grid lines (faint horizontal)
+    for (let g = 0.25; g <= 1.0; g += 0.25) {
+        const y = g * S;
+        const gm = new THREE.LineBasicMaterial({ color: 0x0a3040, transparent: true, opacity: 0.5 });
+        const gg = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, y, 0), new THREE.Vector3(S, y, 0)]);
+        group.add(new THREE.Line(gg, gm));
+    }
+
+    group.position.set(userX - S / 2, floorY + CHART_Y, userZ - 0.5);
+    group.rotation.x = -0.15; // slight tilt toward user
+    return group;
+}
+
+// ──────────────────────────────────────────────────
+// 3D MODE 1 – Multi-Line Technical Chart
+// ──────────────────────────────────────────────────
+function buildTechnical3D() {
+    const group = new THREE.Group();
+    const S     = CHART_SCALE;
+    const N     = DATA.length;
+
+    // Normalize helper
+    const normPrice = DATA.map(d => d.close);
+    const pMin = Math.min(...normPrice), pMax = Math.max(...normPrice);
+    const norm  = (v, mn, mx) => (v - mn) / (mx - mn);
+
+    const rsiMin = 0, rsiMax = 100;
+    const macdVals = DATA.flatMap(d => [d.macd, d.macdSig]);
+    const mMin = Math.min(...macdVals), mMax = Math.max(...macdVals);
+
+    // Axes
+    const axMat = new THREE.LineBasicMaterial({ color: 0x00A39A });
+    const mkLine = (p1, p2, mat) => {
+        const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...p1), new THREE.Vector3(...p2)]);
+        return new THREE.Line(g, mat || axMat);
+    };
+    group.add(mkLine([0,0,0], [S,0,0]));  // time
+    group.add(mkLine([0,0,0], [0,S,0]));  // value
+    group.add(mkLine([0,0,0], [0,0,S * 0.6])); // indicator depth
+
+    // Label helper
+    const makeLabel = (text, pos, col = '#00A39A') => {
+        const lc = document.createElement('canvas');
+        lc.width = 256; lc.height = 64;
+        const lctx = lc.getContext('2d');
+        lctx.fillStyle = col;
+        lctx.font = 'bold 26px Arial';
+        lctx.textAlign = 'center';
+        lctx.fillText(text, 128, 44);
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(lc), transparent: true }));
+        sp.position.set(...pos);
+        sp.scale.set(0.36, 0.10, 1);
+        group.add(sp);
+    };
+    makeLabel('TIME →',   [S + 0.12, 0.02, 0]);
+    makeLabel('VALUE',    [0.06, S + 0.08, 0]);
+    makeLabel('TECHNICAL INDICATORS  |  Price · SMA20 · SMA50 · RSI · MACD', [S/2, S + 0.22, 0], '#ffffff');
+
+    // Draw a 3D line from data array
+    const makeLine3D = (pts, color) => {
+        const geo = new THREE.BufferGeometry().setFromPoints(pts.map(p => new THREE.Vector3(...p)));
+        return new THREE.Line(geo, new THREE.LineBasicMaterial({ color, linewidth: 1 }));
+    };
+
+    // Price (Z=0, cyan/white)
+    const pricePts = DATA.map((d, i) => [(i/(N-1))*S, norm(d.close, pMin, pMax)*S, 0]);
+    group.add(makeLine3D(pricePts, 0xffffff));
+
+    // SMA20 (Z=0.08, cyan)
+    const sma20Pts = DATA.map((d, i) => [(i/(N-1))*S, norm(d.sma20, pMin, pMax)*S, 0.08]);
+    group.add(makeLine3D(sma20Pts, 0x00ccff));
+
+    // SMA50 (Z=0.16, yellow)
+    const sma50Pts = DATA.map((d, i) => [(i/(N-1))*S, norm(d.sma50, pMin, pMax)*S, 0.16]);
+    group.add(makeLine3D(sma50Pts, 0xf39c12));
+
+    // RSI (Z=0.28, purple — different Y range scaled to 0-S)
+    const rsiPts = DATA.map((d, i) => [(i/(N-1))*S, norm(d.rsi, rsiMin, rsiMax)*S, 0.28]);
+    group.add(makeLine3D(rsiPts, 0xa855f7));
+
+    // RSI 70/30 level planes (faint)
+    const rsiLevelMat = new THREE.LineBasicMaterial({ color: 0x334455, transparent: true, opacity: 0.4 });
+    [30, 70].forEach(lv => {
+        const y = norm(lv, 0, 100) * S;
+        const g = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0, y, 0.28), new THREE.Vector3(S, y, 0.28)
+        ]);
+        group.add(new THREE.Line(g, rsiLevelMat));
+    });
+
+    // MACD hist (Z=0.42, green/red coloured segments)
+    DATA.forEach((d, i) => {
+        if (i === 0) return;
+        const x1 = ((i-1)/(N-1))*S, x2 = (i/(N-1))*S;
+        const y1 = norm(d.macdHist, mMin, mMax)*S, y2 = norm(DATA[i-1].macdHist, mMin, mMax)*S;
+        const col = d.macdHist >= 0 ? 0x00c97a : 0xe74c3c;
+        const g = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(x1, y1, 0.44), new THREE.Vector3(x2, y2, 0.44)
+        ]);
+        group.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: col })));
+    });
+
+    // Z-depth label lines
+    const zLines = [
+        { z: 0,    label: 'PRICE',  col: '#ffffff' },
+        { z: 0.08, label: 'SMA20',  col: '#00ccff' },
+        { z: 0.16, label: 'SMA50',  col: '#f39c12' },
+        { z: 0.28, label: 'RSI',    col: '#a855f7' },
+        { z: 0.44, label: 'MACD',   col: '#00c97a' }
+    ];
+    zLines.forEach(zl => makeLabel(zl.label, [-0.18, -0.08, zl.z], zl.col));
+
+    group.position.set(userX - S/2, floorY + CHART_Y, userZ - 0.5);
+    group.rotation.x = -0.10;
+    return group;
+}
+
+// ──────────────────────────────────────────────────
+// 3D MODE 2 – Volatility Surface (terrain mesh)
+// ──────────────────────────────────────────────────
+function buildVolSurface3D() {
+    const group = new THREE.Group();
+    const S = CHART_SCALE;
+
+    const volWindows = [10, 20, 30, 45, 60];
+    const COLS = DATA.length;  // time steps
+    const ROWS = volWindows.length;
+
+    // Compute vol surface grid
+    const grid = [];  // [row][col] = vol value
+    for (let r = 0; r < ROWS; r++) {
+        const row = [];
+        for (let c = 0; c < COLS; c++) {
+            const w = volWindows[r];
+            row.push(DATA[c].volByWindow[w] || 0);
+        }
+        grid.push(row);
+    }
+
+    const allVols = grid.flat();
+    const volMin = 0, volMax = Math.max(...allVols) * 1.05;
+
+    // Sub-sample for performance (every 3rd column)
+    const STEP = 3;
+    const sCols = Math.ceil(COLS / STEP);
+
+    // Indices: we want a (ROWS × sCols) grid of vertices
+    const positions = [];
+    const colors    = [];
+    const indices   = [];
+    const color     = new THREE.Color();
+
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < sCols; c++) {
+            const ci  = Math.min(c * STEP, COLS - 1);
+            const vol = grid[r][ci];
+            const x   = (c / (sCols - 1)) * S;
+            const y   = ((vol - volMin) / (volMax - volMin)) * S * 0.8;
+            const z   = (r / (ROWS - 1)) * S * 0.5;
+
+            positions.push(x, y, z);
+
+            // Color: green→yellow→red
+            const t = (vol - volMin) / (volMax - volMin);
+            if (t < 0.5) color.setRGB(1 - t, 0.8 + 0.2*t, 0.3*(1-2*t));
+            else         color.setRGB(1, (1 - (t-0.5)*2)*0.8, 0);
+            colors.push(color.r, color.g, color.b);
+        }
+    }
+
+    // Build quad indices
+    for (let r = 0; r < ROWS - 1; r++) {
+        for (let c = 0; c < sCols - 1; c++) {
+            const a = r * sCols + c;
+            const b = a + 1;
+            const d = a + sCols;
+            const e = d + 1;
+            indices.push(a, b, d, b, e, d);
+        }
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geo.setAttribute('color',    new THREE.Float32BufferAttribute(colors, 3));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+
+    const mat  = new THREE.MeshStandardMaterial({ vertexColors: true, side: THREE.DoubleSide, roughness: 0.6, metalness: 0.2 });
+    const mesh = new THREE.Mesh(geo, mat);
+    group.add(mesh);
+
+    // Wireframe overlay (subtle)
+    const wfMat = new THREE.MeshBasicMaterial({ color: 0x00A39A, wireframe: true, transparent: true, opacity: 0.12 });
+    group.add(new THREE.Mesh(geo, wfMat));
+
+    // Axes
+    const axMat = new THREE.LineBasicMaterial({ color: 0x00A39A });
+    const mkLine = (p1, p2) => {
+        const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...p1), new THREE.Vector3(...p2)]);
+        return new THREE.Line(g, axMat);
+    };
+    group.add(mkLine([0,0,0], [S+0.1,0,0]));
+    group.add(mkLine([0,0,0], [0,S*0.85,0]));
+    group.add(mkLine([0,0,0], [0,0,S*0.55]));
+
+    // Labels
+    const makeLabel = (text, pos, col = '#00A39A') => {
+        const lc = document.createElement('canvas');
+        lc.width = 256; lc.height = 64;
+        const lctx = lc.getContext('2d');
+        lctx.fillStyle = col;
+        lctx.font = 'bold 26px Arial';
+        lctx.textAlign = 'center';
+        lctx.fillText(text, 128, 44);
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(lc), transparent: true }));
+        sp.position.set(...pos);
+        sp.scale.set(0.36, 0.10, 1);
+        group.add(sp);
+    };
+    makeLabel('TIME →',        [S + 0.16, 0.02, 0]);
+    makeLabel('VOLATILITY ↑',  [0.06, S * 0.85 + 0.10, 0]);
+    makeLabel('WINDOW →',      [0, 0.02, S * 0.55 + 0.10]);
+    volWindows.forEach((w, i) => {
+        makeLabel(`${w}d`, [-0.10, 0.02, (i / (ROWS-1)) * S * 0.5], '#8899aa');
+    });
+    makeLabel('VOLATILITY SURFACE  |  BTC/USD  |  10→60 Day Windows', [S/2, S * 0.85 + 0.24, 0], '#ffffff');
+
+    group.position.set(userX - S/2, floorY + CHART_Y, userZ - 0.4);
+    group.rotation.x = -0.15;
+    return group;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// ─── CONTROL PANEL ────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════
+
+function buildControlPanel() {
+    const pW = 1.10, pH = 0.80;
+    const canvas = document.createElement('canvas');
+    canvas.width = PANEL_W; canvas.height = PANEL_H;
+    const ctx = canvas.getContext('2d');
+    drawPanelCanvas(ctx, PANEL_W, PANEL_H);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    const geo = new THREE.PlaneGeometry(pW, pH);
+    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
+    controlPanel = new THREE.Mesh(geo, mat);
+    controlPanel.userData.canvas = canvas;
+    controlPanel.userData.ctx    = ctx;
+    controlPanel.userData.pW     = pW;
+    controlPanel.userData.pH     = pH;
+
+    // Position: north side of floor chart, 85cm above floor
+    controlPanel.position.set(userX, floorY + 0.85, userZ - (MAP_SIZE / 2 + 0.12));
+    controlPanel.lookAt(new THREE.Vector3(userX, floorY + 0.85, userZ));
+    scene.add(controlPanel);
+    dbg('Control panel built.');
+}
+
+const MODE_DEFS = [
+    {
+        num: '1',
+        title: 'Price Analysis',
+        desc:  'OHLC · SMA · Bollinger Bands',
+        metricFn: () => {
+            const d = DATA[DATA.length-1];
+            const ret = ((d.close / DATA[0].close) - 1) * 100;
+            return `BTC: $${Math.round(d.close).toLocaleString()}  |  180d Return: ${ret.toFixed(1)}%  |  SMA20: $${Math.round(d.sma20).toLocaleString()}`;
+        }
+    },
+    {
+        num: '2',
+        title: 'Technical Indicators',
+        desc:  'RSI · MACD · SMA · BB',
+        metricFn: () => {
+            const d = DATA[DATA.length-1];
+            const sig = d.rsi > 70 ? '🔴 OVERBOUGHT' : d.rsi < 30 ? '🟢 OVERSOLD' : '🟡 NEUTRAL';
+            return `RSI: ${d.rsi.toFixed(1)} ${sig}  |  MACD: ${d.macd.toFixed(0)}  |  Signal: ${d.macdSig.toFixed(0)}`;
+        }
+    },
+    {
+        num: '3',
+        title: 'Volatility Analysis',
+        desc:  'Rolling Vol · Surface · VaR',
+        metricFn: () => {
+            const d = DATA[DATA.length-1];
+            const regime = d.vol30 > 80 ? '🔴 HIGH RISK' : d.vol30 > 40 ? '🟡 ELEVATED' : '🟢 CALM';
+            const meanVol = DATA.map(d => d.vol30).reduce((s,v) => s+v, 0) / DATA.length;
+            return `Vol30d: ${d.vol30.toFixed(1)}%  |  ${regime}  |  Avg: ${meanVol.toFixed(1)}%`;
+        }
+    }
+];
+
+function drawPanelCanvas(ctx, W, H) {
+    ctx.clearRect(0, 0, W, H);
+
+    // Glassmorphism background
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, 'rgba(0,20,35,0.97)');
+    bgGrad.addColorStop(1, 'rgba(0,10,20,0.97)');
+    ctx.fillStyle = bgGrad;
+    roundRect(ctx, 0, 0, W, H, 18);
+    ctx.fill();
+
+    // Border gradient
+    const bGrad = ctx.createLinearGradient(0, 0, W, H);
+    bGrad.addColorStop(0, '#00A39A');
+    bGrad.addColorStop(0.5, '#00ccff');
+    bGrad.addColorStop(1, '#008A82');
+    ctx.strokeStyle = bGrad;
+    ctx.lineWidth = 4;
+    roundRect(ctx, 2, 2, W-4, H-4, 16);
+    ctx.stroke();
+
+    // Header
+    const hGrad = ctx.createLinearGradient(0, 0, W, 0);
+    hGrad.addColorStop(0, '#002C3C');
+    hGrad.addColorStop(0.5, '#008A82');
+    hGrad.addColorStop(1, '#00A39A');
+    ctx.fillStyle = hGrad;
+    roundRectTop(ctx, 4, 4, W-8, 76, 14);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 32px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('⬡  FINANCE AR DASHBOARD', W/2, 36);
+    ctx.font = '20px Arial';
+    ctx.fillStyle = '#aaddcc';
+    ctx.fillText('BTC/USD  —  SELECT ANALYSIS MODE', W/2, 66);
+
+    // Mode rows
+    MODE_DEFS.forEach((m, i) => {
+        const y       = ROW_TOP + i * ROW_H;
+        const isActive = (controlMode === i);
+
+        // Row bg
+        const rowGrad = ctx.createLinearGradient(0, y, 0, y + ROW_H - 8);
+        if (isActive) {
+            rowGrad.addColorStop(0, 'rgba(0,163,154,0.28)');
+            rowGrad.addColorStop(1, 'rgba(0,100,90,0.12)');
+        } else {
+            rowGrad.addColorStop(0, 'rgba(255,255,255,0.04)');
+            rowGrad.addColorStop(1, 'rgba(255,255,255,0.02)');
+        }
+        ctx.fillStyle = rowGrad;
+        roundRect(ctx, 16, y, W-32, ROW_H - 8, 10);
+        ctx.fill();
+
+        ctx.strokeStyle = isActive ? '#00A39A' : '#223344';
+        ctx.lineWidth   = isActive ? 2.5 : 1;
+        roundRect(ctx, 16, y, W-32, ROW_H - 8, 10);
+        ctx.stroke();
+
+        // Radio button
+        ctx.strokeStyle = isActive ? '#00A39A' : '#556677';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(56, y + ROW_H/2 - 4, 16, 0, Math.PI*2); ctx.stroke();
+        if (isActive) {
+            ctx.fillStyle = '#00A39A';
+            ctx.beginPath(); ctx.arc(56, y + ROW_H/2 - 4, 10, 0, Math.PI*2); ctx.fill();
+        }
+
+        // Mode number badge
+        ctx.fillStyle = isActive ? '#00A39A' : '#334455';
+        roundRect(ctx, 82, y + 18, 52, 44, 8);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 30px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(m.num, 108, y + 50);
+
+        // Title
+        ctx.fillStyle = isActive ? '#00ccff' : '#ddeeff';
+        ctx.font = `bold 30px Arial`;
+        ctx.textAlign = 'left';
+        ctx.fillText(m.title, 148, y + 42);
+
+        // Description
+        ctx.fillStyle = isActive ? '#88ddcc' : '#7799aa';
+        ctx.font = '20px Arial';
+        ctx.fillText(m.desc, 148, y + 72);
+
+        // Active badge
+        if (isActive) {
+            ctx.fillStyle = '#00A39A';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('✓ ACTIVE', W - 28, y + 48);
+        }
+    });
+
+    // Footer tip
+    ctx.fillStyle = '#445566';
+    ctx.font = '18px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('⟵ LEFT TRIGGER to select  |  LEFT CONTROLLER ray to aim', W/2, H - 16);
+
+    if (controlPanel?.material?.map) controlPanel.material.map.needsUpdate = true;
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+}
+
+function roundRectTop(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h);
+    ctx.lineTo(x, y + h);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// ─── PANEL INTERACTION ────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════
+
+function checkPanelInteraction(controller) {
+    if (!controlPanel) return;
+    const ray = new THREE.Raycaster();
+    const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(controller.quaternion);
+    ray.set(controller.position, dir);
+    const hits = ray.intersectObject(controlPanel);
+    if (!hits.length || !hits[0].uv) return;
+
+    const uv   = hits[0].uv;
+    const uvY  = 1.0 - uv.y;
+
+    for (let i = 0; i < MODE_ROWS; i++) {
+        const y1 = ROW_TOP / PANEL_H + i * (ROW_H / PANEL_H);
+        const y2 = y1 + ROW_H / PANEL_H - 0.01;
+        if (uvY >= y1 && uvY <= y2) {
+            if (controlMode !== i) switchMode(i);
+            return;
+        }
+    }
+}
+
+function switchMode(mode) {
+    controlMode = mode;
+
+    // Show/hide floor charts
+    floorCharts.forEach((fc, i) => { if (fc) fc.visible = (i === mode); });
+
+    // Show/hide 3D charts
+    chart3D.forEach((c, i) => { if (c) c.visible = (i === mode); });
+
+    // Update panel
+    drawPanelCanvas(controlPanel.userData.ctx, PANEL_W, PANEL_H);
+
+    // Update HUD
+    const modeNames = ['Price Analysis', 'Technical Indicators', 'Volatility Analysis'];
+    document.getElementById('mode-status').textContent = `MODE ${mode + 1}: ${modeNames[mode]}`;
+
+    // Update metric bar
+    const metricEl = document.getElementById('metric-content');
+    metricEl.textContent = MODE_DEFS[mode].metricFn();
+
+    dbg(`Switched to Mode ${mode}: ${modeNames[mode]}`);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// ─── ANIMATION LOOP ───────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════
+
+let chart3DRotAngle = 0;
+const VOL_SURFACE_ROT_SPEED = 0.004;
+
+function animate(timestamp, frame) {
+    if (!frame) return;
+
+    const session = renderer.xr.getSession();
+    if (!session) return;
+
+    if (!refSpace) {
+        refSpace = renderer.xr.getReferenceSpace();
+    }
+    if (!refSpace) return;
+
+    if (!floorDetected) detectFloor(frame, refSpace);
+
+    // Controller input
+    if (floorDetected && session.inputSources) {
+        session.inputSources.forEach(source => {
+            const gp = source.gamepad;
+            if (!gp) return;
+
+            if (source.handedness === 'left') {
+                const trigger = gp.buttons[0]?.pressed || false;
+                if (trigger && !lastLeftTrigPanel && controller0) {
+                    checkPanelInteraction(controller0);
+                }
+                lastLeftTrigPanel = trigger;
+            }
+        });
+    }
+
+    // Slowly rotate 3D charts for visual interest
+    chart3DRotAngle += 0.003;
+    chart3D.forEach((c, i) => {
+        if (!c || !c.visible) return;
+        if (i === 2) {
+            // Volatility surface: gentle yaw rotation
+            c.rotation.y = Math.sin(chart3DRotAngle * 0.5) * 0.18;
+        } else {
+            // Other charts: gentle tilt
+            c.rotation.y = Math.sin(chart3DRotAngle * 0.4) * 0.10;
+        }
+    });
+
+    renderer.render(scene, camera);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Quest 3 AR Robot Control - 6 Modes</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <style>
+            body { margin: 0; font-family: monospace; background: #000; color: #fff; }
+            #info {
+                position: absolute; top: 10px; width: 100%; text-align: center; z-index: 100;
+                background: rgba(0,0,0,0.85); padding: 10px; font-size: 12px; pointer-events: none;
+            }
+            .status-good { color: #0f0; }
+            .status-bad { color: #f00; }
+            .status-warning { color: #ff0; }
+            .status-approved { color: #ffa500; }
+            .status-sent { color: #00ffff; }
+            .status-tracking { color: #ff00ff; }
+        </style>
+    </head>
+    <body>
+        <div id="info">
+            <strong>Quest 3 AR Robot Control - 6 Modes</strong><br/>
+            AR: <span id="ar-status" class="status-warning">NOT STARTED</span> |
+            WS: <span id="conn-status" class="status-bad">NO</span> |
+            Floor: <span id="floor-status" class="status-warning">Detecting...</span><br/>
+            Mode: <span id="mode-status" class="status-warning">NONE</span> |
+            Status: <span id="trajectory-status" class="status-warning">IDLE</span><br/>
+            Pts: <span id="point-count">0</span> | Dist: <span id="path-distance">0.00</span>m |
+            Tracking: <span id="tracking-status" class="status-bad">OFF</span>
+        </div>
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+                    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+                }
+            }
+        </script>
+
+        <script type="module">
+            import * as THREE from 'three';
+            import { ARButton } from 'three/addons/webxr/ARButton.js';
+
+            // ─── DEBUG LOGGING TO SERVER ──────────────────────────────────────────────────
+            function debugLog(message, level = 'INFO') {
+                console.log(`[${level}] ${message}`);
+                // Send to server
+                fetch('/debug_log', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message, level, timestamp: Date.now() })
+                }).catch(e => console.error('Failed to send log:', e));
+            }
+
+            debugLog('=== AR SESSION STARTING ===', 'INFO');
+
+            // ─── WEBSOCKET ───────────────────────────────────────────────────────────────
+            const WS_IP = '192.168.100.10';  // AUTO-REPLACED by server with actual IP
+            const WS_PORT = '8444';  // Websocket server port
+            let websocket = null;
+
+            function connectWS() {
+                try {
+                    websocket = new WebSocket(`wss://${WS_IP}:${WS_PORT}`);
+                    websocket.onopen = () => {
+                        document.getElementById('conn-status').textContent = 'YES';
+                        document.getElementById('conn-status').className = 'status-good';
+                    };
+                    websocket.onclose = () => {
+                        document.getElementById('conn-status').textContent = 'NO';
+                        document.getElementById('conn-status').className = 'status-bad';
+                        setTimeout(connectWS, 3000);
+                    };
+                    websocket.onerror = () => {
+                        document.getElementById('conn-status').textContent = 'ERR';
+                        document.getElementById('conn-status').className = 'status-bad';
+                    };
+                    websocket.onmessage = (event) => {
+                        try {
+                            const data = JSON.parse(event.data);
+                            if (data.type === 'M25_COMMAND') updateM25Chart(data.data);
+                        } catch(e) {}
+                    };
+                } catch(e) {
+                    setTimeout(connectWS, 3000);
+                }
+            }
+            connectWS();
+
+            // ─── THREE.JS SCENE ──────────────────────────────────────────────────────────
+            let scene, camera, renderer;
+            let controller0, controller1; // 0=LEFT, 1=RIGHT
+            let refSpace = null;
+
+            // ─── MAP / FLOOR STATE ───────────────────────────────────────────────────────
+            let floorDetected = false;
+            let floorY = 0;
+            let userX = 0, userZ = 0;
+            let mapPlane = null;
+            const MAP_SIZE = 2.1;
+
+            // ─── SPEED GRAPH / 3D CHART ──────────────────────────────────────────────────
+            let chart3DLine = null;
+            let chart3DData = [];
+            let chart3DAxes = null;
+            const CHART_3D_SIZE = 1.5;
+            const CHART_3D_Y_OFFSET = 2.0;
+            let chartMaxSpeed = 1, chartMaxDist = 1;
+
+            // ─── CONTROL PANEL STATE ─────────────────────────────────────────────────────
+            let controlPanel = null;
+            let controlMode = 0; // default Mode 0 - R Vehicle Map View
+            let approvePressed = false;
+            let panelButtons = [
+                { mode: 0, y1: 0.88, y2: 0.97 },
+                { mode: 1, y1: 0.77, y2: 0.86 },
+                { mode: 2, y1: 0.66, y2: 0.75 },
+                { mode: 3, y1: 0.55, y2: 0.64 },
+                { mode: 4, y1: 0.44, y2: 0.53 },
+                { mode: 5, y1: 0.33, y2: 0.42 }
+            ];
+
+            // ─── MODE 0 - R VEHICLE MAP VIEW ─────────────────────────────────────────────
+            let mode0Robot = null;
+            let mode0LondonMap = null;
+            let geoJSONLoaded = false;
+
+            // ─── TRAJECTORY (MODE 2) ─────────────────────────────────────────────────────
+            let trajectoryPoints = [];
+            let trajectoryLine = null;
+            let isDrawing = false;
+            let isApproved = false;
+            let isSent = false;
+            let totalDistance = 0;
+            let lastGrip = false, lastAButton = false, lastThumbstick = false;
+
+            // ─── M25 (MODE 3) ─────────────────────────────────────────────────────────────
+            let m25Running = false;
+            let m25ChartData = [];
+
+            // ─── ROBOT TRACKING (MODE 4 - LEFT CONTROLLER + KALMAN) ──────────────────────
+            let isTrackingRobot = false;
+            let triangleMarker = null;
+            let robotIcon = null;
+            let trackingInterval = null;
+            let lastXButton = false;
+            let robotChartData = [];
+
+            // Kalman Filter class
+            class KalmanFilter {
+                constructor(processNoise = 0.01, measurementNoise = 0.25) {
+                    this.q = processNoise;
+                    this.r = measurementNoise;
+                    this.x = 0;
+                    this.p = 1;
+                }
+                update(measurement) {
+                    this.p = this.p + this.q;
+                    const k = this.p / (this.p + this.r);
+                    this.x = this.x + k * (measurement - this.x);
+                    this.p = (1 - k) * this.p;
+                    return this.x;
+                }
+            }
+            const kfX = new KalmanFilter(0.01, 0.25);
+            const kfZ = new KalmanFilter(0.01, 0.25);
+            const kfH = new KalmanFilter(0.01, 0.50);
+
+            // ─── SPATIAL ANCHOR TRACKING (MODE 5) ────────────────────────────────────────
+            let anchorTrackingActive = false;
+            let placedAnchor = null;
+            let anchorMarker = null;
+            let anchorRobotIcon = null;
+            let anchorTrackingInterval = null;
+            let reticle = null;
+            let hitTestSource = null;
+            let hitTestSourceRequested = false;
+            let lastRightTrigger = false;
+            let lastLeftTrigger = false;
+
+            // ─── CONTROLLER BUTTON DEBOUNCE ──────────────────────────────────────────────
+            let lastLeftTriggerPanel = false;
+
+            // ─── INIT ─────────────────────────────────────────────────────────────────────
+            function init() {
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+                const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
+                light.position.set(0.5, 1, 0.25);
+                scene.add(light);
+
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setAnimationLoop(animate);
+                renderer.xr.enabled = true;
+                document.body.appendChild(renderer.domElement);
+
+                const arButton = ARButton.createButton(renderer, {
+                    requiredFeatures: ['hit-test', 'local-floor'],
+                    optionalFeatures: ['dom-overlay', 'anchors'],
+                    domOverlay: { root: document.getElementById('info') }
+                });
+                document.body.appendChild(arButton);
+
+                // Controllers
+                controller0 = renderer.xr.getController(0); // LEFT
+                controller1 = renderer.xr.getController(1); // RIGHT
+                scene.add(controller0);
+                scene.add(controller1);
+
+                // Controller rays
+                const rayGeo = new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -3)
+                ]);
+                const leftRay = new THREE.Line(rayGeo, new THREE.LineBasicMaterial({ color: 0xff00ff }));
+                controller0.add(leftRay);
+                const rightRay = new THREE.Line(rayGeo, new THREE.LineBasicMaterial({ color: 0x00ffff }));
+                controller1.add(rightRay);
+
+                // Reticle for Mode 5
+                const reticleGeo = new THREE.RingGeometry(0.08, 0.12, 32);
+                reticleGeo.rotateX(-Math.PI / 2);
+                reticle = new THREE.Mesh(reticleGeo, new THREE.MeshBasicMaterial({ color: 0xffff00 }));
+                reticle.matrixAutoUpdate = false;
+                reticle.visible = false;
+                scene.add(reticle);
+
+                // AR session start
+                renderer.xr.addEventListener('sessionstart', () => {
+                    debugLog('AR SESSION STARTED');
+                    document.getElementById('ar-status').textContent = 'ACTIVE';
+                    document.getElementById('ar-status').className = 'status-good';
+                    refSpace = null;
+                    hitTestSourceRequested = false;
+                    hitTestSource = null;
+                });
+                renderer.xr.addEventListener('sessionend', () => {
+                    debugLog('AR SESSION ENDED');
+                    document.getElementById('ar-status').textContent = 'ENDED';
+                    document.getElementById('ar-status').className = 'status-warning';
+                });
+
+                window.addEventListener('resize', () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+            }
+
+            // ─── FLOOR DETECTION & MAP CREATION ──────────────────────────────────────────
+            let floorDetectionAttempts = 0;
+            function detectFloor(frame, xrRefSpace) {
+                const pose = frame.getViewerPose(xrRefSpace);
+                if (!pose) {
+                    floorDetectionAttempts++;
+                    if (floorDetectionAttempts % 60 === 0) { // Log every 60 frames (~1 second)
+                        debugLog(`Floor detection: No viewer pose available (attempt ${floorDetectionAttempts})`, 'WARN');
+                    }
+                    return;
+                }
+                const headY = pose.transform.position.y;
+                // Force map and robot to appear at origin (where user is standing)
+                userX = 0;
+                userZ = 0;
+                
+                floorDetectionAttempts++;
+                
+                // JUST DETECT FLOOR IMMEDIATELY - Quest's floor reference is unreliable
+                if (!floorDetected) {
+                    floorY = 0;  // Place everything at Quest's floor level (Y=0)
+                    floorDetected = true;
+                    debugLog(`✓ FLOOR DETECTED! Using Quest floor reference (Y=0). HeadY was: ${headY.toFixed(3)}m`, 'INFO');
+                    document.getElementById('floor-status').textContent = 'OK';
+                    document.getElementById('floor-status').className = 'status-good';
+                    buildScene(); // Call async function
+                }
+            }
+
+            async function buildScene() {
+                debugLog('═══ BUILDING SCENE START ═══', 'INFO');
+                try {
+                    // buildMap(); // REMOVED - We only want the London GeoJSON map
+                    // debugLog('Simple map built');
+                    
+                    debugLog('Starting London map load...', 'INFO');
+                    await buildLondonMap(); // Wait for GeoJSON to load
+                    debugLog('✓ London map loaded successfully', 'INFO');
+                    
+                    debugLog('Building 3D chart...', 'INFO');
+                    build3DChart();
+                    debugLog('✓ Chart built', 'INFO');
+                    
+                    debugLog('Building control panel...', 'INFO');
+                    buildControlPanel();
+                    debugLog('✓ Control panel built', 'INFO');
+                    
+                    debugLog('Showing Mode 0 robot...', 'INFO');
+                    showMode0Robot(); // Show robot by default since Mode 0 is default
+                    debugLog('✓ Robot shown', 'INFO');
+                    
+                    debugLog('═══ SCENE BUILD COMPLETE ═══', 'INFO');
+                } catch(e) {
+                    debugLog(`✗ SCENE BUILD FAILED: ${e.message}`, 'ERROR');
+                    debugLog(`Stack: ${e.stack}`, 'ERROR');
+                }
+            }
+
+            // ─── M25 MAP ──────────────────────────────────────────────────────────────────
+            function buildMap() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 2048; canvas.height = 2048;
+                const ctx = canvas.getContext('2d');
+
+                // Dark background
+                ctx.fillStyle = '#0a0a1a';
+                ctx.fillRect(0, 0, 2048, 2048);
+
+                // Grid
+                ctx.strokeStyle = 'rgba(0,200,255,0.15)';
+                ctx.lineWidth = 1;
+                for (let i = 0; i <= 10; i++) {
+                    const p = i * 204.8;
+                    ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, 2048); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(0, p); ctx.lineTo(2048, p); ctx.stroke();
+                }
+
+                // M25 shape (approximate London orbital ring, wider E-W)
+                function coordToPixel(lon, lat) {
+                    const lonRange = 0.003 * 1.4;
+                    const latRange = 0.003;
+                    const x = (lon + 0.0015 * 1.4) / lonRange * 2048;
+                    const y = 2048 - (lat + 0.0015) / latRange * 2048;
+                    return [x, y];
+                }
+
+                // Approximate M25 coordinates (normalized around center)
+                const m25 = [
+                    [0.0, 0.0013], [0.0004, 0.0014], [0.0009, 0.0013], [0.0012, 0.0010],
+                    [0.0013, 0.0005], [0.0013, 0.0000], [0.0011, -0.0006], [0.0007, -0.0011],
+                    [0.0002, -0.0013], [-0.0003, -0.0014], [-0.0008, -0.0013], [-0.0012, -0.0009],
+                    [-0.0013, -0.0004], [-0.0013, 0.0001], [-0.0011, 0.0007], [-0.0007, 0.0011],
+                    [-0.0002, 0.0013], [0.0, 0.0013]
+                ];
+
+                ctx.strokeStyle = '#ff6600';
+                ctx.lineWidth = 12;
+                ctx.shadowColor = '#ff6600';
+                ctx.shadowBlur = 20;
+                ctx.beginPath();
+                const [sx, sy] = coordToPixel(m25[0][0], m25[0][1]);
+                ctx.moveTo(sx, sy);
+                for (let i = 1; i < m25.length; i++) {
+                    const [px, py] = coordToPixel(m25[i][0], m25[i][1]);
+                    ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                // Center dot
+                ctx.fillStyle = '#00ffff';
+                ctx.beginPath();
+                ctx.arc(1024, 1024, 18, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 32px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('LONDON', 1024, 980);
+
+                // Compass
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 48px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('N', 1024, 80);
+
+                const tex = new THREE.CanvasTexture(canvas);
+                const geo = new THREE.PlaneGeometry(MAP_SIZE, MAP_SIZE);
+                const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.85 });
+                mapPlane = new THREE.Mesh(geo, mat);
+                mapPlane.rotation.x = -Math.PI / 2;
+                mapPlane.position.set(userX, floorY + 0.01, userZ);
+                scene.add(mapPlane);
+            }
+
+            // ─── MODE 0: LONDON M25 MAP (ALWAYS VISIBLE) ─────────────────────────────────
+            async function buildLondonMap() {
+                if (geoJSONLoaded) return;
+                try {
+                    debugLog('Fetching sample_campus_map.geojson...');
+                    const res = await fetch('sample_campus_map.geojson');
+                    debugLog('GeoJSON fetch complete, parsing...');
+                    const geojson = await res.json();
+                    debugLog('GeoJSON parsed, creating texture...');
+                    const texture = createLondonMapTexture(geojson);
+                    debugLog('Texture created, placing map...');
+                    placeLondonMap(texture);
+                    geoJSONLoaded = true;
+                    debugLog('GeoJSON map loaded successfully!');
+                } catch(e) {
+                    debugLog(`GeoJSON load failed: ${e.message}`, 'ERROR');
+                }
+            }
+
+            function createLondonMapTexture(geojson) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 4096;
+                canvas.height = 2048;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#0a0f1f';
+                ctx.fillRect(0, 0, 4096, 2048);
+
+                function coordToPixel(lon, lat) {
+                    const lonRange = 0.0037, latRange = 0.0037;
+                    const lonCentre = 0.000045, latCentre = 0.000125;
+                    const x = (lon - lonCentre + lonRange / 2) / lonRange * 4096;
+                    const y = 2048 - (lat - latCentre + latRange / 2) / latRange * 2048;
+                    return [x, y];
+                }
+
+                // Heatmap M25
+                const m25 = geojson.features.find(f => f.properties.heatmap);
+                if (m25 && m25.geometry.type === 'LineString') {
+                    m25.geometry.coordinates.forEach((c, i) => {
+                        const [x, y] = coordToPixel(c[0], c[1]);
+                        const ratio = i / m25.geometry.coordinates.length;
+                        const col = ratio < 0.25 || ratio > 0.75 ? 'rgba(0,255,0,0.28)'
+                                  : ratio < 0.4  || ratio > 0.6  ? 'rgba(255,255,0,0.28)'
+                                  : 'rgba(255,102,0,0.28)';
+                        const g = ctx.createRadialGradient(x, y, 0, x, y, 160);
+                        g.addColorStop(0, col);
+                        g.addColorStop(1, 'rgba(0,0,0,0)');
+                        ctx.fillStyle = g;
+                        ctx.beginPath();
+                        ctx.arc(x, y, 80, 0, Math.PI*2);
+                        ctx.fill();
+                    });
+                }
+
+                // Polygons
+                geojson.features.filter(f => f.geometry.type === 'Polygon').forEach(f => {
+                    ctx.fillStyle = f.properties.color || '#ccc';
+                    ctx.globalAlpha = f.properties.opacity || 0.4;
+                    ctx.beginPath();
+                    f.geometry.coordinates[0].forEach((c, i) => {
+                        const [x, y] = coordToPixel(c[0], c[1]);
+                        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                    });
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                });
+
+                // Lines
+                geojson.features.filter(f => f.geometry.type === 'LineString').forEach(f => {
+                    ctx.strokeStyle = f.properties.color || '#333';
+                    ctx.lineWidth = f.properties.width || 4;
+                    ctx.lineCap = ctx.lineJoin = 'round';
+                    ctx.globalAlpha = f.properties.opacity || 1;
+                    if (f.properties.heatmap) {
+                        ctx.shadowColor = f.properties.color;
+                        ctx.shadowBlur = 15;
+                    }
+                    ctx.beginPath();
+                    f.geometry.coordinates.forEach((c, i) => {
+                        const [x, y] = coordToPixel(c[0], c[1]);
+                        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                    });
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                    ctx.globalAlpha = 1;
+                });
+
+                // Points
+                geojson.features.filter(f => f.geometry.type === 'Point').forEach(f => {
+                    const [x, y] = coordToPixel(f.geometry.coordinates[0], f.geometry.coordinates[1]);
+                    ctx.fillStyle = ctx.shadowColor = f.properties.color || '#00ff88';
+                    ctx.shadowBlur = 8;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 11, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    if (f.properties.name) {
+                        ctx.fillStyle = '#fff';
+                        ctx.font = 'bold 18px Arial';
+                        ctx.shadowColor = '#000';
+                        ctx.shadowBlur = 4;
+                        ctx.fillText(f.properties.name, x+14, y+5);
+                        ctx.shadowBlur = 0;
+                    }
+                });
+
+                // Labels
+                const [cx, cy] = coordToPixel(0.000045, 0.000125);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 56px Arial';
+                ctx.textAlign = 'center';
+                ctx.shadowColor = '#000';
+                ctx.shadowBlur = 8;
+                ctx.fillText('LONDON', cx, cy);
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 40px Arial';
+                ctx.fillText('↑ N', 2048, 55);
+
+                return new THREE.CanvasTexture(canvas);
+            }
+
+            function placeLondonMap(texture) {
+                if (mode0LondonMap) scene.remove(mode0LondonMap);
+                texture.minFilter = texture.magFilter = THREE.LinearFilter;
+                const geo = new THREE.PlaneGeometry(MAP_SIZE * 2, MAP_SIZE);
+                geo.rotateX(-Math.PI / 2);
+                mode0LondonMap = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+                    map: texture, transparent: true, opacity: 0.72, depthWrite: false
+                }));
+                mode0LondonMap.position.set(userX, floorY + 0.001, userZ);
+                scene.add(mode0LondonMap);
+                debugLog(`London map placed at (${userX}, ${(floorY + 0.001).toFixed(3)}, ${userZ})`);
+            }
+
+            function buildProceduralRobot() {
+                debugLog('Building procedural robot...');
+                const robot = new THREE.Group();
+                const wheelRadius = 0.08;
+
+                const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.3, metalness: 0.1 });
+                const blackMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.4, metalness: 0.1 });
+                const yellowMat = new THREE.MeshStandardMaterial({ color: 0xffa500, roughness: 0.5 });
+                const grayMat = new THREE.MeshStandardMaterial({ color: 0x404040, roughness: 0.6, metalness: 0.2 });
+                const rubberMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.9 });
+
+                // Chassis
+                const chassis = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.02, 0.3),
+                    new THREE.MeshStandardMaterial({ color: 0x8b6f47, roughness: 0.8 }));
+                chassis.position.y = 0.12;
+                chassis.castShadow = true;
+                robot.add(chassis);
+
+                // Body shell
+                const bodyGroup = new THREE.Group();
+                bodyGroup.position.y = 0.13;
+                robot.add(bodyGroup);
+
+                const bodyLength = 0.4, bodyWidth = 0.3, bodyHeight = 0.12;
+                const bodyCenter = new THREE.Mesh(new THREE.BoxGeometry(bodyLength, bodyHeight, bodyWidth), whiteMat);
+                bodyCenter.castShadow = true;
+                bodyGroup.add(bodyCenter);
+
+                // Body caps
+                const rearCapGeom = new THREE.CylinderGeometry(bodyWidth/2, bodyWidth/2, bodyHeight, 32, 1, false, 0, Math.PI);
+                rearCapGeom.rotateY(Math.PI);
+                const rearCap = new THREE.Mesh(rearCapGeom, whiteMat);
+                rearCap.position.set(-bodyLength/2, 0, 0);
+                rearCap.castShadow = true;
+                bodyGroup.add(rearCap);
+
+                const frontCapGeom = new THREE.CylinderGeometry(bodyWidth/2, bodyWidth/2, bodyHeight, 32, 1, false, 0, Math.PI);
+                const frontCap = new THREE.Mesh(frontCapGeom, whiteMat);
+                frontCap.position.set(bodyLength/2, 0, 0);
+                frontCap.castShadow = true;
+                bodyGroup.add(frontCap);
+
+                // Top panel
+                const panelShape = new THREE.Shape();
+                const triLen = 0.16 * 1.6 * 1.3, basePos = 0.08 * 1.2;
+                panelShape.moveTo(-triLen, 0);
+                panelShape.lineTo(basePos, -0.12);
+                panelShape.lineTo(basePos, 0.12);
+                panelShape.closePath();
+                const panelGeo = new THREE.ExtrudeGeometry(panelShape, { depth: 0.003, bevelEnabled: false });
+                const topPanel = new THREE.Mesh(panelGeo, grayMat);
+                topPanel.rotation.x = -Math.PI / 2;
+                topPanel.position.set(0.1, bodyHeight/2 + 0.002, 0);
+                topPanel.castShadow = true;
+                bodyGroup.add(topPanel);
+
+                // Hazard stripes
+                const stripes = [0.15, 0.05, -0.05, -0.15];
+                stripes.forEach((x, i) => {
+                    const yellow = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.05, 0.32), yellowMat);
+                    yellow.position.set(x, 0, 0);
+                    bodyGroup.add(yellow);
+                    if (i < stripes.length - 1) {
+                        const black = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.05, 0.32), blackMat);
+                        black.position.set(x - 0.04, 0, 0);
+                        bodyGroup.add(black);
+                    }
+                });
+
+                // Wheels
+                const wheelPos = [[0.165, 0.175], [0.165, -0.175], [-0.165, 0.175], [-0.165, -0.175]];
+                wheelPos.forEach(([x, z]) => {
+                    const wg = new THREE.Group();
+                    wg.position.set(x, 0.04, z);
+                    const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.06, 32), rubberMat);
+                    tire.rotation.x = Math.PI / 2;
+                    tire.castShadow = true;
+                    wg.add(tire);
+                    for (let i = 0; i < 16; i++) {
+                        const a = (i / 16) * Math.PI * 2;
+                        const tread = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.003, 0.05),
+                            new THREE.MeshStandardMaterial({ color: 0x050505 }));
+                        tread.position.set(Math.cos(a) * 0.081, Math.sin(a) * 0.081, 0);
+                        tread.rotation.z = a;
+                        wg.add(tread);
+                    }
+                    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.005, 32),
+                        new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.1, metalness: 0.3 }));
+                    hub.rotation.x = Math.PI / 2;
+                    hub.position.z = z > 0 ? 0.031 : -0.031;
+                    wg.add(hub);
+                    robot.add(wg);
+                });
+
+                // Arm (simplified)
+                const arm = new THREE.Group();
+                arm.position.set(0.25, 0.13, 0);
+                const mount = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.04, 0.08), blackMat);
+                mount.castShadow = true;
+                arm.add(mount);
+                const link1 = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.12, 0.02), blackMat);
+                link1.position.y = 0.06;
+                link1.castShadow = true;
+                arm.add(link1);
+                robot.add(arm);
+
+                // Camera
+                const cam = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.025, 0.015), blackMat);
+                cam.position.set(0.3, bodyHeight/2 + 0.0125, 0);
+                cam.castShadow = true;
+                bodyGroup.add(cam);
+
+                // Direction arrow (red for south)
+                const arrowGeo = new THREE.ConeGeometry(0.03, 0.08, 8);
+                arrowGeo.rotateX(-Math.PI / 2);
+                const arrow = new THREE.Mesh(arrowGeo, new THREE.MeshBasicMaterial({ color: 0xff0044 }));
+                arrow.position.set(0, 0.30, -0.27);
+                robot.add(arrow);
+
+                return robot;
+            }
+
+            function showMode0Robot() {
+                debugLog('showMode0Robot called');
+                if (!mode0Robot) {
+                    mode0Robot = buildProceduralRobot();
+                    const wheelOffset = 0.04;
+                    mode0Robot.position.set(userX, floorY + 0.001 + wheelOffset, userZ);
+                    mode0Robot.rotation.y = -Math.PI / 2; // Arm faces south
+                    debugLog(`Robot positioned at (${userX}, ${(floorY + 0.001 + wheelOffset).toFixed(3)}, ${userZ}), rotation: -90°`);
+                }
+                mode0Robot.visible = true;
+                scene.add(mode0Robot);
+                debugLog('Robot added to scene and visible');
+            }
+
+            function hideMode0Robot() {
+                if (mode0Robot) {
+                    mode0Robot.visible = false;
+                }
+            }
+
+            // ─── 3D CHART ─────────────────────────────────────────────────────────────────
+            function build3DChart() {
+                if (chart3DAxes) scene.remove(chart3DAxes);
+                chart3DAxes = new THREE.Group();
+
+                const axMat = new THREE.LineBasicMaterial({ color: 0x00ff88 });
+                const axLen = CHART_3D_SIZE / 2;
+                const makeAxis = (from, to) => {
+                    const g = new THREE.BufferGeometry().setFromPoints([
+                        new THREE.Vector3(...from), new THREE.Vector3(...to)
+                    ]);
+                    return new THREE.Line(g, axMat);
+                };
+                chart3DAxes.add(makeAxis([0,0,0],[axLen,0,0])); // Time X
+                chart3DAxes.add(makeAxis([0,0,0],[0,axLen,0])); // Speed Y
+                chart3DAxes.add(makeAxis([0,0,0],[0,0,axLen])); // Dist Z
+
+                // Axis labels
+                const labels = [
+                    { text: 'TIME', pos: [axLen + 0.1, 0, 0] },
+                    { text: 'SPEED', pos: [0, axLen + 0.1, 0] },
+                    { text: 'DIST', pos: [0, 0, axLen + 0.1] }
+                ];
+                labels.forEach(l => {
+                    const lc = document.createElement('canvas');
+                    lc.width = 128; lc.height = 64;
+                    const lctx = lc.getContext('2d');
+                    lctx.fillStyle = '#00ff88';
+                    lctx.font = 'bold 28px Arial';
+                    lctx.textAlign = 'center';
+                    lctx.fillText(l.text, 64, 42);
+                    const lt = new THREE.CanvasTexture(lc);
+                    const ls = new THREE.Sprite(new THREE.SpriteMaterial({ map: lt }));
+                    ls.position.set(...l.pos);
+                    ls.scale.set(0.25, 0.12, 1);
+                    chart3DAxes.add(ls);
+                });
+
+                chart3DAxes.position.set(
+                    userX - CHART_3D_SIZE / 2,
+                    floorY + CHART_3D_Y_OFFSET,
+                    userZ - CHART_3D_SIZE / 2
+                );
+                scene.add(chart3DAxes);
+
+                // Empty line for data
+                const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0)]);
+                chart3DLine = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x00ff00, linewidth: 1 }));
+                chart3DAxes.add(chart3DLine);
+            }
+
+            function updateChart3D(data) {
+                if (!chart3DLine || data.length < 2) return;
+                const maxT = data[data.length - 1].t;
+                const axLen = CHART_3D_SIZE / 2;
+                chartMaxSpeed = Math.max(chartMaxSpeed, ...data.map(d => d.speed));
+                chartMaxDist  = Math.max(chartMaxDist, ...data.map(d => d.dist));
+                const pts = data.map(d => new THREE.Vector3(
+                    (d.t / maxT) * axLen,
+                    (d.speed / chartMaxSpeed) * axLen,
+                    (d.dist / chartMaxDist) * axLen
+                ));
+                chart3DLine.geometry.setFromPoints(pts);
+                chart3DLine.geometry.computeBoundingSphere();
+            }
+
+            function updateRobotChart(t, dist, heading) {
+                robotChartData.push({ t, speed: Math.abs(heading), dist });
+                if (robotChartData.length > 200) robotChartData.shift();
+                updateChart3D(robotChartData);
+            }
+
+            function updateM25Chart(cmdData) {
+                if (cmdData) m25ChartData.push({ t: cmdData.timestamp, speed: cmdData.speed_cms, dist: cmdData.distance_to_end });
+                if (m25ChartData.length > 200) m25ChartData.shift();
+                updateChart3D(m25ChartData);
+            }
+
+            // ─── CONTROL PANEL ────────────────────────────────────────────────────────────
+            function buildControlPanel() {
+                const pW = 1.50, pH = 1.00; // wider for 6 modes, less tall
+
+                const canvas = document.createElement('canvas');
+                canvas.width = 1500; canvas.height = 1000;
+                const ctx = canvas.getContext('2d');
+
+                drawControlPanel(ctx, canvas.width, canvas.height);
+
+                const tex = new THREE.CanvasTexture(canvas);
+                const geo = new THREE.PlaneGeometry(pW, pH);
+                const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
+                controlPanel = new THREE.Mesh(geo, mat);
+                controlPanel.userData.canvas = canvas;
+                controlPanel.userData.ctx = ctx;
+
+                // Position: north side of map, 20cm above, facing center
+                controlPanel.position.set(
+                    userX,
+                    floorY + 0.80,
+                    userZ - (MAP_SIZE / 2 + 0.10)
+                );
+                controlPanel.lookAt(new THREE.Vector3(userX, floorY + 0.80, userZ));
+                scene.add(controlPanel);
+            }
+
+            function drawControlPanel(ctx, W, H) {
+                ctx.clearRect(0, 0, W, H);
+
+                // Background
+                ctx.fillStyle = 'rgba(15,15,30,0.95)';
+                ctx.fillRect(0, 0, W, H);
+                ctx.strokeStyle = '#00ccff';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(2, 2, W-4, H-4);
+
+                // Title
+                ctx.fillStyle = '#00ccff';
+                ctx.font = 'bold 32px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('ROBOT CONTROL MODE', W/2, 42);
+
+                // Separator
+                ctx.strokeStyle = '#00ccff';
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(20, 55); ctx.lineTo(W-20, 55); ctx.stroke();
+
+                const modes = [
+                    { num: '0', title: 'R Vehicle Map View', desc: 'View R Vehicle and M25 London' },
+                    { num: '1', title: 'Manual', desc: 'Joystick' },
+                    { num: '2', title: 'Trajectory', desc: 'Draw path' },
+                    { num: '3', title: 'M25 Auto', desc: 'Sevenoaks' },
+                    { num: '4', title: 'Ctrl Track', desc: 'Left Kalman' },
+                    { num: '5', title: 'Anchor', desc: 'Spatial' }
+                ];
+
+                const rowH = 120;
+                modes.forEach((m, i) => {
+                    const y = 70 + i * rowH;
+                    const isActive = (controlMode === i);
+
+                    // Row background
+                    ctx.fillStyle = isActive ? 'rgba(0,255,100,0.18)' : 'rgba(255,255,255,0.04)';
+                    ctx.fillRect(16, y, W-32, rowH - 8);
+                    ctx.strokeStyle = isActive ? '#00ff66' : '#444466';
+                    ctx.lineWidth = isActive ? 3 : 1;
+                    ctx.strokeRect(16, y, W-32, rowH - 8);
+
+                    // Radio button
+                    ctx.strokeStyle = isActive ? '#00ff66' : '#888888';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(48, y + 46, 16, 0, Math.PI * 2);
+                    ctx.stroke();
+                    if (isActive) {
+                        ctx.fillStyle = '#00ff66';
+                        ctx.beginPath();
+                        ctx.arc(48, y + 46, 10, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+
+                    // Mode number + title (single line)
+                    ctx.fillStyle = isActive ? '#00ff66' : '#ffffff';
+                    ctx.font = `bold 28px Arial`;
+                    ctx.textAlign = 'left';
+                    ctx.fillText(`${m.num}. ${m.title}`, 76, y + 48);
+
+                    // Description
+                    ctx.fillStyle = isActive ? '#aaffcc' : '#aaaaaa';
+                    ctx.font = '20px Arial';
+                    ctx.fillText(m.desc, 76, y + 76);
+
+                    // ACTIVE badge
+                    if (isActive) {
+                        ctx.fillStyle = '#00ff66';
+                        ctx.font = 'bold 20px Arial';
+                        ctx.textAlign = 'right';
+                        ctx.fillText('✓ ACTIVE', W - 24, y + 48);
+                        ctx.textAlign = 'left';
+                    }
+                });
+
+                // APPROVE button
+                const btnY = 70 + 6 * rowH + 10;
+                ctx.fillStyle = approvePressed ? '#333333' : '#226622';
+                ctx.fillRect(30, btnY, W-60, 60);
+                ctx.strokeStyle = '#00ff66';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(30, btnY, W-60, 60);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 32px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('APPROVE', W/2, btnY + 42);
+
+                if (controlPanel && controlPanel.material && controlPanel.material.map) {
+                    controlPanel.material.map.needsUpdate = true;
+                }
+            }
+
+            // ─── PANEL INTERACTION ────────────────────────────────────────────────────────
+            function checkControlPanelInteraction(controller) {
+                if (!controlPanel) return;
+                const ray = new THREE.Raycaster();
+                const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(controller.quaternion);
+                ray.set(controller.position, dir);
+                const hits = ray.intersectObject(controlPanel);
+                if (hits.length === 0) return;
+                const uv = hits[0].uv;
+                if (!uv) return;
+
+                const totalModeRows = 6; // Changed from 5 to 6
+                const rowH = 120 / 1000;  // per-mode row height in UV (updated for new canvas height)
+                const topOffset = 70 / 1000; // updated for new layout
+
+                // Check mode rows
+                for (let i = 0; i < totalModeRows; i++) {
+                    const y1 = topOffset + i * rowH;
+                    const y2 = y1 + rowH;
+                    const uvY = 1.0 - uv.y; // flip Y
+                    if (uvY >= y1 && uvY <= y2) {
+                        controlMode = i; // Mode 0-5
+                        approvePressed = false;
+                        drawControlPanel(controlPanel.userData.ctx, 1500, 1000);
+                        document.getElementById('mode-status').textContent = `MODE ${controlMode}`;
+                        return;
+                    }
+                }
+
+                // APPROVE button (updated for 6 modes)
+                const approveY1 = (70 + 6 * 120 + 10) / 1000;
+                const approveY2 = approveY1 + (60 / 1000);
+                const uvY = 1.0 - uv.y;
+                if (uvY >= approveY1 && uvY <= approveY2) {
+                    approvePressed = true;
+                    drawControlPanel(controlPanel.userData.ctx, 1500, 1000);
+                    executeMode(controlMode);
+                }
+            }
+
+            function executeMode(mode) {
+                // Mode 0 doesn't need websocket
+                if (mode === 0) {
+                    showMode0Robot();
+                    document.getElementById('trajectory-status').textContent = 'MAP VIEW ACTIVE';
+                    return;
+                }
+
+                // Hide Mode 0 robot when switching to other modes
+                hideMode0Robot();
+
+                if (!websocket || websocket.readyState !== WebSocket.OPEN) return;
+
+                const modeNames = {
+                    0: 'R Vehicle Map View',
+                    1: 'Manual Control',
+                    2: 'User Trajectory',
+                    3: 'M25 Highway',
+                    4: 'Track Robot (Controller)',
+                    5: 'Spatial Anchor Tracking'
+                };
+
+                websocket.send(JSON.stringify({
+                    command: 'MODE_SELECTED',
+                    mode,
+                    mode_name: modeNames[mode],
+                    timestamp: performance.now()
+                }));
+
+                if (mode === 3) {
+                    m25ChartData = [];
+                    chartMaxSpeed = 1; chartMaxDist = 1;
+                    websocket.send(JSON.stringify({
+                        command: 'EXECUTE_M25',
+                        start_location: 'Sevenoaks',
+                        direction: 'clockwise'
+                    }));
+                }
+
+                if (mode === 4) startRobotTracking();
+                if (mode === 5) startAnchorTracking();
+            }
+
+            // ─── MODE 2: TRAJECTORY ───────────────────────────────────────────────────────
+            function addPoint(point) {
+                if (isApproved || isSent) return;
+                trajectoryPoints.push(point.clone());
+                if (trajectoryPoints.length > 1) {
+                    const last = trajectoryPoints[trajectoryPoints.length - 2];
+                    totalDistance += point.distanceTo(last);
+                }
+                document.getElementById('point-count').textContent = trajectoryPoints.length;
+                document.getElementById('path-distance').textContent = totalDistance.toFixed(2);
+                updateTrajectoryLine();
+            }
+
+            function updateTrajectoryLine() {
+                if (trajectoryLine) { scene.remove(trajectoryLine); trajectoryLine = null; }
+                if (trajectoryPoints.length < 2) return;
+                const geo = new THREE.BufferGeometry().setFromPoints(trajectoryPoints);
+                trajectoryLine = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 2 }));
+                scene.add(trajectoryLine);
+            }
+
+            function approve() {
+                isApproved = true;
+                document.getElementById('trajectory-status').textContent = 'APPROVED';
+                document.getElementById('trajectory-status').className = 'status-approved';
+            }
+
+            function deleteLast() {
+                if (trajectoryPoints.length > 0) {
+                    trajectoryPoints.pop();
+                    document.getElementById('point-count').textContent = trajectoryPoints.length;
+                    updateTrajectoryLine();
+                }
+            }
+
+            function sendTrajectory() {
+                if (!websocket || !isApproved || trajectoryPoints.length < 5) return;
+                websocket.send(JSON.stringify({
+                    command: 'GENERATE_COMMANDS',
+                    trajectory: {
+                        points: trajectoryPoints.map(p => ({ x: p.x, y: p.y, z: p.z })),
+                        distance: totalDistance,
+                        floorY
+                    }
+                }));
+                isSent = true;
+                document.getElementById('trajectory-status').textContent = 'SENT';
+                document.getElementById('trajectory-status').className = 'status-sent';
+            }
+
+            // ─── MODE 4: ROBOT TRACKING (LEFT CONTROLLER + KALMAN) ───────────────────────
+            function startRobotTracking() {
+                if (isTrackingRobot) return;
+                isTrackingRobot = true;
+                robotChartData = [];
+                document.getElementById('tracking-status').textContent = 'TRACKING';
+                document.getElementById('tracking-status').className = 'status-tracking';
+
+                // Triangle marker
+                if (!triangleMarker) {
+                    const geo = new THREE.ConeGeometry(0.06, 0.12, 3);
+                    geo.rotateX(Math.PI / 2);
+                    triangleMarker = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xff00ff }));
+                    scene.add(triangleMarker);
+                }
+                
+                // Show the actual procedural robot (reuse mode0Robot or create new)
+                if (!mode0Robot) {
+                    mode0Robot = buildProceduralRobot();
+                    scene.add(mode0Robot);
+                }
+                mode0Robot.visible = true; // Make sure it's visible
+                
+                // Keep the old robotIcon (green cone) for overlay/comparison
+                if (!robotIcon) {
+                    const geo2 = new THREE.ConeGeometry(0.08, 0.15, 4);
+                    geo2.rotateX(Math.PI / 2);
+                    robotIcon = new THREE.Mesh(geo2, new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
+                    scene.add(robotIcon);
+                }
+
+                trackingInterval = setInterval(() => {
+                    if (!isTrackingRobot || !websocket || websocket.readyState !== WebSocket.OPEN) return;
+                    if (!triangleMarker) return;
+                    const pos = triangleMarker.position;
+                    const x_cm = ((pos.x - userX) / MAP_SIZE * 200).toFixed(1);
+                    const z_cm = ((pos.z - userZ) / MAP_SIZE * 200).toFixed(1);
+                    const dist = Math.sqrt((pos.x - userX)**2 + (pos.z - userZ)**2);
+                    const dist_cm = (dist / MAP_SIZE * 200).toFixed(1);
+                    const heading = ((triangleMarker.rotation.y * 180 / Math.PI + 360) % 360).toFixed(1);
+                    websocket.send(JSON.stringify({
+                        command: 'ROBOT_POSITION',
+                        data: {
+                            x_cm: parseFloat(x_cm), z_cm: parseFloat(z_cm),
+                            heading_deg: parseFloat(heading),
+                            distance_from_center_cm: parseFloat(dist_cm),
+                            timestamp: performance.now() / 1000
+                        }
+                    }));
+                }, 200);
+            }
+
+            function stopRobotTracking() {
+                isTrackingRobot = false;
+                if (trackingInterval) { clearInterval(trackingInterval); trackingInterval = null; }
+                if (triangleMarker) { scene.remove(triangleMarker); triangleMarker = null; }
+                if (robotIcon) { scene.remove(robotIcon); robotIcon = null; }
+                
+                // Hide the procedural robot when exiting Mode 4
+                if (mode0Robot && controlMode !== 0) {
+                    mode0Robot.visible = false;
+                }
+                
+                document.getElementById('tracking-status').textContent = 'OFF';
+                document.getElementById('tracking-status').className = 'status-bad';
+                if (websocket && websocket.readyState === WebSocket.OPEN) {
+                    websocket.send(JSON.stringify({ command: 'TRACKING_STOPPED' }));
+                }
+            }
+
+            // ─── MODE 5: SPATIAL ANCHOR TRACKING ─────────────────────────────────────────
+            function startAnchorTracking() {
+                anchorTrackingActive = true;
+                document.getElementById('tracking-status').textContent = 'ANCHOR MODE';
+                document.getElementById('tracking-status').className = 'status-tracking';
+                // Reticle becomes visible when hit test finds floor
+            }
+
+            function placeAnchorAtReticle() {
+                if (!reticle.visible) return;
+                // Remove old anchor marker
+                if (anchorMarker) { scene.remove(anchorMarker); anchorMarker = null; }
+                if (anchorRobotIcon) { scene.remove(anchorRobotIcon); anchorRobotIcon = null; }
+
+                // Place marker at reticle position
+                const mat = new THREE.Matrix4().copy(reticle.matrix);
+                const pos = new THREE.Vector3();
+                pos.setFromMatrixPosition(mat);
+
+                const geo = new THREE.ConeGeometry(0.07, 0.14, 3);
+                geo.rotateX(Math.PI / 2);
+                anchorMarker = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xff8800 }));
+                anchorMarker.position.copy(pos);
+                anchorMarker.position.y += 0.07;
+                scene.add(anchorMarker);
+
+                const geo2 = new THREE.ConeGeometry(0.09, 0.16, 4);
+                geo2.rotateX(Math.PI / 2);
+                anchorRobotIcon = new THREE.Mesh(geo2, new THREE.MeshBasicMaterial({ color: 0xffff00 }));
+                anchorRobotIcon.position.copy(pos);
+                anchorRobotIcon.position.y += 0.25;
+                scene.add(anchorRobotIcon);
+
+                // Store anchor world position
+                placedAnchor = pos.clone();
+
+                // Start streaming anchor position every 0.2s
+                if (anchorTrackingInterval) clearInterval(anchorTrackingInterval);
+                anchorTrackingInterval = setInterval(() => {
+                    if (!anchorMarker || !websocket || websocket.readyState !== WebSocket.OPEN) return;
+                    const ap = anchorMarker.position;
+                    const x_cm = ((ap.x - userX) / MAP_SIZE * 200).toFixed(1);
+                    const z_cm = ((ap.z - userZ) / MAP_SIZE * 200).toFixed(1);
+                    const dist = Math.sqrt((ap.x - userX)**2 + (ap.z - userZ)**2);
+                    const dist_cm = (dist / MAP_SIZE * 200).toFixed(1);
+                    websocket.send(JSON.stringify({
+                        command: 'ANCHOR_POSITION',
+                        data: {
+                            x_cm: parseFloat(x_cm),
+                            z_cm: parseFloat(z_cm),
+                            distance_from_center_cm: parseFloat(dist_cm),
+                            timestamp: performance.now() / 1000
+                        }
+                    }));
+                }, 200);
+
+                document.getElementById('tracking-status').textContent = 'ANCHOR SET';
+            }
+
+            // ─── MAIN ANIMATION LOOP ──────────────────────────────────────────────────────
+            function animate(timestamp, frame) {
+                if (!frame) return;
+
+                const session = renderer.xr.getSession();
+                if (!session) return;
+
+                // Get reference space
+                if (!refSpace) {
+                    refSpace = renderer.xr.getReferenceSpace();
+                }
+                if (!refSpace) return;
+
+                // Floor detection
+                if (!floorDetected) detectFloor(frame, refSpace);
+
+                // Hit test setup (for Mode 5)
+                if (!hitTestSourceRequested && floorDetected) {
+                    session.requestReferenceSpace('viewer').then(vs => {
+                        session.requestHitTestSource({ space: vs }).then(src => {
+                            hitTestSource = src;
+                        });
+                    });
+                    hitTestSourceRequested = true;
+                }
+
+                // Update reticle (Mode 5)
+                if (hitTestSource && anchorTrackingActive) {
+                    const hitResults = frame.getHitTestResults(hitTestSource);
+                    if (hitResults.length > 0) {
+                        const hit = hitResults[0];
+                        const pose = hit.getPose(refSpace);
+                        if (pose) {
+                            reticle.visible = true;
+                            reticle.matrix.fromArray(pose.transform.matrix);
+                        }
+                    } else {
+                        reticle.visible = false;
+                    }
+                } else if (!anchorTrackingActive) {
+                    reticle.visible = false;
+                }
+
+                // Process controller inputs
+                if (floorDetected && session.inputSources) {
+                    session.inputSources.forEach((source) => {
+                        const gamepad = source.gamepad;
+                        if (!gamepad) return;
+
+                        if (source.handedness === 'left') {
+                            const leftTrigger = gamepad.buttons[0]?.pressed || false;
+                            const xButton    = gamepad.buttons[4]?.pressed || false;
+
+                            // Panel click on trigger press
+                            if (leftTrigger && !lastLeftTriggerPanel && controller0) {
+                                checkControlPanelInteraction(controller0);
+                            }
+                            lastLeftTriggerPanel = leftTrigger;
+
+                            // X button stops Mode 4 tracking
+                            if (xButton && !lastXButton && isTrackingRobot) {
+                                stopRobotTracking();
+                            }
+                            lastXButton = xButton;
+                        }
+
+                        if (source.handedness === 'right') {
+                            const trigger    = gamepad.buttons[0]?.pressed || false;
+                            const grip       = gamepad.buttons[1]?.pressed || false;
+                            const thumbstick = gamepad.buttons[3]?.pressed || false;
+                            const aButton    = gamepad.buttons[4]?.pressed || false;
+
+                            if (controlMode === 2) {
+                                // Draw trajectory
+                                if (trigger && !isApproved && !isSent) {
+                                    if (!isDrawing) isDrawing = true;
+                                    // Find intersect point on floor plane
+                                    if (controller1) {
+                                        const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -floorY);
+                                        const ray = new THREE.Raycaster();
+                                        const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(controller1.quaternion);
+                                        ray.set(controller1.position, dir);
+                                        const target = new THREE.Vector3();
+                                        ray.ray.intersectPlane(floorPlane, target);
+                                        if (target.lengthSq() > 0) addPoint(target);
+                                    }
+                                } else {
+                                    isDrawing = false;
+                                }
+                                if (grip && !lastGrip && !isApproved) approve();
+                                lastGrip = grip;
+                                if (thumbstick && !lastThumbstick && !isApproved) deleteLast();
+                                lastThumbstick = thumbstick;
+                                if (aButton && !lastAButton && isApproved && !isSent) sendTrajectory();
+                                lastAButton = aButton;
+                            }
+
+                            if (controlMode === 5) {
+                                // Place anchor on right trigger press
+                                if (trigger && !lastRightTrigger && anchorTrackingActive) {
+                                    placeAnchorAtReticle();
+                                }
+                                lastRightTrigger = trigger;
+                            }
+                        }
+
+                        // Mode 4: Track left controller with Kalman
+                        if (source.handedness === 'left' && isTrackingRobot && source.gripSpace) {
+                            const gripPose = frame.getPose(source.gripSpace, refSpace);
+                            if (gripPose) {
+                                const pos = gripPose.transform.position;
+                                const ori = gripPose.transform.orientation;
+
+                                // Kalman filter positions
+                                const fx = kfX.update(pos.x);
+                                const fz = kfZ.update(pos.z);
+
+                                // Heading from quaternion (yaw only)
+                                const qx = ori.x, qy = ori.y, qz = ori.z, qw = ori.w;
+                                const rawHeading = Math.atan2(2*(qw*qy + qx*qz), 1 - 2*(qy*qy + qz*qz));
+                                const rawDeg = (rawHeading * 180 / Math.PI + 360) % 360;
+                                const filtHeading = kfH.update(rawDeg);
+
+                                // Update triangle marker (magenta)
+                                if (triangleMarker) {
+                                    triangleMarker.position.set(fx, floorY + 0.05, fz);
+                                    triangleMarker.rotation.y = filtHeading * Math.PI / 180;
+                                }
+                                
+                                // Update green cone icon (above robot)
+                                if (robotIcon) {
+                                    robotIcon.position.set(fx, floorY + 0.20, fz);
+                                    robotIcon.rotation.y = filtHeading * Math.PI / 180;
+                                }
+                                
+                                // Update PROCEDURAL ROBOT - wheels on map, follows controller position & orientation
+                                if (mode0Robot) {
+                                    const wheelOffset = 0.04; // Same as Mode 0 - keeps wheels on map
+                                    mode0Robot.position.set(fx, floorY + 0.001 + wheelOffset, fz);
+                                    mode0Robot.rotation.y = filtHeading * Math.PI / 180; // Yaw only
+                                }
+
+                                const dist_cm = Math.sqrt((fx - userX)**2 + (fz - userZ)**2) / MAP_SIZE * 200;
+                                updateRobotChart(performance.now() / 1000, dist_cm, filtHeading);
+                            }
+                        }
+                    });
+                }
+
+                // Rotate chart axes slowly for visibility
+                if (chart3DAxes) chart3DAxes.rotation.y += 0.002;
+
+                renderer.render(scene, camera);
+            }
+
+            init();
+        </script>
+    </body>
+</html>

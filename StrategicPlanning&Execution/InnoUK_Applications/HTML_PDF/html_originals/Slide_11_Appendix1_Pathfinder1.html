@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Slide 11 – Appendix 1: Early Work CAM Pathfinder 1</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    width:1333px; height:750px; overflow:hidden;
+    background:#0c0f14;
+    font-family:'DM Sans', sans-serif; color:#b7b7b7;
+    position:relative;
+  }
+  body::before {
+    content:''; position:absolute; inset:0;
+    background-image:radial-gradient(circle, rgba(0,255,0,0.06) 1px, transparent 1px);
+    background-size:38px 38px; pointer-events:none; z-index:0;
+  }
+  .glow-tl { position:absolute; top:-140px; left:-80px; width:520px; height:380px;
+    background:radial-gradient(ellipse, rgba(0,255,0,0.08) 0%, transparent 68%);
+    pointer-events:none; z-index:0; }
+  .glow-br { position:absolute; bottom:-100px; right:-60px; width:440px; height:320px;
+    background:radial-gradient(ellipse, rgba(255,192,0,0.07) 0%, transparent 68%);
+    pointer-events:none; z-index:0; }
+
+  .slide {
+    position:relative; z-index:1;
+    width:1333px; height:750px;
+    padding:24px 46px 20px 46px;
+    display:flex; flex-direction:column; gap:0;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding-bottom:11px;
+    border-bottom:1px solid rgba(0,255,0,0.2);
+    margin-bottom:13px; flex-shrink:0;
+  }
+  .eyebrow {
+    font-family:'DM Mono', monospace; font-size:11px; letter-spacing:3px;
+    color:rgba(0,255,0,0.5); text-transform:uppercase; margin-bottom:3px;
+  }
+  h1 { font-size:34px; font-weight:700; color:#00ff00; letter-spacing:-0.5px; line-height:1; }
+  .pills { display:flex; gap:8px; }
+  .pill {
+    font-family:'DM Mono', monospace; font-size:9.5px; letter-spacing:1.6px;
+    text-transform:uppercase; padding:5px 12px; border-radius:20px; white-space:nowrap;
+  }
+  .pill-amber { color:rgba(255,192,0,0.85); border:1px solid rgba(255,192,0,0.35); }
+  .pill-green { color:rgba(0,255,0,0.75);   border:1px solid rgba(0,255,0,0.3); }
+  .pill-blue  { color:rgba(96,165,250,0.85); border:1px solid rgba(96,165,250,0.35); }
+
+  /* ── BODY: 3 equal columns ── */
+  .body {
+    flex:1; min-height:0;
+    display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;
+  }
+
+  /* ── COLUMN CARD ── */
+  .col-card {
+    display:flex; flex-direction:column;
+    border-radius:7px; overflow:hidden;
+    border:1px solid rgba(255,255,255,0.07);
+    min-height:0;
+  }
+  .col-head {
+    padding:9px 14px 8px; flex-shrink:0;
+    display:flex; align-items:center; gap:9px;
+  }
+  .ch-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .ch-title {
+    font-family:'DM Mono', monospace; font-size:10.5px; font-weight:500;
+    letter-spacing:2px; text-transform:uppercase; line-height:1;
+  }
+  .ch-sub { font-size:9.5px; color:rgba(255,255,255,0.38); margin-top:1px; }
+
+  .cc1 .col-head { background:linear-gradient(135deg,rgba(30,90,160,0.7),rgba(18,65,120,0.6)); border-bottom:1px solid rgba(96,165,250,0.2); }
+  .cc1 { border-color:rgba(96,165,250,0.22); }
+  .cc1 .ch-dot { background:#60a5fa; box-shadow:0 0 6px rgba(96,165,250,0.8); }
+  .cc1 .ch-title { color:#60a5fa; }
+
+  .cc2 .col-head { background:linear-gradient(135deg,rgba(10,100,50,0.75),rgba(5,70,30,0.65)); border-bottom:1px solid rgba(0,255,0,0.2); }
+  .cc2 { border-color:rgba(0,255,0,0.22); }
+  .cc2 .ch-dot { background:#00ff00; box-shadow:0 0 6px rgba(0,255,0,0.8); }
+  .cc2 .ch-title { color:#00ff00; }
+
+  .cc3 .col-head { background:linear-gradient(135deg,rgba(140,85,0,0.75),rgba(100,60,0,0.65)); border-bottom:1px solid rgba(255,192,0,0.2); }
+  .cc3 { border-color:rgba(255,192,0,0.22); }
+  .cc3 .ch-dot { background:#FFC000; box-shadow:0 0 6px rgba(255,192,0,0.8); }
+  .cc3 .ch-title { color:#FFC000; }
+
+  .col-body {
+    flex:1; background:rgba(0,0,0,0.25);
+    padding:8px 11px; display:flex; flex-direction:column; gap:6px;
+    min-height:0;
+  }
+
+  /* ── RESULT CARD ── */
+  .rcard {
+    flex:1; min-height:0;
+    border-radius:6px; padding:9px 12px;
+    display:flex; flex-direction:column; gap:3px;
+    position:relative; overflow:hidden;
+  }
+  .rcard::after {
+    content:''; position:absolute; left:0; right:0; top:0; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,0.14) 50%,transparent);
+  }
+
+  .rc-blue   { background:linear-gradient(135deg,rgba(30,90,180,0.36),rgba(18,65,140,0.28)); border:1px solid rgba(96,165,250,0.2); }
+  .rc-green  { background:linear-gradient(135deg,rgba(10,100,50,0.40),rgba(5,70,30,0.30));  border:1px solid rgba(0,255,0,0.18); }
+  .rc-amber  { background:linear-gradient(135deg,rgba(140,85,0,0.40),rgba(100,60,0,0.30));  border:1px solid rgba(255,192,0,0.2); }
+  .rc-purple { background:linear-gradient(135deg,rgba(90,50,160,0.40),rgba(60,30,120,0.30));border:1px solid rgba(167,139,250,0.22); }
+  .rc-stat   { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); flex-direction:row; align-items:center; gap:12px; }
+
+  .rcard-icon  { font-size:16px; flex-shrink:0; }
+  .rcard-label {
+    font-family:'DM Mono', monospace; font-size:8.5px; letter-spacing:1.5px;
+    text-transform:uppercase; color:rgba(255,255,255,0.38); margin-bottom:1px;
+  }
+  .rcard-val  { font-size:14.5px; font-weight:700; line-height:1.15; color:#fff; }
+  .rcard-sub  { font-size:11.5px; color:rgba(210,210,210,0.72); line-height:1.35; }
+
+  .stat-num  { font-size:28px; font-weight:700; line-height:1; flex-shrink:0; }
+  .stat-desc { font-size:12.5px; color:rgba(210,210,210,0.75); line-height:1.35; }
+
+  /* TRL bridge */
+  .trl-bridge {
+    display:flex; align-items:center; gap:0;
+    padding:6px 0; flex-shrink:0;
+  }
+  .trl-box   { flex:1; text-align:center; padding:7px 4px; border-radius:5px; font-weight:700; }
+  .trl-p1    { background:rgba(96,165,250,0.18); border:1px solid rgba(96,165,250,0.35); color:#93c5fd; font-size:13px; }
+  .trl-arrow { font-size:20px; color:rgba(0,255,0,0.5); padding:0 6px; flex-shrink:0; }
+  .trl-p2    { background:rgba(0,255,0,0.14); border:1px solid rgba(0,255,0,0.4); color:#00ff00; font-size:13px; }
+  .trl-label { font-size:9.5px; font-weight:400; display:block; opacity:0.7; margin-top:2px; }
+
+  /* OEM badges */
+  .oem-row { display:flex; gap:5px; flex-wrap:wrap; margin-top:5px; }
+  .oem-badge {
+    font-family:'DM Mono', monospace; font-size:10px; font-weight:600;
+    padding:3px 10px; border-radius:4px;
+    background:rgba(255,192,0,0.12); color:#FFC000; border:1px solid rgba(255,192,0,0.3);
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    flex-shrink:0; margin-top:9px;
+    display:grid; grid-template-columns:1fr 1fr; gap:8px;
+  }
+  .fitem {
+    display:flex; align-items:flex-start; gap:9px;
+    background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07);
+    border-radius:5px; padding:8px 13px;
+  }
+  .ficon { font-size:14px; flex-shrink:0; }
+  .ftext { font-size:11.5px; line-height:1.45; color:rgba(210,210,210,0.75); }
+  .ftext strong { font-weight:700; }
+  .fg { color:#00ff00; }
+  .fb { color:#60a5fa; }
+</style>
+</head>
+<body>
+<div class="glow-tl"></div>
+<div class="glow-br"></div>
+<div class="slide">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <div class="eyebrow">Appendix 1 — Prior Work Foundation</div>
+      <h1>Early Work: CAM Pathfinder 1</h1>
+    </div>
+    <div class="pills">
+      <div class="pill pill-blue">Feasibility Grant Completed</div>
+      <div class="pill pill-green">TRL 3 → TRL 6 Target</div>
+      <div class="pill pill-amber">Dover–Milton Keynes Corridor</div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- COL 1: Pathfinder 1 Outputs -->
+    <div class="col-card cc1">
+      <div class="col-head">
+        <div class="ch-dot"></div>
+        <div>
+          <div class="ch-title">Pathfinder 1 Outputs</div>
+          <div class="ch-sub">What was built &amp; proven</div>
+        </div>
+      </div>
+      <div class="col-body">
+
+        <div class="rcard rc-stat">
+          <div class="stat-num" style="color:#60a5fa;">3,200+</div>
+          <div class="stat-desc">Images &amp; years of real route data across Dover–Milton Keynes (640km)</div>
+        </div>
+
+        <div class="rcard rc-blue">
+          <div class="rcard-icon">📋</div>
+          <div class="rcard-label">Standards Alignment</div>
+          <div class="rcard-val">PAS 1883 ODD Mapping</div>
+          <div class="rcard-sub">Full PAS 1883:2020 alignment verified — machine-readable output</div>
+        </div>
+
+        <div class="rcard rc-blue">
+          <div class="rcard-icon">🔌</div>
+          <div class="rcard-label">Technical Outputs</div>
+          <div class="rcard-val">API + Interactive Dashboard</div>
+          <div class="rcard-sub">Functional prototype, Street View &amp; satellite integration, vehicle capability matrix</div>
+        </div>
+
+        <div class="rcard rc-blue">
+          <div class="rcard-icon">🤝</div>
+          <div class="rcard-label">Atera Analytics Integration</div>
+          <div class="rcard-val">NUIC + Mobility Data Proven</div>
+          <div class="rcard-sub">Real-time NUIC data fused with infrastructure attributes — multi-source pipeline validated</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- COL 2: TRL Progression -->
+    <div class="col-card cc2">
+      <div class="col-head">
+        <div class="ch-dot"></div>
+        <div>
+          <div class="ch-title">TRL Progression</div>
+          <div class="ch-sub">Feasibility → Demonstrator</div>
+        </div>
+      </div>
+      <div class="col-body">
+
+        <div class="trl-bridge">
+          <div class="trl-box trl-p1">TRL 3<span class="trl-label">Pathfinder 1<br>Feasibility</span></div>
+          <div class="trl-arrow">→</div>
+          <div class="trl-box trl-p2">TRL 6<span class="trl-label">This Project<br>Demonstrator</span></div>
+        </div>
+
+        <div class="rcard rc-green">
+          <div class="rcard-icon">✅</div>
+          <div class="rcard-label">Proven Performance</div>
+          <div class="rcard-val">87% AI Classification Accuracy</div>
+          <div class="rcard-sub">AI vs. manual audit across 640km corridor — gaps identified, model refinement loop established</div>
+        </div>
+
+        <div class="rcard rc-green">
+          <div class="rcard-icon">🏭</div>
+          <div class="rcard-label">Validation Infrastructure</div>
+          <div class="rcard-val">9½km South Wales Test Track</div>
+          <div class="rcard-sub">Pembrokeshire military base — city circuit, industrial docking, multimodal railhead</div>
+        </div>
+
+        <div class="rcard rc-purple">
+          <div class="rcard-icon">🔁</div>
+          <div class="rcard-label">Without Grant Funding</div>
+          <div class="rcard-val">Fragmented — No National Scale</div>
+          <div class="rcard-sub">Partners progress in isolation — repeated bespoke assessments, no cumulative knowledge</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- COL 3: Market Demand -->
+    <div class="col-card cc3">
+      <div class="col-head">
+        <div class="ch-dot"></div>
+        <div>
+          <div class="ch-title">Market Demand &amp; OEM Interest</div>
+          <div class="ch-sub">Commercial pull evidenced through partners</div>
+        </div>
+      </div>
+      <div class="col-body">
+
+        <div class="rcard rc-amber">
+          <div class="rcard-icon">🚚</div>
+          <div class="rcard-label">OEM Engagement</div>
+          <div class="rcard-val">Active Discussions Secured</div>
+          <div class="rcard-sub">Expressions of interest from major OEMs via consortium network:</div>
+          <div class="oem-row">
+            <span class="oem-badge">Daimler</span>
+            <span class="oem-badge">DAF</span>
+            <span class="oem-badge">Volvo</span>
+            <span class="oem-badge">Scania</span>
+          </div>
+        </div>
+
+        <div class="rcard rc-amber">
+          <div class="rcard-icon">📈</div>
+          <div class="rcard-label">What Demonstrate Adds</div>
+          <div class="rcard-val">Live NUIC Validation at Scale</div>
+          <div class="rcard-sub">Concept proven. This project adds real NUIC trials, ADS integration &amp; national-scale scoring.</div>
+        </div>
+
+        <div class="rcard rc-amber">
+          <div class="rcard-icon">🎯</div>
+          <div class="rcard-label">Commercial Pathway</div>
+          <div class="rcard-val">TRL 6 → SaaS Revenue</div>
+          <div class="rcard-sub">Sufficient maturity to secure customer commitments &amp; attract private investment for TRL 7</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="fitem">
+      <div class="ficon">📋</div>
+      <div class="ftext">
+        <strong class="fb">Proven foundation:</strong> Pathfinder 1 delivered a functional prototype, PAS 1883-aligned scoring, production-grade API &amp; validated data pipelines — this project builds directly on that base.
+      </div>
+    </div>
+    <div class="fitem">
+      <div class="ficon">🔁</div>
+      <div class="ftext">
+        <strong class="fg">Standards continuity:</strong> PAS 1883 ODD taxonomy from Pathfinder 1 is the same common language used here — ADS operators overlay their own capability constraints without proprietary data sharing.
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,79 @@
+# modules/_module_registry.yml
+# =============================
+# THE CONTROL CENTER - Enable/Disable Modules Here
+# EV Route Optimizer v4.0 - CAV Edition
+
+modules:
+  # BigQuery Connection Module
+  bigquery_connection:
+    enabled: true
+    priority: 1
+    description: "BigQuery authentication and charging point data"
+  
+  # Road Network Module
+  road_network:
+    enabled: true
+    priority: 10
+    description: "OpenStreetMap road network download and processing"
+  
+  # Route Optimizer Module
+  route_optimizer:
+    enabled: true
+    priority: 20
+    description: "Calculate optimal routes through charging stations"
+  
+  # Route Map Module
+  route_map:
+    enabled: true
+    priority: 30
+    description: "Interactive Leaflet map with route visualization"
+  
+  # CAV Route Sampler Module
+  cav_route_sampler:
+    enabled: true
+    priority: 25
+    description: "Generate waypoints for CAV analysis"
+  
+  # Feature Detector Module
+  feature_detector:
+    enabled: true
+    priority: 26
+    description: "Detect road features and POIs"
+  
+  # Street View Capture Module
+  streetview_capture:
+    enabled: true
+    priority: 27
+    description: "Download Street View imagery"
+  
+  # YOLO Detector Module
+  yolo_detector:
+    enabled: true
+    priority: 28
+    description: "ML-based object detection"
+  
+  # Risk Map Module
+  risk_map:
+    enabled: true
+    priority: 29
+    description: "CAV risk visualization"
+
+# Global Settings
+settings:
+  auto_install: false
+  check_versions: true
+  verbose: true
+  dev_mode: false
+
+# Application Metadata
+app:
+  name: "EV/CAV Route Optimizer"
+  version: "4.0.0"
+  description: "Modular EV/CAV route optimization with risk detection and charging station integration"
+  author: "Analytics Team"
+  created: "2024"
+  updated: "2026"
+
+# To DISABLE a module: Change "enabled: true" to "enabled: false"
+# To ENABLE a module: Change "enabled: false" to "enabled: true"
+# Then restart the app

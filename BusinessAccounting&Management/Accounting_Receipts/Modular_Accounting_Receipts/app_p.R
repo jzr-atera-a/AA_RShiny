@@ -11,8 +11,6 @@ source("modules/categorize_module.R")
 source("modules/statements_to_table_module.R")
 source("modules/budget_module.R")
 source("modules/transaction_categorization_module.R")
-source("modules/invoice_management_module.R")
-source("modules/receipt_translation_module.R")         # ADDED
 source("utils/api_utils.R")
 source("utils/file_utils.R")
 source("ui/styles.R")
@@ -32,9 +30,7 @@ ui <- dashboardPage(
       menuItem("Categorize Receipts", tabName = "categorize", icon = icon("tags")),
       menuItem("Statements to Table", tabName = "statements", icon = icon("file-invoice-dollar")),
       menuItem("Quarterly Budget", tabName = "budget", icon = icon("chart-line")),
-      menuItem("Transaction Categorization", tabName = "txn_categorization", icon = icon("list-check")),
-      menuItem("Invoice Management", tabName = "invoice_mgmt", icon = icon("file-invoice")),  # ADDED
-      menuItem("Receipt Translation", tabName = "receipt_translation", icon = icon("language"))  # ADDED
+      menuItem("Transaction Categorization", tabName = "txn_categorization", icon = icon("list-check"))
     )
   ),
   
@@ -95,18 +91,6 @@ ui <- dashboardPage(
       tabItem(
         tabName = "txn_categorization",
         transactionCategorizationUI("txn_categorization")
-      ),
-      
-      # Invoice Management Tab
-      tabItem(                                                    # ADDED
-        tabName = "invoice_mgmt",
-        invoice_management_ui("invoice_mgmt")
-      ),
-      
-      # Receipt Translation Tab
-      tabItem(                                                    # ADDED
-        tabName = "receipt_translation",
-        receipt_translation_ui("receipt_translation")
       )
     )
   )
@@ -163,8 +147,6 @@ server <- function(input, output, session) {
   statementsToTableServer("statements", shared_rv)
   budgetServer("budget", shared_rv)
   transactionCategorizationServer("txn_categorization", shared_rv)
-  invoice_management_server("invoice_mgmt", shared_rv)            # ADDED
-  receipt_translation_server("receipt_translation", shared_rv)    # ADDED
 }
 
 # Run the application

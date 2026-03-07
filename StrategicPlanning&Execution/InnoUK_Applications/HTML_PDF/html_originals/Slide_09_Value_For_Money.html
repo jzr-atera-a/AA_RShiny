@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Slide 9 – Value for Money</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+
+  body{
+    width:1333px;height:750px;overflow:hidden;
+    background:#0c0f14;
+    font-family:'DM Sans',sans-serif;color:#b7b7b7;position:relative;
+  }
+  body::before{
+    content:'';position:absolute;inset:0;
+    background-image:radial-gradient(circle,rgba(0,255,0,0.06) 1px,transparent 1px);
+    background-size:38px 38px;pointer-events:none;z-index:0;
+  }
+  .glow-tl{position:absolute;top:-140px;left:-80px;width:520px;height:380px;
+    background:radial-gradient(ellipse,rgba(0,255,0,0.08) 0%,transparent 68%);
+    pointer-events:none;z-index:0;}
+  .glow-br{position:absolute;bottom:-100px;right:-60px;width:440px;height:320px;
+    background:radial-gradient(ellipse,rgba(255,192,0,0.07) 0%,transparent 68%);
+    pointer-events:none;z-index:0;}
+
+  .slide{
+    position:relative;z-index:1;
+    width:1333px;height:750px;
+    padding:24px 44px 18px 44px;
+    display:flex;flex-direction:column;gap:0;
+  }
+
+  /* ── HEADER ── */
+  .header{
+    padding-bottom:11px;border-bottom:1px solid rgba(0,255,0,0.2);
+    margin-bottom:13px;flex-shrink:0;
+  }
+  .eyebrow{
+    font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;
+    color:rgba(0,255,0,0.5);text-transform:uppercase;margin-bottom:4px;
+  }
+  h1{font-size:34px;font-weight:700;color:#00ff00;letter-spacing:-0.5px;line-height:1;}
+
+  /* ── BODY: 2 columns ── */
+  .body{
+    flex:1;min-height:0;
+    display:grid;grid-template-columns:1fr 1fr;gap:18px;
+  }
+
+  /* ══ LEFT: Round boxes vertical stack ══ */
+  .left-section{
+    display:flex;flex-direction:column;gap:12px;
+  }
+
+  .sec-header{
+    background:linear-gradient(135deg,rgba(140,85,0,0.6),rgba(100,60,0,0.5));
+    border:1px solid rgba(255,192,0,0.35);
+    border-radius:8px;padding:10px 18px;
+    font-size:16px;font-weight:700;color:#FFC000;
+    box-shadow:0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  .round-boxes{
+    flex:1;
+    display:flex;flex-direction:column;
+    justify-content:space-evenly;
+    gap:10px;
+  }
+
+  /* Single round box - amber/orange theme */
+  .round-box{
+    background:linear-gradient(135deg,rgba(140,85,0,0.55),rgba(100,60,0,0.45));
+    border:2px solid rgba(255,192,0,0.4);
+    border-radius:50px;
+    padding:14px 24px;
+    display:flex;align-items:center;gap:16px;
+    box-shadow:0 3px 10px rgba(0,0,0,0.4);
+    min-height:75px;
+  }
+
+  .round-icon{
+    width:65px;height:65px;
+    border-radius:50%;
+    background:rgba(255,192,0,0.2);
+    border:2px solid rgba(255,192,0,0.4);
+    flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:32px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.3);
+  }
+
+  .round-text{
+    flex:1;
+    font-size:15px;font-weight:600;color:#fff;
+    line-height:1.3;
+  }
+
+  /* ══ RIGHT: Explanation boxes ══ */
+  .right-section{
+    display:flex;flex-direction:column;gap:12px;
+  }
+
+  .info-boxes{
+    flex:1;
+    display:flex;flex-direction:column;
+    justify-content:space-evenly;
+    gap:10px;
+  }
+
+  /* Green explanation boxes */
+  .info-box{
+    background:linear-gradient(135deg,rgba(10,100,50,0.45),rgba(5,70,30,0.35));
+    border:2px solid rgba(0,255,0,0.3);
+    border-radius:10px;
+    padding:14px 20px;
+    box-shadow:0 3px 10px rgba(0,0,0,0.4);
+  }
+
+  .info-title{
+    font-size:13px;font-weight:700;color:#00ff00;
+    margin-bottom:6px;text-transform:uppercase;
+    font-family:'DM Mono',monospace;letter-spacing:1px;
+  }
+
+  .info-text{
+    font-size:13.5px;color:rgba(210,210,210,0.85);
+    line-height:1.4;
+  }
+
+  /* Footer */
+  .footer{
+    flex-shrink:0;margin-top:10px;
+    background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);
+    border-radius:5px;padding:9px 16px;
+    font-size:14px;color:rgba(210,210,210,0.7);line-height:1.4;
+    text-align:center;
+  }
+  .footer strong{font-weight:700;color:#FFC000;}
+
+</style>
+</head>
+<body>
+<div class="glow-tl"></div>
+<div class="glow-br"></div>
+<div class="slide">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="eyebrow">09 — Budget & Value</div>
+    <h1>Value for money &amp; cost alignment</h1>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- ══ LEFT: Round boxes ══ -->
+    <div class="left-section">
+      <div class="sec-header">Value for Money Strengths</div>
+      <div class="round-boxes">
+
+        <div class="round-box">
+          <div class="round-icon">💡</div>
+          <div class="round-text">28% of spend builds reusable AI platform &amp; datasets IP for R10</div>
+        </div>
+
+        <div class="round-box">
+          <div class="round-icon">📊</div>
+          <div class="round-text">Validation activities generate reusable operational datasets</div>
+        </div>
+
+        <div class="round-box">
+          <div class="round-icon">🔬</div>
+          <div class="round-text">Vehicle integration + Validation Infrastructure = Proof for All</div>
+        </div>
+
+        <div class="round-box">
+          <div class="round-icon">⚖️</div>
+          <div class="round-text">Flexible allocation retained for contingency + in-kind contributions</div>
+        </div>
+
+        <div class="round-box">
+          <div class="round-icon">🚛</div>
+          <div class="round-text">Welch Group provides a model other network members can follow</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ RIGHT: Explanations ══ -->
+    <div class="right-section">
+      <div class="sec-header">Cost Justification</div>
+      <div class="info-boxes">
+
+        <div class="info-box">
+          <div class="info-title">Reusable Platform IP</div>
+          <div class="info-text">28% of total spend directly builds Route10's core AI engine and proprietary datasets — these assets generate post-project SaaS revenue</div>
+        </div>
+
+        <div class="info-box">
+          <div class="info-title">Validation Creates Value</div>
+          <div class="info-text">Vehicle trials don't just test the platform — they generate the operational NUIC and ADS datasets that train and refine Route10's scoring models</div>
+        </div>
+
+        <div class="info-box">
+          <div class="info-title">Integrated Validation</div>
+          <div class="info-text">Berkeley and Voltempo costs create the test infrastructure that proves the platform works — every pound of vehicle spend improves platform accuracy</div>
+        </div>
+
+        <div class="info-box">
+          <div class="info-title">Responsible Planning</div>
+          <div class="info-text">Contingency buffer maintained for risk mitigation. In-kind contributions from partners demonstrate genuine commercial commitment beyond grant funding</div>
+        </div>
+
+        <div class="info-box">
+          <div class="info-title">Scalable Model</div>
+          <div class="info-text">Welch's operational validation creates a replicable template — other Pallet Network members can adopt the same approach, accelerating national rollout</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <strong>Strong co-investment:</strong> £684K partner contribution (30.3%) demonstrates genuine commercial commitment — five partners at 70% grant rate, Welch at 60% reflecting operational validation role
+  </div>
+
+</div>
+</body>
+</html>

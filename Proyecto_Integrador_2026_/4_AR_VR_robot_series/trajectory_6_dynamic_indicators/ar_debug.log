@@ -1,0 +1,106 @@
+=== AR Debug Log Started: 2026-03-05 13:54:30 ===
+[2026-03-05 13:56:37.582] INFO: === AR SESSION STARTING ===
+[2026-03-05 13:56:47.232] INFO: floorDetected=true, floorY=-1.640
+[2026-03-05 13:56:47.253] INFO: Starting London map load...
+[2026-03-05 13:56:47.278] INFO: Fetching sample_campus_map.geojson...
+[2026-03-05 13:56:47.296] INFO: AR SESSION STARTED
+[2026-03-05 13:56:47.308] INFO: FLOOR DETECTED! RefSpace: viewer/local (estimated), HeadY: -0.040m, floorY: -1.640m
+[2026-03-05 13:56:47.320] INFO: === BUILDING SCENE START ===
+[2026-03-05 13:56:47.334] INFO: Called from:     at detectFloor (https://10.163.85.243:8443/trajectory_6modes.html:355:21)
+[2026-03-05 13:56:47.348] INFO: GeoJSON fetch complete, parsing...
+[2026-03-05 13:56:47.357] INFO: GeoJSON parsed, creating texture...
+[2026-03-05 13:56:47.374] INFO: Texture created, placing map...
+[2026-03-05 13:56:47.384] INFO: London map placed at (0, -1.639, 0). floorY=-1.640
+[2026-03-05 13:56:47.613] INFO: Chart built
+[2026-03-05 13:56:47.626] INFO: Building control panel...
+[2026-03-05 13:56:47.640] INFO: Control panel built
+[2026-03-05 13:56:47.654] INFO: Showing Mode 0 robot...
+[2026-03-05 13:56:47.672] INFO: showMode0Robot called
+[2026-03-05 13:56:47.686] INFO: Building procedural robot...
+[2026-03-05 13:56:47.703] INFO: Robot created at (0, -1.599, 0), rotation: -90°. floorY=-1.640
+[2026-03-05 13:56:47.724] INFO: Robot added to scene and visible
+[2026-03-05 13:56:47.739] INFO: Robot shown
+[2026-03-05 13:56:47.753] INFO: === SCENE BUILD COMPLETE ===
+[2026-03-05 13:56:47.765] WARN: Map should be on floor. If floating at head level, check AR reference space!
+[2026-03-05 13:56:47.784] INFO: GeoJSON map loaded successfully!
+[2026-03-05 13:56:47.887] INFO: London map loaded successfully
+[2026-03-05 13:56:47.904] INFO: Building 3D chart...
+[2026-03-05 13:59:39.393] INFO: === AR SESSION STARTING ===
+[2026-03-05 14:00:19.953] INFO: floorDetected=true, floorY=-1.552
+[2026-03-05 14:00:19.971] INFO: Starting London map load...
+[2026-03-05 14:00:20.016] INFO: Fetching sample_campus_map.geojson...
+[2026-03-05 14:00:20.033] INFO: AR SESSION STARTED
+[2026-03-05 14:00:20.053] INFO: FLOOR DETECTED! RefSpace: viewer/local (estimated), HeadY: 0.048m, floorY: -1.552m
+[2026-03-05 14:00:20.070] INFO: === BUILDING SCENE START ===
+[2026-03-05 14:00:20.084] INFO: Called from:     at detectFloor (https://10.163.85.243:8443/trajectory_6modes.html:355:21)
+[2026-03-05 14:00:20.098] INFO: GeoJSON fetch complete, parsing...
+[2026-03-05 14:00:20.116] INFO: GeoJSON parsed, creating texture...
+[2026-03-05 14:00:20.134] INFO: Texture created, placing map...
+[2026-03-05 14:00:20.464] INFO: Building 3D chart...
+[2026-03-05 14:00:20.753] INFO: Chart built
+[2026-03-05 14:00:20.773] INFO: Building control panel...
+[2026-03-05 14:00:20.799] INFO: Control panel built
+[2026-03-05 14:00:20.814] INFO: Showing Mode 0 robot...
+[2026-03-05 14:00:20.831] INFO: showMode0Robot called
+[2026-03-05 14:00:20.848] INFO: Building procedural robot...
+[2026-03-05 14:00:20.863] INFO: Robot created at (0, -1.511, 0), rotation: -90°. floorY=-1.552
+[2026-03-05 14:00:20.903] INFO: Robot shown
+[2026-03-05 14:00:20.918] INFO: === SCENE BUILD COMPLETE ===
+[2026-03-05 14:00:20.933] INFO: London map placed at (0, -1.551, 0). floorY=-1.552
+[2026-03-05 14:00:20.950] WARN: Map should be on floor. If floating at head level, check AR reference space!
+[2026-03-05 14:00:20.969] INFO: GeoJSON map loaded successfully!
+[2026-03-05 14:00:20.983] INFO: London map loaded successfully
+[2026-03-05 14:00:20.999] INFO: Robot added to scene and visible
+[2026-03-05 14:00:28.592] INFO: AR SESSION ENDED
+[2026-03-05 14:00:55.616] INFO: AR SESSION STARTED
+[2026-03-05 14:01:32.261] INFO: Mode 6: EV Charger tracking started
+[2026-03-05 14:01:32.489] INFO: Mode 6: 3D graph and 2D panel created
+[2026-03-05 14:01:32.502] INFO: Received 3 charger updates
+[2026-03-05 14:01:32.516] INFO: Created charger marker at (-0.38, 0.56) - available
+[2026-03-05 14:01:32.533] INFO: Created charger marker at (-0.52, -0.50) - reserved
+[2026-03-05 14:01:32.554] INFO: Created charger marker at (-1.45, -0.25) - reserved
+[2026-03-05 14:01:47.341] INFO: Received 3 charger updates
+[2026-03-05 14:01:47.360] INFO: Created charger marker at (-0.69, 0.16) - available
+[2026-03-05 14:01:47.378] INFO: Created charger marker at (1.57, 0.57) - offline
+[2026-03-05 14:01:47.399] INFO: Created charger marker at (-0.06, -0.03) - available
+[2026-03-05 14:02:02.337] INFO: Received 3 charger updates
+[2026-03-05 14:02:02.359] INFO: Created charger marker at (1.48, -0.20) - in_use
+[2026-03-05 14:02:02.372] INFO: Created charger marker at (-0.69, -0.33) - offline
+[2026-03-05 14:02:02.384] INFO: Created charger marker at (2.03, -0.84) - reserved
+[2026-03-05 14:02:17.427] INFO: Received 3 charger updates
+[2026-03-05 14:02:17.451] INFO: Created charger marker at (0.76, -1.03) - in_use
+[2026-03-05 14:02:17.481] INFO: Created charger marker at (1.91, 0.03) - in_use
+[2026-03-05 14:02:17.499] INFO: Created charger marker at (0.34, 0.18) - reserved
+[2026-03-05 14:02:32.353] INFO: Received 3 charger updates
+[2026-03-05 14:02:32.367] INFO: Created charger marker at (-1.50, -0.98) - offline
+[2026-03-05 14:02:32.380] INFO: Created charger marker at (1.93, 0.14) - offline
+[2026-03-05 14:02:32.397] INFO: Created charger marker at (0.53, -0.90) - reserved
+[2026-03-05 14:02:47.381] INFO: Received 3 charger updates
+[2026-03-05 14:02:47.404] INFO: Created charger marker at (-1.82, 0.79) - available
+[2026-03-05 14:02:47.510] INFO: Created charger marker at (0.84, -0.49) - offline
+[2026-03-05 14:02:47.533] INFO: Created charger marker at (-1.76, -0.13) - offline
+[2026-03-05 14:03:02.393] INFO: Received 3 charger updates
+[2026-03-05 14:03:02.410] INFO: Created charger marker at (0.31, 0.88) - in_use
+[2026-03-05 14:03:02.453] INFO: Created charger marker at (-1.69, 1.01) - available
+[2026-03-05 14:03:02.474] INFO: Created charger marker at (0.53, 0.02) - reserved
+[2026-03-05 14:03:05.257] INFO: Mode 6: 3D graph view reset
+[2026-03-05 14:03:17.404] INFO: Received 3 charger updates
+[2026-03-05 14:03:17.422] INFO: Created charger marker at (-0.04, -0.74) - in_use
+[2026-03-05 14:03:17.442] INFO: Created charger marker at (-0.43, -0.66) - in_use
+[2026-03-05 14:03:17.459] INFO: Created charger marker at (-1.61, 0.39) - in_use
+[2026-03-05 14:03:32.408] INFO: Received 3 charger updates
+[2026-03-05 14:03:32.423] INFO: Created charger marker at (0.75, 0.21) - in_use
+[2026-03-05 14:03:32.448] INFO: Created charger marker at (-1.49, -0.15) - offline
+[2026-03-05 14:03:32.464] INFO: Created charger marker at (0.47, -0.40) - in_use
+[2026-03-05 14:03:47.422] INFO: Received 3 charger updates
+[2026-03-05 14:03:47.452] INFO: Created charger marker at (-1.58, 1.02) - offline
+[2026-03-05 14:03:47.511] INFO: Created charger marker at (-1.58, 0.11) - offline
+[2026-03-05 14:03:47.529] INFO: Created charger marker at (0.18, -0.29) - available
+[2026-03-05 14:04:02.431] INFO: Received 3 charger updates
+[2026-03-05 14:04:02.445] INFO: Created charger marker at (-1.09, 0.00) - offline
+[2026-03-05 14:04:02.467] INFO: Created charger marker at (-0.06, -0.16) - reserved
+[2026-03-05 14:04:02.480] INFO: Created charger marker at (-0.83, -0.49) - in_use
+[2026-03-05 14:04:17.491] INFO: Received 3 charger updates
+[2026-03-05 14:04:17.521] INFO: Created charger marker at (-2.04, 0.84) - available
+[2026-03-05 14:04:17.758] INFO: Created charger marker at (-0.03, -0.18) - offline
+[2026-03-05 14:04:17.816] INFO: Created charger marker at (-0.01, -0.91) - in_use

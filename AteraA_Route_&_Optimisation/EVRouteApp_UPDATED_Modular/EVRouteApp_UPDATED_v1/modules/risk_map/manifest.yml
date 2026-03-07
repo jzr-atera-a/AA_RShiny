@@ -1,0 +1,17 @@
+module:
+  id: "risk_map"
+  name: "Risk Map"
+  description: "CAV risk visualization"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Risk Map"
+    icon: "map-marked-alt"
+    tabname: "risk_map"
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - leaflet
+      - dplyr
+      - htmltools

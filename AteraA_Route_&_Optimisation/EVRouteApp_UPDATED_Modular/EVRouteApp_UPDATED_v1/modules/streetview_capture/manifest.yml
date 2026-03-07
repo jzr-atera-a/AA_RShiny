@@ -1,0 +1,17 @@
+module:
+  id: "streetview_capture"
+  name: "Street View Capture"
+  description: "Download Street View imagery"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Street View"
+    icon: "camera"
+    tabname: "streetview_capture"
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - httr
+      - dplyr
+      - DT

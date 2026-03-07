@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Slide 8 – Delivery Plan & Milestones</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    width:1333px; height:750px; overflow:hidden;
+    background:#0c0f14;
+    font-family:'DM Sans', sans-serif; color:#b7b7b7;
+    position:relative;
+  }
+  body::before {
+    content:''; position:absolute; inset:0;
+    background-image:radial-gradient(circle, rgba(0,255,0,0.06) 1px, transparent 1px);
+    background-size:38px 38px; pointer-events:none; z-index:0;
+  }
+  .glow-tl { position:absolute; top:-140px; left:-80px; width:520px; height:380px;
+    background:radial-gradient(ellipse, rgba(0,255,0,0.08) 0%, transparent 68%);
+    pointer-events:none; z-index:0; }
+  .glow-br { position:absolute; bottom:-100px; right:-60px; width:440px; height:320px;
+    background:radial-gradient(ellipse, rgba(255,192,0,0.07) 0%, transparent 68%);
+    pointer-events:none; z-index:0; }
+
+  .slide {
+    position:relative; z-index:1;
+    width:1333px; height:750px;
+    padding:24px 44px 18px 44px;
+    display:flex; flex-direction:column; gap:0;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding-bottom:11px;
+    border-bottom:1px solid rgba(0,255,0,0.2);
+    margin-bottom:11px; flex-shrink:0;
+  }
+  .eyebrow {
+    font-family:'DM Mono', monospace; font-size:11px; letter-spacing:3px;
+    color:rgba(0,255,0,0.5); text-transform:uppercase; margin-bottom:3px;
+  }
+  h1 { font-size:34px; font-weight:700; color:#00ff00; letter-spacing:-0.5px; line-height:1; }
+  .pills { display:flex; gap:8px; }
+  .pill {
+    font-family:'DM Mono', monospace; font-size:10px; letter-spacing:1.8px;
+    text-transform:uppercase; padding:5px 14px; border-radius:20px; white-space:nowrap;
+  }
+  .pill-amber { color:rgba(255,192,0,0.85); border:1px solid rgba(255,192,0,0.35); }
+  .pill-green { color:rgba(0,255,0,0.75);  border:1px solid rgba(0,255,0,0.3); }
+
+  /* ── PHASE BANDS ── */
+  .phase-bands {
+    flex-shrink:0; margin-bottom:5px;
+    display:grid; grid-template-columns:148px 1fr;
+  }
+  .phase-band-track { display:flex; gap:4px; }
+  .phase-band {
+    font-family:'DM Sans', sans-serif;
+    font-size:12px; font-weight:700; letter-spacing:0.5px;
+    text-transform:uppercase; text-align:center;
+    padding:6px 8px; border-radius:4px; line-height:1.2;
+    flex:1;
+  }
+  .pb1 { background:rgba(37,99,190,0.3);  color:#93c5fd; border:1px solid rgba(96,165,250,0.3); }
+  .pb2 { background:rgba(5,110,50,0.3);   color:#6ee7b7; border:1px solid rgba(52,211,153,0.3); }
+  .pb3 { background:rgba(140,80,0,0.3);   color:#FFC000; border:1px solid rgba(255,192,0,0.3); }
+
+  /* ── MONTH RULER ── */
+  .ruler-wrap {
+    flex-shrink:0; margin-bottom:6px;
+    display:grid; grid-template-columns:148px 1fr;
+  }
+  .ruler-row-label {
+    font-family:'DM Mono', monospace; font-size:9px; letter-spacing:1.5px;
+    text-transform:uppercase; color:rgba(255,255,255,0.25);
+    display:flex; align-items:center;
+  }
+  .ruler {
+    display:grid; grid-template-columns:repeat(18,1fr);
+    border-bottom:1px solid rgba(255,255,255,0.1);
+  }
+  .mc {
+    font-family:'DM Mono', monospace; font-size:8px; text-align:center;
+    padding:2px 0 3px; color:rgba(255,255,255,0.3);
+    border-right:1px solid rgba(255,255,255,0.05); line-height:1.1;
+  }
+  .mc .sub { font-size:7px; color:rgba(255,255,255,0.18); display:block; }
+  .mc:last-child { border-right:none; }
+  .m-p1 { background:rgba(37,99,190,0.1); }
+  .m-p2 { background:rgba(5,110,50,0.1); }
+  .m-p3 { background:rgba(140,80,0,0.12); }
+
+  /* ══════════════════════════════════
+     GANTT ROWS AREA
+  ══════════════════════════════════ */
+  .rows-area {
+    flex:1; min-height:0; display:flex; flex-direction:column; gap:3px;
+  }
+
+  /* A "group" = label + right side with 1 or 2 bar-rows */
+  .group {
+    flex:1; min-height:0;
+    display:grid; grid-template-columns:148px 1fr;
+  }
+
+  /* Label cell — spans all sub-rows */
+  .glabel {
+    display:flex; align-items:center; justify-content:flex-start;
+    font-family:'DM Mono', monospace; font-size:11px; font-weight:600;
+    letter-spacing:1px; text-transform:uppercase;
+    padding-right:10px; white-space:nowrap;
+    border-right:2px solid; /* colour set inline */
+  }
+
+  /* Right side = 1 or 2 sub-rows stacked */
+  .gtrack-col {
+    display:flex; flex-direction:column; gap:3px; min-height:0;
+  }
+
+  /* Each sub-row is one bar slot */
+  .sub-row {
+    flex:1; min-height:0; position:relative;
+    /* vertical month guides */
+    background-image: repeating-linear-gradient(
+      90deg, transparent,
+      transparent calc(100%/18 - 1px),
+      rgba(255,255,255,0.04) calc(100%/18 - 1px),
+      rgba(255,255,255,0.04) calc(100%/18)
+    );
+  }
+
+  /* ── BAR ── placed absolutely within sub-row */
+  .bar {
+    position:absolute; top:8%; height:84%;
+    border-radius:5px;
+    display:flex; align-items:center;
+    padding:0 10px;
+    font-size:12.5px; font-weight:600;
+    white-space:nowrap; overflow:hidden;
+    box-shadow:0 1px 6px rgba(0,0,0,0.5);
+    letter-spacing:0.1px;
+  }
+
+  /* Bar colour themes — text white, bg deep gradient */
+  .b-r10   { background:linear-gradient(90deg,rgba(80,40,155,0.92),rgba(112,75,200,0.82)); border:1px solid rgba(167,139,250,0.45); color:#e9d5ff; }
+  .b-atera { background:linear-gradient(90deg,rgba(15,80,38,0.92), rgba(28,105,55,0.82)); border:1px solid rgba(79,196,114,0.45);  color:#bbf7d0; }
+  .b-halo  { background:linear-gradient(90deg,rgba(100,35,165,0.92),rgba(135,60,195,0.82));border:1px solid rgba(192,132,252,0.45); color:#f3e8ff; }
+  .b-volt  { background:linear-gradient(90deg,rgba(130,85,0,0.92),  rgba(165,110,0,0.82)); border:1px solid rgba(255,192,0,0.45);  color:#fef3c7; }
+  .b-berk  { background:linear-gradient(90deg,rgba(135,25,25,0.92), rgba(170,45,45,0.82)); border:1px solid rgba(248,113,113,0.45); color:#fecaca; }
+  .b-welch { background:linear-gradient(90deg,rgba(18,60,140,0.92), rgba(32,85,175,0.82)); border:1px solid rgba(96,165,250,0.45);  color:#bfdbfe; }
+  .b-gov   { background:linear-gradient(90deg,rgba(60,60,60,0.5),   rgba(80,80,80,0.4));   border:1px dashed rgba(255,255,255,0.2); color:rgba(255,255,255,0.5); font-size:11px; }
+  .b-amber { background:linear-gradient(90deg,rgba(130,85,0,0.85),  rgba(200,140,0,0.75)); border:1px solid rgba(255,192,0,0.4);    color:#fef3c7; }
+  .b-cust  { background:rgba(255,255,255,0.05); border:1px dashed rgba(255,255,255,0.22); color:rgba(255,255,255,0.65); font-size:12px; font-weight:500; }
+
+  /* 1 col unit = 100/18 = 5.5556% */
+  /* helper macros for bar spans:
+     start at col C (0-based) → left: C*5.5556%
+     span S cols → width: S*5.5556%          */
+
+  /* ── STAGE GATE ── */
+  .sg {
+    position:absolute; top:50%; transform:translate(-50%,-50%) rotate(45deg);
+    width:14px; height:14px;
+    background:#00ff00; border:2px solid #0c0f14;
+    box-shadow:0 0 8px rgba(0,255,0,0.8); z-index:5;
+  }
+  .sg-lbl {
+    position:absolute; top:2px;
+    font-family:'DM Mono', monospace; font-size:8.5px; font-weight:600;
+    color:#00ff00; transform:translateX(-50%); z-index:6;
+    text-shadow:0 0 6px rgba(0,255,0,0.5);
+  }
+
+  /* ── MILESTONE DOT ── */
+  .mdot {
+    position:absolute; top:50%; transform:translate(-50%,-50%);
+    width:11px; height:11px; border-radius:50%;
+    background:#FFC000; border:2px solid #0c0f14;
+    box-shadow:0 0 7px rgba(255,192,0,0.8); z-index:5;
+  }
+
+  /* NUIC fallback tag */
+  .fallback-tag {
+    position:absolute; bottom:1px; left:50%;
+    transform:translateX(-50%);
+    font-family:'DM Mono', monospace; font-size:8px;
+    color:rgba(255,192,0,0.8); background:rgba(12,15,20,0.9);
+    padding:1px 7px; border-radius:3px;
+    border:1px solid rgba(255,192,0,0.3); white-space:nowrap; z-index:4;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    flex-shrink:0; margin-top:7px;
+    display:grid; grid-template-columns:1fr 1fr 1fr; gap:7px;
+  }
+  .fitem {
+    display:flex; align-items:flex-start; gap:9px;
+    background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07);
+    border-radius:5px; padding:8px 12px;
+  }
+  .ficon { font-size:14px; flex-shrink:0; }
+  .ftext { font-size:11.5px; line-height:1.45; color:rgba(210,210,210,0.75); }
+  .ftext strong { font-weight:700; }
+  .fg { color:#00ff00; }
+  .fa { color:#FFC000; }
+  .fp { color:#a78bfa; }
+</style>
+</head>
+<body>
+<div class="glow-tl"></div>
+<div class="glow-br"></div>
+<div class="slide">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <div class="eyebrow">08 — Project Delivery</div>
+      <h1>Delivery Plan &amp; Milestones</h1>
+    </div>
+    <div class="pills">
+      <div class="pill pill-green">18 Months · Jun 2026 – Nov 2027</div>
+      <div class="pill pill-amber">TRL 4 → TRL 6</div>
+    </div>
+  </div>
+
+  <!-- PHASE BANDS -->
+  <div class="phase-bands">
+    <div></div>
+    <div class="phase-band-track">
+      <div class="phase-band pb1">Phase 1 · M1–M6 · Platform Foundation</div>
+      <div class="phase-band pb2">Phase 2 · M7–M12 · Integration &amp; Testing</div>
+      <div class="phase-band pb3">Phase 3 · M13–M18 · Validation &amp; Demo</div>
+    </div>
+  </div>
+
+  <!-- MONTH RULER -->
+  <div class="ruler-wrap">
+    <div class="ruler-row-label">Month</div>
+    <div class="ruler">
+      <div class="mc m-p1">M1<span class="sub">Jun 26</span></div>
+      <div class="mc m-p1">M2<span class="sub">Jul 26</span></div>
+      <div class="mc m-p1">M3<span class="sub">Aug 26</span></div>
+      <div class="mc m-p1">M4<span class="sub">Sep 26</span></div>
+      <div class="mc m-p1">M5<span class="sub">Oct 26</span></div>
+      <div class="mc m-p1">M6<span class="sub">Nov 26</span></div>
+      <div class="mc m-p2">M7<span class="sub">Dec 26</span></div>
+      <div class="mc m-p2">M8<span class="sub">Jan 27</span></div>
+      <div class="mc m-p2">M9<span class="sub">Feb 27</span></div>
+      <div class="mc m-p2">M10<span class="sub">Mar 27</span></div>
+      <div class="mc m-p2">M11<span class="sub">Apr 27</span></div>
+      <div class="mc m-p2">M12<span class="sub">May 27</span></div>
+      <div class="mc m-p3">M13<span class="sub">Jun 27</span></div>
+      <div class="mc m-p3">M14<span class="sub">Jul 27</span></div>
+      <div class="mc m-p3">M15<span class="sub">Aug 27</span></div>
+      <div class="mc m-p3">M16<span class="sub">Sep 27</span></div>
+      <div class="mc m-p3">M17<span class="sub">Oct 27</span></div>
+      <div class="mc m-p3">M18<span class="sub">Nov 27</span></div>
+    </div>
+  </div>
+
+  <!-- GANTT ROWS -->
+  <div class="rows-area">
+
+    <!-- ── ROUTE10 AI — 2 sub-rows ── -->
+    <div class="group">
+      <div class="glabel" style="color:#a78bfa; border-color:#a78bfa;">Route10 AI</div>
+      <div class="gtrack-col">
+        <!-- sub-row 1: WP1 Governance (full span, subtle) -->
+        <div class="sub-row">
+          <div class="bar b-gov" style="left:0%;width:100%;">WP1 · Governance &amp; Management (M1–M18)</div>
+          <!-- Stage Gates ON THIS ROW -->
+          <div class="sg" style="left:33.33%;"></div><div class="sg-lbl" style="left:33.33%;">SG1</div>
+          <div class="sg" style="left:66.66%;"></div><div class="sg-lbl" style="left:66.66%;">SG2</div>
+          <div class="sg" style="left:99.5%;"></div> <div class="sg-lbl" style="left:99.5%;">SG3</div>
+        </div>
+        <!-- sub-row 2: WP2 Platform Dev M1–M9 -->
+        <div class="sub-row">
+          <div class="bar b-r10" style="left:0%;width:50%;">WP2 · Platform Dev &amp; AI/ML Models (M1–M9)</div>
+          <div class="bar b-r10" style="left:0%;width:33.33%;opacity:0;pointer-events:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ATERA — 2 sub-rows ── -->
+    <div class="group">
+      <div class="glabel" style="color:#4fc472; border-color:#4fc472;">Atera Analytics</div>
+      <div class="gtrack-col">
+        <!-- sub-row 1: WP3 PAS 1883 M1–M6 -->
+        <div class="sub-row">
+          <div class="bar b-atera" style="left:0%;width:33.33%;">WP3 · PAS 1883 ODD Mapping (M1–M6)</div>
+        </div>
+        <!-- sub-row 2: WP4 M3–M10, WP5 M5–M12 shown sequentially -->
+        <div class="sub-row">
+          <div class="bar b-atera" style="left:11.11%;width:38.89%;">WP4 · Route Optimisation Framework (M3–M10)</div>
+          <div class="bar b-atera" style="left:55.55%;width:33.33%;">WP5 · NUIC Performance Modelling (M11–M16)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BERKELEY — 2 sub-rows ── -->
+    <div class="group">
+      <div class="glabel" style="color:#f87171; border-color:#f87171;">Berkeley</div>
+      <div class="gtrack-col">
+        <!-- sub-row 1: WP6 Vehicle Retrofit M2–M6 -->
+        <div class="sub-row">
+          <div class="bar b-berk" style="left:5.56%;width:27.78%;">WP6 · Vehicle Retrofit (Jul–Nov 26)</div>
+        </div>
+        <!-- sub-row 2: WP7 Test Env M5–M9 -->
+        <div class="sub-row">
+          <div class="bar b-berk" style="left:22.22%;width:27.78%;">WP7 · Test Environment Prep (Oct 26–Feb 27)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── VOLTEMPO — 2 sub-rows ── -->
+    <div class="group">
+      <div class="glabel" style="color:#FFC000; border-color:#FFC000;">Voltempo</div>
+      <div class="gtrack-col">
+        <!-- sub-row 1: WP8 Control Centre M5–M18 -->
+        <div class="sub-row">
+          <div class="bar b-volt" style="left:22.22%;width:77.78%;">WP8 · NUIC/ADSE Control Centre (Oct 26–Nov 27)</div>
+        </div>
+        <!-- sub-row 2: WP13 Operational Data M7–M15 -->
+        <div class="sub-row">
+          <div class="bar b-volt" style="left:33.33%;width:44.44%;">WP13 · Operational Data Integration (M7–M15)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── HALO — 2 sub-rows ── -->
+    <div class="group">
+      <div class="glabel" style="color:#c084fc; border-color:#c084fc;">Halo</div>
+      <div class="gtrack-col">
+        <!-- sub-row 1: WP9 M1–M3, WP10 M10–M11 -->
+        <div class="sub-row">
+          <div class="bar b-halo" style="left:0%;width:16.67%;">WP9 · ADS Foundation (Jun–Aug 26)</div>
+          <div class="bar b-halo" style="left:50%;width:11.11%;">WP10 · HIL (Mar–Apr 27)</div>
+          <div class="bar b-halo" style="left:72.22%;width:27.78%;">WP12 · On-Road Validation (Jul–Nov 27)</div>
+        </div>
+        <!-- sub-row 2: WP11 Track testing + fallback note -->
+        <div class="sub-row">
+          <div class="bar b-halo" style="left:61.11%;width:11.11%;">WP11 · Closed-Track (May–Jun 27)</div>
+          <div class="fallback-tag">⚠ NUIC fallback: controlled track if regulatory approval delayed — not on critical path</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── WELCH / ALL — 2 sub-rows ── -->
+    <div class="group">
+      <div class="glabel" style="color:#60a5fa; border-color:#60a5fa;">Welch / All</div>
+      <div class="gtrack-col">
+        <!-- sub-row 1: WP14 Fleet Validation M9–M16 -->
+        <div class="sub-row">
+          <div class="bar b-welch" style="left:44.44%;width:38.89%;">WP14 · Fleet Validation &amp; Commercial Testing (M9–M16)</div>
+          <div class="mdot" style="left:99.5%;"></div>
+        </div>
+        <!-- sub-row 2: WP15 Dissemination M14–M18 -->
+        <div class="sub-row">
+          <div class="bar b-amber" style="left:72.22%;width:27.78%;">WP15 · Dissemination &amp; Cenex Expo (M14–M18)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CUSTOMERS (single row, dashed) ── -->
+    <div class="group">
+      <div class="glabel" style="color:rgba(255,255,255,0.45); border-color:rgba(255,255,255,0.2); font-size:10px;">👥 Customers</div>
+      <div class="gtrack-col">
+        <div class="sub-row">
+          <div class="bar b-cust" style="left:0%;width:33.33%;">Requirements workshops — fleet operators &amp; insurers</div>
+          <div class="bar b-cust" style="left:33.89%;width:33.33%;">Alpha/beta access — 3–5 logistics operators</div>
+          <div class="bar b-cust" style="left:67.78%;width:32.22%;">Pilot trials + Cenex showcase (M14–M18)</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /rows-area -->
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="fitem">
+      <div class="ficon">🟩</div>
+      <div class="ftext">
+        <strong class="fg">Stage Gates (SG1–SG3):</strong> Formal go/no-go reviews at M6, M12 &amp; M18 with documented TRL advancement criteria and independent technical sign-off.
+      </div>
+    </div>
+    <div class="fitem">
+      <div class="ficon">⚠️</div>
+      <div class="ftext">
+        <strong class="fa">NUIC Fallback:</strong> WP12 on-road validation can complete on Trecwn controlled track using Atera's existing NUIC dataset — public road NUIC is not on the critical path.
+      </div>
+    </div>
+    <div class="fitem">
+      <div class="ficon">👥</div>
+      <div class="ftext">
+        <strong class="fp">Continuous Engagement:</strong> Customer Advisory Board active from M1 with quarterly workshops throughout — not weighted to end-of-project showcase.
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

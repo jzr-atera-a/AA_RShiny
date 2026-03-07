@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Quest 3 - AR Map Tiles</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; background: #000; color: #fff; }
+        #info {
+            position: absolute; top: 10px; width: 100%; text-align: center; z-index: 100;
+            background: rgba(0,0,0,0.9); padding: 15px; font-size: 14px;
+        }
+        .good { color: #00ff88; font-weight: bold; }
+        .bad { color: #ff4444; font-weight: bold; }
+        .warn { color: #ffaa00; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <strong>🗺️ AR Map Tiles - London M25</strong><br/>
+        Floor: <span id="floor" class="warn">Detecting...</span> | 
+        Map: <span id="map" class="warn">Loading...</span> | 
+        Tiles: <span id="tiles">0/9</span>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { ARButton } from 'three/addons/webxr/ARButton.js';
+
+        // CONFIG
+        const CFG = {
+            FLOOR_OFFSET: 1.6,
+            MAP_SIZE: 2.5,
+            LAT: 51.505,    // London center
+            LON: -0.09,
+            ZOOM: 11,       // City level
+            TILE_SIZE: 256,
+            CANVAS_SIZE: 2048,
+            TILE_URL: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+        };
+
+        let scene, camera, renderer, controller;
+        let floorY, floorDetected = false, userX = 0, userZ = 0;
+        let mapPlane, floorPlane;
+
+        // Lat/Lon to Tile coordinates
+        function latLonToTile(lat, lon, zoom) {
+            const n = Math.pow(2, zoom);
+            const x = Math.floor((lon + 180) / 360 * n);
+            const latRad = lat * Math.PI / 180;
+            const y = Math.floor((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n);
+            return { x, y };
+        }
+
+        // Load single tile image
+        async function loadTile(url) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => resolve(img);
+                img.onerror = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = canvas.height = CFG.TILE_SIZE;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#f0f0f0';
+                    ctx.fillRect(0, 0, CFG.TILE_SIZE, CFG.TILE_SIZE);
+                    resolve(canvas);
+                };
+                img.src = url;
+            });
+        }
+
+        // Load 3x3 tile grid
+        async function loadMapTiles() {
+            const centerTile = latLonToTile(CFG.LAT, CFG.LON, CFG.ZOOM);
+            const tiles = [];
+            let loaded = 0;
+
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    const url = CFG.TILE_URL
+                        .replace('{z}', CFG.ZOOM)
+                        .replace('{x}', centerTile.x + dx)
+                        .replace('{y}', centerTile.y + dy);
+                    
+                    tiles.push({
+                        gridX: dx + 1,
+                        gridY: dy + 1,
+                        promise: loadTile(url).then(img => {
+                            loaded++;
+                            document.getElementById('tiles').textContent = `${loaded}/9`;
+                            return img;
+                        })
+                    });
+                }
+            }
+
+            const imgs = await Promise.all(tiles.map(t => t.promise));
+            
+            // Composite to canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = CFG.CANVAS_SIZE;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, CFG.CANVAS_SIZE, CFG.CANVAS_SIZE);
+            
+            const tileSize = CFG.CANVAS_SIZE / 3;
+            tiles.forEach((tile, i) => {
+                ctx.drawImage(imgs[i], 
+                    tile.gridX * tileSize, 
+                    tile.gridY * tileSize, 
+                    tileSize, tileSize);
+            });
+            
+            // Attribution
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.fillRect(10, CFG.CANVAS_SIZE - 30, 300, 25);
+            ctx.fillStyle = '#000';
+            ctx.font = '12px Arial';
+            ctx.fillText('© OpenStreetMap contributors', 15, CFG.CANVAS_SIZE - 12);
+            
+            document.getElementById('map').textContent = 'Loaded';
+            document.getElementById('map').className = 'good';
+            
+            return canvas;
+        }
+
+        // Create map plane
+        function createMapPlane(canvas) {
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            
+            const geometry = new THREE.PlaneGeometry(CFG.MAP_SIZE, CFG.MAP_SIZE);
+            geometry.rotateX(-Math.PI / 2);
+            
+            const material = new THREE.MeshBasicMaterial({
+                map: texture,
+                transparent: true,
+                opacity: 0.95
+            });
+            
+            mapPlane = new THREE.Mesh(geometry, material);
+            mapPlane.position.set(userX, floorY + 0.002, userZ);
+            scene.add(mapPlane);
+        }
+
+        // Init Three.js
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 100);
+            
+            const light = new THREE.AmbientLight(0xffffff, 1);
+            scene.add(light);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.xr.enabled = true;
+            document.body.appendChild(renderer.domElement);
+            
+            const arButton = ARButton.createButton(renderer, {
+                requiredFeatures: ['hit-test'],
+                optionalFeatures: ['dom-overlay'],
+                domOverlay: { root: document.body }
+            });
+            document.body.appendChild(arButton);
+            
+            controller = renderer.xr.getController(0);
+            scene.add(controller);
+            
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+            
+            renderer.setAnimationLoop(animate);
+        }
+
+        // Animation loop
+        function animate() {
+            const session = renderer.xr.getSession();
+            
+            if (session && !floorDetected) {
+                const frame = renderer.xr.getFrame();
+                const refSpace = renderer.xr.getReferenceSpace();
+                
+                if (frame && refSpace) {
+                    const viewerPose = frame.getViewerPose(refSpace);
+                    if (viewerPose) {
+                        floorY = viewerPose.transform.position.y - CFG.FLOOR_OFFSET;
+                        userX = viewerPose.transform.position.x;
+                        userZ = viewerPose.transform.position.z;
+                        floorDetected = true;
+                        
+                        document.getElementById('floor').textContent = 'Detected';
+                        document.getElementById('floor').className = 'good';
+                        
+                        floorPlane = new THREE.Mesh(
+                            new THREE.PlaneGeometry(100, 100).rotateX(-Math.PI / 2),
+                            new THREE.MeshBasicMaterial({ visible: false })
+                        );
+                        floorPlane.position.y = floorY;
+                        scene.add(floorPlane);
+                        
+                        const grid = new THREE.GridHelper(5, 20, 0x00ff88, 0x004400);
+                        grid.position.set(userX, floorY, userZ);
+                        scene.add(grid);
+                        
+                        loadMapTiles().then(canvas => createMapPlane(canvas));
+                    }
+                }
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        init();
+    </script>
+</body>
+</html>

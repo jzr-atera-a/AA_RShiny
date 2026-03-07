@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>EURUSD Forex AR Analysis - Quest 3</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <style>
+        body { margin: 0; font-family: monospace; background: #000; color: #fff; }
+        #info {
+            position: absolute; top: 10px; width: 100%; text-align: center; z-index: 100;
+            background: rgba(0,44,60,0.92); padding: 10px; font-size: 12px; pointer-events: none;
+            border-bottom: 2px solid #00A39A;
+        }
+        .status-good { color: #00A39A; }
+        .status-bad  { color: #e74c3c; }
+        .status-warn { color: #f39c12; }
+        #mode-badge {
+            display: inline-block; padding: 2px 10px; border-radius: 10px;
+            background: linear-gradient(135deg, #008A82, #00A39A); color: #fff;
+            font-weight: bold; font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+<div id="info">
+    <strong style="color:#00A39A;">EURUSD FOREX AR · Quest 3</strong><br/>
+    AR: <span id="ar-status" class="status-warn">NOT STARTED</span> &nbsp;|&nbsp;
+    Floor: <span id="floor-status" class="status-warn">Detecting...</span> &nbsp;|&nbsp;
+    Mode: <span id="mode-badge">NONE</span>
+</div>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { ARButton } from 'three/addons/webxr/ARButton.js';
+
+// ─── TEAL COLOUR PALETTE (matching R Shiny dashboard) ───────────────────────
+const C = {
+    bg:      0x002C3C,
+    teal1:   0x008A82,
+    teal2:   0x00A39A,
+    white:   0xffffff,
+    bid:     0x3498db,   // blue
+    ask:     0xe74c3c,   // red
+    mid:     0x00A39A,   // teal
+    bull:    0x2ecc71,   // green candle
+    bear:    0xe74c3c,   // red candle
+    sma20:   0xf39c12,   // orange
+    sma50:   0x9b59b6,   // purple
+    bb:      0x3498db,   // blue bands
+    rsi:     0x00A39A,
+    macd:    0xf39c12,
+    low_vol: 0x2ecc71,
+    mid_vol: 0xf39c12,
+    hi_vol:  0xe74c3c,
+    panel_bg:0x001C28,
+};
+
+// ─── SYNTHETIC EURUSD DATA (200 hourly bars) ────────────────────────────────
+function generateEURUSD() {
+    const data = [];
+    let mid = 1.0850;
+    const now = new Date('2026-01-20T00:00:00Z');
+    for (let i = 0; i < 200; i++) {
+        const ts = new Date(now.getTime() + i * 3600000);
+        // Realistic random walk with slight mean reversion
+        const drift   = (1.0880 - mid) * 0.02;
+        const shock   = (Math.random() - 0.5) * 0.0025;
+        const intraH  = Math.abs(Math.random() * 0.0015);
+        const intraL  = Math.abs(Math.random() * 0.0015);
+        mid = mid + drift + shock;
+        mid = Math.max(1.0700, Math.min(1.1050, mid));
+        const open  = mid + (Math.random() - 0.5) * 0.0010;
+        const high  = Math.max(open, mid) + intraH;
+        const low   = Math.min(open, mid) - intraL;
+        const close = mid;
+        const spread = 0.00005 + Math.random() * 0.00015; // 0.5-2 pips
+        data.push({
+            ts, i,
+            open:  +open.toFixed(5),
+            high:  +high.toFixed(5),
+            low:   +low.toFixed(5),
+            close: +close.toFixed(5),
+            mid:   +mid.toFixed(5),
+            bid:   +(mid - spread).toFixed(5),
+            ask:   +(mid + spread).toFixed(5),
+            spread_pips: +(spread * 2 * 10000).toFixed(1),
+            volume: Math.round(500 + Math.random() * 1500),
+        });
+    }
+    return data;
+}
+
+// ─── INDICATOR CALCULATIONS ──────────────────────────────────────────────────
+function calcSMA(arr, n) {
+    return arr.map((_, i) => {
+        if (i < n - 1) return null;
+        const s = arr.slice(i - n + 1, i + 1).reduce((a, b) => a + b, 0);
+        return s / n;
+    });
+}
+function calcEMA(arr, n) {
+    const k = 2 / (n + 1); const res = new Array(arr.length).fill(null);
+    let ema = arr[0];
+    for (let i = 0; i < arr.length; i++) {
+        if (i === 0) { res[0] = arr[0]; ema = arr[0]; continue; }
+        ema = arr[i] * k + ema * (1 - k);
+        res[i] = ema;
+    }
+    return res;
+}
+function calcRSI(arr, n = 14) {
+    const res = new Array(arr.length).fill(null);
+    let gains = 0, losses = 0;
+    for (let i = 1; i <= n; i++) {
+        const d = arr[i] - arr[i - 1];
+        if (d >= 0) gains += d; else losses -= d;
+    }
+    let ag = gains / n, al = losses / n;
+    res[n] = al === 0 ? 100 : 100 - 100 / (1 + ag / al);
+    for (let i = n + 1; i < arr.length; i++) {
+        const d = arr[i] - arr[i - 1];
+        const g = d > 0 ? d : 0, l = d < 0 ? -d : 0;
+        ag = (ag * (n - 1) + g) / n;
+        al = (al * (n - 1) + l) / n;
+        res[i] = al === 0 ? 100 : 100 - 100 / (1 + ag / al);
+    }
+    return res;
+}
+function calcMACD(arr) {
+    const ema12 = calcEMA(arr, 12), ema26 = calcEMA(arr, 26);
+    const macd = arr.map((_, i) => (ema12[i] !== null && ema26[i] !== null) ? ema12[i] - ema26[i] : null);
+    const signal = calcEMA(macd.map(v => v ?? 0), 9);
+    const hist = macd.map((v, i) => (v !== null && signal[i] !== null) ? v - signal[i] : null);
+    return { macd, signal, hist };
+}
+function calcBB(arr, n = 20, sd = 2) {
+    const sma = calcSMA(arr, n);
+    const upper = [], lower = [];
+    arr.forEach((_, i) => {
+        if (i < n - 1) { upper.push(null); lower.push(null); return; }
+        const slice = arr.slice(i - n + 1, i + 1);
+        const mean = sma[i];
+        const std = Math.sqrt(slice.reduce((a, v) => a + (v - mean) ** 2, 0) / n);
+        upper.push(mean + sd * std);
+        lower.push(mean - sd * std);
+    });
+    return { upper, lower, mid: sma };
+}
+function calcVolatility(arr, n = 20) {
+    const returns = arr.map((v, i) => i === 0 ? null : Math.log(v / arr[i - 1]));
+    const vol = returns.map((_, i) => {
+        if (i < n) return null;
+        const sl = returns.slice(i - n + 1, i + 1).filter(v => v !== null);
+        const mean = sl.reduce((a, b) => a + b, 0) / sl.length;
+        const variance = sl.reduce((a, v) => a + (v - mean) ** 2, 0) / sl.length;
+        return Math.sqrt(variance) * Math.sqrt(252 * 24) * 100; // annualized %
+    });
+    return { returns, vol };
+}
+
+// ─── GLOBAL DATA ─────────────────────────────────────────────────────────────
+const EURUSD = generateEURUSD();
+const closes = EURUSD.map(d => d.mid);
+const INDICATORS = {
+    sma20: calcSMA(closes, 20),
+    sma50: calcSMA(closes, 50),
+    ema20: calcEMA(closes, 20),
+    rsi:   calcRSI(closes, 14),
+    macd:  calcMACD(closes),
+    bb:    calcBB(closes, 20, 2),
+    ...calcVolatility(closes, 20)
+};
+
+// ─── SCENE STATE ─────────────────────────────────────────────────────────────
+let scene, camera, renderer;
+let controller0, controller1;
+let refSpace = null;
+let floorDetected = false, floorY = 0;
+let userX = 0, userZ = 0;   // viewer XZ captured at floor detection
+let mapPlane = null;
+let chart3DGroup = null;
+let controlPanel = null;
+let currentMode = -1;   // no mode selected yet
+let pendingMode = 0;    // highlighted in panel
+let lastLeftTrigger = false;
+const MAP_W = 1.5, MAP_H = 1.0;
+const FLOOR_OFFSET = 1.6;   // fallback: camera-to-floor when local-floor unavailable
+
+// Control panel button layout (3 modes)
+const PANEL_MODES = [
+    { id: 0, label: 'Mode 1 · Market Overview',      sub: 'Price · Spread · Distribution',  y1: 0.80, y2: 0.92 },
+    { id: 1, label: 'Mode 2 · Technical Indicators', sub: 'SMA · RSI · MACD · Bollinger',   y1: 0.60, y2: 0.72 },
+    { id: 2, label: 'Mode 3 · Volatility Analysis',  sub: 'Rolling Vol · Regimes · Cluster', y1: 0.40, y2: 0.52 },
+];
+const APPROVE_BTN = { y1: 0.08, y2: 0.22 };
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function init() {
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.01, 20);
+    const light = new THREE.HemisphereLight(0xffffff, 0x334455, 3);
+    light.position.set(0.5, 1, 0.25);
+    scene.add(light);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(devicePixelRatio);
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setAnimationLoop(animate);
+    renderer.xr.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    const arBtn = ARButton.createButton(renderer, {
+        requiredFeatures: ['local-floor'],
+        optionalFeatures: ['dom-overlay'],
+        domOverlay: { root: document.getElementById('info') }
+    });
+    document.body.appendChild(arBtn);
+
+    controller0 = renderer.xr.getController(0); // LEFT
+    controller1 = renderer.xr.getController(1); // RIGHT
+    scene.add(controller0); scene.add(controller1);
+
+    // Controller ray lines
+    const rayGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,-4)
+    ]);
+    controller0.add(new THREE.Line(rayGeo, new THREE.LineBasicMaterial({ color: 0xff00ff, linewidth: 2 })));
+    controller1.add(new THREE.Line(rayGeo, new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 2 })));
+
+    renderer.xr.addEventListener('sessionstart', () => {
+        document.getElementById('ar-status').textContent = 'ACTIVE';
+        document.getElementById('ar-status').className = 'status-good';
+        refSpace = null;
+    });
+    renderer.xr.addEventListener('sessionend', () => {
+        document.getElementById('ar-status').textContent = 'ENDED';
+        document.getElementById('ar-status').className = 'status-warn';
+    });
+    window.addEventListener('resize', () => {
+        camera.aspect = innerWidth / innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(innerWidth, innerHeight);
+    });
+}
+
+// ─── FLOOR DETECTION ─────────────────────────────────────────────────────────
+function detectFloor(frame, xrRS) {
+    const pose = frame.getViewerPose(xrRS);
+    if (!pose || floorDetected) return;
+
+    // Read head Y from the transform matrix (column-major, index 13 = Y translation)
+    const headY = pose.transform.matrix[13];
+
+    // Force content to spawn at XZ origin (where user is standing)
+    userX = 0;
+    userZ = 0;
+
+    // KEY HEURISTIC (from working trajectory_6modes reference):
+    // In local-floor space: floor=Y=0, so head is ~1.5-1.8m above 0 → headY > 0.5
+    // In viewer/local space: head is near Y=0 → headY ≈ 0
+    if (Math.abs(headY) > 0.5) {
+        floorY = 0;          // local-floor: floor IS at Y=0
+    } else {
+        floorY = headY - FLOOR_OFFSET;  // viewer/local: estimate from eye height
+    }
+
+    floorDetected = true;
+    document.getElementById('floor-status').textContent = `Y=${floorY.toFixed(2)}m`;
+    document.getElementById('floor-status').className = 'status-good';
+    buildScene();
+}
+
+// ─── BUILD SCENE ─────────────────────────────────────────────────────────────
+function buildScene() {
+    buildControlPanel();
+    buildFloorPlaceholder();
+    build3DChartFrame();
+    // Activate mode 0 by default
+    activateMode(0);
+}
+
+// ─── CONTROL PANEL (Spatial Floating UI) ─────────────────────────────────────
+function buildControlPanel() {
+    const W = 1500, H = 1000;
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    drawControlPanel(ctx, W, H);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    const geo = new THREE.PlaneGeometry(1.5, 1.0);
+    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
+    controlPanel = new THREE.Mesh(geo, mat);
+    controlPanel.userData = { canvas, ctx, W, H };
+    // Position: floated north of user at chest height
+    controlPanel.position.set(userX - 1.2, floorY + 1.1, userZ - 0.8);
+    controlPanel.rotation.y = Math.PI / 8;
+    scene.add(controlPanel);
+}
+
+function drawControlPanel(ctx, W, H) {
+    // Background
+    ctx.fillStyle = '#001C28';
+    ctx.fillRect(0, 0, W, H);
+    // Border
+    ctx.strokeStyle = '#00A39A';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(2, 2, W-4, H-4);
+    // Title bar
+    const grad = ctx.createLinearGradient(0,0,W,0);
+    grad.addColorStop(0, '#002C3C'); grad.addColorStop(1, '#008A82');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, 90);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 36px Arial'; ctx.textAlign = 'center';
+    ctx.fillText('EURUSD FOREX ANALYSIS', W/2, 42);
+    ctx.font = '22px Arial'; ctx.fillStyle = '#00A39A';
+    ctx.fillText('Select Analysis Mode', W/2, 72);
+
+    // Mode buttons
+    PANEL_MODES.forEach((m, idx) => {
+        const y0 = H * m.y1, y1 = H * m.y2, bH = y1 - y0;
+        const active = (idx === pendingMode);
+        // Button background
+        const bg = ctx.createLinearGradient(20, y0, W-20, y0);
+        if (active) {
+            bg.addColorStop(0, '#008A82'); bg.addColorStop(1, '#00A39A');
+        } else {
+            bg.addColorStop(0, '#003344'); bg.addColorStop(1, '#004455');
+        }
+        ctx.fillStyle = bg;
+        roundRect(ctx, 20, y0, W-40, bH, 14);
+        ctx.fill();
+        // Border
+        ctx.strokeStyle = active ? '#00ffdd' : '#008A82';
+        ctx.lineWidth = active ? 4 : 2;
+        roundRect(ctx, 20, y0, W-40, bH, 14);
+        ctx.stroke();
+        // Active indicator dot
+        if (active) {
+            ctx.fillStyle = '#00ffdd';
+            ctx.beginPath(); ctx.arc(52, y0 + bH/2, 10, 0, Math.PI*2); ctx.fill();
+        }
+        // Text
+        ctx.fillStyle = active ? '#ffffff' : '#aacccc';
+        ctx.font = `bold 30px Arial`; ctx.textAlign = 'left';
+        ctx.fillText(m.label, 72, y0 + bH/2 - 8);
+        ctx.font = '20px Arial'; ctx.fillStyle = active ? '#ccffff' : '#669988';
+        ctx.fillText(m.sub, 72, y0 + bH/2 + 22);
+    });
+
+    // Approve button
+    const ay0 = H * APPROVE_BTN.y1, ay1 = H * APPROVE_BTN.y2, aH = ay1 - ay0;
+    const appGrad = ctx.createLinearGradient(100, ay0, W-100, ay0);
+    appGrad.addColorStop(0, '#00A39A'); appGrad.addColorStop(1, '#008A82');
+    ctx.fillStyle = appGrad;
+    roundRect(ctx, 100, ay0, W-200, aH, 18); ctx.fill();
+    ctx.strokeStyle = '#00ffdd'; ctx.lineWidth = 3;
+    roundRect(ctx, 100, ay0, W-200, aH, 18); ctx.stroke();
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 32px Arial'; ctx.textAlign = 'center';
+    ctx.fillText('▶  ACTIVATE MODE', W/2, ay0 + aH/2 + 10);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y);
+    ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+    ctx.lineTo(x+w, y+h-r);
+    ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+    ctx.lineTo(x+r, y+h);
+    ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+    ctx.lineTo(x, y+r);
+    ctx.quadraticCurveTo(x, y, x+r, y);
+    ctx.closePath();
+}
+
+// ─── PANEL INTERACTION (Left controller trigger + raycasting) ─────────────────
+function checkPanelInteraction() {
+    if (!controlPanel) return;
+    const ray = new THREE.Raycaster();
+    const origin = new THREE.Vector3(); const direction = new THREE.Vector3();
+    controller0.getWorldPosition(origin);
+    controller0.getWorldDirection(direction); direction.negate();
+    ray.set(origin, direction);
+    const hits = ray.intersectObject(controlPanel);
+    if (hits.length === 0) return;
+    const uv = hits[0].uv;
+    if (!uv) return;
+    const uvY = 1.0 - uv.y; // flip Y
+    // Check approve button
+    if (uvY >= APPROVE_BTN.y1 && uvY <= APPROVE_BTN.y2) {
+        activateMode(pendingMode);
+        return;
+    }
+    // Check mode buttons
+    for (let i = 0; i < PANEL_MODES.length; i++) {
+        const m = PANEL_MODES[i];
+        if (uvY >= m.y1 && uvY <= m.y2) {
+            if (pendingMode !== i) {
+                pendingMode = i;
+                redrawControlPanel();
+            }
+            return;
+        }
+    }
+}
+
+function redrawControlPanel() {
+    if (!controlPanel) return;
+    const { ctx, W, H } = controlPanel.userData;
+    drawControlPanel(ctx, W, H);
+    controlPanel.material.map.needsUpdate = true;
+}
+
+// ─── MODE ACTIVATION ─────────────────────────────────────────────────────────
+function activateMode(m) {
+    currentMode = m;
+    document.getElementById('mode-badge').textContent =
+        ['1·Market Overview', '2·Tech Indicators', '3·Volatility'][m];
+    updateFloorCanvas(m);
+    update3DChart(m);
+}
+
+// ─── FLOOR CANVAS (2D Chart) ─────────────────────────────────────────────────
+function buildFloorPlaceholder() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 4096; canvas.height = 2048;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#001C28'; ctx.fillRect(0,0,4096,2048);
+    const tex = new THREE.CanvasTexture(canvas);
+    const geo = new THREE.PlaneGeometry(MAP_W, MAP_H);
+    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.92 });
+    mapPlane = new THREE.Mesh(geo, mat);
+    mapPlane.userData = { canvas, ctx };
+    mapPlane.rotation.x = -Math.PI / 2;
+    mapPlane.position.set(userX, floorY + 0.001, userZ);
+    scene.add(mapPlane);
+}
+
+function updateFloorCanvas(mode) {
+    if (!mapPlane) return;
+    const { canvas, ctx } = mapPlane.userData;
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    if (mode === 0) drawFloorMarketOverview(ctx, W, H);
+    else if (mode === 1) drawFloorTechnical(ctx, W, H);
+    else if (mode === 2) drawFloorVolatility(ctx, W, H);
+    mapPlane.material.map.needsUpdate = true;
+}
+
+// ── FLOOR MODE 0: Market Overview ────────────────────────────────────────────
+function drawFloorMarketOverview(ctx, W, H) {
+    drawDarkBg(ctx, W, H, 'MARKET OVERVIEW  ·  EURUSD  ·  200 Hourly Bars');
+
+    const d = EURUSD;
+    const topH = H * 0.6, botH = H * 0.38, botY = H * 0.60;
+    const pad = { l:120, r:40, t:80, b:50 };
+
+    // Value box row
+    drawValueBox(ctx, 40, 30, 280, 60, 'CURRENT', d[d.length-1].mid.toFixed(5), '#00A39A');
+    const change = ((d[d.length-1].mid - d[0].mid) / d[0].mid * 100);
+    drawValueBox(ctx, 340, 30, 280, 60, 'CHANGE', (change>=0?'+':'')+change.toFixed(3)+'%', change>=0?'#2ecc71':'#e74c3c');
+    const avgSpread = (d.reduce((a,b)=>a+b.spread_pips,0)/d.length);
+    drawValueBox(ctx, 640, 30, 280, 60, 'AVG SPREAD', avgSpread.toFixed(1)+' pips', '#f39c12');
+    const minM = Math.min(...d.map(x=>x.mid)).toFixed(5);
+    const maxM = Math.max(...d.map(x=>x.mid)).toFixed(5);
+    drawValueBox(ctx, 940, 30, 340, 60, 'RANGE', minM+' – '+maxM, '#9b59b6');
+
+    // ── Main price chart (top 60%)
+    const cW = W - pad.l - pad.r, cH = topH - pad.t - pad.b;
+    const vals = d.map(x=>x.mid).concat(d.map(x=>x.bid),d.map(x=>x.ask));
+    const minV = Math.min(...vals)-0.0005, maxV = Math.max(...vals)+0.0005;
+    const xScale = cW / (d.length-1);
+    const yPx = v => pad.t + cH - (v - minV) / (maxV - minV) * cH;
+    const xPx = i => pad.l + i * xScale;
+
+    // Grid
+    drawGrid(ctx, pad.l, pad.t, cW, cH, 6, 5, '#1a3a4a', '#2a5a6a', minV, maxV, true, 5);
+
+    // Bid line
+    ctx.beginPath(); ctx.strokeStyle='#3498db'; ctx.lineWidth=3;
+    d.forEach((row,i)=>{ i===0?ctx.moveTo(xPx(i),yPx(row.bid)):ctx.lineTo(xPx(i),yPx(row.bid)); });
+    ctx.stroke();
+    // Ask line
+    ctx.beginPath(); ctx.strokeStyle='#e74c3c'; ctx.lineWidth=3;
+    d.forEach((row,i)=>{ i===0?ctx.moveTo(xPx(i),yPx(row.ask)):ctx.lineTo(xPx(i),yPx(row.ask)); });
+    ctx.stroke();
+    // Mid line (thicker, with glow)
+    ctx.shadowColor='#00A39A'; ctx.shadowBlur=12;
+    ctx.beginPath(); ctx.strokeStyle='#00A39A'; ctx.lineWidth=5;
+    d.forEach((row,i)=>{ i===0?ctx.moveTo(xPx(i),yPx(row.mid)):ctx.lineTo(xPx(i),yPx(row.mid)); });
+    ctx.stroke();
+    ctx.shadowBlur=0;
+
+    // Legend
+    drawLegendItem(ctx, pad.l, topH - 28, '─', '#3498db', 'Bid');
+    drawLegendItem(ctx, pad.l+130, topH - 28, '─', '#e74c3c', 'Ask');
+    drawLegendItem(ctx, pad.l+260, topH - 28, '─', '#00A39A', 'Mid');
+    chartLabel(ctx, pad.l + cW/2, pad.t - 20, 'Price Chart  (Bid / Ask / Mid)');
+
+    // ── Spread chart (bottom 38%)
+    const bW = W*0.55 - pad.l - pad.r;
+    const bH2 = botH - 50;
+    const spreads = d.map(x=>x.spread_pips);
+    const maxSp = Math.max(...spreads)+0.5, minSp = 0;
+    const yS = v => botY + 45 + bH2 - (v - minSp)/(maxSp - minSp)*bH2;
+
+    ctx.fillStyle='#00A39A'; ctx.font='bold 26px Arial'; ctx.textAlign='left';
+    ctx.fillText('Bid-Ask Spread (pips)', pad.l, botY+35);
+    ctx.beginPath(); ctx.strokeStyle='#f39c12'; ctx.lineWidth=3;
+    d.forEach((row,i)=>{ const x=pad.l+i*(bW/(d.length-1)), y=yS(row.spread_pips);
+        i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+    ctx.stroke();
+    // Fill
+    ctx.beginPath(); ctx.fillStyle='rgba(243,156,18,0.18)';
+    d.forEach((row,i)=>{ const x=pad.l+i*(bW/(d.length-1)); i===0?ctx.moveTo(x,yS(row.spread_pips)):ctx.lineTo(x,yS(row.spread_pips)); });
+    ctx.lineTo(pad.l+bW, botY+45+bH2); ctx.lineTo(pad.l, botY+45+bH2); ctx.closePath(); ctx.fill();
+
+    // ── Price distribution (right 40% of bottom)
+    const distX = W*0.58;
+    const distW = W - distX - 20;
+    ctx.fillStyle='#00A39A'; ctx.font='bold 26px Arial'; ctx.textAlign='left';
+    ctx.fillText('Price Distribution', distX, botY+35);
+    drawHistogram(ctx, d.map(x=>x.mid), distX, botY+45, distW, bH2, '#00A39A', 20);
+}
+
+// ── FLOOR MODE 1: Technical Indicators ───────────────────────────────────────
+function drawFloorTechnical(ctx, W, H) {
+    drawDarkBg(ctx, W, H, 'TECHNICAL INDICATORS  ·  EURUSD  ·  SMA · EMA · RSI · MACD · Bollinger');
+
+    const d = EURUSD;
+    const mainH = H * 0.58, rsiH = H * 0.20, macdH = H * 0.16;
+    const pad = { l:130, r:40, t:80, b:20 };
+    const cW = W - pad.l - pad.r;
+    const mainCH = mainH - pad.t - 20;
+
+    // Price + Indicators chart
+    const mids = d.map(x=>x.mid);
+    const bbU = INDICATORS.bb.upper, bbL = INDICATORS.bb.lower;
+    const allV = [...mids, ...bbU.filter(v=>v), ...bbL.filter(v=>v)];
+    const minV = Math.min(...allV)-0.0003, maxV = Math.max(...allV)+0.0003;
+    const xPx = i => pad.l + i * cW/(d.length-1);
+    const yMain = v => pad.t + mainCH - (v-minV)/(maxV-minV)*mainCH;
+
+    drawGrid(ctx, pad.l, pad.t, cW, mainCH, 6, 5, '#1a3a4a', '#2a5a6a', minV, maxV, true, 5);
+
+    // Bollinger band fill
+    ctx.beginPath(); ctx.fillStyle='rgba(52,152,219,0.12)';
+    d.forEach((_, i) => { if (bbU[i]) { i===0?ctx.moveTo(xPx(i),yMain(bbU[i])):ctx.lineTo(xPx(i),yMain(bbU[i])); }});
+    d.slice().reverse().forEach((_, ri) => { const i=d.length-1-ri; if (bbL[i]) ctx.lineTo(xPx(i),yMain(bbL[i])); });
+    ctx.closePath(); ctx.fill();
+    // BB upper/lower
+    ['upper','lower'].forEach(k => {
+        ctx.beginPath(); ctx.strokeStyle='#3498db'; ctx.lineWidth=2; ctx.setLineDash([6,4]);
+        INDICATORS.bb[k].forEach((v,i)=>{ if(v){ i===0?ctx.moveTo(xPx(i),yMain(v)):ctx.lineTo(xPx(i),yMain(v)); }});
+        ctx.stroke(); ctx.setLineDash([]);
+    });
+    // Mid price
+    ctx.beginPath(); ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.lineWidth=2;
+    d.forEach((row,i)=>{ i===0?ctx.moveTo(xPx(i),yMain(row.mid)):ctx.lineTo(xPx(i),yMain(row.mid)); });
+    ctx.stroke();
+    // SMA20
+    ctx.beginPath(); ctx.strokeStyle='#f39c12'; ctx.lineWidth=3;
+    INDICATORS.sma20.forEach((v,i)=>{ if(v){ const x=xPx(i),y=yMain(v); ctx.moveTo(x,y)||ctx.lineTo(x,y); }});
+    INDICATORS.sma20.forEach((v,i)=>{ if(v){ i===0||!INDICATORS.sma20[i-1]?ctx.moveTo(xPx(i),yMain(v)):ctx.lineTo(xPx(i),yMain(v)); }});
+    ctx.stroke();
+    // SMA50
+    ctx.beginPath(); ctx.strokeStyle='#9b59b6'; ctx.lineWidth=3;
+    INDICATORS.sma50.forEach((v,i)=>{ if(v){ i===0||!INDICATORS.sma50[i-1]?ctx.moveTo(xPx(i),yMain(v)):ctx.lineTo(xPx(i),yMain(v)); }});
+    ctx.stroke();
+
+    chartLabel(ctx, pad.l + cW/2, pad.t-20, 'Price + BB(20,2) + SMA(20) + SMA(50)');
+    drawLegendItem(ctx, pad.l, mainH-30, '─', '#3498db', 'Bollinger Bands');
+    drawLegendItem(ctx, pad.l+230, mainH-30, '─', '#f39c12', 'SMA 20');
+    drawLegendItem(ctx, pad.l+360, mainH-30, '─', '#9b59b6', 'SMA 50');
+
+    // ── RSI panel
+    const rsiY0 = mainH + 10, rsiCH = rsiH - 30;
+    drawGrid(ctx, pad.l, rsiY0, cW, rsiCH, 3, 1, '#1a3a4a', '#2a5a6a', 0, 100, false, 0);
+    // Overbought/oversold lines
+    [30,70].forEach(level => {
+        ctx.beginPath(); ctx.strokeStyle=level===70?'rgba(231,76,60,0.6)':'rgba(46,204,113,0.6)'; ctx.lineWidth=2; ctx.setLineDash([8,4]);
+        ctx.moveTo(pad.l, rsiY0 + rsiCH*(1-level/100)); ctx.lineTo(pad.l+cW, rsiY0 + rsiCH*(1-level/100));
+        ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle=level===70?'#e74c3c':'#2ecc71'; ctx.font='18px Arial'; ctx.textAlign='left';
+        ctx.fillText(level.toString(), pad.l-35, rsiY0 + rsiCH*(1-level/100)+6);
+    });
+    ctx.beginPath(); ctx.strokeStyle='#00A39A'; ctx.lineWidth=3;
+    INDICATORS.rsi.forEach((v,i)=>{ if(v!==null){ const x=xPx(i),y=rsiY0+rsiCH*(1-v/100); i===0||INDICATORS.rsi[i-1]===null?ctx.moveTo(x,y):ctx.lineTo(x,y); }});
+    ctx.stroke();
+    ctx.fillStyle='#00A39A'; ctx.font='bold 22px Arial'; ctx.textAlign='left';
+    ctx.fillText('RSI(14)', pad.l, rsiY0-8);
+    const lastRSI = INDICATORS.rsi.filter(v=>v!==null).pop();
+    ctx.fillStyle=lastRSI>70?'#e74c3c':lastRSI<30?'#2ecc71':'#f39c12';
+    ctx.fillText(lastRSI.toFixed(1) + (lastRSI>70?' OVERBOUGHT':lastRSI<30?' OVERSOLD':' NEUTRAL'), pad.l+120, rsiY0-8);
+
+    // ── MACD panel
+    const macdY0 = mainH + rsiH + 10, macdCH = macdH - 25;
+    const { macd, signal, hist } = INDICATORS.macd;
+    const allMACD = [...macd,...signal,...hist].filter(v=>v!==null);
+    const macdMin = Math.min(...allMACD), macdMax = Math.max(...allMACD);
+    const yMacd = v => macdY0 + macdCH - (v-macdMin)/(macdMax-macdMin)*macdCH;
+    // Zero line
+    ctx.beginPath(); ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=1;
+    const z0 = yMacd(0); ctx.moveTo(pad.l, z0); ctx.lineTo(pad.l+cW, z0); ctx.stroke();
+    // Histogram
+    hist.forEach((v,i)=>{ if(v!==null){
+        const bw=Math.max(2,cW/d.length-1), x=xPx(i)-bw/2;
+        ctx.fillStyle=v>=0?'rgba(46,204,113,0.7)':'rgba(231,76,60,0.7)';
+        const yTop=yMacd(v), yBot=yMacd(0);
+        ctx.fillRect(x, Math.min(yTop,yBot), bw, Math.abs(yTop-yBot));
+    }});
+    // MACD line
+    ctx.beginPath(); ctx.strokeStyle='#00A39A'; ctx.lineWidth=2;
+    macd.forEach((v,i)=>{ if(v!==null){ const x=xPx(i),y=yMacd(v); i===0||macd[i-1]===null?ctx.moveTo(x,y):ctx.lineTo(x,y); }});
+    ctx.stroke();
+    // Signal line
+    ctx.beginPath(); ctx.strokeStyle='#f39c12'; ctx.lineWidth=2;
+    signal.forEach((v,i)=>{ if(v!==null){ const x=xPx(i),y=yMacd(v); i===0||signal[i-1]===null?ctx.moveTo(x,y):ctx.lineTo(x,y); }});
+    ctx.stroke();
+    ctx.fillStyle='#00A39A'; ctx.font='bold 22px Arial'; ctx.textAlign='left';
+    ctx.fillText('MACD(12,26,9)', pad.l, macdY0-5);
+}
+
+// ── FLOOR MODE 2: Volatility Analysis ────────────────────────────────────────
+function drawFloorVolatility(ctx, W, H) {
+    drawDarkBg(ctx, W, H, 'VOLATILITY ANALYSIS  ·  EURUSD  ·  Rolling 20-Period  ·  Regime Classification');
+
+    const vol = INDICATORS.vol;
+    const validVol = vol.filter(v=>v!==null);
+    const q25 = quantile(validVol, 0.25), q75 = quantile(validVol, 0.75);
+    const maxVol = Math.max(...validVol)+2, minVol = 0;
+    const pad = { l:130, r:40, t:80, b:20 };
+    const cW = W - pad.l - pad.r;
+
+    // ── Rolling vol chart (top 60%)
+    const topCH = H*0.58 - pad.t - 20;
+    drawGrid(ctx, pad.l, pad.t, cW, topCH, 6, 5, '#1a3a4a', '#2a5a6a', minVol, maxVol, false, 0);
+    // Regime bands
+    const yV = v => pad.t + topCH - (v-minVol)/(maxVol-minVol)*topCH;
+    // Low vol band
+    ctx.fillStyle='rgba(46,204,113,0.10)';
+    ctx.fillRect(pad.l, yV(q25), cW, topCH - (topCH - (yV(q25)-pad.t)));
+    // High vol band
+    ctx.fillStyle='rgba(231,76,60,0.10)';
+    ctx.fillRect(pad.l, pad.t, cW, yV(q75)-pad.t);
+    // Regime threshold lines
+    [q25, q75].forEach((v, idx) => {
+        ctx.beginPath(); ctx.strokeStyle=idx===0?'#2ecc71':'#e74c3c'; ctx.lineWidth=2; ctx.setLineDash([8,4]);
+        ctx.moveTo(pad.l, yV(v)); ctx.lineTo(pad.l+cW, yV(v)); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle=idx===0?'#2ecc71':'#e74c3c'; ctx.font='20px Arial'; ctx.textAlign='left';
+        ctx.fillText((idx===0?'LOW':'HIGH')+' '+v.toFixed(1)+'%', pad.l+8, yV(v)-6);
+    });
+    // Volatility line colored by regime
+    for (let i = 1; i < vol.length; i++) {
+        if (vol[i]===null||vol[i-1]===null) continue;
+        const regime = vol[i] < q25 ? '#2ecc71' : vol[i] > q75 ? '#e74c3c' : '#f39c12';
+        ctx.beginPath(); ctx.strokeStyle=regime; ctx.lineWidth=4;
+        const xF = j => pad.l + j * cW/(vol.length-1);
+        ctx.moveTo(xF(i-1), yV(vol[i-1]));
+        ctx.lineTo(xF(i), yV(vol[i]));
+        ctx.stroke();
+    }
+    chartLabel(ctx, pad.l+cW/2, pad.t-20, 'Rolling 20-Period Annualized Volatility (%)');
+    drawLegendItem(ctx, pad.l, H*0.58-30, '●', '#2ecc71', 'Low Regime (< Q25)');
+    drawLegendItem(ctx, pad.l+270, H*0.58-30, '●', '#f39c12', 'Normal Regime');
+    drawLegendItem(ctx, pad.l+540, H*0.58-30, '●', '#e74c3c', 'High Regime (> Q75)');
+
+    // ── Volatility distribution histogram (bottom left)
+    const botY = H*0.60, botH = H*0.37;
+    ctx.fillStyle='#00A39A'; ctx.font='bold 26px Arial'; ctx.textAlign='left';
+    ctx.fillText('Volatility Distribution', pad.l, botY+30);
+    drawHistogram(ctx, validVol, pad.l, botY+38, W*0.48 - pad.l, botH-50, '#00A39A', 15, q25, q75);
+
+    // ── Returns clustering scatter (bottom right)
+    const scX = W*0.52, scW = W - scX - 30;
+    ctx.fillStyle='#00A39A'; ctx.font='bold 26px Arial'; ctx.textAlign='left';
+    ctx.fillText('Returns vs Volatility Clustering', scX, botY+30);
+    const returns = INDICATORS.returns.filter(v=>v!==null).map(v=>v*100);
+    const volFiltered = validVol.slice(0, returns.length);
+    const rMin=Math.min(...returns), rMax=Math.max(...returns);
+    const vMax2=Math.max(...volFiltered);
+    const scH = botH - 50;
+    for (let i = 0; i < Math.min(returns.length, volFiltered.length); i++) {
+        const px = scX + (returns[i]-rMin)/(rMax-rMin)*scW;
+        const py = botY+38 + scH - volFiltered[i]/vMax2*scH;
+        const regime = volFiltered[i] < q25 ? '#2ecc71' : volFiltered[i] > q75 ? '#e74c3c' : '#f39c12';
+        ctx.fillStyle = regime;
+        ctx.beginPath(); ctx.arc(px, py, 3.5, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.font='18px Arial'; ctx.textAlign='center';
+    ctx.fillText('Returns (%)', scX+scW/2, botY+38+scH+22);
+}
+
+// ─── 3D CHART (Floating in Air) ───────────────────────────────────────────────
+function build3DChartFrame() {
+    chart3DGroup = new THREE.Group();
+    chart3DGroup.position.set(userX + 0.4, floorY + 1.85, userZ - 1.2);
+    scene.add(chart3DGroup);
+}
+
+function update3DChart(mode) {
+    if (!chart3DGroup) return;
+    // Clear previous chart content
+    while (chart3DGroup.children.length) chart3DGroup.remove(chart3DGroup.children[0]);
+    if (mode === 0) build3DCandlestick();
+    else if (mode === 1) build3DTechnical();
+    else if (mode === 2) build3DVolatility();
+}
+
+// ── 3D Chart helper: axes ─────────────────────────────────────────────────────
+function add3DAxes(g, size, xLabel, yLabel, zLabel) {
+    const mat = v => new THREE.LineBasicMaterial({ color: v });
+    const line = (pts, m) => {
+        const geo = new THREE.BufferGeometry().setFromPoints(pts.map(p=>new THREE.Vector3(...p)));
+        g.add(new THREE.Line(geo, m));
+    };
+    line([[0,0,0],[size,0,0]], mat(0x3498db));   // X
+    line([[0,0,0],[0,size,0]], mat(0x2ecc71));   // Y
+    line([[0,0,0],[0,0,size]], mat(0xe74c3c));   // Z
+    // Axis labels as sprites
+    [
+        { text: xLabel, pos: [size*1.1, 0, 0] },
+        { text: yLabel, pos: [0, size*1.1, 0] },
+        { text: zLabel, pos: [0, 0, size*1.1] },
+    ].forEach(({ text, pos }) => {
+        const sp = makeTextSprite(text, { fontSize: 42, color: '#ffffff', bg: 'rgba(0,44,60,0.75)' });
+        sp.position.set(...pos);
+        g.add(sp);
+    });
+}
+
+function makeTextSprite(text, opts={}) {
+    const { fontSize=40, color='#ffffff', bg='rgba(0,0,0,0.5)' } = opts;
+    const canvas = document.createElement('canvas');
+    canvas.width = 256; canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = bg; ctx.fillRect(0,0,256,64);
+    ctx.fillStyle = color; ctx.font = `bold ${fontSize}px Arial`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, 128, 32);
+    const tex = new THREE.CanvasTexture(canvas);
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+    const sp = new THREE.Sprite(mat);
+    sp.scale.set(0.25, 0.065, 1);
+    return sp;
+}
+
+// ── 3D Mode 0: Candlestick chart ──────────────────────────────────────────────
+function build3DCandlestick() {
+    const S = 1.0;
+    add3DAxes(chart3DGroup, S, 'TIME', 'PRICE', 'VOL');
+
+    const d = EURUSD.slice(100, 150); // 50 candles for clarity
+    const prices = d.map(x=>[x.open,x.high,x.low,x.close]);
+    const allP = prices.flat(), minP = Math.min(...allP), rangeP = Math.max(...allP) - minP;
+    const maxVol = Math.max(...d.map(x=>x.volume));
+
+    d.forEach((bar, i) => {
+        const x = (i / (d.length-1)) * S;
+        const norm = v => (v - minP) / rangeP * S;
+        const yO = norm(bar.open), yC = norm(bar.close);
+        const yH = norm(bar.high), yL = norm(bar.low);
+        const z  = (bar.volume / maxVol) * S * 0.3;
+        const bullish = bar.close >= bar.open;
+        const col = bullish ? 0x2ecc71 : 0xe74c3c;
+
+        // Body (box)
+        const bodyH = Math.max(Math.abs(yC - yO), 0.005);
+        const bodyGeo = new THREE.BoxGeometry(S/d.length * 0.7, bodyH, 0.02);
+        const bodyMat = new THREE.MeshBasicMaterial({ color: col });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.position.set(x, (yO+yC)/2, z);
+        chart3DGroup.add(body);
+
+        // Wick (line)
+        const wickPts = [new THREE.Vector3(x, yL, z), new THREE.Vector3(x, yH, z)];
+        const wickGeo = new THREE.BufferGeometry().setFromPoints(wickPts);
+        chart3DGroup.add(new THREE.Line(wickGeo, new THREE.LineBasicMaterial({ color: col })));
+    });
+
+    // Title label
+    const title = makeTextSprite('3D CANDLESTICK  EURUSD', { fontSize:36, color:'#00A39A', bg:'rgba(0,28,40,0.85)' });
+    title.position.set(S/2, S*1.05, 0); title.scale.set(0.55, 0.09, 1);
+    chart3DGroup.add(title);
+    chart3DGroup.userData.autoRotate = true;
+}
+
+// ── 3D Mode 1: Technical Indicators ──────────────────────────────────────────
+function build3DTechnical() {
+    const S = 1.0;
+    add3DAxes(chart3DGroup, S, 'TIME', 'PRICE', 'RSI');
+
+    const d = EURUSD;
+    const mids = d.map(x=>x.mid);
+    const rsi  = INDICATORS.rsi;
+    const sma20= INDICATORS.sma20;
+    const bbU  = INDICATORS.bb.upper, bbL = INDICATORS.bb.lower;
+
+    const minP = Math.min(...mids), rangeP = Math.max(...mids)-minP;
+    const yP  = v => (v - minP) / rangeP * S;
+    const xT  = i => (i / (d.length-1)) * S;
+    const zRSI = v => (v / 100) * S * 0.6;
+
+    // Price line (mid)
+    const pts = d.map((_,i) => new THREE.Vector3(xT(i), yP(mids[i]), 0));
+    chart3DGroup.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(pts),
+        new THREE.LineBasicMaterial({ color: 0x00A39A, linewidth: 3 })
+    ));
+
+    // SMA20 line
+    const smaPts = sma20.map((v,i)=>v?new THREE.Vector3(xT(i),yP(v),0):null).filter(Boolean);
+    if (smaPts.length>1) chart3DGroup.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(smaPts),
+        new THREE.LineBasicMaterial({ color: 0xf39c12, linewidth: 2 })
+    ));
+
+    // BB upper/lower (dashed rendered as point arrays with gaps)
+    const bbColor = 0x3498db;
+    for (let k of ['upper','lower']) {
+        const bPts = INDICATORS.bb[k].map((v,i)=>v?new THREE.Vector3(xT(i),yP(v),0):null).filter(Boolean);
+        if (bPts.length>1) chart3DGroup.add(new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints(bPts),
+            new THREE.LineBasicMaterial({ color: bbColor, linewidth: 1.5 })
+        ));
+    }
+
+    // RSI as 3D polyline rising in Z axis
+    const rsiPts = rsi.map((v,i)=>v!==null?new THREE.Vector3(xT(i), yP(mids[i]), zRSI(v)):null).filter(Boolean);
+    if (rsiPts.length>1) chart3DGroup.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(rsiPts),
+        new THREE.LineBasicMaterial({ color: 0xe74c3c, linewidth: 3 })
+    ));
+
+    // RSI overbought/oversold planes (transparent)
+    [70, 30].forEach(level => {
+        const geo = new THREE.PlaneGeometry(S, S*0.6);
+        geo.rotateY(-Math.PI/2);
+        const mat = new THREE.MeshBasicMaterial({
+            color: level===70 ? 0xe74c3c : 0x2ecc71,
+            transparent: true, opacity: 0.06, side: THREE.DoubleSide
+        });
+        const plane = new THREE.Mesh(geo, mat);
+        plane.position.set(S/2, S*0.5, zRSI(level));
+        chart3DGroup.add(plane);
+    });
+
+    const title = makeTextSprite('3D TECHNICAL  EURUSD', { fontSize:36, color:'#f39c12', bg:'rgba(0,28,40,0.85)' });
+    title.position.set(S/2, S*1.05, 0); title.scale.set(0.55, 0.09, 1);
+    chart3DGroup.add(title);
+    chart3DGroup.userData.autoRotate = true;
+}
+
+// ── 3D Mode 2: Volatility Surface ────────────────────────────────────────────
+function build3DVolatility() {
+    const S = 1.0;
+    add3DAxes(chart3DGroup, S, 'TIME', 'VOL%', 'RETURN');
+
+    const vol = INDICATORS.vol;
+    const ret = INDICATORS.returns;
+    const validVol = vol.filter(v=>v!==null);
+    const q25 = quantile(validVol, 0.25), q75 = quantile(validVol, 0.75);
+    const maxVol = Math.max(...validVol), minRet = Math.min(...ret.filter(v=>v!==null));
+    const maxRet = Math.max(...ret.filter(v=>v!==null));
+
+    const points = [], colors = [];
+    for (let i = 0; i < vol.length; i++) {
+        if (vol[i] === null || ret[i] === null) continue;
+        const x = (i / (vol.length - 1)) * S;
+        const y = (vol[i] / maxVol) * S;
+        const z = ((ret[i] - minRet) / (maxRet - minRet)) * S * 0.8;
+        points.push(x, y, z);
+        const regime = vol[i] < q25 ? new THREE.Color(0x2ecc71) : vol[i] > q75 ? new THREE.Color(0xe74c3c) : new THREE.Color(0xf39c12);
+        colors.push(regime.r, regime.g, regime.b);
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    const mat = new THREE.PointsMaterial({ size: 0.025, vertexColors: true });
+    chart3DGroup.add(new THREE.Points(geo, mat));
+
+    // Volatility polyline
+    const volPts = [];
+    for (let i = 0; i < vol.length; i++) {
+        if (vol[i] === null) continue;
+        volPts.push(new THREE.Vector3((i/(vol.length-1))*S, (vol[i]/maxVol)*S, 0));
+    }
+    if (volPts.length>1) chart3DGroup.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(volPts),
+        new THREE.LineBasicMaterial({ color: 0x00A39A, linewidth: 4 })
+    ));
+
+    // Regime threshold planes
+    [q25, q75].forEach((v, idx) => {
+        const yPlane = (v / maxVol) * S;
+        const geo2 = new THREE.PlaneGeometry(S, S*0.8);
+        const mat2 = new THREE.MeshBasicMaterial({
+            color: idx===0 ? 0x2ecc71 : 0xe74c3c,
+            transparent: true, opacity: 0.07, side: THREE.DoubleSide
+        });
+        const plane = new THREE.Mesh(geo2, mat2);
+        plane.rotation.x = Math.PI/2;
+        plane.position.set(S/2, yPlane, S*0.4);
+        chart3DGroup.add(plane);
+    });
+
+    const title = makeTextSprite('3D VOLATILITY  EURUSD', { fontSize:36, color:'#e74c3c', bg:'rgba(0,28,40,0.85)' });
+    title.position.set(S/2, S*1.05, 0); title.scale.set(0.55, 0.09, 1);
+    chart3DGroup.add(title);
+    chart3DGroup.userData.autoRotate = true;
+}
+
+// ─── CANVAS DRAWING HELPERS ───────────────────────────────────────────────────
+function drawDarkBg(ctx, W, H, title) {
+    ctx.fillStyle = '#001C28'; ctx.fillRect(0, 0, W, H);
+    // Top gradient bar
+    const grad = ctx.createLinearGradient(0,0,W,0);
+    grad.addColorStop(0,'#002C3C'); grad.addColorStop(1,'#008A82');
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, W, 110);
+    ctx.strokeStyle='#00A39A'; ctx.lineWidth=3;
+    ctx.strokeRect(2,2,W-4,H-4);
+    ctx.fillStyle='#ffffff'; ctx.font='bold 44px Arial'; ctx.textAlign='center';
+    ctx.fillText('EURUSD FOREX AR', W/2, 52);
+    ctx.fillStyle='#00A39A'; ctx.font='28px Arial';
+    ctx.fillText(title, W/2, 90);
+}
+
+function drawGrid(ctx, x0, y0, w, h, rows, cols, lineColor, borderColor, minV, maxV, showLabels, decimals) {
+    ctx.strokeStyle=lineColor; ctx.lineWidth=1;
+    for (let i=0; i<=rows; i++) {
+        const y = y0 + i * h / rows;
+        ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x0+w, y); ctx.stroke();
+        if (showLabels) {
+            const val = maxV - i * (maxV-minV) / rows;
+            ctx.fillStyle='rgba(0,163,154,0.7)'; ctx.font='18px Arial'; ctx.textAlign='right';
+            ctx.fillText(val.toFixed(decimals), x0-8, y+6);
+        }
+    }
+    for (let i=0; i<=cols; i++) {
+        const x = x0 + i * w / cols;
+        ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y0+h); ctx.stroke();
+    }
+    ctx.strokeStyle=borderColor; ctx.lineWidth=2;
+    ctx.strokeRect(x0, y0, w, h);
+}
+
+function drawHistogram(ctx, data, x0, y0, w, h, color, bins, q25=null, q75=null) {
+    const min=Math.min(...data), max=Math.max(...data)+0.001;
+    const binW=(max-min)/bins, counts=new Array(bins).fill(0);
+    data.forEach(v=>{ const b=Math.min(bins-1,Math.floor((v-min)/binW)); counts[b]++; });
+    const maxC=Math.max(...counts);
+    const bW=w/bins;
+    counts.forEach((c,i)=>{ 
+        const v = min + i*binW;
+        let col = color;
+        if (q25!==null && q75!==null) col = v<q25?'#2ecc71':v>q75?'#e74c3c':'#f39c12';
+        ctx.fillStyle=col;
+        const bH=h*(c/maxC);
+        ctx.fillRect(x0+i*bW, y0+h-bH, bW-2, bH);
+    });
+    ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=1;
+    ctx.strokeRect(x0, y0, w, h);
+}
+
+function drawValueBox(ctx, x, y, w, h, label, value, color) {
+    ctx.fillStyle='rgba(0,44,60,0.8)';
+    roundRect(ctx,x,y,w,h,8); ctx.fill();
+    ctx.strokeStyle=color; ctx.lineWidth=2;
+    roundRect(ctx,x,y,w,h,8); ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.font='18px Arial'; ctx.textAlign='center';
+    ctx.fillText(label, x+w/2, y+20);
+    ctx.fillStyle=color; ctx.font='bold 24px Arial';
+    ctx.fillText(value, x+w/2, y+50);
+}
+
+function chartLabel(ctx, x, y, text) {
+    ctx.fillStyle='rgba(0,163,154,0.9)'; ctx.font='bold 26px Arial'; ctx.textAlign='center';
+    ctx.fillText(text, x, y);
+}
+
+function drawLegendItem(ctx, x, y, icon, color, label) {
+    ctx.fillStyle=color; ctx.font='bold 22px Arial'; ctx.textAlign='left';
+    ctx.fillText(icon, x, y);
+    ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.font='20px Arial';
+    ctx.fillText(label, x+28, y);
+}
+
+function quantile(arr, q) {
+    const sorted=[...arr].sort((a,b)=>a-b);
+    const pos=(sorted.length-1)*q, lo=Math.floor(pos), hi=Math.ceil(pos);
+    return sorted[lo]+(sorted[hi]-sorted[lo])*(pos-lo);
+}
+
+// ─── ANIMATION LOOP ───────────────────────────────────────────────────────────
+function animate(timestamp, frame) {
+    if (!frame) return;
+
+    const session = renderer.xr.getSession();
+    if (!session) return;
+
+    if (!refSpace) {
+        refSpace = renderer.xr.getReferenceSpace();
+    }
+    if (!refSpace) return;
+
+    if (!floorDetected) detectFloor(frame, refSpace);
+
+    // Controller input: left trigger selects panel
+    if (floorDetected) {
+        for (const src of session.inputSources) {
+            if (!src.gamepad) continue;
+            const trigger = src.gamepad.buttons[0]?.pressed;
+            if (src.handedness === 'left') {
+                if (trigger && !lastLeftTrigger) checkPanelInteraction();
+                lastLeftTrigger = trigger;
+            }
+        }
+    }
+
+    // Auto-rotate 3D chart
+    if (chart3DGroup && chart3DGroup.userData.autoRotate) {
+        chart3DGroup.rotation.y += 0.004;
+    }
+
+    renderer.render(scene, camera);
+}
+
+init();
+</script>
+</body>
+</html>

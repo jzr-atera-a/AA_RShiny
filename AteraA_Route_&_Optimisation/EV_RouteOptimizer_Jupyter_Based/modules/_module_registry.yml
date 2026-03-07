@@ -1,0 +1,50 @@
+# modules/_module_registry.yml
+# CAV Route Optimizer - Module Registry
+
+modules:
+  cav_route_sampler:
+    enabled: true
+    priority: 25
+    name: "Route Sampler"
+    description: "Google Maps routing & waypoint generation"
+    icon: "route"
+  
+  feature_detector:
+    enabled: true
+    priority: 26
+    name: "Feature Detector"
+    description: "OSM-based feature detection"
+    icon: "search-location"
+  
+  streetview_capture:
+    enabled: true
+    priority: 27
+    name: "Street View"
+    description: "Street View image download via Python"
+    icon: "camera"
+  
+  yolo_detector:
+    enabled: true
+    priority: 28
+    name: "YOLO Detector"
+    description: "YOLO ML inference via Python"
+    icon: "brain"
+  
+  risk_map:
+    enabled: true
+    priority: 29
+    name: "Risk Map"
+    description: "Interactive risk visualization"
+    icon: "map-marked-alt"
+
+settings:
+  auto_install: false
+  check_versions: true
+  verbose: true
+
+app:
+  name: "CAV Route Optimizer"
+  version: "5.0.0"
+  description: "CAV risk detection with Python backend integration"
+  author: "Analytics Team"
+  updated: "2026-02-09"

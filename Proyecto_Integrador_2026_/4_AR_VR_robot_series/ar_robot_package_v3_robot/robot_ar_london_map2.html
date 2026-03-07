@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Robot AR — London M25 Map</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#000; font-family: monospace; color:#0f0; overflow:hidden; }
+  #hud {
+    position:fixed; top:0; left:0; width:100%; z-index:100;
+    background:rgba(0,0,0,0.85); padding:10px 14px;
+    font-size:12px; line-height:1.8; pointer-events:none;
+  }
+  #hud .row { display:flex; gap:18px; flex-wrap:wrap; }
+  .ok  { color:#0f0; }
+  .bad { color:#f00; }
+  .warn{ color:#ff0; }
+  .info{ color:#0af; }
+  #start-btn {
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    background:rgba(0,0,0,0.7); border:2px solid #0f0; color:#0f0;
+    font-family:monospace; font-size:16px; padding:14px 40px;
+    cursor:pointer; z-index:200; letter-spacing:3px;
+    transition: all 0.2s;
+  }
+  #start-btn:hover { background:rgba(0,255,0,0.15); box-shadow:0 0 20px rgba(0,255,0,0.4); }
+  #start-btn:disabled { opacity:0.3; cursor:default; }
+  #hud-corners { position:fixed; top:0; left:0; width:100%; height:100%;
+    pointer-events:none; z-index:50; display:none; }
+  .corner { position:absolute; width:20px; height:20px; border-color:rgba(0,255,0,0.5); border-style:solid; }
+  .tl{top:12px;left:12px;border-width:2px 0 0 2px}
+  .tr{top:12px;right:12px;border-width:2px 2px 0 0}
+  .bl{bottom:12px;left:12px;border-width:0 0 2px 2px}
+  .br{bottom:12px;right:12px;border-width:0 2px 2px 0}
+</style>
+</head>
+<body>
+
+<div id="hud">
+  <div class="row">
+    <span>🤖 ROBOT AR — LONDON M25</span>
+    <span>AR: <span id="s-ar" class="warn">—</span></span>
+    <span>Floor: <span id="s-floor" class="warn">detecting…</span></span>
+    <span>Map: <span id="s-map" class="warn">loading…</span></span>
+    <span>Robot: <span id="s-robot" class="warn">loading…</span></span>
+  </div>
+  <div class="row" style="margin-top:4px; font-size:10px; color:#888;">
+    Length 60cm · Wheelbase 33cm · Track 35cm · Map appears at your feet
+  </div>
+</div>
+
+<div id="hud-corners">
+  <div class="corner tl"></div><div class="corner tr"></div>
+  <div class="corner bl"></div><div class="corner br"></div>
+</div>
+
+<button id="start-btn" onclick="startAR()">▶ START AR</button>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { ARButton } from 'three/addons/webxr/ARButton.js';
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ROBOT & MAP CONFIGURATION
+// ══════════════════════════════════════════════════════════════════════════════
+const ROBOT_CONFIG = {
+  bodyLength: 0.60,      // 60 cm body length (real size)
+  wheelbase: 0.33,       // 33 cm wheelbase
+  trackWidth: 0.35,      // 35 cm track width
+  // Future movement parameters (not used yet, but ready for implementation)
+  maxSpeed: 0.20,        // 20 cm/s max speed
+  turnRadius: 0.50,      // 50 cm turning radius
+  position: { x: 0, y: 0, z: 0 },  // Will be set to center of map
+  rotation: 0            // Heading in radians (0 = facing north/-Z)
+};
+
+const MAP_SIZE = 2.1;   // 2.1 m base size (N-S direction)
+const FLOOR_OFFSET = 1.6;  // camera to floor estimate (m)
+
+// ══════════════════════════════════════════════════════════════════════════════
+// THREE.JS GLOBALS
+// ══════════════════════════════════════════════════════════════════════════════
+let scene, camera, renderer;
+let floorY = null, floorDetected = false;
+let userX = 0, userZ = 0;
+let mapPlane = null;
+let robotGroup = null;
+let arStarted = false;
+
+// ──────────────────────────────────────────────────────────────────────────────
+// BUILD PROCEDURAL ROBOT (from robot-viewer-v10.html)
+// Maintains real-world scale: 60cm body length
+// Bottom of wheels at Y=0 in local space for proper floor placement
+// ──────────────────────────────────────────────────────────────────────────────
+function buildProceduralRobot() {
+  const robot = new THREE.Group();
+  robot.name = 'Robot';
+
+  // Materials
+  const whitePlasticMat = new THREE.MeshStandardMaterial({
+    color: 0xf5f5f5,
+    roughness: 0.3,
+    metalness: 0.1
+  });
+
+  const blackPlasticMat = new THREE.MeshStandardMaterial({
+    color: 0x1a1a1a,
+    roughness: 0.4,
+    metalness: 0.1
+  });
+
+  const yellowStripeMat = new THREE.MeshStandardMaterial({
+    color: 0xffa500,
+    roughness: 0.5
+  });
+
+  const grayPanelMat = new THREE.MeshStandardMaterial({
+    color: 0x404040,
+    roughness: 0.6,
+    metalness: 0.2
+  });
+
+  const rubberMat = new THREE.MeshStandardMaterial({
+    color: 0x0a0a0a,
+    roughness: 0.9
+  });
+
+  // Wheel radius for calculating floor contact point
+  const wheelRadius = 0.08;  // 8cm radius
+
+  // Chassis base (40cm x 30cm) - positioned as in original
+  // Bottom of chassis at Y=0.11, creating 11cm gap above floor
+  const chassisBase = new THREE.Mesh(
+    new THREE.BoxGeometry(0.4, 0.02, 0.3),
+    new THREE.MeshStandardMaterial({ color: 0x8b6f47, roughness: 0.8 })
+  );
+  chassisBase.position.y = 0.12;  // Original position - center at 12cm
+  chassisBase.castShadow = true;
+  robot.add(chassisBase);
+
+  // Main body shell - positioned as in original
+  const bodyGroup = new THREE.Group();
+  bodyGroup.position.y = 0.13;  // Original position
+  robot.add(bodyGroup);
+
+  const bodyLength = 0.4;
+  const bodyWidth = 0.3;
+  const bodyHeight = 0.12;
+  
+  // Main flat center section
+  const bodyCenter = new THREE.Mesh(
+    new THREE.BoxGeometry(bodyLength, bodyHeight, bodyWidth),
+    whitePlasticMat
+  );
+  bodyCenter.castShadow = true;
+  bodyGroup.add(bodyCenter);
+
+  // Rear semicircular cap
+  const rearCapGeom = new THREE.CylinderGeometry(bodyWidth/2, bodyWidth/2, bodyHeight, 32, 1, false, 0, Math.PI);
+  rearCapGeom.rotateY(Math.PI);
+  const rearCap = new THREE.Mesh(rearCapGeom, whitePlasticMat);
+  rearCap.position.set(-bodyLength/2, 0, 0);
+  rearCap.castShadow = true;
+  bodyGroup.add(rearCap);
+
+  // Front semicircular cap
+  const frontCapGeom = new THREE.CylinderGeometry(bodyWidth/2, bodyWidth/2, bodyHeight, 32, 1, false, 0, Math.PI);
+  const frontCap = new THREE.Mesh(frontCapGeom, whitePlasticMat);
+  frontCap.position.set(bodyLength/2, 0, 0);
+  frontCap.castShadow = true;
+  bodyGroup.add(frontCap);
+
+  // Top black panel (triangular)
+  const panelShape = new THREE.Shape();
+  const triangleLength = 0.16 * 1.6 * 1.3;
+  const basePosition = 0.08 * 1.2;
+  panelShape.moveTo(-triangleLength, 0);
+  panelShape.lineTo(basePosition, -0.12);
+  panelShape.lineTo(basePosition, 0.12);
+  panelShape.closePath();
+
+  const panelGeometry = new THREE.ExtrudeGeometry(panelShape, {
+    depth: 0.003,
+    bevelEnabled: false
+  });
+  const topPanel = new THREE.Mesh(panelGeometry, grayPanelMat);
+  topPanel.rotation.x = -Math.PI / 2;
+  topPanel.position.set(0.1, bodyHeight/2 + 0.002, 0);
+  topPanel.castShadow = true;
+  bodyGroup.add(topPanel);
+
+  // Hazard stripes
+  const stripePositions = [
+    { x: 0.15, width: 0.08 },
+    { x: 0.05, width: 0.08 },
+    { x: -0.05, width: 0.08 },
+    { x: -0.15, width: 0.08 }
+  ];
+
+  stripePositions.forEach((pos, i) => {
+    const yellowStripe = new THREE.Mesh(
+      new THREE.BoxGeometry(pos.width, 0.05, 0.32),
+      yellowStripeMat
+    );
+    yellowStripe.position.set(pos.x, 0, 0);
+    bodyGroup.add(yellowStripe);
+
+    if (i < stripePositions.length - 1) {
+      const blackStripe = new THREE.Mesh(
+        new THREE.BoxGeometry(0.04, 0.05, 0.32),
+        blackPlasticMat
+      );
+      blackStripe.position.set(pos.x - 0.04, 0, 0);
+      bodyGroup.add(blackStripe);
+    }
+  });
+
+  // Wheels - LOWERED to create gap between chassis and floor
+  // Wheel center at Y=0.04 (not 0.08), so with 0.08 radius:
+  // - Wheel bottom is at Y = 0.04 - 0.08 = -0.04 (extends BELOW origin)
+  // - This creates proper gap between chassis bottom (Y=0.11) and floor
+  const wheelPositions = [
+    { x: 0.165, z: 0.175 },   // Front right
+    { x: 0.165, z: -0.175 },  // Front left
+    { x: -0.165, z: 0.175 },  // Rear right
+    { x: -0.165, z: -0.175 }  // Rear left
+  ];
+
+  wheelPositions.forEach(pos => {
+    const wheelGroup = new THREE.Group();
+    wheelGroup.position.set(pos.x, 0.04, pos.z);  // LOWERED: center at 4cm instead of 8cm
+
+    const isRightSide = pos.z > 0;
+
+    // Tire
+    const tire = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.08, 0.08, 0.06, 32),
+      rubberMat
+    );
+    tire.rotation.x = Math.PI / 2;
+    tire.castShadow = true;
+    wheelGroup.add(tire);
+
+    // Tread pattern
+    for (let i = 0; i < 16; i++) {
+      const angle = (i / 16) * Math.PI * 2;
+      const tread = new THREE.Mesh(
+        new THREE.BoxGeometry(0.01, 0.003, 0.05),
+        new THREE.MeshStandardMaterial({ color: 0x050505 })
+      );
+      tread.position.x = Math.cos(angle) * 0.081;
+      tread.position.y = Math.sin(angle) * 0.081;
+      tread.position.z = 0;
+      tread.rotation.z = angle;
+      wheelGroup.add(tread);
+    }
+
+    // White hubcap
+    const hubCap = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.035, 0.035, 0.005, 32),
+      new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.1, metalness: 0.3 })
+    );
+    hubCap.rotation.x = Math.PI / 2;
+    hubCap.position.z = isRightSide ? 0.031 : -0.031;
+    wheelGroup.add(hubCap);
+
+    robot.add(wheelGroup);
+  });
+
+  // Robotic arm - original positioning
+  const armGroup = new THREE.Group();
+  armGroup.position.set(0.25, 0.13, 0);  // Original position
+  robot.add(armGroup);
+
+  const baseMount = new THREE.Mesh(
+    new THREE.BoxGeometry(0.06, 0.04, 0.08),
+    blackPlasticMat
+  );
+  baseMount.castShadow = true;
+  armGroup.add(baseMount);
+
+  const servo1 = new THREE.Mesh(
+    new THREE.BoxGeometry(0.05, 0.035, 0.04),
+    blackPlasticMat
+  );
+  servo1.position.y = 0.04;
+  servo1.castShadow = true;
+  armGroup.add(servo1);
+
+  const link1 = new THREE.Mesh(
+    new THREE.BoxGeometry(0.025, 0.12, 0.02),
+    blackPlasticMat
+  );
+  link1.position.set(0, 0.1, 0);
+  link1.castShadow = true;
+  armGroup.add(link1);
+
+  const servo2 = new THREE.Mesh(
+    new THREE.BoxGeometry(0.05, 0.035, 0.04),
+    blackPlasticMat
+  );
+  servo2.position.set(0, 0.16, 0);
+  servo2.castShadow = true;
+  armGroup.add(servo2);
+
+  const link2 = new THREE.Mesh(
+    new THREE.BoxGeometry(0.02, 0.1, 0.025),
+    blackPlasticMat
+  );
+  link2.position.set(0.05, 0.21, 0);
+  link2.rotation.z = -Math.PI / 2;
+  link2.castShadow = true;
+  armGroup.add(link2);
+
+  const servo3 = new THREE.Mesh(
+    new THREE.BoxGeometry(0.05, 0.03, 0.035),
+    blackPlasticMat
+  );
+  servo3.position.set(0.1, 0.21, 0);
+  servo3.castShadow = true;
+  armGroup.add(servo3);
+
+  const wrist = new THREE.Mesh(
+    new THREE.BoxGeometry(0.04, 0.06, 0.03),
+    blackPlasticMat
+  );
+  wrist.position.set(0.15, 0.21, 0);
+  wrist.castShadow = true;
+  armGroup.add(wrist);
+
+  const gripperBase = new THREE.Mesh(
+    new THREE.BoxGeometry(0.03, 0.04, 0.035),
+    blackPlasticMat
+  );
+  gripperBase.position.set(0.2, 0.21, 0);
+  gripperBase.castShadow = true;
+  armGroup.add(gripperBase);
+
+  const finger1 = new THREE.Mesh(
+    new THREE.BoxGeometry(0.01, 0.05, 0.015),
+    blackPlasticMat
+  );
+  finger1.position.set(0.25, 0.21, 0.015);
+  finger1.castShadow = true;
+  armGroup.add(finger1);
+
+  const finger2 = new THREE.Mesh(
+    new THREE.BoxGeometry(0.01, 0.05, 0.015),
+    blackPlasticMat
+  );
+  finger2.position.set(0.25, 0.21, -0.015);
+  finger2.castShadow = true;
+  armGroup.add(finger2);
+
+  // Camera sensor
+  const cameraSensor = new THREE.Mesh(
+    new THREE.BoxGeometry(0.025, 0.025, 0.015),
+    blackPlasticMat
+  );
+  cameraSensor.position.set(0.3, bodyHeight/2 + 0.0125, 0);
+  cameraSensor.castShadow = true;
+  bodyGroup.add(cameraSensor);
+
+  const lens = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.008, 0.008, 0.005, 16),
+    new THREE.MeshStandardMaterial({ color: 0x1a1aff, emissive: 0x0000ff, emissiveIntensity: 0.3 })
+  );
+  lens.rotation.x = Math.PI / 2;
+  lens.position.set(0.3 + 0.0075, bodyHeight/2 + 0.0125, 0);
+  bodyGroup.add(lens);
+
+  // Direction arrow pointing forward in robot's local frame
+  // After 180° rotation, this will point SOUTH (+Z)
+  const arrowGeo = new THREE.ConeGeometry(0.03, 0.08, 8);
+  arrowGeo.rotateX(-Math.PI / 2);
+  const arrow = new THREE.Mesh(arrowGeo, new THREE.MeshBasicMaterial({ color: 0xff0044 })); // Red for south
+  arrow.position.set(0, 0.30, -0.27);  // Points forward in local frame
+  robot.add(arrow);
+
+  // Store configuration for future movement
+  // Wheel bottoms are at Y=-0.04 in local space (they extend below origin)
+  // So we need to offset robot up by 0.04 to place wheel bottoms at floor level
+  robot.userData.config = {
+    wheelRadius: wheelRadius,
+    bodyLength: 0.60,
+    canMove: true,
+    heading: 0,
+    wheelBottomOffset: 0.04  // Amount to raise robot so wheel bottoms touch floor
+  };
+
+  document.getElementById('s-robot').textContent = 'Ready';
+  document.getElementById('s-robot').className = 'ok';
+  return robot;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// MAP FROM GEOJSON (London M25 Heatmap)
+// ──────────────────────────────────────────────────────────────────────────────
+async function loadGeoJSONMap() {
+  const res = await fetch('sample_campus_map.geojson');
+  const geojson = await res.json();
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 4096; 
+  canvas.height = 2048;
+  const ctx = canvas.getContext('2d');
+
+  // Dark background
+  ctx.fillStyle = '#0a0f1f';
+  ctx.fillRect(0, 0, 4096, 2048);
+
+  function coordToPixel(lon, lat) {
+    const lonRange = 0.0037;
+    const latRange = 0.0037;
+    const lonCentre = 0.000045;
+    const latCentre = 0.000125;
+    const x = (lon - lonCentre + lonRange / 2) / lonRange * 4096;
+    const y = 2048 - (lat - latCentre + latRange / 2) / latRange * 2048;
+    return [x, y];
+  }
+
+  // Heatmap blobs for M25
+  const m25 = geojson.features.find(f => f.properties.heatmap);
+  if (m25 && m25.geometry.type === 'LineString') {
+    m25.geometry.coordinates.forEach((c, i) => {
+      const [x, y] = coordToPixel(c[0], c[1]);
+      const ratio = i / m25.geometry.coordinates.length;
+      const col = ratio < 0.25 || ratio > 0.75 ? 'rgba(0,255,0,0.28)'
+                : ratio < 0.4  || ratio > 0.6  ? 'rgba(255,255,0,0.28)'
+                : 'rgba(255,102,0,0.28)';
+      const g = ctx.createRadialGradient(x, y, 0, x, y, 160);
+      g.addColorStop(0, col); 
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); 
+      ctx.arc(x, y, 80, 0, Math.PI*2); 
+      ctx.fill();
+    });
+  }
+
+  // Polygons
+  geojson.features.filter(f => f.geometry.type === 'Polygon').forEach(f => {
+    ctx.fillStyle = f.properties.color || '#ccc';
+    ctx.globalAlpha = f.properties.opacity || 0.4;
+    ctx.beginPath();
+    f.geometry.coordinates[0].forEach((c, i) => {
+      const [x, y] = coordToPixel(c[0], c[1]);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.fill(); 
+    ctx.globalAlpha = 1;
+  });
+
+  // Lines
+  geojson.features.filter(f => f.geometry.type === 'LineString').forEach(f => {
+    ctx.strokeStyle = f.properties.color || '#333';
+    ctx.lineWidth = f.properties.width || 4;
+    ctx.lineCap = ctx.lineJoin = 'round';
+    ctx.globalAlpha = f.properties.opacity || 1;
+    if (f.properties.heatmap) { 
+      ctx.shadowColor = f.properties.color; 
+      ctx.shadowBlur = 15; 
+    }
+    ctx.beginPath();
+    f.geometry.coordinates.forEach((c, i) => {
+      const [x, y] = coordToPixel(c[0], c[1]);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke(); 
+    ctx.shadowBlur = 0; 
+    ctx.globalAlpha = 1;
+    if (f.properties.designation) {
+      const [x, y] = coordToPixel(f.geometry.coordinates[0][0], f.geometry.coordinates[0][1]);
+      ctx.fillStyle = f.properties.color; 
+      ctx.font = 'bold 22px Arial';
+      ctx.fillText(f.properties.designation, x+8, y-8);
+    }
+  });
+
+  // Points
+  geojson.features.filter(f => f.geometry.type === 'Point').forEach(f => {
+    const [x, y] = coordToPixel(f.geometry.coordinates[0], f.geometry.coordinates[1]);
+    ctx.fillStyle = ctx.shadowColor = f.properties.color || '#00ff88';
+    ctx.shadowBlur = 8;
+    ctx.beginPath(); 
+    ctx.arc(x, y, 11, 0, Math.PI*2); 
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#fff'; 
+    ctx.lineWidth = 2; 
+    ctx.stroke();
+    ctx.fillStyle = '#fff'; 
+    ctx.font = 'bold 18px Arial';
+    ctx.shadowColor = '#000'; 
+    ctx.shadowBlur = 4;
+    ctx.fillText(f.properties.name, x+14, y+5);
+    ctx.shadowBlur = 0;
+  });
+
+  // Centre label + North
+  const [cx, cy] = coordToPixel(0.000045, 0.000125);
+  ctx.fillStyle = '#fff'; 
+  ctx.font = 'bold 56px Arial'; 
+  ctx.textAlign = 'center';
+  ctx.shadowColor = '#000'; 
+  ctx.shadowBlur = 8;
+  ctx.fillText('LONDON', cx, cy); 
+  ctx.shadowBlur = 0; 
+  ctx.textAlign = 'left';
+  
+  // North arrow
+  ctx.fillStyle = '#fff'; 
+  ctx.font = 'bold 40px Arial'; 
+  ctx.textAlign = 'center';
+  ctx.fillText('↑ N', 2048, 55);
+  ctx.textAlign = 'left';
+
+  // Scale indicator
+  ctx.strokeStyle = '#fff'; 
+  ctx.lineWidth = 3;
+  ctx.beginPath(); 
+  ctx.moveTo(80, 1980); 
+  ctx.lineTo(480, 1980); 
+  ctx.stroke();
+  ctx.fillStyle = '#fff'; 
+  ctx.font = 'bold 20px Arial'; 
+  ctx.textAlign = 'center';
+  ctx.fillText('MAP (scaled)', 280, 2010);
+  
+  // East edge label
+  ctx.textAlign = 'right';
+  ctx.fillText('E →', 4060, 1024);
+
+  document.getElementById('s-map').textContent = 'Loaded';
+  document.getElementById('s-map').className = 'ok';
+  return new THREE.CanvasTexture(canvas);
+}
+
+function placeMap(texture) {
+  texture.minFilter = texture.magFilter = THREE.LinearFilter;
+  
+  // Map geometry: 4.2m (E-W) × 2.1m (N-S) to match 4096×2048 texture aspect ratio
+  const geo = new THREE.PlaneGeometry(MAP_SIZE * 2, MAP_SIZE);  // 2× wider E-W
+  geo.rotateX(-Math.PI / 2);
+  
+  mapPlane = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+    map: texture, 
+    transparent: true, 
+    opacity: 0.72, 
+    depthWrite: false
+  }));
+  
+  // Place map on detected floor
+  mapPlane.position.set(userX, floorY + 0.001, userZ);
+  scene.add(mapPlane);
+
+  // Compass rose above map centre
+  addCompassRose(userX, floorY + 0.003, userZ);
+
+  // Place robot at CENTER of map (centered over London)
+  // Robot geometry has wheel bottoms at Y=-0.04 in local space (they extend below origin)
+  // So we offset robot Y position up by 0.04 to place wheel bottoms exactly on map surface
+  const wheelBottomOffset = 0.04;
+  robotGroup.position.set(userX, floorY + 0.001 + wheelBottomOffset, userZ);
+  
+  // Rotate robot 90° CLOCKWISE (viewed from above) so arm/front faces SOUTH (+Z direction)
+  // In Three.js: clockwise rotation = negative Y rotation
+  // -90° = -π/2 radians
+  robotGroup.rotation.y = -Math.PI / 2;  // 90° clockwise rotation
+  
+  // Store position in config for future movement
+  ROBOT_CONFIG.position.x = userX;
+  ROBOT_CONFIG.position.y = floorY + 0.001 + wheelBottomOffset;
+  ROBOT_CONFIG.position.z = userZ;
+  ROBOT_CONFIG.rotation = -Math.PI / 2;  // Facing south (90° clockwise from initial)
+  
+  scene.add(robotGroup);
+
+  console.log('✓ Robot placed at center of London map at user origin');
+  console.log('  Position: (0, ' + (floorY + 0.001 + wheelBottomOffset).toFixed(3) + ', 0)');
+  console.log('  Wheel bottoms touch map, chassis ~15cm above floor');
+  console.log('  Orientation: Robotic arm/front faces SOUTH (+Z), rear faces NORTH (-Z)');
+  console.log('  Map size: 4.2m (E-W) × 2.1m (N-S)');
+}
+
+function addCompassRose(cx, y, cz) {
+  const directions = [
+    { label:'N', dx: 0, dz:-MAP_SIZE/2-0.12 },
+    { label:'S', dx: 0, dz: MAP_SIZE/2+0.12 },
+    { label:'E', dx: MAP_SIZE+0.12, dz: 0 },
+    { label:'W', dx:-MAP_SIZE-0.12, dz: 0 },
+  ];
+  directions.forEach(d => {
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 64;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#00ff88'; 
+    ctx.font = 'bold 40px Arial';
+    ctx.textAlign = 'center'; 
+    ctx.textBaseline = 'middle';
+    ctx.fillText(d.label, 32, 32);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c) }));
+    sp.scale.set(0.12, 0.12, 1);
+    sp.position.set(cx + d.dx, y + 0.01, cz + d.dz);
+    scene.add(sp);
+  });
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// ROBOT MOVEMENT FUNCTIONS (prepared for future use)
+// ──────────────────────────────────────────────────────────────────────────────
+// Currently static, but structure ready for animation
+
+function updateRobotPosition(deltaTime) {
+  // Future: This will update robot position based on velocity/heading
+  // For now: robot stays static at center of London
+  
+  // Example future implementation:
+  // const speed = ROBOT_CONFIG.maxSpeed * deltaTime;
+  // ROBOT_CONFIG.position.x += Math.sin(ROBOT_CONFIG.rotation) * speed;
+  // ROBOT_CONFIG.position.z += Math.cos(ROBOT_CONFIG.rotation) * speed;
+  // robotGroup.position.set(
+  //   ROBOT_CONFIG.position.x,
+  //   ROBOT_CONFIG.position.y,
+  //   ROBOT_CONFIG.position.z
+  // );
+  // robotGroup.rotation.y = ROBOT_CONFIG.rotation;
+}
+
+function setRobotTarget(targetX, targetZ) {
+  // Future: This will move robot to a target position
+  // Calculate path, heading, etc.
+  console.log('Future: Move robot to', targetX, targetZ);
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// INIT SCENE
+// ──────────────────────────────────────────────────────────────────────────────
+function init() {
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.01, 50);
+
+  // Lighting
+  const sun = new THREE.DirectionalLight(0xfff5e0, 1.8);
+  sun.position.set(3, 6, 3);
+  scene.add(sun);
+  const fill = new THREE.DirectionalLight(0xd0e8ff, 0.6);
+  fill.position.set(-3, 2, -3);
+  scene.add(fill);
+  scene.add(new THREE.AmbientLight(0x404060, 1.0));
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x222244, 0.5));
+
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(devicePixelRatio);
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.xr.enabled = true;
+  renderer.shadowMap.enabled = true;
+  document.body.appendChild(renderer.domElement);
+
+  // AR button
+  const arBtn = ARButton.createButton(renderer, { 
+    requiredFeatures: ['hit-test'], 
+    optionalFeatures: ['dom-overlay'], 
+    domOverlay: { root: document.body } 
+  });
+  arBtn.style.display = 'none';
+  document.body.appendChild(arBtn);
+
+  // Build robot
+  robotGroup = buildProceduralRobot();
+
+  // Load map
+  loadGeoJSONMap().then(tex => {
+    window.mapTexture = tex;
+  });
+
+  renderer.setAnimationLoop(render);
+  console.log('✓ Scene initialized');
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// FLOOR DETECTION
+// ──────────────────────────────────────────────────────────────────────────────
+let hitTestSource = null;
+let hitTestSourceRequested = false;
+
+function onXRSessionStart(session) {
+  console.log('XR session started');
+  session.addEventListener('end', onXRSessionEnd);
+  document.getElementById('s-ar').textContent = 'Active';
+  document.getElementById('s-ar').className = 'ok';
+  document.getElementById('hud-corners').style.display = 'block';
+}
+
+function onXRSessionEnd() {
+  console.log('XR session ended');
+  hitTestSourceRequested = false;
+  hitTestSource = null;
+  document.getElementById('s-ar').textContent = 'Inactive';
+  document.getElementById('s-ar').className = 'warn';
+  document.getElementById('hud-corners').style.display = 'none';
+}
+
+function render(timestamp, frame) {
+  if (frame) {
+    const referenceSpace = renderer.xr.getReferenceSpace();
+    const session = renderer.xr.getSession();
+
+    if (!hitTestSourceRequested) {
+      session.requestReferenceSpace('viewer').then(refSpace => {
+        session.requestHitTestSource({ space: refSpace }).then(source => {
+          hitTestSource = source;
+        });
+      });
+      session.addEventListener('end', () => {
+        hitTestSourceRequested = false;
+        hitTestSource = null;
+      });
+      hitTestSourceRequested = true;
+    }
+
+    if (hitTestSource && !floorDetected) {
+      const hitTestResults = frame.getHitTestResults(hitTestSource);
+      if (hitTestResults.length > 0) {
+        const hit = hitTestResults[0];
+        const pose = hit.getPose(referenceSpace);
+        
+        // Use detected floor Y, but keep X and Z at origin (where user is standing)
+        floorY = pose.transform.position.y;
+        userX = 0;  // Origin X - user's position
+        userZ = 0;  // Origin Z - user's position
+        
+        floorDetected = true;
+        document.getElementById('s-floor').textContent = `Y=${floorY.toFixed(2)}m`;
+        document.getElementById('s-floor').className = 'ok';
+        
+        if (window.mapTexture) {
+          placeMap(window.mapTexture);
+        }
+      }
+    }
+  }
+
+  renderer.render(scene, camera);
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// START AR
+// ──────────────────────────────────────────────────────────────────────────────
+window.startAR = async function() {
+  const btn = document.getElementById('start-btn');
+  btn.disabled = true;
+  btn.textContent = 'STARTING...';
+  
+  if (!arStarted) {
+    arStarted = true;
+    const arButton = document.querySelector('.ar-button');
+    if (arButton) {
+      arButton.click();
+      btn.style.display = 'none';
+    }
+  }
+};
+
+// ──────────────────────────────────────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────────────────────────────────────
+init();
+
+// Attach XR session handlers
+if (navigator.xr) {
+  renderer.xr.addEventListener('sessionstart', onXRSessionStart);
+  renderer.xr.addEventListener('sessionend', onXRSessionEnd);
+}
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+</script>
+</body>
+</html>

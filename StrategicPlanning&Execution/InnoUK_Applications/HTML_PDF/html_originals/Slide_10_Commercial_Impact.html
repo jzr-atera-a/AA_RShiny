@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Slide 10 – Commercial Impact</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+
+  body{
+    width:1333px;height:750px;overflow:hidden;
+    background:#0c0f14;
+    font-family:'DM Sans',sans-serif;color:#b7b7b7;position:relative;
+  }
+  body::before{
+    content:'';position:absolute;inset:0;
+    background-image:radial-gradient(circle,rgba(0,255,0,0.06) 1px,transparent 1px);
+    background-size:38px 38px;pointer-events:none;z-index:0;
+  }
+  .glow-tl{position:absolute;top:-140px;left:-80px;width:520px;height:380px;
+    background:radial-gradient(ellipse,rgba(0,255,0,0.08) 0%,transparent 68%);
+    pointer-events:none;z-index:0;}
+  .glow-br{position:absolute;bottom:-100px;right:-60px;width:440px;height:320px;
+    background:radial-gradient(ellipse,rgba(255,192,0,0.07) 0%,transparent 68%);
+    pointer-events:none;z-index:0;}
+
+  .slide{
+    position:relative;z-index:1;
+    width:1333px;height:750px;
+    padding:24px 44px 18px 44px;
+    display:flex;flex-direction:column;gap:0;
+  }
+
+  /* ── HEADER ── */
+  .header{
+    padding-bottom:11px;border-bottom:1px solid rgba(0,255,0,0.2);
+    margin-bottom:13px;flex-shrink:0;
+  }
+  .eyebrow{
+    font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;
+    color:rgba(0,255,0,0.5);text-transform:uppercase;margin-bottom:4px;
+  }
+  h1{font-size:34px;font-weight:700;color:#00ff00;letter-spacing:-0.5px;line-height:1;}
+
+  /* ── BODY ── */
+  .body{
+    flex:1;min-height:0;
+    display:flex;flex-direction:column;gap:14px;
+  }
+
+  /* ══ TOP ROW: 2 wrapper columns ══ */
+  .top-row{
+    flex:1;
+    display:grid;grid-template-columns:1fr 1fr;gap:16px;
+  }
+
+  /* Wrapper box (outer container) - stretched vertically */
+  .wrapper-box{
+    background:linear-gradient(135deg,rgba(70,120,200,0.35),rgba(50,90,160,0.25));
+    border:2px solid rgba(96,165,250,0.3);
+    border-radius:12px;
+    padding:16px 12px;
+    box-shadow:0 3px 10px rgba(0,0,0,0.4);
+    display:flex;flex-direction:column;gap:14px;
+  }
+
+  /* Header label inside wrapper - 60% larger text */
+  .wrapper-header{
+    background:linear-gradient(135deg,rgba(50,90,160,0.7),rgba(30,70,140,0.6));
+    border:1px solid rgba(96,165,250,0.4);
+    border-radius:8px;
+    padding:10px 16px;
+    text-align:center;
+    font-size:26px;font-weight:700;color:#fff;
+    box-shadow:0 2px 6px rgba(0,0,0,0.3);
+  }
+
+  /* Cards container - centered vertically */
+  .cards-container{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  /* 3 cards in a row */
+  .cards-row{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+    width:100%;
+  }
+
+  /* Individual card - stretched vertically by 150% */
+  .card{
+    background:linear-gradient(135deg,rgba(80,130,210,0.55),rgba(60,100,180,0.45));
+    border:2px solid rgba(96,165,250,0.4);
+    border-radius:8px;
+    padding:28px 12px;
+    display:flex;flex-direction:column;align-items:center;gap:14px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  .card-icon{
+    width:68px;height:68px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.15);
+    border:2px solid rgba(255,255,255,0.3);
+    display:flex;align-items:center;justify-content:center;
+    font-size:36px;
+  }
+
+  .card-text{
+    font-size:21px;font-weight:600;color:#fff;
+    text-align:center;line-height:1.3;
+  }
+
+  /* Double-headed arrow below cards */
+  .double-arrow{
+    height:40px;
+    position:relative;
+    display:flex;align-items:center;
+  }
+
+  .double-arrow-shape{
+    position:absolute;left:5%;right:5%;top:50%;
+    transform:translateY(-50%);
+    height:32px;
+    background:rgba(255,255,255,0.7);
+    clip-path:polygon(
+      0% 50%,
+      4% 30%,
+      4% 40%,
+      96% 40%,
+      96% 30%,
+      100% 50%,
+      96% 70%,
+      96% 60%,
+      4% 60%,
+      4% 70%
+    );
+  }
+
+  /* ══ BOTTOM: Full-width arrow ══ */
+  .bottom-arrow{
+    height:80px;
+    position:relative;
+  }
+
+  .full-arrow-bg{
+    position:absolute;
+    left:5%;right:8%;top:50%;
+    transform:translateY(-50%);
+    height:100%;
+    background:linear-gradient(135deg,rgba(70,120,200,0.65),rgba(50,90,160,0.55));
+    border:2px solid rgba(96,165,250,0.4);
+    box-shadow:0 3px 10px rgba(0,0,0,0.4);
+    clip-path:polygon(
+      0% 0%,
+      92% 0%,
+      92% 20%,
+      100% 50%,
+      92% 80%,
+      92% 100%,
+      0% 100%
+    );
+  }
+
+  .full-arrow-text{
+    position:absolute;
+    left:10%;right:15%;top:0;bottom:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:29px;font-weight:700;color:#fff;
+    text-align:center;
+  }
+
+</style>
+</head>
+<body>
+<div class="glow-tl"></div>
+<div class="glow-br"></div>
+<div class="slide">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="eyebrow">10 — Commercial Impact</div>
+    <h1>Anchoring UK CAM capability &amp; commercial impact</h1>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- ══ TOP ROW: 2 wrapper columns ══ -->
+    <div class="top-row">
+
+      <!-- LEFT WRAPPER: Economic -->
+      <div class="wrapper-box">
+        <div class="wrapper-header">Economic</div>
+        <div class="cards-container">
+          <div class="cards-row">
+            <div class="card">
+              <div class="card-icon">☁️</div>
+              <div class="card-text">Scalable SaaS platform<br>£1m – £30m arr</div>
+            </div>
+            <div class="card">
+              <div class="card-icon">👥</div>
+              <div class="card-text">20+ High-value UK AI jobs</div>
+            </div>
+            <div class="card">
+              <div class="card-icon">🌍</div>
+              <div class="card-text">Export potential</div>
+            </div>
+          </div>
+        </div>
+        <div class="double-arrow">
+          <div class="double-arrow-shape"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT WRAPPER: Supply Chain -->
+      <div class="wrapper-box">
+        <div class="wrapper-header">Supply Chain</div>
+        <div class="cards-container">
+          <div class="cards-row">
+            <div class="card">
+              <div class="card-icon">🏅</div>
+              <div class="card-text">UK-first infrastructure readiness capability</div>
+            </div>
+            <div class="card">
+              <div class="card-icon">📚</div>
+              <div class="card-text">Standards-aligned evaluation framework</div>
+            </div>
+            <div class="card">
+              <div class="card-icon">⭐</div>
+              <div class="card-text">Ongoing UK CAV Readiness Consortium</div>
+            </div>
+          </div>
+        </div>
+        <div class="double-arrow">
+          <div class="double-arrow-shape"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══ BOTTOM: Full-width arrow ══ -->
+    <div class="bottom-arrow">
+      <div class="full-arrow-bg"></div>
+      <div class="full-arrow-text">Route readiness becomes a national advantage</div>
+    </div>
+
+  </div>
+
+</div>
+</body>
+</html>

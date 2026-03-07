@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Slide 5 – Technical USP</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+
+  body{
+    width:1333px;height:750px;overflow:hidden;
+    background:#0c0f14;
+    font-family:'DM Sans',sans-serif;color:#b7b7b7;position:relative;
+  }
+  body::before{
+    content:'';position:absolute;inset:0;
+    background-image:radial-gradient(circle,rgba(0,255,0,0.06) 1px,transparent 1px);
+    background-size:38px 38px;pointer-events:none;z-index:0;
+  }
+  .glow-tl{position:absolute;top:-140px;left:-80px;width:520px;height:380px;
+    background:radial-gradient(ellipse,rgba(0,255,0,0.08) 0%,transparent 68%);
+    pointer-events:none;z-index:0;}
+  .glow-br{position:absolute;bottom:-100px;right:-60px;width:440px;height:320px;
+    background:radial-gradient(ellipse,rgba(255,192,0,0.07) 0%,transparent 68%);
+    pointer-events:none;z-index:0;}
+
+  .slide{
+    position:relative;z-index:1;
+    width:1333px;height:750px;
+    padding:24px 44px 18px 44px;
+    display:flex;flex-direction:column;gap:0;
+  }
+
+  /* ── HEADER ── */
+  .header{
+    padding-bottom:11px;border-bottom:1px solid rgba(0,255,0,0.2);
+    margin-bottom:13px;flex-shrink:0;
+  }
+  .eyebrow{
+    font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;
+    color:rgba(0,255,0,0.5);text-transform:uppercase;margin-bottom:4px;
+  }
+  h1{font-size:30px;font-weight:700;color:#00ff00;letter-spacing:-0.5px;line-height:1;}
+
+  /* ── BODY: 2 columns ── */
+  .body{
+    flex:1;min-height:0;
+    display:grid;grid-template-columns:1fr 1fr;gap:18px;
+  }
+
+  /* ══ LEFT: Round boxes vertical stack ══ */
+  .left-section{
+    display:flex;flex-direction:column;gap:12px;
+  }
+
+  .sec-header{
+    background:linear-gradient(135deg,rgba(50,80,140,0.5),rgba(30,55,100,0.4));
+    border:1px solid rgba(96,165,250,0.3);
+    border-radius:8px;padding:10px 18px;
+    font-size:16px;font-weight:700;color:#fff;
+    box-shadow:0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  .round-boxes{
+    flex:1;
+    display:flex;flex-direction:column;
+    justify-content:space-evenly;
+    gap:10px;
+  }
+
+  /* Single round box */
+  .round-box{
+    background:linear-gradient(135deg,rgba(70,120,200,0.65),rgba(50,90,160,0.55));
+    border:2px solid rgba(96,165,250,0.4);
+    border-radius:50px;
+    padding:16px 24px;
+    display:flex;align-items:center;gap:16px;
+    box-shadow:0 3px 10px rgba(0,0,0,0.4);
+    min-height:80px;
+  }
+
+  .round-icon{
+    width:70px;height:70px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.15);
+    border:2px solid rgba(255,255,255,0.3);
+    flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:34px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.3);
+  }
+
+  .round-text{
+    flex:1;
+    font-size:16px;font-weight:600;color:#fff;
+    line-height:1.3;
+  }
+
+  /* ══ RIGHT: Explanation boxes ══ */
+  .right-section{
+    display:flex;flex-direction:column;gap:12px;
+  }
+
+  .info-boxes{
+    flex:1;
+    display:flex;flex-direction:column;
+    justify-content:space-evenly;
+    gap:10px;
+  }
+
+  .info-box{
+    background:linear-gradient(135deg,rgba(10,100,50,0.45),rgba(5,70,30,0.35));
+    border:2px solid rgba(0,255,0,0.3);
+    border-radius:10px;
+    padding:16px 20px;
+    box-shadow:0 3px 10px rgba(0,0,0,0.4);
+  }
+
+  .info-title{
+    font-size:14px;font-weight:700;color:#00ff00;
+    margin-bottom:6px;text-transform:uppercase;
+    font-family:'DM Mono',monospace;letter-spacing:1px;
+  }
+
+  .info-text{
+    font-size:14px;color:rgba(210,210,210,0.85);
+    line-height:1.4;
+  }
+
+  /* Footer */
+  .footer{
+    flex-shrink:0;margin-top:10px;
+    background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);
+    border-radius:5px;padding:9px 16px;
+    font-size:14px;color:rgba(210,210,210,0.7);line-height:1.4;
+    text-align:center;
+  }
+  .footer strong{font-weight:700;color:#00ff00;}
+
+</style>
+</head>
+<body>
+<div class="glow-tl"></div>
+<div class="glow-br"></div>
+<div class="slide">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="eyebrow">05 — Technical USP</div>
+    <h1>Technical USP – Standards-aligned infrastructure intelligence</h1>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- ══ LEFT: Round boxes ══ -->
+    <div class="left-section">
+      <div class="sec-header">Core Technical Capabilities</div>
+      <div class="round-boxes">
+
+        <div class="round-box">
+          <div class="round-icon">📋</div>
+          <div class="round-text">PAS 1883 ODD taxonomy alignment</div>
+        </div>
+
+        <div class="round-box">
+          <div class="round-icon">📖</div>
+          <div class="round-text">BSI Flex 1890 vocabulary compliance</div>
+        </div>
+
+        <div class="round-box">
+          <div class="round-icon">🔗</div>
+          <div class="round-text">ADS-agnostic capability abstraction layer</div>
+        </div>
+
+        <div class="round-box">
+          <div class="round-icon">✅</div>
+          <div class="round-text">Automated vs manual equivalence validation</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ RIGHT: Explanations ══ -->
+    <div class="right-section">
+      <div class="sec-header">Why This Matters</div>
+      <div class="info-boxes">
+
+        <div class="info-box">
+          <div class="info-title">Common Language</div>
+          <div class="info-text">Infrastructure classified using the same ODD framework that ADS operators use — route readiness and vehicle capability speak the same language</div>
+        </div>
+
+        <div class="info-box">
+          <div class="info-title">Regulatory Compatibility</div>
+          <div class="info-text">BSI Flex 1890 ensures consistent terminology and audit trail requirements for safety case approval</div>
+        </div>
+
+        <div class="info-box">
+          <div class="info-title">Vendor Independence</div>
+          <div class="info-text">Platform-neutral design works across multiple ADS providers — no vendor lock-in, supports market interoperability</div>
+        </div>
+
+        <div class="info-box">
+          <div class="info-title">Proven Performance</div>
+          <div class="info-text">87% agreement target between AI-predicted constraints and manual audit across 640km Dover–Milton Keynes corridor</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <strong>First-mover advantage:</strong> No other UK platform provides automated, PAS 1883-aligned, multi-source route readiness scoring at national scale
+  </div>
+
+</div>
+</body>
+</html>

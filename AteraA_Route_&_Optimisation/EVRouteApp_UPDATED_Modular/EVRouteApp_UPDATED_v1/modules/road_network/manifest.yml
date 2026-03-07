@@ -1,0 +1,18 @@
+module:
+  id: "road_network"
+  name: "Road Network"
+  description: "Download OpenStreetMap road networks"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Road Network"
+    icon: "road"
+    tabname: "road_network"
+  dependencies:
+    packages:
+      - osmdata
+      - sf
+      - dplyr
+      - dodgr
+      - magrittr
+      - tmaptools

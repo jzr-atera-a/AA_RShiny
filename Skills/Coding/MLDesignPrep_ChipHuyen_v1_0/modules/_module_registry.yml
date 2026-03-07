@@ -1,0 +1,79 @@
+# modules/_module_registry.yml
+# ML System Design Interview Prep Suite
+# Based on: Designing Machine Learning Systems — Chip Huyen (O'Reilly)
+
+app:
+  name: "ML Design Interview Prep"
+  version: "1.0.0"
+  description: "Complete ML System Design interview preparation based on Chip Huyen's framework"
+
+modules:
+  overview:
+    enabled: true
+    priority: 10
+    name: "Overview & Framework"
+    icon: "home"
+    tabname: "overview"
+
+  framing:
+    enabled: true
+    priority: 20
+    name: "Problem Framing"
+    icon: "bullseye"
+    tabname: "framing"
+
+  data_engineering:
+    enabled: true
+    priority: 30
+    name: "Data Engineering"
+    icon: "database"
+    tabname: "data_engineering"
+
+  feature_engineering:
+    enabled: true
+    priority: 40
+    name: "Feature Engineering"
+    icon: "cogs"
+    tabname: "feature_engineering"
+
+  model_development:
+    enabled: true
+    priority: 50
+    name: "Model Development"
+    icon: "brain"
+    tabname: "model_development"
+
+  evaluation:
+    enabled: true
+    priority: 60
+    name: "Evaluation & Metrics"
+    icon: "chart-bar"
+    tabname: "evaluation"
+
+  deployment:
+    enabled: true
+    priority: 70
+    name: "Deployment & Serving"
+    icon: "rocket"
+    tabname: "deployment"
+
+  monitoring:
+    enabled: true
+    priority: 80
+    name: "Monitoring & Drift"
+    icon: "search"
+    tabname: "monitoring"
+
+  design_questions:
+    enabled: true
+    priority: 90
+    name: "Design Questions"
+    icon: "comments"
+    tabname: "design_questions"
+
+  practice:
+    enabled: true
+    priority: 100
+    name: "Timed Practice"
+    icon: "clock"
+    tabname: "practice"

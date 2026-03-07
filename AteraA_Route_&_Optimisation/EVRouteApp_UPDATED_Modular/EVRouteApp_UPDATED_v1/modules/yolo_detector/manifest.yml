@@ -1,0 +1,17 @@
+module:
+  id: "yolo_detector"
+  name: "YOLO Detector"
+  description: "ML-based object detection"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "YOLO Detector"
+    icon: "brain"
+    tabname: "yolo_detector"
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - dplyr
+      - DT
+      - readr

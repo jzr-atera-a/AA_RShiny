@@ -1,0 +1,19 @@
+module:
+  id: "route_map"
+  name: "Route Map"
+  description: "Interactive Leaflet map visualization with route display"
+  version: "1.0.0"
+  author: "Analytics Team"
+  enabled: true
+  
+  menu:
+    label: "Route Map"
+    icon: "map"
+    tabname: "route_map"
+  
+  dependencies:
+    packages:
+      - leaflet
+      - sf
+      - htmltools
+      - dodgr
