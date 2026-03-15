@@ -1571,6 +1571,22 @@
                 }
                 
                 // Clear Mode 2/3 paths when switching modes
+                if (mode !== 1) {
+                    // Cleanup Mode 1
+                    if (mode1LeftPanel) {
+                        scene.remove(mode1LeftPanel);
+                        mode1LeftPanel = null;
+                    }
+                    if (mode1PathLine) {
+                        scene.remove(mode1PathLine);
+                        mode1PathLine = null;
+                    }
+                    mode1TrackingActive = false;
+                    mode1PathData = [];
+                    removeMode1Grid();
+                    if (mapPlane && !mapPlane.visible) mapPlane.visible = true;
+                }
+                
                 if (mode !== 2) {
                     mode2TrackingActive = false;
                     mode2ControllerPath = [];
@@ -1651,7 +1667,19 @@
                 if (anchorTrackingActive) anchorTrackingActive = false;
                 if (isChargerModeActive) stopChargerMode();
 
-                if (mode === 1) startManualControl();
+                if (mode === 1) {
+                    // Hide M25 map, show grid
+                    if (mapPlane) mapPlane.visible = false;
+                    createMode1Grid();
+                    
+                    // Create left panel
+                    mode1LeftPanel = buildMode1LeftPanel();
+                    mode1LeftPanel.position.set(userX - 1.1, floorY + 0.80, userZ - (MAP_SIZE/2 + 0.10));
+                    mode1LeftPanel.rotation.y = 0;
+                    scene.add(mode1LeftPanel);
+                    
+                    startManualControl();
+                }
                 
                 // Mode 2: Show left panel + grid, hide map
                 if (mode === 2) {
@@ -1746,6 +1774,217 @@
             // Left controller tracking for Mode 1
             let mode1LeftTracking = false;
             let mode1LeftMarker = null;
+            let mode1LeftPanel = null;
+            let mode1TrackingActive = false;
+            let mode1PathData = [];  // Stores {pos, heading, linear, angular, timestamp}
+            let mode1PathLine = null;  // Orange line
+            let mode1Markers = [];
+            let mode1MarkersGroup = null;
+            let mode1GridPlane = null;
+            
+            function buildMode1LeftPanel() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 600;
+                canvas.height = 600;
+                const ctx = canvas.getContext('2d');
+                
+                ctx.fillStyle = 'rgba(20, 20, 40, 0.95)';
+                ctx.fillRect(0, 0, 600, 600);
+                
+                ctx.fillStyle = '#00ffff';
+                ctx.font = 'bold 32px Arial';
+                ctx.fillText('MODE 1 CONTROLS', 30, 50);
+                
+                const buttons = [
+                    { label: 'START TRACKING', y: 120, action: 'start' },
+                    { label: 'STOP TRACKING', y: 210, action: 'stop' },
+                    { label: 'SEND FOR ANALYSIS', y: 300, action: 'analyze' }
+                ];
+                
+                buttons.forEach(btn => {
+                    ctx.fillStyle = '#2a4a6a';
+                    ctx.fillRect(30, btn.y, 540, 70);
+                    ctx.strokeStyle = '#00ff00';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(30, btn.y, 540, 70);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 24px Arial';
+                    ctx.fillText(btn.label, 50, btn.y + 45);
+                });
+                
+                ctx.fillStyle = '#ffff00';
+                ctx.font = '18px Arial';
+                ctx.fillText('Orange: Robot path', 30, 450);
+                
+                const texture = new THREE.CanvasTexture(canvas);
+                const geo = new THREE.PlaneGeometry(0.6, 0.6);
+                const mat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, transparent: true });
+                const panel = new THREE.Mesh(geo, mat);
+                panel.userData = { ctx, canvas, texture, buttons };
+                return panel;
+            }
+            
+            function checkMode1LeftPanelClick(uv) {
+                if (!mode1LeftPanel) return;
+                const buttons = mode1LeftPanel.userData.buttons;
+                const uvY = 1.0 - uv.y;
+                const y = uvY * 600;
+                
+                buttons.forEach(btn => {
+                    if (y >= btn.y && y <= btn.y + 70) {
+                        debugLog(`Mode 1: Button ${btn.action}`, 'INFO');
+                        
+                        if (btn.action === 'start') {
+                            mode1TrackingActive = true;
+                            mode1PathData = [];
+                            debugLog('Mode 1: Tracking STARTED', 'INFO');
+                        } else if (btn.action === 'stop') {
+                            mode1TrackingActive = false;
+                            debugLog('Mode 1: Tracking STOPPED', 'INFO');
+                        } else if (btn.action === 'analyze') {
+                            sendMode1AnalysisToServer();
+                        }
+                    }
+                });
+            }
+            
+            function createMode1Grid() {
+                if (mode1GridPlane) return;
+                const canvas = document.createElement('canvas');
+                canvas.width = 2048;
+                canvas.height = 2048;
+                const ctx = canvas.getContext('2d');
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, 2048, 2048);
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 2;
+                
+                const gridSize = 21;
+                const cellSize = 2048 / gridSize;
+                
+                for (let i = 0; i <= gridSize; i++) {
+                    const x = i * cellSize;
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, 2048);
+                    ctx.stroke();
+                }
+                
+                for (let i = 0; i <= gridSize; i++) {
+                    const y = i * cellSize;
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(2048, y);
+                    ctx.stroke();
+                }
+                
+                const texture = new THREE.CanvasTexture(canvas);
+                const geo = new THREE.PlaneGeometry(MAP_SIZE, MAP_SIZE);
+                const mat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+                mode1GridPlane = new THREE.Mesh(geo, mat);
+                mode1GridPlane.rotation.x = -Math.PI / 2;
+                mode1GridPlane.position.set(userX, floorY + 0.002, userZ);
+                scene.add(mode1GridPlane);
+            }
+            
+            function removeMode1Grid() {
+                if (mode1GridPlane) {
+                    scene.remove(mode1GridPlane);
+                    mode1GridPlane = null;
+                }
+                if (mode1MarkersGroup) {
+                    scene.remove(mode1MarkersGroup);
+                    mode1MarkersGroup = null;
+                }
+                mode1Markers = [];
+            }
+            
+            function updateMode1Path(pos, heading, linear, angular) {
+                if (!mode1TrackingActive) return;
+                
+                const gridX = Math.floor((pos.x - (userX - MAP_SIZE/2)) / 0.1);
+                const gridZ = Math.floor((pos.z - (userZ - MAP_SIZE/2)) / 0.1);
+                
+                const dataPoint = {
+                    position: pos.clone(),
+                    heading: heading,
+                    linear: linear,
+                    angular: angular,
+                    gridX: gridX,
+                    gridZ: gridZ,
+                    timestamp: performance.now()
+                };
+                
+                mode1PathData.push(dataPoint);
+                
+                // Update orange line
+                if (mode1PathLine) scene.remove(mode1PathLine);
+                if (mode1PathData.length >= 2) {
+                    const points = mode1PathData.map(d => new THREE.Vector3(d.position.x, floorY + 0.003, d.position.z));
+                    const geo = new THREE.BufferGeometry().setFromPoints(points);
+                    mode1PathLine = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0xff8800, linewidth: 3 }));
+                    scene.add(mode1PathLine);
+                }
+                
+                // Add markers every 20cm
+                if (!mode1MarkersGroup) {
+                    mode1MarkersGroup = new THREE.Group();
+                    scene.add(mode1MarkersGroup);
+                }
+                
+                let totalDist = 0;
+                for (let i = 1; i < mode1PathData.length; i++) {
+                    totalDist += mode1PathData[i].position.distanceTo(mode1PathData[i-1].position);
+                }
+                
+                const lastMarkerDist = mode1Markers.length > 0 ? mode1Markers[mode1Markers.length - 1].distance : -1;
+                if (mode1Markers.length === 0 || totalDist >= lastMarkerDist + 0.20) {
+                    const markerGeo = new THREE.RingGeometry(0.018, 0.020, 32);
+                    const markerMat = new THREE.MeshBasicMaterial({ color: 0xff8800, side: THREE.DoubleSide });
+                    const marker = new THREE.Mesh(markerGeo, markerMat);
+                    marker.rotation.x = -Math.PI / 2;
+                    marker.position.set(pos.x, floorY + 0.004, pos.z);
+                    mode1MarkersGroup.add(marker);
+                    mode1Markers.push({ distance: totalDist, index: mode1Markers.length });
+                }
+            }
+            
+            function sendMode1AnalysisToServer() {
+                if (mode1PathData.length < 2) {
+                    debugLog('Mode 1: Not enough data for analysis', 'ERROR');
+                    return;
+                }
+                
+                const analysis = {
+                    mode: 1,
+                    grid_size: '21x21 (10cm cells)',
+                    map_size: MAP_SIZE,
+                    total_points: mode1PathData.length,
+                    data: mode1PathData.map(d => ({
+                        grid_x: d.gridX,
+                        grid_z: d.gridZ,
+                        world_x: d.position.x.toFixed(3),
+                        world_z: d.position.z.toFixed(3),
+                        heading_deg: (d.heading * 180 / Math.PI).toFixed(1),
+                        motor_linear: d.linear.toFixed(3),
+                        motor_angular: d.angular.toFixed(3),
+                        timestamp: d.timestamp.toFixed(0)
+                    })),
+                    markers: mode1Markers.length
+                };
+                
+                if (websocket && websocket.readyState === WebSocket.OPEN) {
+                    websocket.send(JSON.stringify({
+                        command: 'SAVE_MODE1_ANALYSIS',
+                        analysis: analysis,
+                        filename: `mode1_analysis_${Date.now()}.txt`
+                    }));
+                    debugLog('Mode 1: Analysis sent to server', 'INFO');
+                } else {
+                    debugLog('Mode 1: WebSocket not connected', 'ERROR');
+                }
+            }
 
             // ─── MODE 1: MANUAL CONTROL ──────────────────────────────────────────────────
             function startManualControl() {
@@ -3838,6 +4077,17 @@
                                 checkControlPanelInteraction(controller1);
                                 checkVehiclePanelInteraction(controller1);
                                 
+                                // Check Mode 1 left panel
+                                if (controlMode === 1 && mode1LeftPanel) {
+                                    const raycaster = new THREE.Raycaster();
+                                    const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(controller1.quaternion);
+                                    raycaster.set(controller1.position, dir);
+                                    const hits = raycaster.intersectObject(mode1LeftPanel);
+                                    if (hits.length > 0) {
+                                        checkMode1LeftPanelClick(hits[0].uv);
+                                    }
+                                }
+                                
                                 // Check Mode 2 left panel
                                 if (controlMode === 2 && mode2LeftPanel) {
                                     const raycaster = new THREE.Raycaster();
@@ -4026,25 +4276,32 @@
                                 const rawHeading = Math.atan2(2*(qw*qy + qx*qz), 1 - 2*(qy*qy + qz*qz));
                                 const rawDeg = (rawHeading * 180 / Math.PI + 360) % 360;
                                 const filtHeading = kfH.update(rawDeg);
+                                const filtHeadingRad = filtHeading * Math.PI / 180;
 
                                 // Update marker position (left hand position in air)
                                 if (mode1LeftMarker) {
                                     mode1LeftMarker.position.set(fx, pos.y, fz);
-                                    mode1LeftMarker.rotation.y = filtHeading * Math.PI / 180;
+                                    mode1LeftMarker.rotation.y = filtHeadingRad;
                                 }
+                                
+                                // Robot floor position
+                                const robotPos = new THREE.Vector3(fx, floorY + 0.001 + 0.04, fz);
                                 
                                 // Update ROBOT if it's the current vehicle (overlay on real robot)
                                 if (currentVehicle === 'robot' && mode0Robot) {
-                                    const wheelOffset = 0.04;
-                                    mode0Robot.position.set(fx, floorY + 0.001 + wheelOffset, fz);
-                                    mode0Robot.rotation.y = (filtHeading * Math.PI / 180) + (Math.PI / 2);
+                                    mode0Robot.position.copy(robotPos);
+                                    mode0Robot.rotation.y = filtHeadingRad + (Math.PI / 2);
                                 }
                                 
                                 // Update TRUCK if it's the current vehicle (overlay on real robot)
                                 if (currentVehicle === 'truck' && mode0Truck) {
-                                    const wheelOffset = 0.04;
-                                    mode0Truck.position.set(fx, floorY + 0.001 + wheelOffset, fz);
-                                    mode0Truck.rotation.y = (filtHeading * Math.PI / 180) + (Math.PI / 2);
+                                    mode0Truck.position.copy(robotPos);
+                                    mode0Truck.rotation.y = filtHeadingRad + (Math.PI / 2);
+                                }
+                                
+                                // Track path with motor commands (if tracking active)
+                                if (mode1TrackingActive) {
+                                    updateMode1Path(robotPos, filtHeadingRad, lastJoystickForward, lastJoystickTurn);
                                 }
                             }
                         }

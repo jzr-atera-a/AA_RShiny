@@ -190,6 +190,14 @@ modules:
     icon: "share-alt"
     tabname: "social_recommender_case_study"
 
+  av_infrastructure_case_study:
+    enabled: true
+    priority: 117
+    group: case_studies
+    name: "AV Infrastructure Assessment"
+    icon: "car"
+    tabname: "av_infrastructure_case_study"
+
   banking_case_study:
     enabled: true
     priority: 115

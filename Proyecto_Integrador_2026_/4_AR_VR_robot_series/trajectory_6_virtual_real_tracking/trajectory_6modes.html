@@ -129,7 +129,7 @@
 
             // ─── CONTROL PANEL STATE ─────────────────────────────────────────────────────
             let controlPanel = null;
-            let controlMode = 0; // default Mode 0 - R Vehicle Map View
+            let controlMode = 4; // DEFAULT: Mode 4 - Track Robot (Controller)
             let approvePressed = false;
             let panelButtons = [
                 { mode: 0, y1: 0.93, y2: 0.99 },
@@ -176,6 +176,8 @@
             let trackingInterval = null;
             let lastXButton = false;
             let robotChartData = [];
+            let mode4FirstFrame = true;  // Bypass velocity limits on first detection
+            let lastUnwrappedHeading = 0;  // For continuous angle tracking (no wrapping)
 
             // Kalman Filter class
             class KalmanFilter {
@@ -193,9 +195,9 @@
                     return this.x;
                 }
             }
-            const kfX = new KalmanFilter(0.01, 0.25);
-            const kfZ = new KalmanFilter(0.01, 0.25);
-            const kfH = new KalmanFilter(0.001, 2.0);  // MUCH stronger smoothing for heading (low process noise, high measurement noise)
+            const kfX = new KalmanFilter(0.01, 0.1);  // Position: moderate smoothing
+            const kfZ = new KalmanFilter(0.01, 0.1);  // Position: moderate smoothing
+            const kfH = new KalmanFilter(0.01, 0.5);  // Heading: faster response, less lag
 
             // ─── SPATIAL ANCHOR TRACKING (MODE 5) ────────────────────────────────────────
             let anchorTrackingActive = false;
@@ -588,9 +590,9 @@
                     buildVehiclePanel();
                     debugLog('Vehicle panel built', 'INFO');
                     
-                    debugLog('Showing Mode 0 robot...', 'INFO');
-                    showMode0Robot(); // Show robot by default since Mode 0 is default
-                    debugLog('Robot shown', 'INFO');
+                    debugLog('Auto-starting Mode 4 (Track Robot)...', 'INFO');
+                    executeMode(4);  // Auto-start Mode 4
+                    debugLog('Mode 4 started', 'INFO');
                     
                     debugLog('=== SCENE BUILD COMPLETE ===', 'INFO');
                 } catch(e) {
@@ -2776,12 +2778,14 @@
             function startRobotTracking() {
                 if (isTrackingRobot) return;
                 isTrackingRobot = true;
+                mode4FirstFrame = true;  // Reset flag for new session
+                lastUnwrappedHeading = 0;  // Reset angle tracking
                 robotChartData = [];
                 document.getElementById('tracking-status').textContent = 'TRACKING';
                 document.getElementById('tracking-status').className = 'status-tracking';
 
                 debugLog(`Mode 4 started with currentVehicle: ${currentVehicle}`, 'INFO');
-                debugLog(`Waiting for left controller input...`, 'INFO');
+                debugLog(`Waiting for left controller detection...`, 'INFO');
 
                 // Triangle marker
                 if (!triangleMarker) {
@@ -2791,32 +2795,27 @@
                     scene.add(triangleMarker);
                 }
                 
-                // Show current vehicle (robot OR truck) and ensure it's created
+                // HIDE vehicle initially - will show on first controller detection
                 if (currentVehicle === 'robot') {
                     if (!mode0Robot) {
                         mode0Robot = buildProceduralRobot();
                         scene.add(mode0Robot);
-                        debugLog('Robot built for Mode 4', 'INFO');
                     }
-                    mode0Robot.visible = true;
-                    debugLog('Robot visible for Mode 4 tracking', 'INFO');
+                    mode0Robot.visible = false;  // HIDE until controller detected
+                    debugLog('Robot created but hidden until controller detected', 'INFO');
                 } else {
-                    // Truck - ensure it's loaded and visible
                     if (!mode0Truck) {
-                        debugLog('Truck not loaded yet, loading now for Mode 4...', 'INFO');
+                        debugLog('Truck loading...', 'INFO');
                         buildTruck().then(() => {
                             if (mode0Truck) {
-                                mode0Truck.visible = true;
+                                mode0Truck.visible = false;  // HIDE until controller detected
                                 scene.add(mode0Truck);
-                                debugLog('Truck loaded and visible for Mode 4 tracking', 'INFO');
                             }
                         });
                     } else {
-                        mode0Truck.visible = true;
-                        if (!mode0Truck.parent) {
-                            scene.add(mode0Truck);
-                        }
-                        debugLog('Truck visible for Mode 4 tracking', 'INFO');
+                        mode0Truck.visible = false;  // HIDE until controller detected
+                        if (!mode0Truck.parent) scene.add(mode0Truck);
+                        debugLog('Truck created but hidden until controller detected', 'INFO');
                     }
                 }
                 
@@ -4198,109 +4197,145 @@
                         }
 
                         // Mode 4: Track left controller with Kalman
-                        if (source.handedness === 'left' && isTrackingRobot && source.gripSpace) {
-                            debugLog('Mode 4: Left controller detected and tracking!', 'INFO');
-                            
+                        if (source.handedness === 'left' && isTrackingRobot && source.gripSpace && !source.hand) {
                             const gripPose = frame.getPose(source.gripSpace, refSpace);
                             if (gripPose) {
                                 const pos = gripPose.transform.position;
                                 const ori = gripPose.transform.orientation;
 
-                                // Extract raw controller position (including Y for triangle marker)
-                                const rawY = pos.y;
+                                // POSITION: Direct from controller (absolute floor coordinates)
+                                const controllerX = pos.x;
+                                const controllerZ = pos.z;
+                                const controllerY = pos.y;
                                 
-                                // Heading from quaternion (yaw only)
+                                // ROTATION: Unwrap angles to prevent 180° jumps
                                 const qx = ori.x, qy = ori.y, qz = ori.z, qw = ori.w;
                                 const rawHeading = Math.atan2(2*(qw*qy + qx*qz), 1 - 2*(qy*qy + qz*qz));
-                                const rawDeg = (rawHeading * 180 / Math.PI + 360) % 360;
+                                const rawDeg = rawHeading * 180 / Math.PI;
+                                
+                                // Unwrap: handle -180/+180 boundary
+                                let unwrappedDeg = rawDeg;
+                                if (mode4FirstFrame) {
+                                    lastUnwrappedHeading = rawDeg;
+                                } else {
+                                    const delta = rawDeg - (lastUnwrappedHeading % 360);
+                                    if (delta > 180) {
+                                        unwrappedDeg = lastUnwrappedHeading + (delta - 360);
+                                    } else if (delta < -180) {
+                                        unwrappedDeg = lastUnwrappedHeading + (delta + 360);
+                                    } else {
+                                        unwrappedDeg = lastUnwrappedHeading + delta;
+                                    }
+                                }
+                                lastUnwrappedHeading = unwrappedDeg;
 
-                                // Kalman filter for SMOOTH tracking
-                                const fx = kfX.update(pos.x);
-                                const fz = kfZ.update(pos.z);
-                                const filtHeading = kfH.update(rawDeg);
+                                // Kalman filter on UNWRAPPED angle
+                                const fx = kfX.update(controllerX);
+                                const fz = kfZ.update(controllerZ);
+                                const filtHeadingDeg = kfH.update(unwrappedDeg);
+                                const filtHeadingRad = (filtHeadingDeg % 360) * Math.PI / 180;
 
-                                // Update triangle marker - SMOOTH filtered position at actual controller height
+                                if (mode4FirstFrame) {
+                                    mode4FirstFrame = false;
+                                    debugLog(`Mode 4: Controller detected at (${fx.toFixed(2)}, ${fz.toFixed(2)}), heading: ${filtHeadingDeg.toFixed(1)}°`, 'INFO');
+                                }
+
+                                // Update triangle marker (controller position in air)
                                 if (triangleMarker) {
-                                    triangleMarker.position.set(fx, rawY, fz);
-                                    triangleMarker.rotation.y = filtHeading * Math.PI / 180;
+                                    triangleMarker.position.set(fx, controllerY, fz);
+                                    triangleMarker.rotation.y = filtHeadingRad;
                                 }
                                 
-                                // Update green cone icon - filtered position, above vehicle
+                                // Update green cone icon
                                 if (robotIcon) {
                                     robotIcon.position.set(fx, floorY + 0.20, fz);
-                                    robotIcon.rotation.y = filtHeading * Math.PI / 180;
+                                    robotIcon.rotation.y = filtHeadingRad;
                                 }
                                 
-                                // Update ROBOT if it's the current vehicle
+                                // CRITICAL: Vehicle position = Controller position (NO offsets, NO anchoring)
+                                const vehicleX = fx;
+                                const vehicleZ = fz;
+                                const vehicleY = floorY + 0.045;  // 4.5cm wheel offset
+                                const vehicleHeading = filtHeadingRad + (Math.PI / 2);  // Model orientation offset
+                                
+                                // Update ROBOT
                                 if (currentVehicle === 'robot' && mode0Robot) {
-                                    const wheelOffset = 0.04;
-                                    mode0Robot.position.set(fx, floorY + 0.001 + wheelOffset, fz);
-                                    mode0Robot.rotation.y = (filtHeading * Math.PI / 180) + (Math.PI / 2);
+                                    mode0Robot.position.set(vehicleX, vehicleY, vehicleZ);
+                                    mode0Robot.rotation.y = vehicleHeading;
                                     
-                                    // Log every 60 frames (~1 second)
-                                    if (Math.random() < 0.016) {
-                                        debugLog(`Mode 4: Robot tracking - pos:(${fx.toFixed(2)}, ${fz.toFixed(2)}), heading:${filtHeading.toFixed(1)}°`, 'INFO');
+                                    if (!mode0Robot.visible) {
+                                        mode0Robot.visible = true;
+                                        debugLog('Mode 4: Robot VISIBLE at controller position', 'INFO');
                                     }
                                 }
                                 
-                                // Update TRUCK if it's the current vehicle
+                                // Update TRUCK
                                 if (currentVehicle === 'truck' && mode0Truck) {
-                                    const wheelOffset = 0.04;
-                                    mode0Truck.position.set(fx, floorY + 0.001 + wheelOffset, fz);
-                                    mode0Truck.rotation.y = (filtHeading * Math.PI / 180) + (Math.PI / 2);
+                                    mode0Truck.position.set(vehicleX, vehicleY, vehicleZ);
+                                    mode0Truck.rotation.y = vehicleHeading;
                                     
-                                    // Log every 60 frames (~1 second)
-                                    if (Math.random() < 0.016) {
-                                        debugLog(`Mode 4: Truck tracking - pos:(${fx.toFixed(2)}, ${fz.toFixed(2)}), heading:${filtHeading.toFixed(1)}°`, 'INFO');
+                                    if (!mode0Truck.visible) {
+                                        mode0Truck.visible = true;
+                                        debugLog('Mode 4: Truck VISIBLE at controller position', 'INFO');
                                     }
                                 }
 
+                                // Chart uses RELATIVE distance from user start position for display only
                                 const dist_cm = Math.sqrt((fx - userX)**2 + (fz - userZ)**2) / MAP_SIZE * 200;
-                                updateRobotChart(performance.now() / 1000, dist_cm, filtHeading);
+                                updateRobotChart(performance.now() / 1000, dist_cm, filtHeadingDeg % 360);
                             }
                         }
 
                         // Mode 1: Track left controller for manual control (overlay virtual on real robot)
-                        if (source.handedness === 'left' && mode1LeftTracking && source.gripSpace) {
+                        if (source.handedness === 'left' && mode1LeftTracking && source.gripSpace && !source.hand) {
                             const gripPose = frame.getPose(source.gripSpace, refSpace);
                             if (gripPose) {
                                 const pos = gripPose.transform.position;
                                 const ori = gripPose.transform.orientation;
 
-                                // Kalman filter for smooth tracking
-                                const fx = kfX.update(pos.x);
-                                const fz = kfZ.update(pos.z);
+                                // POSITION: Direct from controller (absolute floor coordinates)
+                                const controllerX = pos.x;
+                                const controllerZ = pos.z;
+                                const controllerY = pos.y;
                                 
-                                // Heading from quaternion
+                                // ROTATION: Extract heading
                                 const qx = ori.x, qy = ori.y, qz = ori.z, qw = ori.w;
                                 const rawHeading = Math.atan2(2*(qw*qy + qx*qz), 1 - 2*(qy*qy + qz*qz));
-                                const rawDeg = (rawHeading * 180 / Math.PI + 360) % 360;
-                                const filtHeading = kfH.update(rawDeg);
-                                const filtHeadingRad = filtHeading * Math.PI / 180;
+                                const rawDeg = rawHeading * 180 / Math.PI;
 
-                                // Update marker position (left hand position in air)
+                                // Kalman filter for smoothing
+                                const fx = kfX.update(controllerX);
+                                const fz = kfZ.update(controllerZ);
+                                const filtHeadingDeg = kfH.update(rawDeg);
+                                const filtHeadingRad = filtHeadingDeg * Math.PI / 180;
+
+                                // Update marker (controller position in air)
                                 if (mode1LeftMarker) {
-                                    mode1LeftMarker.position.set(fx, pos.y, fz);
+                                    mode1LeftMarker.position.set(fx, controllerY, fz);
                                     mode1LeftMarker.rotation.y = filtHeadingRad;
                                 }
                                 
-                                // Robot floor position
-                                const robotPos = new THREE.Vector3(fx, floorY + 0.001 + 0.04, fz);
+                                // CRITICAL: Vehicle position = Controller position
+                                const vehicleX = fx;
+                                const vehicleZ = fz;
+                                const vehicleY = floorY + 0.045;
+                                const vehicleHeading = filtHeadingRad + (Math.PI / 2);
                                 
-                                // Update ROBOT if it's the current vehicle (overlay on real robot)
+                                // Update ROBOT
                                 if (currentVehicle === 'robot' && mode0Robot) {
-                                    mode0Robot.position.copy(robotPos);
-                                    mode0Robot.rotation.y = filtHeadingRad + (Math.PI / 2);
+                                    mode0Robot.position.set(vehicleX, vehicleY, vehicleZ);
+                                    mode0Robot.rotation.y = vehicleHeading;
                                 }
                                 
-                                // Update TRUCK if it's the current vehicle (overlay on real robot)
+                                // Update TRUCK
                                 if (currentVehicle === 'truck' && mode0Truck) {
-                                    mode0Truck.position.copy(robotPos);
-                                    mode0Truck.rotation.y = filtHeadingRad + (Math.PI / 2);
+                                    mode0Truck.position.set(vehicleX, vehicleY, vehicleZ);
+                                    mode0Truck.rotation.y = vehicleHeading;
                                 }
                                 
-                                // Track path with motor commands (if tracking active)
+                                // Track path with motor commands
                                 if (mode1TrackingActive) {
+                                    const robotPos = new THREE.Vector3(vehicleX, vehicleY, vehicleZ);
                                     updateMode1Path(robotPos, filtHeadingRad, lastJoystickForward, lastJoystickTurn);
                                 }
                             }

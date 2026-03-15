@@ -129,6 +129,7 @@ overview_server <- function(id, prep_manager) {
         list(id = "ch11_human_side",         label = "Ch.11 Human Side"),
         list(id = "social_recommender_case_study", label = "Social Media Recommender"),
         list(id = "banking_case_study",            label = "Banking Case Study"),
+        list(id = "av_infrastructure_case_study",  label = "AV Infrastructure"),
         list(id = "monitoring",          label = "Monitoring & Drift"),
         list(id = "design_questions",    label = "Design Questions"),
         list(id = "practice",            label = "Timed Practice")

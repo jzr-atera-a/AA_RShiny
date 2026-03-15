@@ -132,12 +132,14 @@
             let controlMode = 0; // default Mode 0 - R Vehicle Map View
             let approvePressed = false;
             let panelButtons = [
-                { mode: 0, y1: 0.88, y2: 0.97 },
-                { mode: 1, y1: 0.77, y2: 0.86 },
-                { mode: 2, y1: 0.66, y2: 0.75 },
-                { mode: 3, y1: 0.55, y2: 0.64 },
-                { mode: 4, y1: 0.44, y2: 0.53 },
-                { mode: 5, y1: 0.33, y2: 0.42 }
+                { mode: 0, y1: 0.93, y2: 0.99 },
+                { mode: 1, y1: 0.83, y2: 0.91 },
+                { mode: 2, y1: 0.73, y2: 0.81 },
+                { mode: 3, y1: 0.63, y2: 0.71 },
+                { mode: 4, y1: 0.53, y2: 0.61 },
+                { mode: 5, y1: 0.43, y2: 0.51 },
+                { mode: 6, y1: 0.33, y2: 0.41 },
+                { mode: 7, y1: 0.23, y2: 0.31 }
             ];
 
             // ─── MODE 0 - R VEHICLE MAP VIEW ─────────────────────────────────────────────
@@ -227,6 +229,190 @@
             // Charger performance data (historical)
             let chargerHistoryData = [];
             const MAX_HISTORY = 20; // Keep last 20 updates
+            
+            // ─── MODE 7: TRUCK POSITIONS MAP ─────────────────────────────────────────────
+            let mode7Active = false;
+            let mode7MapPlane = null;
+            let mode7Markers = [];
+            let mode7SelectedMarker = null;
+            let mode7InfoPanel = null;
+            let mode7GeoJSON = null;
+            
+            // Mode 7: Truck Positions Functions
+            async function loadMode7Map() {
+                try {
+                    const res = await fetch('2026-03-10_positions.geojson');
+                    mode7GeoJSON = await res.json();
+                    const texture = createMode7MapTexture(mode7GeoJSON);
+                    placeMode7Map(texture);
+                    createMode7Markers(mode7GeoJSON);
+                    debugLog('Mode 7: Map and markers loaded', 'INFO');
+                } catch(e) {
+                    debugLog(`Mode 7 load failed: ${e.message}`, 'ERROR');
+                }
+            }
+            
+            function createMode7MapTexture(geojson) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 4096;
+                canvas.height = 2048;
+                const ctx = canvas.getContext('2d');
+                
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(0, 0, 4096, 2048);
+                
+                // Use EXACT metadata from GeoJSON
+                const center = geojson.metadata.center;
+                const lonCentre = center.longitude;  // 0.1681
+                const latCentre = center.latitude;   // 52.1015
+                const lonRange = 0.4, latRange = 0.4;
+                
+                function coordToPixel(lon, lat) {
+                    const x = (lon - (lonCentre - lonRange/2)) / lonRange * 4096;
+                    const y = 2048 - (lat - (latCentre - latRange/2)) / latRange * 2048;
+                    return [x, y];
+                }
+                
+                // Draw features
+                geojson.features.forEach(f => {
+                    if (f.properties.heatmap) {
+                        // Heatmap route
+                        ctx.strokeStyle = '#00ff00';
+                        ctx.lineWidth = 8;
+                        ctx.beginPath();
+                        f.geometry.coordinates.forEach(([lon, lat], i) => {
+                            const [x, y] = coordToPixel(lon, lat);
+                            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                        });
+                        ctx.stroke();
+                    } else if (f.properties.type === 'building') {
+                        ctx.fillStyle = 'rgba(100, 100, 100, 0.5)';
+                        ctx.beginPath();
+                        f.geometry.coordinates[0].forEach(([lon, lat], i) => {
+                            const [x, y] = coordToPixel(lon, lat);
+                            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                        });
+                        ctx.fill();
+                    } else if (f.properties.type === 'road') {
+                        ctx.strokeStyle = '#666';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        f.geometry.coordinates.forEach(([lon, lat], i) => {
+                            const [x, y] = coordToPixel(lon, lat);
+                            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                        });
+                        ctx.stroke();
+                    }
+                });
+                
+                return new THREE.CanvasTexture(canvas);
+            }
+            
+            function placeMode7Map(texture) {
+                const MODE7_MAP_SIZE = 2.5;  // 2.5m x 2.5m
+                const geo = new THREE.PlaneGeometry(MODE7_MAP_SIZE, MODE7_MAP_SIZE);
+                const mat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+                mode7MapPlane = new THREE.Mesh(geo, mat);
+                mode7MapPlane.rotation.x = -Math.PI / 2;
+                // Move 1m closer to panel (south, -Z direction)
+                mode7MapPlane.position.set(userX, floorY + 0.01, userZ - 1.0);
+                scene.add(mode7MapPlane);
+            }
+            
+            function createMode7Markers(geojson) {
+                const center = geojson.metadata.center;
+                const lonCentre = center.longitude;  // 0.1681
+                const latCentre = center.latitude;   // 52.1015
+                const lonRange = 0.4, latRange = 0.4;
+                const MODE7_MAP_SIZE = 2.5;
+                
+                // Get unique trucks
+                const trucks = {};
+                geojson.features.forEach(f => {
+                    if (f.properties.type === 'poi') {
+                        const vin = f.properties.vin;
+                        if (!trucks[vin]) {
+                            trucks[vin] = { vin, name: f.properties.name, color: getColorForTruck(vin), points: [] };
+                        }
+                        trucks[vin].points.push(f);
+                    }
+                });
+                
+                // Create markers for each truck's points
+                Object.values(trucks).forEach(truck => {
+                    truck.points.forEach(point => {
+                        const [lon, lat] = point.geometry.coordinates;
+                        
+                        // Normalize to 0-1 range, then scale to map size and center
+                        const normX = (lon - (lonCentre - lonRange/2)) / lonRange;
+                        const normZ = (lat - (latCentre - latRange/2)) / latRange;
+                        
+                        const x = userX + (normX - 0.5) * MODE7_MAP_SIZE;
+                        const z = (userZ - 1.0) + (0.5 - normZ) * MODE7_MAP_SIZE;  // 1m offset
+                        
+                        // Cone marker: 5cm diameter, 25cm height
+                        const geo = new THREE.ConeGeometry(0.025, 0.25, 8);
+                        const mat = new THREE.MeshBasicMaterial({ color: truck.color });
+                        const marker = new THREE.Mesh(geo, mat);
+                        marker.position.set(x, floorY + 0.125, z);
+                        marker.userData = { properties: point.properties, truck: truck.name };
+                        scene.add(marker);
+                        mode7Markers.push(marker);
+                    });
+                });
+                
+                debugLog(`Mode 7: Created ${mode7Markers.length} markers`, 'INFO');
+            }
+            
+            function getColorForTruck(vin) {
+                const hash = vin.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+                return [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff][hash % 6];
+            }
+            
+            function cleanupMode7() {
+                if (mode7MapPlane) { scene.remove(mode7MapPlane); mode7MapPlane = null; }
+                mode7Markers.forEach(m => scene.remove(m));
+                mode7Markers = [];
+                if (mode7InfoPanel) { scene.remove(mode7InfoPanel); mode7InfoPanel = null; }
+                mode7SelectedMarker = null;
+                mode7Active = false;
+            }
+            
+            function createMode7InfoPanel(marker) {
+                if (mode7InfoPanel) { scene.remove(mode7InfoPanel); mode7InfoPanel = null; }
+                
+                const props = marker.userData.properties;
+                const canvas = document.createElement('canvas');
+                canvas.width = 400;
+                canvas.height = 300;
+                const ctx = canvas.getContext('2d');
+                
+                ctx.fillStyle = 'rgba(20, 20, 40, 0.95)';
+                ctx.fillRect(0, 0, 400, 300);
+                ctx.strokeStyle = '#00ff00';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(0, 0, 400, 300);
+                
+                ctx.fillStyle = '#00ffff';
+                ctx.font = 'bold 24px Arial';
+                ctx.fillText(props.name || 'Unknown', 20, 40);
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '18px Arial';
+                let y = 80;
+                ctx.fillText(`VIN: ${props.vin}`, 20, y); y += 30;
+                ctx.fillText(`Speed: ${props.speed_kmh} km/h`, 20, y); y += 30;
+                ctx.fillText(`Heading: ${props.heading_deg}°`, 20, y); y += 30;
+                ctx.fillText(`Altitude: ${props.altitude_m}m`, 20, y); y += 30;
+                ctx.fillText(`Time: ${new Date(props.timestamp).toLocaleTimeString()}`, 20, y);
+                
+                const texture = new THREE.CanvasTexture(canvas);
+                const geo = new THREE.PlaneGeometry(0.4, 0.3);
+                const mat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, transparent: true });
+                mode7InfoPanel = new THREE.Mesh(geo, mat);
+                mode7InfoPanel.position.set(marker.position.x + 0.3, floorY + 0.5, marker.position.z);
+                scene.add(mode7InfoPanel);
+            }
             
             // Map bounds for M25 London (estimated)
             const mapBounds = {
@@ -1035,10 +1221,10 @@
 
             // ─── CONTROL PANEL ────────────────────────────────────────────────────────────
             function buildControlPanel() {
-                const pW = 1.50, pH = 1.00; // wider for 6 modes, less tall
+                const pW = 1.50, pH = 1.20; // Taller for 8 modes
 
                 const canvas = document.createElement('canvas');
-                canvas.width = 1500; canvas.height = 1000;
+                canvas.width = 1500; canvas.height = 1200;
                 const ctx = canvas.getContext('2d');
 
                 drawControlPanel(ctx, canvas.width, canvas.height);
@@ -1254,7 +1440,8 @@
                     { num: '3', title: 'M25 Auto', desc: 'Sevenoaks' },
                     { num: '4', title: 'Ctrl Track', desc: 'Left Kalman' },
                     { num: '5', title: 'Anchor', desc: 'Spatial' },
-                    { num: '6', title: 'EV Chargers', desc: 'Live Status' }
+                    { num: '6', title: 'EV Chargers', desc: 'Live Status' },
+                    { num: '7', title: 'Truck Positions', desc: 'Fleet Map' }
                 ];
 
                 const rowH = 120;
@@ -1303,8 +1490,8 @@
                     }
                 });
 
-                // APPROVE button
-                const btnY = 70 + 7 * rowH + 10;
+                // APPROVE button (below Mode 7)
+                const btnY = 70 + 8 * rowH + 10;
                 ctx.fillStyle = approvePressed ? '#333333' : '#226622';
                 ctx.fillRect(30, btnY, W-60, 60);
                 ctx.strokeStyle = '#00ff66';
@@ -1331,9 +1518,9 @@
                 const uv = hits[0].uv;
                 if (!uv) return;
 
-                const totalModeRows = 7; // Updated from 6 to 7
-                const rowH = 120 / 1000;  // per-mode row height in UV (updated for new canvas height)
-                const topOffset = 70 / 1000; // updated for new layout
+                const totalModeRows = 8; // Modes 0-7
+                const rowH = 120 / 1200;  // per-mode row height in UV (120px rows, 1200px canvas)
+                const topOffset = 70 / 1200; // top margin in UV
 
                 // Check mode rows
                 for (let i = 0; i < totalModeRows; i++) {
@@ -1341,21 +1528,21 @@
                     const y2 = y1 + rowH;
                     const uvY = 1.0 - uv.y; // flip Y
                     if (uvY >= y1 && uvY <= y2) {
-                        controlMode = i; // Mode 0-5
+                        controlMode = i; // Mode 0-7
                         approvePressed = false;
-                        drawControlPanel(controlPanel.userData.ctx, 1500, 1000);
+                        drawControlPanel(controlPanel.userData.ctx, 1500, 1200);
                         document.getElementById('mode-status').textContent = `MODE ${controlMode}`;
                         return;
                     }
                 }
 
-                // APPROVE button (updated for 7 modes)
-                const approveY1 = (70 + 7 * 120 + 10) / 1000;
-                const approveY2 = approveY1 + (60 / 1000);
+                // APPROVE button (updated for 8 modes)
+                const approveY1 = (70 + 8 * 120 + 10) / 1200;
+                const approveY2 = approveY1 + (60 / 1200);
                 const uvY = 1.0 - uv.y;
                 if (uvY >= approveY1 && uvY <= approveY2) {
                     approvePressed = true;
-                    drawControlPanel(controlPanel.userData.ctx, 1500, 1000);
+                    drawControlPanel(controlPanel.userData.ctx, 1500, 1200);
                     executeMode(controlMode);
                 }
             }
@@ -1447,7 +1634,8 @@
                     3: 'M25 Highway',
                     4: 'Track Robot (Controller)',
                     5: 'Spatial Anchor Tracking',
-                    6: 'EV Charger Status'
+                    6: 'EV Charger Status',
+                    7: 'Truck Positions Map'
                 };
 
                 websocket.send(JSON.stringify({
@@ -1528,6 +1716,22 @@
                 }
 
                 if (mode === 6) startChargerMode();
+                
+                if (mode === 7) {
+                    // Mode 7: Truck Positions (no vehicles shown)
+                    if (mode0Robot) mode0Robot.visible = false;
+                    if (mode0Truck) mode0Truck.visible = false;
+                    if (mapPlane) mapPlane.visible = false;  // Hide M25 map
+                    mode7Active = true;
+                    loadMode7Map();
+                    debugLog('Mode 7: Truck positions mode started', 'INFO');
+                }
+                
+                if (mode !== 7) {
+                    cleanupMode7();
+                    // Restore M25 map when leaving Mode 7
+                    if (mapPlane && !mapPlane.visible) mapPlane.visible = true;
+                }
             }
 
             // ─── MODE 1: MANUAL CONTROL ──────────────────────────────────────────────────
@@ -3722,6 +3926,22 @@
                                 // Select charger on right trigger press
                                 if (trigger && !lastRightTrigger && controller1) {
                                     checkChargerSelection(controller1);
+                                }
+                                lastRightTrigger = trigger;
+                            }
+                            
+                            if (controlMode === 7) {
+                                // Select Mode 7 marker on right trigger press
+                                if (trigger && !lastRightTrigger && controller1 && mode7Active) {
+                                    const raycaster = new THREE.Raycaster();
+                                    const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(controller1.quaternion);
+                                    raycaster.set(controller1.position, dir);
+                                    const hits = raycaster.intersectObjects(mode7Markers);
+                                    if (hits.length > 0) {
+                                        mode7SelectedMarker = hits[0].object;
+                                        createMode7InfoPanel(mode7SelectedMarker);
+                                        debugLog(`Mode 7: Selected truck ${mode7SelectedMarker.userData.truck}`, 'INFO');
+                                    }
                                 }
                                 lastRightTrigger = trigger;
                             }
