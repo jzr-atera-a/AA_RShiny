@@ -84,6 +84,20 @@ modules:
     icon: "robot"
     tabname: "ml_design_profile"
 
+  ml_design_excalidraw:
+    enabled: true
+    priority: 42
+    name: "Sketch Whiteboard"
+    icon: "pencil-alt"
+    tabname: "ml_design_excalidraw"
+
+  ml_design_coderpad_wb:
+    enabled: true
+    priority: 43
+    name: "CoderPad Whiteboard"
+    icon: "chalkboard-teacher"
+    tabname: "ml_design_coderpad_wb"
+
   # ── Technical Project ────────────────────────────────────────
   tech_project:
     enabled: true

@@ -35,7 +35,8 @@ PrepManager <- R6Class(
                 "intro_profile","qualities_profile","coding_profile",
                 "ml_design_profile","tech_project_profile",
                 "cross_functional_profile","career_profile",
-                "python_runner","ml_design_whiteboard")
+                "python_runner","ml_design_whiteboard",
+                "ml_design_excalidraw","ml_design_coderpad_wb")
       for (t in tabs) {
         self$tab_progress[[t]]    <- 0
         self$practice_scores[[t]] <- list()

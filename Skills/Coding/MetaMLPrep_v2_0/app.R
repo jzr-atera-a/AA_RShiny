@@ -2,7 +2,7 @@
 # Software Engineer (Leadership) — Machine Learning
 
 cat("\n╔════════════════════════════════════════════════════╗\n")
-cat("║  META ML INTERVIEW PREP SUITE v1.0 - STARTING     ║\n")
+cat("║  META ML INTERVIEW PREP SUITE v2.0 - STARTING     ║\n")
 cat("╚════════════════════════════════════════════════════╝\n\n")
 
 source("global.R")

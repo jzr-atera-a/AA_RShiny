@@ -1015,6 +1015,14 @@
                     timestamp: performance.now()
                 }));
 
+                // Stop all active modes first
+                if (isManualControlActive) stopManualControl();
+                if (isTrackingRobot) stopRobotTracking();
+                if (anchorTrackingActive) anchorTrackingActive = false;
+                if (isChargerModeActive) stopChargerMode();
+
+                if (mode === 1) startManualControl();
+                
                 if (mode === 3) {
                     m25ChartData = [];
                     chartMaxSpeed = 1; chartMaxDist = 1;
@@ -1028,6 +1036,188 @@
                 if (mode === 4) startRobotTracking();
                 if (mode === 5) startAnchorTracking();
                 if (mode === 6) startChargerMode();
+            }
+
+            // ─── MODE 1: MANUAL CONTROL ──────────────────────────────────────────────────
+            let isManualControlActive = false;
+            let manualControlInterval = null;
+            let lastJoystickForward = 0;
+            let lastJoystickTurn = 0;
+            let lastMotorSpeed = 0;      // Both motors same speed (MOTORS:XX command)
+            let lastServo2 = 90;          // Servo2 (pin 9) - steering (50-130°)
+            let lastServo1 = 90;          // Servo1 (pin 8) - gripper (40-140°)
+            
+            // Left controller tracking for Mode 1
+            let mode1LeftTracking = false;
+            let mode1LeftMarker = null;
+
+            // ─── MODE 1: MANUAL CONTROL ──────────────────────────────────────────────────
+            function startManualControl() {
+                if (isManualControlActive) return;
+                isManualControlActive = true;
+                mode1LeftTracking = true;
+                
+                debugLog('Mode 1: Manual control started', 'INFO');
+                
+                // Create left controller marker (small green sphere at controller position)
+                const geo = new THREE.SphereGeometry(0.05, 16, 16);
+                const mat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                mode1LeftMarker = new THREE.Mesh(geo, mat);
+                scene.add(mode1LeftMarker);
+                
+                // Start sending commands at 5Hz
+                manualControlInterval = setInterval(() => {
+                    sendManualControlCommand();
+                }, 200); // 5Hz = 200ms
+                
+                // Tell server to start logging
+                if (websocket && websocket.readyState === WebSocket.OPEN) {
+                    websocket.send(JSON.stringify({
+                        command: 'START_MANUAL_CONTROL'
+                    }));
+                }
+                
+                document.getElementById('tracking-status').textContent = 'MANUAL';
+                document.getElementById('tracking-status').className = 'status-tracking';
+            }
+
+            function stopManualControl() {
+                isManualControlActive = false;
+                mode1LeftTracking = false;
+                
+                // Stop motors immediately
+                sendStopCommand();
+                
+                // Clear interval
+                if (manualControlInterval) {
+                    clearInterval(manualControlInterval);
+                    manualControlInterval = null;
+                }
+                
+                // Remove marker
+                if (mode1LeftMarker) {
+                    scene.remove(mode1LeftMarker);
+                    mode1LeftMarker = null;
+                }
+                
+                // Tell server to stop logging
+                if (websocket && websocket.readyState === WebSocket.OPEN) {
+                    websocket.send(JSON.stringify({
+                        command: 'STOP_MANUAL_CONTROL'
+                    }));
+                }
+                
+                document.getElementById('tracking-status').textContent = 'OFF';
+                document.getElementById('tracking-status').className = 'status-bad';
+                
+                debugLog('Mode 1: Manual control stopped', 'INFO');
+            }
+
+            function sendManualControlCommand() {
+                if (!isManualControlActive || !websocket || websocket.readyState !== WebSocket.OPEN) return;
+                
+                // Get left controller pose (if available)
+                let leftX = 0, leftY = 0, leftZ = 0, leftHeading = 0;
+                
+                // This will be populated in the animation loop
+                if (mode1LeftMarker) {
+                    leftX = mode1LeftMarker.position.x;
+                    leftY = mode1LeftMarker.position.y;
+                    leftZ = mode1LeftMarker.position.z;
+                    leftHeading = (mode1LeftMarker.rotation.y * 180 / Math.PI + 360) % 360;
+                }
+                
+                // Convert to cm from map center
+                const leftX_cm = ((leftX - userX) / MAP_SIZE * 200);
+                const leftZ_cm = ((leftZ - userZ) / MAP_SIZE * 200);
+                const leftY_cm = (leftY - floorY) * 100; // cm above floor
+                
+                // Send command
+                websocket.send(JSON.stringify({
+                    command: 'MANUAL_CONTROL',
+                    data: {
+                        timestamp: performance.now() / 1000,
+                        left_x_cm: leftX_cm,
+                        left_y_cm: leftY_cm,
+                        left_z_cm: leftZ_cm,
+                        left_heading_deg: leftHeading,
+                        joystick_forward: lastJoystickForward,
+                        joystick_turn: lastJoystickTurn,
+                        motor_speed: lastMotorSpeed,  // Both motors same speed
+                        servo2_angle: lastServo2,      // Steering (pin 9)
+                        servo1_angle: lastServo1       // Gripper (pin 8)
+                    }
+                }));
+            }
+
+            function sendStopCommand() {
+                lastJoystickForward = 0;
+                lastJoystickTurn = 0;
+                lastMotorSpeed = 0;
+                lastServo2 = 90;  // Center steering
+                lastServo1 = 90;  // Center gripper
+                
+                if (websocket && websocket.readyState === WebSocket.OPEN) {
+                    websocket.send(JSON.stringify({
+                        command: 'MANUAL_CONTROL',
+                        data: {
+                            timestamp: performance.now() / 1000,
+                            left_x_cm: 0,
+                            left_y_cm: 0,
+                            left_z_cm: 0,
+                            left_heading_deg: 0,
+                            joystick_forward: 0,
+                            joystick_turn: 0,
+                            motor_speed: 0,
+                            servo2_angle: 90,
+                            servo1_angle: 90
+                        }
+                    }));
+                }
+            }
+
+            function processJoystickInput(forwardAxis, turnAxis) {
+                // Dead zone
+                const DEAD_ZONE = 0.1;
+                
+                // Apply dead zone
+                const forward = Math.abs(forwardAxis) > DEAD_ZONE ? forwardAxis : 0;
+                const turn = Math.abs(turnAxis) > DEAD_ZONE ? turnAxis : 0;
+                
+                lastJoystickForward = forward;
+                lastJoystickTurn = turn;
+                
+                // Map forward (-1 to +1) to motor speed (0 to 80% - SAFETY LIMIT)
+                // Original: 50-80% range when moving
+                if (Math.abs(forward) > 0) {
+                    // Scale to 50-80% range (SAFETY)
+                    lastMotorSpeed = 50 + (Math.abs(forward) * 30);  // 50-80%
+                } else {
+                    lastMotorSpeed = 0;  // Stop
+                }
+                
+                // Note: Original doesn't support reverse! Only forward motion
+                // If you want reverse, need to update Arduino code
+                
+                // Map turn (-1 to +1) to servo2 angle (50° to 130°)
+                // Original range: SERVO2_MIN=50, SERVO2_MAX=130
+                // -1 = full left = 50°
+                //  0 = straight = 90°
+                // +1 = full right = 130°
+                lastServo2 = 90 + (turn * 40);
+                lastServo2 = Math.max(50, Math.min(130, lastServo2)); // Clamp to range
+            }
+
+            function processGripperButtons(aPressed, bPressed) {
+                // A button: close gripper (decrease angle toward min)
+                // B button: open gripper (increase angle toward max)
+                const GRIPPER_STEP = 5;  // degrees per button press
+                
+                if (aPressed) {
+                    lastServo1 = Math.max(40, lastServo1 - GRIPPER_STEP);  // Close
+                } else if (bPressed) {
+                    lastServo1 = Math.min(140, lastServo1 + GRIPPER_STEP);  // Open
+                }
             }
 
             // ─── MODE 2: TRAJECTORY ───────────────────────────────────────────────────────
@@ -2016,6 +2206,22 @@
                             const grip       = gamepad.buttons[1]?.pressed || false;
                             const thumbstick = gamepad.buttons[3]?.pressed || false;
                             const aButton    = gamepad.buttons[4]?.pressed || false;
+                            const bButton    = gamepad.buttons[5]?.pressed || false;
+                            const axes = gamepad.axes;
+
+                            // Mode 1: Manual Control - Right joystick drives robot
+                            if (controlMode === 1 && isManualControlActive) {
+                                if (axes && axes.length >= 4) {
+                                    const joyX = axes[2]; // Right joystick horizontal (turn)
+                                    const joyY = axes[3]; // Right joystick vertical (forward/back)
+                                    
+                                    // Invert Y axis (joystick forward is negative)
+                                    processJoystickInput(-joyY, joyX);
+                                }
+                                
+                                // A/B buttons control gripper (SERVO1 on pin 8)
+                                processGripperButtons(aButton, bButton);
+                            }
 
                             if (controlMode === 2) {
                                 // Draw trajectory
@@ -2101,6 +2307,31 @@
 
                                 const dist_cm = Math.sqrt((fx - userX)**2 + (fz - userZ)**2) / MAP_SIZE * 200;
                                 updateRobotChart(performance.now() / 1000, dist_cm, filtHeading);
+                            }
+                        }
+
+                        // Mode 1: Track left controller for manual control (above robot)
+                        if (source.handedness === 'left' && mode1LeftTracking && source.gripSpace) {
+                            const gripPose = frame.getPose(source.gripSpace, refSpace);
+                            if (gripPose) {
+                                const pos = gripPose.transform.position;
+                                const ori = gripPose.transform.orientation;
+
+                                // Kalman filter
+                                const fx = kfX.update(pos.x);
+                                const fz = kfZ.update(pos.z);
+                                
+                                // Heading
+                                const qx = ori.x, qy = ori.y, qz = ori.z, qw = ori.w;
+                                const rawHeading = Math.atan2(2*(qw*qy + qx*qz), 1 - 2*(qy*qy + qz*qz));
+                                const rawDeg = (rawHeading * 180 / Math.PI + 360) % 360;
+                                const filtHeading = kfH.update(rawDeg);
+
+                                // Update marker position
+                                if (mode1LeftMarker) {
+                                    mode1LeftMarker.position.set(fx, pos.y, fz);
+                                    mode1LeftMarker.rotation.y = filtHeading * Math.PI / 180;
+                                }
                             }
                         }
                     });

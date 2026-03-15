@@ -1,0 +1,87 @@
+# modules/_module_registry.yml
+# ML System Design Interview Prep
+# Based on: Machine Learning System Design (with end-to-end examples)
+# Authors: Arseny Kravchenko, Valerii Babushkin (Manning, Feb 2025)
+
+app:
+  name: "ML System Design Prep — Kravchenko & Babushkin"
+  version: "1.0.0"
+  description: "End-to-end ML system design interview prep based on Manning 2025"
+
+modules:
+  intro:
+    enabled: true
+    priority: 10
+    name: "Overview & Book Guide"
+    icon: "home"
+    tabname: "intro"
+
+  requirements:
+    enabled: true
+    priority: 20
+    name: "Requirements & Scoping"
+    icon: "bullseye"
+    tabname: "requirements"
+
+  data_pipeline:
+    enabled: true
+    priority: 30
+    name: "Data Pipeline Design"
+    icon: "database"
+    tabname: "data_pipeline"
+
+  feature_store:
+    enabled: true
+    priority: 40
+    name: "Feature Engineering & Store"
+    icon: "cogs"
+    tabname: "feature_store"
+
+  modelling:
+    enabled: true
+    priority: 50
+    name: "Modelling & Training"
+    icon: "brain"
+    tabname: "modelling"
+
+  experiment_tracking:
+    enabled: true
+    priority: 55
+    name: "Experiment Tracking"
+    icon: "flask"
+    tabname: "experiment_tracking"
+
+  evaluation:
+    enabled: true
+    priority: 60
+    name: "Evaluation & Testing"
+    icon: "chart-bar"
+    tabname: "evaluation"
+
+  serving:
+    enabled: true
+    priority: 70
+    name: "Serving & Deployment"
+    icon: "rocket"
+    tabname: "serving"
+
+  monitoring:
+    enabled: true
+    priority: 80
+    name: "Monitoring & Reliability"
+    icon: "heartbeat"
+    tabname: "monitoring"
+
+  end_to_end:
+    enabled: true
+    priority: 90
+    name: "End-to-End Case Studies"
+    icon: "project-diagram"
+    tabname: "end_to_end"
+
+  practice:
+    enabled: true
+    priority: 100
+    name: "Timed Practice"
+    icon: "clock"
+    tabname: "practice"

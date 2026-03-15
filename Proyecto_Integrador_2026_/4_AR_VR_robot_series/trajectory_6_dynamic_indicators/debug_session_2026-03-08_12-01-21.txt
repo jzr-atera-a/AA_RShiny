@@ -1,0 +1,26 @@
+====================================================================================================
+  QUEST 3 AR ROBOT CONTROL - DEBUG SESSION
+  Started: 2026-03-08 12:01:21
+  Platform: Windows 11
+====================================================================================================
+
+[12:01:22.016] [INIT] Server starting...
+[12:01:22.016] [INIT] Platform: Windows
+[12:01:22.017] [INIT] Arduino connected: False
+[12:01:36.354] [INFO] Quest 3 connected from 10.201.149.105
+[12:01:36.355] [INFO] Active connections: 1
+[12:01:37.367] [TRACK] Mode 4 tracking: X=-2.4cm, Z=-15.7cm, Heading=352.5°
+[12:01:37.967] [TRACK] Mode 4 tracking: X=-2.4cm, Z=-15.7cm, Heading=352.5°
+[12:01:40.096] [TRACK] Mode 4 tracking: X=-2.4cm, Z=-15.7cm, Heading=352.5°
+[12:01:50.095] [TRACK] Mode 4 tracking: X=-2.4cm, Z=-15.7cm, Heading=352.5°
+[12:01:56.102] [TRACK] Mode 4 tracking: X=-2.4cm, Z=-15.7cm, Heading=352.5°
+[12:02:00.097] [TRACK] Mode 4 tracking: X=-2.4cm, Z=-15.7cm, Heading=352.5°
+[12:02:02.099] [TRACK] Mode 4 tracking: X=-2.4cm, Z=-15.7cm, Heading=352.5°
+[12:02:07.096] [TRACK] Mode 4 tracking: X=-2.4cm, Z=-15.7cm, Heading=352.5°
+[12:02:27.099] [TRACK] Mode 4 tracking: X=-2.4cm, Z=-15.7cm, Heading=352.5°
+[12:02:29.092] [TRACK] Mode 4 tracking: X=-2.4cm, Z=-15.7cm, Heading=352.5°
+[12:03:17.078] [SHUTDOWN] Server stopped by user (Ctrl+C)
+
+====================================================================================================
+  Session ended: 2026-03-08 12:03:17
+====================================================================================================

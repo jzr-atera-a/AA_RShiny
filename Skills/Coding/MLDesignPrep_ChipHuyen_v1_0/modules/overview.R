@@ -113,12 +113,22 @@ overview_server <- function(id, prep_manager) {
     output$tab_progress_bars <- renderUI({
       prep_manager$progress_trigger()
       tabs <- list(
-        list(id = "framing",             label = "Problem Framing"),
+        list(id = "visual_diagrams",     label = "Key Diagrams"),
+        list(id = "chapter_diagrams",    label = "Whiteboard Diagrams"),
+        list(id = "framing",              label = "Problem Framing"),
         list(id = "data_engineering",    label = "Data Engineering"),
         list(id = "feature_engineering", label = "Feature Engineering"),
         list(id = "model_development",   label = "Model Development"),
+        list(id = "experiment_tracking", label = "Experiment Tracking"),
         list(id = "evaluation",          label = "Evaluation & Metrics"),
-        list(id = "deployment",          label = "Deployment & Serving"),
+        list(id = "deployment",              label = "Deployment & Serving"),
+        list(id = "model_compression",       label = "Model Compression"),
+        list(id = "ch8_distribution_shifts", label = "Ch.8 Distribution Shifts"),
+        list(id = "ch9_continual_learning",  label = "Ch.9 Continual Learning"),
+        list(id = "ch10_infrastructure",     label = "Ch.10 Infrastructure"),
+        list(id = "ch11_human_side",         label = "Ch.11 Human Side"),
+        list(id = "social_recommender_case_study", label = "Social Media Recommender"),
+        list(id = "banking_case_study",            label = "Banking Case Study"),
         list(id = "monitoring",          label = "Monitoring & Drift"),
         list(id = "design_questions",    label = "Design Questions"),
         list(id = "practice",            label = "Timed Practice")

@@ -16,9 +16,11 @@ PrepManager <- R6Class(
       self$progress_trigger <- reactiveVal(0)
       self$score_trigger    <- reactiveVal(0)
 
-      tabs <- c("overview","framing","data_engineering","feature_engineering",
-                "model_development","evaluation","deployment","monitoring",
-                "design_questions","practice")
+      tabs <- c("overview","visual_diagrams","chapter_diagrams","framing","data_engineering",
+                "feature_engineering","model_development","experiment_tracking","evaluation",
+                "deployment","model_compression","ch8_distribution_shifts","ch9_continual_learning",
+                "ch10_infrastructure","ch11_human_side","social_recommender_case_study",
+                "banking_case_study","design_questions","practice")
       for (t in tabs) {
         self$tab_progress[[t]]    <- 0
         self$practice_scores[[t]] <- list()

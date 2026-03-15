@@ -1,44 +1,58 @@
 /* www/js/app_helpers.js
-   Custom message handlers for Python Runner + Whiteboard modules
-   Loaded via global.R tags$head injection
+   Helpers for Python Runner (CodeMirror) + Whiteboard
 */
 
-// ── Code Editor helpers ───────────────────────────────────────────────────
-// Set textarea content from R server (template loader)
+// ── Utility: get CodeMirror instance for a given Shiny input id ──────────
+function getCM(id) {
+  return window._cmEditors && window._cmEditors[id];
+}
+
+// ── Set editor content (used by template loader & problem bank) ──────────
 Shiny.addCustomMessageHandler("setCodeEditor", function(msg) {
+  var cm = getCM(msg.id);
+  if (cm) {
+    cm.setValue(msg.value);
+    cm.focus();
+    return;
+  }
+  // Fallback: plain textarea (other modules)
   var el = document.getElementById(msg.id);
   if (el) {
     el.value = msg.value;
-    // Trigger Shiny input binding to update reactive value
-    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("input",  { bubbles: true }));
     el.dispatchEvent(new Event("change", { bubbles: true }));
     el.focus();
   }
 });
 
-// Append text to existing textarea content
+// ── Append to editor content (timeit / assertion helpers) ────────────────
 Shiny.addCustomMessageHandler("appendCodeEditor", function(msg) {
+  var cm = getCM(msg.id);
+  if (cm) {
+    var cur = cm.getValue();
+    cm.setValue(cur + msg.value);
+    cm.setCursor(cm.lineCount(), 0);  // move cursor to end
+    cm.focus();
+    return;
+  }
+  // Fallback: plain textarea
   var el = document.getElementById(msg.id);
   if (el) {
-    el.value = el.value + msg.value;
+    el.value += msg.value;
     el.dispatchEvent(new Event("input",  { bubbles: true }));
     el.dispatchEvent(new Event("change", { bubbles: true }));
     el.scrollTop = el.scrollHeight;
   }
 });
 
-// Sync textarea value to Shiny on every keystroke
+// ── Sync plain textareas (non-CodeMirror editors) to Shiny ───────────────
 document.addEventListener("input", function(e) {
   if (e.target && e.target.classList.contains("code-editor")) {
-    Shiny.setInputValue(e.target.id, e.target.value, { priority: "event" });
+    try { Shiny.setInputValue(e.target.id, e.target.value, { priority: "event" }); } catch(err) {}
   }
 });
 
 // ── Whiteboard save bridge ────────────────────────────────────────────────
-// Called by whiteboard JS to trigger R notification after save
 Shiny.addCustomMessageHandler("wbSaveResult", function(msg) {
-  // msg: { success: true/false, filename: "...", format: "png/jpg/pdf" }
-  if (msg.success) {
-    console.log("[Whiteboard] Saved:", msg.filename);
-  }
+  if (msg.success) console.log("[Whiteboard] Saved:", msg.filename);
 });

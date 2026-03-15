@@ -1,23 +1,87 @@
 # modules/_module_registry.yml
-# ML System Design Interview Prep Suite
-# Based on: Designing Machine Learning Systems — Chip Huyen (O'Reilly)
+# ML System Design Interview Prep Suite — Chip Huyen (O'Reilly)
+# One group per chapter of the book
 
 app:
   name: "ML Design Interview Prep"
-  version: "1.0.0"
+  version: "2.0.0"
   description: "Complete ML System Design interview preparation based on Chip Huyen's framework"
+
+groups:
+  ch1_2:
+    label: "1-2: ML System Design"
+    icon: "book"
+    priority: 10
+  ch3_4:
+    label: "3-4: Data"
+    icon: "database"
+    priority: 20
+  ch5:
+    label: "5: Feature Engineering"
+    icon: "cogs"
+    priority: 30
+  ch6:
+    label: "6: Model Development"
+    icon: "brain"
+    priority: 40
+  ch7:
+    label: "7: Deployment"
+    icon: "rocket"
+    priority: 50
+  ch8:
+    label: "8: Distribution Shifts"
+    icon: "exclamation-triangle"
+    priority: 60
+  ch9:
+    label: "9: Continual Learning"
+    icon: "refresh"
+    priority: 70
+  ch10:
+    label: "10: Infrastructure"
+    icon: "server"
+    priority: 80
+  ch11:
+    label: "11: Human Side of ML"
+    icon: "users"
+    priority: 90
+  case_studies:
+    label: "Case Studies"
+    icon: "building"
+    priority: 95
+  practice:
+    label: "Practice"
+    icon: "graduation-cap"
+    priority: 100
 
 modules:
   overview:
     enabled: true
     priority: 10
+    group: ch1_2
     name: "Overview & Framework"
     icon: "home"
     tabname: "overview"
 
+  visual_diagrams:
+    enabled: true
+    priority: 15
+    group: ch1_2
+    name: "Key Diagrams"
+    icon: "sitemap"
+    tabname: "visual_diagrams"
+
+  chapter_diagrams:
+    enabled: true
+    priority: 16
+    group: ch1_2
+    name: "Whiteboard Diagrams"
+    icon: "chalkboard"
+    tabname: "chapter_diagrams"
+
   framing:
     enabled: true
     priority: 20
+    group: ch1_2
     name: "Problem Framing"
     icon: "bullseye"
     tabname: "framing"
@@ -25,6 +89,7 @@ modules:
   data_engineering:
     enabled: true
     priority: 30
+    group: ch3_4
     name: "Data Engineering"
     icon: "database"
     tabname: "data_engineering"
@@ -32,6 +97,7 @@ modules:
   feature_engineering:
     enabled: true
     priority: 40
+    group: ch5
     name: "Feature Engineering"
     icon: "cogs"
     tabname: "feature_engineering"
@@ -39,13 +105,23 @@ modules:
   model_development:
     enabled: true
     priority: 50
+    group: ch6
     name: "Model Development"
     icon: "brain"
     tabname: "model_development"
 
+  experiment_tracking:
+    enabled: true
+    priority: 55
+    group: ch6
+    name: "Experiment Tracking"
+    icon: "flask"
+    tabname: "experiment_tracking"
+
   evaluation:
     enabled: true
     priority: 60
+    group: ch6
     name: "Evaluation & Metrics"
     icon: "chart-bar"
     tabname: "evaluation"
@@ -53,27 +129,87 @@ modules:
   deployment:
     enabled: true
     priority: 70
+    group: ch7
     name: "Deployment & Serving"
     icon: "rocket"
     tabname: "deployment"
 
-  monitoring:
+  model_compression:
+    enabled: true
+    priority: 75
+    group: ch7
+    name: "Model Compression"
+    icon: "compress"
+    tabname: "model_compression"
+
+  ch8_distribution_shifts:
     enabled: true
     priority: 80
-    name: "Monitoring & Drift"
+    group: ch8
+    name: "Distribution Shifts"
+    icon: "exclamation-triangle"
+    tabname: "ch8_distribution_shifts"
+
+  ch9_continual_learning:
+    enabled: true
+    priority: 90
+    group: ch9
+    name: "Continual Learning"
+    icon: "refresh"
+    tabname: "ch9_continual_learning"
+
+  ch10_infrastructure:
+    enabled: true
+    priority: 100
+    group: ch10
+    name: "Infrastructure & MLOps"
+    icon: "server"
+    tabname: "ch10_infrastructure"
+
+  ch11_human_side:
+    enabled: true
+    priority: 110
+    group: ch11
+    name: "Human Side of ML"
+    icon: "users"
+    tabname: "ch11_human_side"
+
+  monitoring:
+    enabled: false
+    priority: 999
+    group: ch8
+    name: "Monitoring & Drift (legacy)"
     icon: "search"
     tabname: "monitoring"
 
+  social_recommender_case_study:
+    enabled: true
+    priority: 116
+    group: case_studies
+    name: "Social Media Recommender"
+    icon: "share-alt"
+    tabname: "social_recommender_case_study"
+
+  banking_case_study:
+    enabled: true
+    priority: 115
+    group: case_studies
+    name: "Banking Customers ML"
+    icon: "university"
+    tabname: "banking_case_study"
+
   design_questions:
     enabled: true
-    priority: 90
+    priority: 120
+    group: practice
     name: "Design Questions"
     icon: "comments"
     tabname: "design_questions"
 
   practice:
     enabled: true
-    priority: 100
+    priority: 130
+    group: practice
     name: "Timed Practice"
     icon: "clock"
     tabname: "practice"

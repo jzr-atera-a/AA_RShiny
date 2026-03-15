@@ -1,0 +1,5420 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "generated": "2026-03-10T11:10:22Z",
+    "center": {
+      "latitude": 52.1015,
+      "longitude": 0.1681
+    },
+    "vehicle_count": 3,
+    "point_count": 300,
+    "canvas": "4096x2048",
+    "description": "Welch Group EV fleet positions — 2026-03-10"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "heatmap": true,
+        "name": "Primary Depot Loop"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [0.0906, 52.0786],
+          [0.0958, 52.0783],
+          [0.101, 52.078],
+          [0.1061, 52.0778],
+          [0.1113, 52.0775],
+          [0.1165, 52.0772],
+          [0.1216, 52.077],
+          [0.1268, 52.0767],
+          [0.132, 52.0764],
+          [0.1371, 52.0762],
+          [0.1423, 52.0759],
+          [0.1475, 52.0756],
+          [0.1526, 52.0754],
+          [0.1578, 52.0751],
+          [0.163, 52.0748],
+          [0.1681, 52.0746],
+          [0.1681, 52.0746],
+          [0.1836, 52.0748],
+          [0.1992, 52.0751],
+          [0.2147, 52.0754],
+          [0.2302, 52.0756],
+          [0.2457, 52.0759],
+          [0.2613, 52.0762],
+          [0.2768, 52.0764],
+          [0.2923, 52.0767],
+          [0.3078, 52.077],
+          [0.3234, 52.0772],
+          [0.3389, 52.0775],
+          [0.3544, 52.0778],
+          [0.3699, 52.078],
+          [0.3855, 52.0783],
+          [0.401, 52.0786],
+          [0.401, 52.0786],
+          [0.4013, 52.0801],
+          [0.4015, 52.0816],
+          [0.4018, 52.0832],
+          [0.4021, 52.0847],
+          [0.4023, 52.0862],
+          [0.4026, 52.0878],
+          [0.4029, 52.0893],
+          [0.4031, 52.0908],
+          [0.4034, 52.0923],
+          [0.4037, 52.0939],
+          [0.4039, 52.0954],
+          [0.4042, 52.0969],
+          [0.4045, 52.0985],
+          [0.4047, 52.1],
+          [0.405, 52.1015],
+          [0.405, 52.1015],
+          [0.4047, 52.104],
+          [0.4045, 52.1064],
+          [0.4042, 52.1088],
+          [0.4039, 52.1112],
+          [0.4037, 52.1136],
+          [0.4034, 52.1161],
+          [0.4031, 52.1185],
+          [0.4029, 52.1209],
+          [0.4026, 52.1233],
+          [0.4023, 52.1258],
+          [0.4021, 52.1282],
+          [0.4018, 52.1306],
+          [0.4015, 52.133],
+          [0.4013, 52.1355],
+          [0.401, 52.1379],
+          [0.401, 52.1379],
+          [0.3855, 52.1381],
+          [0.3699, 52.1384],
+          [0.3544, 52.1387],
+          [0.3389, 52.1389],
+          [0.3234, 52.1392],
+          [0.3078, 52.1395],
+          [0.2923, 52.1397],
+          [0.2768, 52.14],
+          [0.2613, 52.1403],
+          [0.2457, 52.1405],
+          [0.2302, 52.1408],
+          [0.2147, 52.1411],
+          [0.1992, 52.1413],
+          [0.1836, 52.1416],
+          [0.1681, 52.1419],
+          [0.1681, 52.1419],
+          [0.163, 52.1416],
+          [0.1578, 52.1413],
+          [0.1526, 52.1411],
+          [0.1475, 52.1408],
+          [0.1423, 52.1405],
+          [0.1371, 52.1403],
+          [0.132, 52.14],
+          [0.1268, 52.1397],
+          [0.1216, 52.1395],
+          [0.1165, 52.1392],
+          [0.1113, 52.1389],
+          [0.1061, 52.1387],
+          [0.101, 52.1384],
+          [0.0958, 52.1381],
+          [0.0906, 52.1379],
+          [0.0906, 52.1379],
+          [0.0904, 52.1355],
+          [0.0901, 52.133],
+          [0.0898, 52.1306],
+          [0.0896, 52.1282],
+          [0.0893, 52.1258],
+          [0.089, 52.1233],
+          [0.0888, 52.1209],
+          [0.0885, 52.1185],
+          [0.0882, 52.1161],
+          [0.088, 52.1136],
+          [0.0877, 52.1112],
+          [0.0874, 52.1088],
+          [0.0872, 52.1064],
+          [0.0869, 52.104],
+          [0.0866, 52.1015],
+          [0.0866, 52.1015],
+          [0.0869, 52.1],
+          [0.0872, 52.0985],
+          [0.0874, 52.0969],
+          [0.0877, 52.0954],
+          [0.088, 52.0939],
+          [0.0882, 52.0923],
+          [0.0885, 52.0908],
+          [0.0888, 52.0893],
+          [0.089, 52.0878],
+          [0.0893, 52.0862],
+          [0.0896, 52.0847],
+          [0.0898, 52.0832],
+          [0.0901, 52.0816],
+          [0.0904, 52.0801],
+          [0.0906, 52.0786]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "building"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [0.1661, 52.1005],
+            [0.1667, 52.1005],
+            [0.1667, 52.1009],
+            [0.1661, 52.1009],
+            [0.1661, 52.1005]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "building"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [0.1691, 52.102],
+            [0.1696, 52.102],
+            [0.1696, 52.1023],
+            [0.1691, 52.1023],
+            [0.1691, 52.102]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "road",
+        "name": "East-West Route"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [0.0906, 52.1015],
+          [0.107, 52.1015],
+          [0.1233, 52.1015],
+          [0.1396, 52.1015],
+          [0.156, 52.1015],
+          [0.1723, 52.1015],
+          [0.1886, 52.1015],
+          [0.205, 52.1015],
+          [0.2213, 52.1015],
+          [0.2376, 52.1015],
+          [0.254, 52.1015],
+          [0.2703, 52.1015],
+          [0.2866, 52.1015],
+          [0.303, 52.1015],
+          [0.3193, 52.1015],
+          [0.3357, 52.1015],
+          [0.352, 52.1015],
+          [0.3683, 52.1015],
+          [0.3847, 52.1015],
+          [0.401, 52.1015]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "road",
+        "name": "North-South Route"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [0.1681, 52.0786],
+          [0.1681, 52.0817],
+          [0.1681, 52.0848],
+          [0.1681, 52.0879],
+          [0.1681, 52.0911],
+          [0.1681, 52.0942],
+          [0.1681, 52.0973],
+          [0.1681, 52.1004],
+          [0.1681, 52.1035],
+          [0.1681, 52.1067],
+          [0.1681, 52.1098],
+          [0.1681, 52.1129],
+          [0.1681, 52.116],
+          [0.1681, 52.1191],
+          [0.1681, 52.1223],
+          [0.1681, 52.1254],
+          [0.1681, 52.1285],
+          [0.1681, 52.1316],
+          [0.1681, 52.1348],
+          [0.1681, 52.1379]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "road",
+        "name": "Diagonal Access Road"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [0.1651, 52.0985],
+          [0.1654, 52.0988],
+          [0.1658, 52.0992],
+          [0.1661, 52.0995],
+          [0.1664, 52.0998],
+          [0.1667, 52.1001],
+          [0.167, 52.1004],
+          [0.1673, 52.1007],
+          [0.1676, 52.1011],
+          [0.168, 52.1014],
+          [0.1683, 52.1017],
+          [0.1686, 52.102],
+          [0.1689, 52.1023],
+          [0.1692, 52.1026],
+          [0.1695, 52.103],
+          [0.1699, 52.1033],
+          [0.1702, 52.1036],
+          [0.1705, 52.1039],
+          [0.1708, 52.1042],
+          [0.1711, 52.1045]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "road",
+        "name": "Service Road"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [0.1711, 52.0985],
+          [0.1708, 52.0988],
+          [0.1705, 52.0992],
+          [0.1702, 52.0995],
+          [0.1699, 52.0998],
+          [0.1695, 52.1001],
+          [0.1692, 52.1004],
+          [0.1689, 52.1007],
+          [0.1686, 52.1011],
+          [0.1683, 52.1014],
+          [0.168, 52.1017],
+          [0.1676, 52.102],
+          [0.1673, 52.1023],
+          [0.167, 52.1026],
+          [0.1667, 52.103],
+          [0.1664, 52.1033],
+          [0.1661, 52.1036],
+          [0.1658, 52.1039],
+          [0.1654, 52.1042],
+          [0.1651, 52.1045]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-07T18:13:28.110Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-07T19:14:40.867Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "BATTERY_PRECONDITIONING",
+        "timestamp": "2026-03-07T19:14:40.887Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "BATTERY_PRECONDITIONING",
+        "timestamp": "2026-03-07T19:27:07.123Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-07T20:29:42.056Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-07T21:29:42.343Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-07T22:29:42.648Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-07T23:29:43.180Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T00:28:27.181Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T01:29:46.270Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T02:29:45.717Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T03:28:32.241Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T04:01:34.158Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T04:42:47.261Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T05:40:20.008Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T07:30:04.113Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T08:30:06.873Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T09:30:07.345Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T10:28:19.291Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T11:28:52.200Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T12:30:08.487Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T13:28:52.147Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T14:30:09.572Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T15:28:54.119Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T16:30:09.222Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T17:30:10.655Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T18:30:10.317Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T19:30:44.382Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T20:30:12.844Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T21:30:13.857Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T22:28:58.606Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T23:30:14.773Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T00:29:02.734Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "BATTERY_PRECONDITIONING",
+        "timestamp": "2026-03-09T00:29:02.747Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T00:40:19.836Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "BATTERY_PRECONDITIONING",
+        "timestamp": "2026-03-09T00:42:50.346Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T01:45:16.456Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T02:45:17.665Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T03:43:29.449Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T04:40:20.026Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T05:40:19.305Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T06:40:20.065Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "IGNITION_ON",
+        "timestamp": "2026-03-09T07:07:24.211Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "DRIVER_LOGIN",
+        "timestamp": "2026-03-09T07:08:52.816Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "DRIVER_1_WORKING_STATE_CHANGED",
+        "timestamp": "2026-03-09T07:09:03.960Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 28,
+        "trigger": "MOVEMENT",
+        "timestamp": "2026-03-09T07:25:46.583Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 10.2,
+        "heading_deg": 256,
+        "altitude_m": 29,
+        "trigger": "DRIVER_1_WORKING_STATE_CHANGED",
+        "timestamp": "2026-03-09T07:26:03.253Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.162, 52.1015]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 9.8,
+        "heading_deg": 262,
+        "altitude_m": 29,
+        "trigger": "DTJ_ACTIVITY",
+        "timestamp": "2026-03-09T07:26:03.625Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.162, 52.1015]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 261,
+        "altitude_m": 29,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T07:27:00.585Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.163, 52.1019]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 307,
+        "altitude_m": 30,
+        "trigger": "DTJ_ACTIVITY",
+        "timestamp": "2026-03-09T07:31:02.268Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1631, 52.1019]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 307,
+        "altitude_m": 30,
+        "trigger": "DRIVER_1_WORKING_STATE_CHANGED",
+        "timestamp": "2026-03-09T07:31:04.030Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1631, 52.1019]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 307,
+        "altitude_m": 30,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T07:32:42.301Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1631, 52.1019]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 307,
+        "altitude_m": 30,
+        "trigger": "NO_MOVEMENT",
+        "timestamp": "2026-03-09T07:33:54.350Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1631, 52.1019]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 307,
+        "altitude_m": 30,
+        "trigger": "IDLING",
+        "timestamp": "2026-03-09T07:34:04.728Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1631, 52.1019]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 307,
+        "altitude_m": 30,
+        "trigger": "IDLING",
+        "timestamp": "2026-03-09T07:37:56.701Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1631, 52.1019]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 307,
+        "altitude_m": 30,
+        "trigger": "MOVEMENT",
+        "timestamp": "2026-03-09T07:37:59.507Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1631, 52.1019]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 10.9,
+        "heading_deg": 246,
+        "altitude_m": 29,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T07:39:00.589Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.162, 52.1016]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 10.6,
+        "heading_deg": 248,
+        "altitude_m": 29,
+        "trigger": "DTJ_ACTIVITY",
+        "timestamp": "2026-03-09T07:39:02.279Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1619, 52.1016]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 8.3,
+        "heading_deg": 252,
+        "altitude_m": 29,
+        "trigger": "DRIVER_1_WORKING_STATE_CHANGED",
+        "timestamp": "2026-03-09T07:39:03.941Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1619, 52.1016]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 1.7,
+        "heading_deg": 263,
+        "altitude_m": 29,
+        "trigger": "NO_MOVEMENT",
+        "timestamp": "2026-03-09T07:39:21.914Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1617, 52.1016]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 263,
+        "altitude_m": 29,
+        "trigger": "IGNITION_OFF",
+        "timestamp": "2026-03-09T07:39:22.009Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1617, 52.1016]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 263,
+        "altitude_m": 29,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T07:40:19.292Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1617, 52.1016]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 263,
+        "altitude_m": 29,
+        "trigger": "DRIVER_1_WORKING_STATE_CHANGED",
+        "timestamp": "2026-03-09T07:41:12.820Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1617, 52.1016]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 263,
+        "altitude_m": 29,
+        "trigger": "DTJ_ACTIVITY",
+        "timestamp": "2026-03-09T07:42:02.331Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1617, 52.1016]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 263,
+        "altitude_m": 29,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T07:42:42.291Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1617, 52.1016]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 263,
+        "altitude_m": 29,
+        "trigger": "IGNITION_ON",
+        "timestamp": "2026-03-09T07:54:21.985Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1617, 52.1016]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 263,
+        "altitude_m": 29,
+        "trigger": "MOVEMENT",
+        "timestamp": "2026-03-09T07:55:23.024Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1617, 52.1016]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 9.4,
+        "heading_deg": 6,
+        "altitude_m": 30,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T07:56:00.525Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1627, 52.102]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 8.9,
+        "heading_deg": 42,
+        "altitude_m": 30,
+        "trigger": "DRIVER_1_WORKING_STATE_CHANGED",
+        "timestamp": "2026-03-09T07:56:04.434Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1627, 52.1021]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 8.7,
+        "heading_deg": 30,
+        "altitude_m": 30,
+        "trigger": "DTJ_ACTIVITY",
+        "timestamp": "2026-03-09T07:56:04.463Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1627, 52.1021]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 116,
+        "altitude_m": 29,
+        "trigger": "DRIVER_1_WORKING_STATE_CHANGED",
+        "timestamp": "2026-03-09T07:58:35.486Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1631, 52.102]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 116,
+        "altitude_m": 29,
+        "trigger": "DTJ_ACTIVITY",
+        "timestamp": "2026-03-09T07:59:04.228Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1631, 52.102]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0.2,
+        "heading_deg": 116,
+        "altitude_m": 29,
+        "trigger": "NO_MOVEMENT",
+        "timestamp": "2026-03-09T08:01:33.151Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1631, 52.102]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0.2,
+        "heading_deg": 116,
+        "altitude_m": 29,
+        "trigger": "IDLING",
+        "timestamp": "2026-03-09T08:01:43.158Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1631, 52.102]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 116,
+        "altitude_m": 29,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:02:42.308Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1631, 52.102]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 116,
+        "altitude_m": 29,
+        "trigger": "IDLING",
+        "timestamp": "2026-03-09T08:12:26.955Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1631, 52.102]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 116,
+        "altitude_m": 29,
+        "trigger": "MOVEMENT",
+        "timestamp": "2026-03-09T08:12:29.303Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1631, 52.102]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 13.9,
+        "heading_deg": 266,
+        "altitude_m": 24,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:13:00.630Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1635, 52.1018]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 13,
+        "heading_deg": 265,
+        "altitude_m": 24,
+        "trigger": "DRIVER_1_WORKING_STATE_CHANGED",
+        "timestamp": "2026-03-09T08:13:03.914Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1634, 52.1018]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 13,
+        "heading_deg": 265,
+        "altitude_m": 24,
+        "trigger": "DTJ_ACTIVITY",
+        "timestamp": "2026-03-09T08:13:06.137Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1634, 52.1018]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 267,
+        "altitude_m": 27,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:14:00.527Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 1.7,
+        "heading_deg": 267,
+        "altitude_m": 27,
+        "trigger": "NO_MOVEMENT",
+        "timestamp": "2026-03-09T08:14:14.746Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 267,
+        "altitude_m": 27,
+        "trigger": "IGNITION_OFF",
+        "timestamp": "2026-03-09T08:14:14.800Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 267,
+        "altitude_m": 27,
+        "trigger": "DRIVER_1_WORKING_STATE_CHANGED",
+        "timestamp": "2026-03-09T08:16:03.309Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 267,
+        "altitude_m": 27,
+        "trigger": "DTJ_ACTIVITY",
+        "timestamp": "2026-03-09T08:16:04.770Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 267,
+        "altitude_m": 27,
+        "trigger": "IGNITION_ON",
+        "timestamp": "2026-03-09T08:19:05.542Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 267,
+        "altitude_m": 27,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:22:42.218Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 0,
+        "heading_deg": 267,
+        "altitude_m": 27,
+        "trigger": "MOVEMENT",
+        "timestamp": "2026-03-09T08:23:21.039Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 9.3,
+        "heading_deg": 264,
+        "altitude_m": 39,
+        "trigger": "DRIVER_1_WORKING_STATE_CHANGED",
+        "timestamp": "2026-03-09T08:24:04.278Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1601, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 9.3,
+        "heading_deg": 264,
+        "altitude_m": 39,
+        "trigger": "DTJ_ACTIVITY",
+        "timestamp": "2026-03-09T08:24:04.383Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1601, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 65.9,
+        "heading_deg": 282,
+        "altitude_m": 36,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:25:00.578Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1557, 52.1024]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 40.4,
+        "heading_deg": 238,
+        "altitude_m": 37,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:26:00.582Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1429, 52.1007]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 57,
+        "heading_deg": 239,
+        "altitude_m": 37,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:27:00.669Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1349, 52.0973]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 50.7,
+        "heading_deg": 228,
+        "altitude_m": 31,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:28:00.702Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1234, 52.0928]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 48.7,
+        "heading_deg": 221,
+        "altitude_m": 34,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:29:00.680Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1118, 52.0866]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 63.7,
+        "heading_deg": 324,
+        "altitude_m": 35,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:30:00.702Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1055, 52.0907]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 23.7,
+        "heading_deg": 331,
+        "altitude_m": 27,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:31:00.556Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.0999, 52.0958]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 27.4,
+        "heading_deg": 341,
+        "altitude_m": 24,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:32:00.691Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.0986, 52.0992]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 36.1,
+        "heading_deg": 57,
+        "altitude_m": 24,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:32:42.325Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.0992, 52.1008]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA3SD000216",
+        "name": "N88GNW",
+        "speed_kmh": 22,
+        "heading_deg": 71,
+        "altitude_m": 25,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:33:00.726Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.101, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-07T18:15:37.925Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-07T19:15:37.260Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-07T20:15:38.724Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-07T21:15:38.175Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-07T22:15:37.629Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-07T23:15:38.020Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T00:15:37.483Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T01:15:37.785Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T02:15:37.348Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T03:15:37.713Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T04:15:38.196Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T05:15:37.593Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "BATTERY_PRECONDITIONING",
+        "timestamp": "2026-03-08T06:00:20.497Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "BATTERY_PRECONDITIONING",
+        "timestamp": "2026-03-08T06:05:50.735Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T06:31:28.646Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T07:32:52.899Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T08:32:54.265Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T09:32:56.178Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T10:32:55.031Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T11:31:39.871Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T12:32:57.625Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T13:32:55.730Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T14:32:56.851Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T15:32:57.264Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T16:32:59.511Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T17:31:44.864Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T18:33:00.430Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T19:32:59.937Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T20:33:00.847Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T21:33:00.600Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T22:33:01.590Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T23:33:01.948Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T00:33:02.095Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T01:33:01.436Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T02:33:02.219Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T03:15:37.939Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T04:18:05.481Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T05:15:37.290Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "BATTERY_PRECONDITIONING",
+        "timestamp": "2026-03-09T05:28:50.735Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "BATTERY_PRECONDITIONING",
+        "timestamp": "2026-03-09T06:00:24.727Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T06:15:37.425Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T07:41:24.501Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:32:25.292Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "IGNITION_ON",
+        "timestamp": "2026-03-09T08:32:25.299Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "MOVEMENT",
+        "timestamp": "2026-03-09T08:32:25.304Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 80,
+        "altitude_m": 30,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:32:48.402Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1638, 52.102]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 80,
+        "altitude_m": 29,
+        "trigger": "DRIVING_WITHOUT_BEING_LOGGEDIN",
+        "timestamp": "2026-03-09T08:34:07.232Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1638, 52.102]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 13.9,
+        "heading_deg": 260,
+        "altitude_m": 26,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:36:06.397Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.162, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0.9,
+        "heading_deg": 269,
+        "altitude_m": 26,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:36:48.413Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1608, 52.101]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 178,
+        "altitude_m": 30,
+        "trigger": "NO_MOVEMENT",
+        "timestamp": "2026-03-09T08:40:39.986Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1607, 52.101]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 178,
+        "altitude_m": 30,
+        "trigger": "IGNITION_OFF",
+        "timestamp": "2026-03-09T08:40:40.015Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1607, 52.101]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 178,
+        "altitude_m": 30,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:46:06.411Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1607, 52.101]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 178,
+        "altitude_m": 30,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T09:15:37.241Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1607, 52.101]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 178,
+        "altitude_m": 30,
+        "trigger": "IGNITION_ON",
+        "timestamp": "2026-03-09T09:18:01.893Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1607, 52.101]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 178,
+        "altitude_m": 30,
+        "trigger": "IGNITION_OFF",
+        "timestamp": "2026-03-09T09:21:35.819Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1607, 52.101]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 178,
+        "altitude_m": 30,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T10:15:37.313Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1607, 52.101]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 178,
+        "altitude_m": 30,
+        "trigger": "IGNITION_ON",
+        "timestamp": "2026-03-09T10:26:40.317Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1607, 52.101]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0.2,
+        "heading_deg": 178,
+        "altitude_m": 29,
+        "trigger": "MOVEMENT",
+        "timestamp": "2026-03-09T10:28:09.291Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1607, 52.101]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 59,
+        "altitude_m": 30,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T10:28:47.724Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.101]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 3,
+        "heading_deg": 59,
+        "altitude_m": 30,
+        "trigger": "NO_MOVEMENT",
+        "timestamp": "2026-03-09T10:33:31.354Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.101]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 3,
+        "heading_deg": 59,
+        "altitude_m": 30,
+        "trigger": "IDLING",
+        "timestamp": "2026-03-09T10:33:41.190Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.101]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 59,
+        "altitude_m": 30,
+        "trigger": "IDLING",
+        "timestamp": "2026-03-09T10:33:44.488Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.101]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 59,
+        "altitude_m": 30,
+        "trigger": "MOVEMENT",
+        "timestamp": "2026-03-09T10:33:46.774Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1613, 52.101]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 2.8,
+        "heading_deg": 205,
+        "altitude_m": 26,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T10:35:47.649Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1626, 52.1017]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 206,
+        "altitude_m": 27,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T10:36:05.809Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1626, 52.1017]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0.6,
+        "heading_deg": 206,
+        "altitude_m": 27,
+        "trigger": "NO_MOVEMENT",
+        "timestamp": "2026-03-09T10:40:55.379Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1626, 52.1017]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0.6,
+        "heading_deg": 206,
+        "altitude_m": 27,
+        "trigger": "IDLING",
+        "timestamp": "2026-03-09T10:41:05.447Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1626, 52.1017]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 206,
+        "altitude_m": 27,
+        "trigger": "IDLING",
+        "timestamp": "2026-03-09T10:42:37.478Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1626, 52.1017]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 206,
+        "altitude_m": 27,
+        "trigger": "MOVEMENT",
+        "timestamp": "2026-03-09T10:43:04.584Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1626, 52.1017]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 4.3,
+        "heading_deg": 244,
+        "altitude_m": 30,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T10:43:47.568Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1629, 52.1016]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 246,
+        "altitude_m": "NA",
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T10:46:05.534Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.163, 52.1016]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 3.9,
+        "heading_deg": 265,
+        "altitude_m": "NA",
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T10:47:47.696Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1615, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 1.7,
+        "heading_deg": 265,
+        "altitude_m": 31,
+        "trigger": "NO_MOVEMENT",
+        "timestamp": "2026-03-09T10:48:14.965Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1614, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 265,
+        "altitude_m": 31,
+        "trigger": "IGNITION_OFF",
+        "timestamp": "2026-03-09T10:48:15.016Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1614, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 265,
+        "altitude_m": 31,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T10:56:06.195Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1614, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 265,
+        "altitude_m": 31,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T11:15:37.362Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1614, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 265,
+        "altitude_m": 31,
+        "trigger": "BATTERY_PRECONDITIONING",
+        "timestamp": "2026-03-09T12:04:36.762Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1614, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 265,
+        "altitude_m": 31,
+        "trigger": "BATTERY_PRECONDITIONING",
+        "timestamp": "2026-03-09T12:04:37.951Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1614, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 265,
+        "altitude_m": 31,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T12:17:06.136Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1614, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 31,
+        "trigger": "MOVEMENT",
+        "timestamp": "2026-03-09T12:17:06.141Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1614, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 31,
+        "trigger": "IGNITION_ON",
+        "timestamp": "2026-03-09T12:17:06.143Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1614, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 297,
+        "altitude_m": 29,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T12:17:48.102Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1605, 52.1009]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 297,
+        "altitude_m": 29,
+        "trigger": "DRIVING_WITHOUT_BEING_LOGGEDIN",
+        "timestamp": "2026-03-09T12:19:20.931Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1605, 52.1009]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 289,
+        "altitude_m": 31,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T12:26:06.059Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1604, 52.1009]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0.6,
+        "heading_deg": 170,
+        "altitude_m": 33,
+        "trigger": "NO_MOVEMENT",
+        "timestamp": "2026-03-09T12:28:47.110Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1605, 52.1009]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 170,
+        "altitude_m": 33,
+        "trigger": "IGNITION_OFF",
+        "timestamp": "2026-03-09T12:28:47.117Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1605, 52.1009]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 170,
+        "altitude_m": 33,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T12:28:48.098Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1605, 52.1009]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 170,
+        "altitude_m": 33,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T13:15:38.183Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1605, 52.1009]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 170,
+        "altitude_m": 33,
+        "trigger": "IGNITION_ON",
+        "timestamp": "2026-03-09T13:37:21.998Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1605, 52.1009]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 170,
+        "altitude_m": 33,
+        "trigger": "IGNITION_OFF",
+        "timestamp": "2026-03-09T13:39:59.603Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1605, 52.1009]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 170,
+        "altitude_m": 33,
+        "trigger": "IGNITION_ON",
+        "timestamp": "2026-03-09T14:07:30.601Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1605, 52.1009]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 170,
+        "altitude_m": 33,
+        "trigger": "MOVEMENT",
+        "timestamp": "2026-03-09T14:07:55.767Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1605, 52.1009]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 12,
+        "heading_deg": 85,
+        "altitude_m": 30,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T14:08:48.591Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1615, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 13.3,
+        "heading_deg": 243,
+        "altitude_m": 27,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T14:09:47.576Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1637, 52.1021]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 205,
+        "altitude_m": 29,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T14:12:47.465Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1627, 52.1017]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 4.1,
+        "heading_deg": 352,
+        "altitude_m": 31,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T14:15:37.320Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1608, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 2.4,
+        "heading_deg": 356,
+        "altitude_m": 31,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T14:15:47.462Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1608, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 1.7,
+        "heading_deg": 354,
+        "altitude_m": 31,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T14:16:05.700Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1608, 52.1012]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 21.5,
+        "heading_deg": 68,
+        "altitude_m": 33,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T14:22:47.635Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1623, 52.1015]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF611AEA4SD000273",
+        "name": "TA70 WTL",
+        "speed_kmh": 0,
+        "heading_deg": 204,
+        "altitude_m": 29,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T14:23:47.641Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1628, 52.1017]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 46,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-07T18:20:41.102Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.161, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 33,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-07T19:37:15.490Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 44,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-07T20:38:33.784Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 42,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-07T21:40:11.310Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 39,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-07T22:20:41.365Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 42,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-07T23:44:28.168Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 38,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T00:45:47.519Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T01:47:24.235Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 44,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T02:20:41.417Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.161, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 43,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T03:51:33.669Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.161, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T04:52:53.290Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 25,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T05:54:30.594Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.161, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 42,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T06:20:41.094Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 27,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T07:58:38.434Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 33,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T08:59:57.141Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 35,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T10:01:16.310Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 13,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T11:02:35.149Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1612, 52.1015]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 26,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T12:03:54.266Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 42,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T13:05:14.224Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T14:06:33.804Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 21,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T15:07:53.227Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 27,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T16:09:12.072Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1612, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 37,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T17:10:31.154Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 34,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T18:12:08.533Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 42,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T18:20:41.325Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 39,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T20:16:43.417Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 38,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T21:18:20.161Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 44,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T21:20:41.252Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 42,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T22:20:41.284Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 39,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-08T23:22:44.207Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 27,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T00:24:21.530Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 51,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T01:20:40.968Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 37,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T02:28:36.814Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1015]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 26,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T03:30:14.047Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 44,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T04:20:41.344Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 27,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T05:34:25.659Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1013]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 26,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T06:36:03.405Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1611, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 47,
+        "trigger": "IGNITION_ON",
+        "timestamp": "2026-03-09T07:04:17.091Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.161, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 47,
+        "trigger": "IGNITION_OFF",
+        "timestamp": "2026-03-09T07:04:38.217Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.161, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 47,
+        "trigger": "IGNITION_ON",
+        "timestamp": "2026-03-09T07:04:44.459Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.161, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 47,
+        "trigger": "DRIVER_LOGIN",
+        "timestamp": "2026-03-09T07:05:24.719Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.161, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 0,
+        "altitude_m": 46,
+        "trigger": "DRIVER_1_WORKING_STATE_CHANGED",
+        "timestamp": "2026-03-09T07:06:16.797Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.161, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0.6,
+        "heading_deg": 0,
+        "altitude_m": 38,
+        "trigger": "MOVEMENT",
+        "timestamp": "2026-03-09T07:09:29.049Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.161, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 77,
+        "altitude_m": 30,
+        "trigger": "DRIVER_1_WORKING_STATE_CHANGED",
+        "timestamp": "2026-03-09T07:10:16.859Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1614, 52.1018]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 77,
+        "altitude_m": 31,
+        "trigger": "DRIVER_1_WORKING_STATE_CHANGED",
+        "timestamp": "2026-03-09T07:12:16.871Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1614, 52.1017]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 1.7,
+        "heading_deg": 77,
+        "altitude_m": 31,
+        "trigger": "NO_MOVEMENT",
+        "timestamp": "2026-03-09T07:15:03.352Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1614, 52.1017]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 77,
+        "altitude_m": 33,
+        "trigger": "IGNITION_OFF",
+        "timestamp": "2026-03-09T07:19:13.822Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1615, 52.1017]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 77,
+        "altitude_m": 33,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T07:20:40.805Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1615, 52.1017]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 77,
+        "altitude_m": 30,
+        "trigger": "IGNITION_ON",
+        "timestamp": "2026-03-09T07:27:06.162Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1615, 52.1017]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 77,
+        "altitude_m": 31,
+        "trigger": "MOVEMENT",
+        "timestamp": "2026-03-09T07:27:27.431Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1615, 52.1017]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 1.3,
+        "heading_deg": 194,
+        "altitude_m": 29,
+        "trigger": "NO_MOVEMENT",
+        "timestamp": "2026-03-09T07:28:15.263Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.162, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 194,
+        "altitude_m": 29,
+        "trigger": "IGNITION_OFF",
+        "timestamp": "2026-03-09T07:28:15.311Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.162, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 194,
+        "altitude_m": 29,
+        "trigger": "DRIVER_1_WORKING_STATE_CHANGED",
+        "timestamp": "2026-03-09T07:28:16.646Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.162, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 194,
+        "altitude_m": 29,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T07:28:28.856Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.162, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 194,
+        "altitude_m": 29,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T07:28:41.502Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.162, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 194,
+        "altitude_m": 29,
+        "trigger": "DRIVER_1_WORKING_STATE_CHANGED",
+        "timestamp": "2026-03-09T07:30:16.728Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.162, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 194,
+        "altitude_m": 29,
+        "trigger": "IGNITION_ON",
+        "timestamp": "2026-03-09T07:31:11.735Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.162, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 194,
+        "altitude_m": 28,
+        "trigger": "IGNITION_OFF",
+        "timestamp": "2026-03-09T07:45:56.539Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1619, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 194,
+        "altitude_m": 30,
+        "trigger": "IGNITION_ON",
+        "timestamp": "2026-03-09T07:56:36.446Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1619, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 194,
+        "altitude_m": 30,
+        "trigger": "MOVEMENT",
+        "timestamp": "2026-03-09T07:58:56.045Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1619, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 17.4,
+        "heading_deg": 259,
+        "altitude_m": 30,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T07:59:41.526Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1629, 52.1017]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 244,
+        "altitude_m": 34,
+        "trigger": "DRIVER_1_WORKING_STATE_CHANGED",
+        "timestamp": "2026-03-09T08:00:16.140Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 244,
+        "altitude_m": 35,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:00:41.582Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1616, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 1.5,
+        "heading_deg": 266,
+        "altitude_m": 33,
+        "trigger": "NO_MOVEMENT",
+        "timestamp": "2026-03-09T08:01:49.840Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.161, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 266,
+        "altitude_m": 31,
+        "trigger": "IGNITION_OFF",
+        "timestamp": "2026-03-09T08:01:49.866Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.161, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 266,
+        "altitude_m": 29,
+        "trigger": "DRIVER_1_WORKING_STATE_CHANGED",
+        "timestamp": "2026-03-09T08:03:48.158Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.161, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 266,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:08:28.889Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1609, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 266,
+        "altitude_m": 31,
+        "trigger": "IGNITION_ON",
+        "timestamp": "2026-03-09T08:09:55.371Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.161, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 266,
+        "altitude_m": 30,
+        "trigger": "MOVEMENT",
+        "timestamp": "2026-03-09T08:12:17.757Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.161, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 8,
+        "heading_deg": 276,
+        "altitude_m": 30,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:13:41.567Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.16, 52.1014]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 330,
+        "altitude_m": 32,
+        "trigger": "DRIVER_1_WORKING_STATE_CHANGED",
+        "timestamp": "2026-03-09T08:14:16.186Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1597, 52.1021]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 24.1,
+        "heading_deg": 304,
+        "altitude_m": 38,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:15:41.562Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1436, 52.101]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 25,
+        "heading_deg": 73,
+        "altitude_m": 39,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:16:41.548Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1477, 52.1022]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 31.9,
+        "heading_deg": 101,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:17:41.581Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1558, 52.1025]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 15.7,
+        "heading_deg": 88,
+        "altitude_m": 31,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:18:28.903Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1599, 52.1022]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 10,
+        "heading_deg": 86,
+        "altitude_m": 32,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:18:41.574Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1606, 52.1022]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 1.3,
+        "heading_deg": 72,
+        "altitude_m": 39,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:19:41.550Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1649, 52.1028]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 35.2,
+        "heading_deg": 77,
+        "altitude_m": 34,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:20:40.900Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1694, 52.1037]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 38.7,
+        "heading_deg": 77,
+        "altitude_m": 34,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:20:41.497Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1695, 52.1037]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 37.2,
+        "heading_deg": 122,
+        "altitude_m": 34,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:21:41.565Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1775, 52.1049]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 50,
+        "heading_deg": 42,
+        "altitude_m": 33,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:22:41.623Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.1889, 52.1103]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 72,
+        "heading_deg": 69,
+        "altitude_m": 35,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:23:41.592Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.2, 52.1152]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 78.9,
+        "heading_deg": 13,
+        "altitude_m": 37,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:24:41.616Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.2163, 52.1212]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 42.6,
+        "heading_deg": 79,
+        "altitude_m": 43,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:25:41.674Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.2222, 52.1299]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 63.7,
+        "heading_deg": 108,
+        "altitude_m": 39,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:26:41.619Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.2322, 52.1238]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 79.1,
+        "heading_deg": 170,
+        "altitude_m": 36,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:27:41.579Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.2433, 52.117]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 43.5,
+        "heading_deg": 133,
+        "altitude_m": 43,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:28:28.987Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.2485, 52.1098]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 56.5,
+        "heading_deg": 121,
+        "altitude_m": 47,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:28:41.567Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.2504, 52.1088]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 74.8,
+        "heading_deg": 160,
+        "altitude_m": 53,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:29:41.537Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.2625, 52.1024]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 0,
+        "heading_deg": 133,
+        "altitude_m": 50,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:30:41.546Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.2687, 52.0977]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 18.2,
+        "heading_deg": 120,
+        "altitude_m": 52,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:31:41.643Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.2728, 52.0961]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 68.2,
+        "heading_deg": 108,
+        "altitude_m": 49,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:32:41.639Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.2786, 52.0943]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 63.5,
+        "heading_deg": 68,
+        "altitude_m": 54,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:33:41.603Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.2946, 52.0935]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 72.4,
+        "heading_deg": 89,
+        "altitude_m": 82,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:34:41.578Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.3057, 52.0964]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 81.1,
+        "heading_deg": 40,
+        "altitude_m": 79,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:35:41.581Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.3245, 52.0985]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 79.6,
+        "heading_deg": 106,
+        "altitude_m": 107,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:36:41.586Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.3416, 52.1021]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 79.6,
+        "heading_deg": 103,
+        "altitude_m": 107,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:37:41.591Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.3582, 52.0967]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 80.2,
+        "heading_deg": 82,
+        "altitude_m": 107,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:38:28.923Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.3728, 52.0943]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 80,
+        "heading_deg": 74,
+        "altitude_m": 96,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:38:41.580Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.3769, 52.095]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "type": "poi",
+        "vin": "VF620JEA7PB000178",
+        "name": "T88RNW",
+        "speed_kmh": 23.5,
+        "heading_deg": 89,
+        "altitude_m": 88,
+        "trigger": "TIMER",
+        "timestamp": "2026-03-09T08:39:41.572Z"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.393, 52.0952]
+      }
+    }
+  ]
+}
