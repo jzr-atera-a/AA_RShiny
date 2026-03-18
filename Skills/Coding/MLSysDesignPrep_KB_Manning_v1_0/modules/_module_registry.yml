@@ -1,12 +1,29 @@
 # modules/_module_registry.yml
 # ML System Design Interview Prep
-# Based on: Machine Learning System Design (with end-to-end examples)
 # Authors: Arseny Kravchenko, Valerii Babushkin (Manning, Feb 2025)
 
 app:
   name: "ML System Design Prep — Kravchenko & Babushkin"
-  version: "1.0.0"
-  description: "End-to-end ML system design interview prep based on Manning 2025"
+  version: "1.2.0"
+
+groups:
+  - id: core
+    label: "K&B System Design"
+    icon: "book"
+    expanded: true
+    modules: [intro, requirements, data_pipeline, feature_store, modelling, experiment_tracking, evaluation, serving, monitoring, end_to_end]
+
+  - id: case_studies
+    label: "Use Cases"
+    icon: "briefcase"
+    expanded: false
+    modules: [banking_case_study, social_recommender_case_study, av_infrastructure_case_study, quant_trading_case_study]
+
+  - id: practice_group
+    label: "Practice"
+    icon: "clock"
+    expanded: false
+    modules: [practice]
 
 modules:
   intro:
@@ -44,6 +61,13 @@ modules:
     icon: "brain"
     tabname: "modelling"
 
+  experiment_tracking:
+    enabled: true
+    priority: 55
+    name: "Experiment Tracking"
+    icon: "flask"
+    tabname: "experiment_tracking"
+
   evaluation:
     enabled: true
     priority: 60
@@ -72,9 +96,37 @@ modules:
     icon: "project-diagram"
     tabname: "end_to_end"
 
+  banking_case_study:
+    enabled: true
+    priority: 110
+    name: "Banking Customers ML"
+    icon: "university"
+    tabname: "banking_case_study"
+
+  social_recommender_case_study:
+    enabled: true
+    priority: 120
+    name: "Social Media Recommender"
+    icon: "share-alt"
+    tabname: "social_recommender_case_study"
+
+  av_infrastructure_case_study:
+    enabled: true
+    priority: 130
+    name: "AV Infrastructure Assessment"
+    icon: "car"
+    tabname: "av_infrastructure_case_study"
+
   practice:
     enabled: true
-    priority: 100
+    priority: 200
     name: "Timed Practice"
     icon: "clock"
     tabname: "practice"
+
+  quant_trading_case_study:
+    enabled: true
+    priority: 140
+    name: "ML Quant Trading — Equity Alpha"
+    icon: "line-chart"
+    tabname: "quant_trading_case_study"

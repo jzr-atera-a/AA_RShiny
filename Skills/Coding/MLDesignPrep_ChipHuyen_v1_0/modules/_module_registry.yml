@@ -198,6 +198,14 @@ modules:
     icon: "car"
     tabname: "av_infrastructure_case_study"
 
+  quant_trading_case_study:
+    enabled: true
+    priority: 118
+    group: case_studies
+    name: "Quant Trading ML"
+    icon: "line-chart"
+    tabname: "quant_trading_case_study"
+
   banking_case_study:
     enabled: true
     priority: 115
