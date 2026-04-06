@@ -1,0 +1,409 @@
+/* www/css/global.css - Welch Group Fleet Monitor
+   Dark teal/navy dashboard theme — mirrors IntegratedAVSuite corporate palette */
+
+/* ── Base & Reset ───────────────────────────────────────────── */
+:root {
+  --wg-teal:        #1a9b9b;
+  --wg-teal-light:  #7ec8e3;
+  --wg-navy:        #0d1b2a;
+  --wg-dark:        #131e2b;
+  --wg-card:        #192435;
+  --wg-card-hdr:    #1a2d45;
+  --wg-border:      #253a52;
+  --wg-text:        #ccd9e8;
+  --wg-muted:       #8fa0b5;
+  --wg-accent:      #fd7e14;
+  --wg-green:       #28a745;
+  --wg-red:         #dc3545;
+  --wg-purple:      #6f42c1;
+}
+
+html, body { background: var(--wg-navy) !important; }
+
+/* ── Sidebar overrides ────────────────────────────────────────── */
+.main-sidebar, .left-side {
+  background: #0f1e2e !important;
+  border-right: 1px solid var(--wg-teal) !important;
+}
+.sidebar-menu > li > a {
+  color: var(--wg-muted) !important;
+  border-left: 3px solid transparent;
+  transition: all .2s;
+}
+.sidebar-menu > li:hover > a,
+.sidebar-menu > li.active > a {
+  color: var(--wg-teal-light) !important;
+  background: rgba(26,155,155,.12) !important;
+  border-left-color: var(--wg-teal) !important;
+}
+.wg-sidebar-brand {
+  padding: 14px 18px;
+  color: var(--wg-teal);
+  font-size: 11px;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  line-height: 1.5;
+}
+.wg-sidebar-footer {
+  padding: 12px 18px;
+  color: var(--wg-muted);
+  font-size: 10px;
+  opacity: .7;
+}
+
+/* ── Header ──────────────────────────────────────────────────── */
+.main-header .navbar,
+.main-header .logo {
+  background: #0f1e2e !important;
+  border-bottom: 1px solid var(--wg-teal) !important;
+  color: var(--wg-teal-light) !important;
+}
+.main-header .logo {
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  color: var(--wg-teal-light) !important;
+  letter-spacing: .3px;
+}
+
+/* ── Content wrapper ─────────────────────────────────────────── */
+.content-wrapper, .right-side {
+  background: var(--wg-navy) !important;
+}
+.content { padding: 16px 20px; }
+
+/* ── Page header ─────────────────────────────────────────────── */
+.wg-page-header {
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--wg-border);
+}
+.wg-page-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--wg-teal-light);
+  letter-spacing: .2px;
+}
+.wg-page-subtitle {
+  font-size: 13px;
+  color: var(--wg-muted);
+  margin-top: 4px;
+  line-height: 1.6;
+}
+
+/* ── Cards ───────────────────────────────────────────────────── */
+.wg-card {
+  background: var(--wg-card);
+  border: 1px solid var(--wg-border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.wg-card-header {
+  background: var(--wg-card-hdr);
+  color: var(--wg-teal-light);
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 13px;
+  border-bottom: 1px solid var(--wg-border);
+  letter-spacing: .3px;
+}
+.wg-card-body {
+  padding: 16px;
+  color: var(--wg-text);
+}
+
+/* ── Inputs ──────────────────────────────────────────────────── */
+.wg-field-group { margin-bottom: 14px; }
+.wg-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--wg-muted);
+  margin-bottom: 5px;
+}
+.wg-hint {
+  color: var(--wg-muted);
+  font-size: 11px;
+  line-height: 1.5;
+  display: block;
+  margin-top: 4px;
+}
+.wg-divider { border-color: var(--wg-border); margin: 14px 0; }
+
+input[type="text"], input[type="password"], select, .form-control {
+  background: var(--wg-dark) !important;
+  border: 1px solid var(--wg-border) !important;
+  color: var(--wg-text) !important;
+  border-radius: 5px !important;
+}
+input[type="text"]:focus,
+input[type="password"]:focus,
+.form-control:focus {
+  border-color: var(--wg-teal) !important;
+  box-shadow: 0 0 0 2px rgba(26,155,155,.25) !important;
+}
+input[type="text"]::placeholder,
+input[type="password"]::placeholder { color: #4a6280 !important; }
+
+/* Radio / checkbox labels */
+.radio label, .checkbox label { color: var(--wg-text) !important; }
+.shiny-input-radiogroup label,
+.shiny-input-checkboxgroup label { color: var(--wg-text) !important; }
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.wg-btn {
+  border: none;
+  border-radius: 5px;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 9px 18px;
+  cursor: pointer;
+  transition: filter .15s;
+}
+.wg-btn:hover { filter: brightness(1.15); }
+.wg-btn-primary {
+  background: var(--wg-teal) !important;
+  color: #fff !important;
+}
+.wg-btn-secondary {
+  background: var(--wg-card-hdr) !important;
+  color: var(--wg-teal-light) !important;
+  border: 1px solid var(--wg-teal) !important;
+}
+
+/* ── Status indicators ───────────────────────────────────────── */
+.wg-status-row  { display: flex; align-items: center; gap: 12px; }
+.wg-status-dot  { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+.wg-status-green { background: var(--wg-green); box-shadow: 0 0 8px var(--wg-green); }
+.wg-status-red   { background: var(--wg-red);   box-shadow: 0 0 8px var(--wg-red); }
+.wg-status-grey  { background: #4a6280; }
+.wg-status-text  { font-size: 14px; color: var(--wg-text); }
+.wg-status-detail { color: var(--wg-muted); font-size: 13px; }
+.wg-status-meta  { margin-top: 8px; color: var(--wg-muted); font-size: 12px; }
+.wg-error-hint {
+  margin-top: 10px; padding: 8px 12px;
+  background: rgba(220,53,69,.15);
+  border: 1px solid rgba(220,53,69,.3);
+  border-radius: 5px;
+  color: #e07b84;
+  font-size: 12px;
+}
+.wg-metric-mini {
+  display: inline-block;
+  background: var(--wg-dark);
+  border: 1px solid var(--wg-border);
+  border-radius: 6px;
+  padding: 8px 16px;
+  text-align: center;
+  margin-right: 8px;
+  margin-top: 8px;
+  color: var(--wg-teal-light);
+  font-size: 13px;
+}
+.wg-metric-mini small { color: var(--wg-muted); font-size: 10px; text-transform: uppercase; }
+
+/* ── Fleet reference ──────────────────────────────────────────── */
+.wg-fleet-ref { display: flex; gap: 16px; flex-wrap: wrap; }
+.wg-fleet-vehicle {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--wg-dark);
+  border: 1px solid var(--wg-border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  flex: 1; min-width: 200px;
+}
+.wg-reg-plate {
+  background: #fff;
+  color: #1a1a1a;
+  font-family: "Courier New", monospace;
+  font-weight: 900;
+  font-size: 16px;
+  letter-spacing: 2px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  border: 2px solid #ffc107;
+  white-space: nowrap;
+}
+.wg-vehicle-detail { color: var(--wg-text); font-size: 13px; }
+.wg-vehicle-detail small { color: var(--wg-muted); }
+
+/* ── Endpoint reference ──────────────────────────────────────── */
+.wg-endpoint-box p { color: var(--wg-muted); font-size: 12px; margin: 6px 0; }
+.wg-endpoint-box code {
+  background: var(--wg-dark);
+  border: 1px solid var(--wg-border);
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 11px;
+  color: var(--wg-teal-light);
+  word-break: break-all;
+}
+.wg-endpoint-ref {
+  background: var(--wg-dark);
+  border: 1px solid var(--wg-border);
+  border-radius: 6px;
+  padding: 12px;
+  height: 100%;
+}
+.wg-endpoint-ref p { color: var(--wg-muted); font-size: 12px; margin: 6px 0; }
+.wg-endpoint-ref small { font-size: 10px; }
+.wg-method-get {
+  background: var(--wg-teal);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .5px;
+}
+.wg-param { color: #a0c4e0 !important; font-family: monospace; }
+
+/* ── Badges ──────────────────────────────────────────────────── */
+.wg-badge {
+  background: var(--wg-teal);
+  color: #fff;
+  border-radius: 10px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 8px;
+}
+.wg-demo-badge {
+  background: var(--wg-accent);
+  color: #fff;
+  border-radius: 10px;
+  padding: 3px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  align-self: center;
+}
+.wg-demo-notice {
+  background: rgba(253,126,20,.12);
+  border: 1px solid rgba(253,126,20,.3);
+  border-radius: 5px;
+  color: #fd7e14;
+  padding: 8px 12px;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+/* ── Map ─────────────────────────────────────────────────────── */
+.wg-map-controls {
+  color: var(--wg-muted);
+  font-size: 12px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.leaflet-container { border-radius: 6px; }
+
+/* ── DataTables dark theme ────────────────────────────────────── */
+.wg-dt,
+.dataTables_wrapper {
+  color: var(--wg-text) !important;
+}
+.dataTables_wrapper .dataTables_length label,
+.dataTables_wrapper .dataTables_filter label,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate { color: var(--wg-muted) !important; }
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+  background: var(--wg-dark) !important;
+  color: var(--wg-text) !important;
+  border-color: var(--wg-border) !important;
+}
+table.dataTable thead th {
+  background: var(--wg-card-hdr) !important;
+  color: var(--wg-teal-light) !important;
+  border-bottom: 2px solid var(--wg-teal) !important;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+table.dataTable tbody tr {
+  background: var(--wg-card) !important;
+  color: var(--wg-text) !important;
+}
+table.dataTable tbody tr:hover { background: var(--wg-card-hdr) !important; }
+table.dataTable tbody tr.odd  { background: var(--wg-dark) !important; }
+table.dataTable tbody td { border-color: var(--wg-border) !important; font-size: 13px; }
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  color: var(--wg-muted) !important;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background: var(--wg-teal) !important;
+  color: #fff !important;
+  border-color: var(--wg-teal) !important;
+  border-radius: 3px;
+}
+.dt-buttons .dt-button {
+  background: var(--wg-card-hdr) !important;
+  color: var(--wg-teal-light) !important;
+  border: 1px solid var(--wg-border) !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+}
+
+/* ── Tabs ────────────────────────────────────────────────────── */
+.nav-tabs { border-color: var(--wg-border) !important; }
+.nav-tabs > li > a {
+  color: var(--wg-muted) !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  font-size: 13px;
+}
+.nav-tabs > li.active > a {
+  color: var(--wg-teal-light) !important;
+  background: var(--wg-card-hdr) !important;
+  border-color: var(--wg-teal) var(--wg-teal) transparent !important;
+}
+.tab-content { background: var(--wg-card); border-radius: 0 6px 6px 6px; padding: 4px; }
+
+/* ── Verbatim output (JSON) ──────────────────────────────────── */
+pre.shiny-text-output {
+  background: var(--wg-dark);
+  border: 1px solid var(--wg-border);
+  color: #a0c4e0;
+  border-radius: 5px;
+  font-size: 12px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+/* ── Statistics section ──────────────────────────────────────── */
+.wg-stat-section { margin-bottom: 20px; }
+.wg-geo-box {
+  background: var(--wg-dark);
+  border: 1px solid var(--wg-border);
+  border-radius: 6px;
+  padding: 14px;
+}
+
+/* ── Empty state ─────────────────────────────────────────────── */
+.wg-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--wg-muted);
+}
+.wg-empty-state p { margin-top: 12px; font-size: 13px; }
+
+/* ── Notifications ───────────────────────────────────────────── */
+.shiny-notification {
+  background: var(--wg-card-hdr) !important;
+  border-left: 4px solid var(--wg-teal) !important;
+  color: var(--wg-text) !important;
+}
+.shiny-notification-error   { border-left-color: var(--wg-red)   !important; }
+.shiny-notification-warning { border-left-color: var(--wg-accent)!important; }
+
+/* ── Progress bar ────────────────────────────────────────────── */
+.progress-bar { background-color: var(--wg-teal) !important; }
+
+/* ── Scrollbar ───────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--wg-dark); }
+::-webkit-scrollbar-thumb { background: var(--wg-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--wg-teal); }

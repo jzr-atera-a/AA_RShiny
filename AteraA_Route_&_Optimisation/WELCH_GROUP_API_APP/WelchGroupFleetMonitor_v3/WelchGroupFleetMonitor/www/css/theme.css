@@ -1,0 +1,520 @@
+/* ====================================
+   CORPORATE TEAL/CYAN THEME
+   EV Route Optimizer v3.0
+   ==================================== */
+
+/* Main Backgrounds */
+.content-wrapper, .right-side {
+  background: linear-gradient(135deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+  min-height: 100vh;
+}
+.sidebar, .main-sidebar {
+  background: linear-gradient(180deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+}
+
+/* Sidebar Menu */
+.sidebar .sidebar-menu > li > a {
+  color: #ffffff !important;
+  border-left: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+.sidebar .sidebar-menu > li.active > a,
+.sidebar .sidebar-menu > li:hover > a {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-left: 3px solid #00A39A !important;
+}
+
+/* Header */
+.main-header, .main-header .navbar {
+  background: linear-gradient(135deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+}
+.main-header .logo {
+  background: linear-gradient(135deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+/* Boxes */
+.box {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 25px rgba(0, 44, 60, 0.2) !important;
+  margin-bottom: 20px;
+  transition: transform 0.2s ease;
+}
+.box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(0, 44, 60, 0.3) !important;
+}
+.box-header {
+  background: linear-gradient(135deg, #008A82 0%, #00A39A 100%) !important;
+  color: white !important;
+  border-radius: 12px 12px 0 0 !important;
+  padding: 15px 20px;
+}
+.box-header > .box-title {
+  color: #ffffff !important;
+  font-weight: 600;
+  font-size: 16px;
+}
+.box-body {
+  background-color: #ffffff !important;
+  padding: 20px;
+}
+
+/* Status Boxes */
+.status-success {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%) !important;
+  color: #155724 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #00A39A !important;
+  margin: 10px 0;
+}
+.status-error {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%) !important;
+  color: #721c24 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #e74c3c !important;
+  margin: 10px 0;
+}
+.status-info {
+  background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%) !important;
+  color: #0c5460 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #17a2b8 !important;
+  margin: 10px 0;
+}
+.status-warning {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%) !important;
+  color: #856404 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #f39c12 !important;
+  margin: 10px 0;
+}
+
+/* Connection Status - EV Route Specific */
+.connection-success {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%) !important;
+  color: #155724 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #00A39A !important;
+  margin: 10px 0;
+  box-shadow: 0 4px 15px rgba(0, 163, 154, 0.2);
+}
+.connection-error {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%) !important;
+  color: #721c24 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #e74c3c !important;
+  margin: 10px 0;
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.2);
+}
+.connection-warning {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%) !important;
+  color: #856404 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #f39c12 !important;
+  margin: 10px 0;
+  box-shadow: 0 4px 15px rgba(243, 156, 18, 0.2);
+}
+
+/* Form Controls */
+.form-control {
+  border-radius: 8px !important;
+  border: 2px solid #ddd !important;
+  transition: border-color 0.3s ease;
+}
+.form-control:focus {
+  border-color: #008A82 !important;
+  box-shadow: 0 0 0 3px rgba(0, 138, 130, 0.1) !important;
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, #008A82 0%, #00A39A 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+  font-weight: 600;
+  transition: transform 0.2s ease;
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #006b63 0%, #007d75 100%) !important;
+  transform: translateY(-1px);
+}
+.btn-success {
+  background: linear-gradient(135deg, #00A39A 0%, #008A82 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+  font-weight: 600;
+}
+.btn-info {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+  font-weight: 600;
+}
+.btn-danger {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+}
+.btn-warning {
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+}
+
+/* Small Boxes (Value Boxes) */
+.small-box {
+  border-radius: 12px !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+  transition: transform 0.2s ease;
+}
+.small-box:hover {
+  transform: translateY(-3px);
+}
+.small-box.bg-aqua {
+  background: linear-gradient(135deg, #00A39A 0%, #008A82 100%) !important;
+}
+.small-box.bg-blue {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+}
+.small-box.bg-green {
+  background: linear-gradient(135deg, #27ae60 0%, #229954 100%) !important;
+}
+.small-box.bg-yellow {
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
+}
+.small-box.bg-red {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+}
+
+/* Leaflet Map */
+.leaflet-container {
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Progress Bars */
+.progress {
+  height: 25px;
+  border-radius: 8px;
+  background: #ecf0f1;
+}
+.progress-bar {
+  background: linear-gradient(135deg, #008A82 0%, #00A39A 100%) !important;
+  border-radius: 8px;
+}
+
+/* Text Areas */
+textarea.form-control {
+  min-height: 100px;
+}
+
+/* Alerts */
+.alert-info {
+  background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%) !important;
+  border-left: 4px solid #17a2b8 !important;
+  border-radius: 8px;
+}
+
+/* Loading Spinner */
+#loading_spinner {
+  color: #008A82;
+}
+
+/* Helper Text */
+.text-muted {
+  color: #7f8c8d !important;
+  font-size: 12px;
+}
+
+/* ── Progress log (monospace terminal style) ── */
+.progress-log { font-family: monospace; font-size: 12px; }
+.progress-log .log-ok    { color: #2ecc71; }
+.progress-log .log-error { color: #e74c3c; }
+.progress-log .log-info  { color: #3498db; }
+
+/* ── Trajectory map height ── */
+.traj-map { height: 450px !important; }
+
+/* ── Tab panels inside boxes — match theme ── */
+.nav-tabs > li > a {
+  border-radius: 8px 8px 0 0 !important;
+  color: #008A82 !important;
+  font-weight: 500;
+}
+.nav-tabs > li.active > a,
+.nav-tabs > li.active > a:focus,
+.nav-tabs > li.active > a:hover {
+  background: linear-gradient(135deg, #008A82 0%, #00A39A 100%) !important;
+  color: #ffffff !important;
+  border-color: #008A82 !important;
+}
+.nav-tabs > li > a:hover {
+  background: rgba(0, 138, 130, 0.1) !important;
+  border-color: #008A82 !important;
+}
+.tab-content {
+  background: #ffffff !important;
+  border: 1px solid #dee2e6 !important;
+  border-top: none !important;
+  border-radius: 0 0 8px 8px !important;
+  padding: 15px !important;
+}
+
+/* ── Collapsible box chevron colour ── */
+.box-header .btn {
+  color: #ffffff !important;
+}
+
+/* ── Checkbox and radio label colour ── */
+.checkbox label, .radio label {
+  color: #2c3e50;
+  font-size: 13px;
+}
+
+/* ── Feature selection preset buttons spacing ── */
+.btn-sm {
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+/* ── Feature source annotation line ── */
+.feature-source-note {
+  font-size: 11px;
+  color: #7f8c8d;
+  font-family: monospace;
+  background: #f8f9fa;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+/* ── Warning/info inline banners (route optimizer region check) ── */
+.region-warning {
+  background: linear-gradient(135deg, #fdf2f8 0%, #fce4ec 100%) !important;
+  border-left: 4px solid #c0392b !important;
+  border-radius: 6px !important;
+  padding: 8px 12px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #721c24;
+}
+.region-ok {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%) !important;
+  border-left: 4px solid #00A39A !important;
+  border-radius: 6px !important;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: #155724;
+}
+
+
+/* ============================================================
+   WG-* CUSTOM CLASSES (Welch Group Fleet Monitor additions)
+   These mirror standard .box/.box-header/.box-body styling
+   ============================================================ */
+
+/* Page header - floats on teal background */
+.wg-page-header {
+  background: rgba(255,255,255,0.12);
+  border-bottom: 2px solid rgba(255,255,255,0.25);
+  padding: 18px 22px 14px;
+  margin-bottom: 18px;
+  border-radius: 0 0 10px 10px;
+}
+.wg-page-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+}
+.wg-page-title .fa { color: #ffffff; margin-right:8px; }
+.wg-page-subtitle { font-size: 13px; color: rgba(255,255,255,0.85); margin-top: 4px; }
+
+/* wg-card = white card, same as .box */
+.wg-card {
+  background: rgba(255,255,255,0.98);
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0,44,60,0.2);
+  margin-bottom: 20px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.wg-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(0,44,60,0.3);
+}
+/* wg-card-header = teal gradient, white text, same as .box-header */
+.wg-card-header {
+  background: linear-gradient(135deg, #008A82 0%, #00A39A 100%);
+  color: #ffffff;
+  padding: 15px 20px;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wg-card-header .fa,
+.wg-card-header i { color: #ffffff; }
+/* wg-card-body = white, dark readable text, same as .box-body */
+.wg-card-body {
+  background-color: #ffffff;
+  padding: 20px;
+  color: #2c3e50;
+}
+.wg-card-body label { color: #2c3e50; font-weight: 600; }
+.wg-card-body p, .wg-card-body span, .wg-card-body small,
+.wg-card-body h4, .wg-card-body h5, .wg-card-body h6,
+.wg-card-body li, .wg-card-body b, .wg-card-body strong { color: #2c3e50; }
+
+/* WG Buttons */
+.wg-btn {
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 9px 18px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+.wg-btn-primary {
+  background: linear-gradient(135deg, #008A82 0%, #00A39A 100%);
+  color: #ffffff;
+}
+.wg-btn-primary:hover { background: linear-gradient(135deg, #006b63 0%, #007d75 100%); color:#ffffff; transform:translateY(-1px); }
+.wg-btn-secondary {
+  background: rgba(0,138,130,0.1);
+  color: #008A82;
+  border: 2px solid #008A82;
+}
+.wg-btn-secondary:hover { background: rgba(0,138,130,0.2); }
+
+/* Sidebar brand/footer */
+li.wg-sidebar-brand { list-style:none; padding:14px 16px 10px; border-bottom:1px solid rgba(255,255,255,0.2); margin-bottom:6px; }
+li.wg-sidebar-brand b { color:#ffffff; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.8px; display:block; }
+li.wg-sidebar-brand small { color:rgba(255,255,255,0.65); font-size:10px; }
+li.wg-sidebar-footer { list-style:none; padding:10px 16px; border-top:1px solid rgba(255,255,255,0.15); }
+li.wg-sidebar-footer small { color:rgba(255,255,255,0.55); font-size:10px; display:block; line-height:1.7; }
+
+/* WG form labels */
+.wg-label { color:#2c3e50; font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:5px; display:block; }
+.wg-hint { color:#7f8c8d; font-size:11px; display:block; margin-top:5px; }
+hr.wg-divider { border-color:#dde9e7; margin:12px 0; }
+
+/* Status indicators */
+.wg-status-row { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+.wg-status-dot { width:13px; height:13px; border-radius:50%; display:inline-block; }
+.wg-status-green { background:#00A39A; box-shadow:0 0 6px rgba(0,163,154,0.7); }
+.wg-status-red   { background:#e74c3c; box-shadow:0 0 6px rgba(231,76,60,0.7); }
+.wg-status-grey  { background:#95a5a6; }
+.wg-status-text  { font-weight:700; color:#2c3e50; font-size:14px; }
+.wg-status-detail{ color:#7f8c8d; font-size:13px; }
+.wg-status-meta  { color:#7f8c8d; font-size:11px; margin-top:4px; }
+.wg-error-hint { background:#fdf2f2; border-left:3px solid #e74c3c; border-radius:4px; padding:8px 12px; color:#721c24; font-size:12px; margin-top:8px; }
+
+/* Metric mini cards */
+.wg-metric-mini {
+  background: #ffffff;
+  border-left: 4px solid #008A82;
+  border-radius: 8px;
+  padding: 10px 16px;
+  text-align: center;
+  min-width: 80px;
+  box-shadow: 0 2px 8px rgba(0,44,60,0.1);
+}
+.wg-metric-mini b { display:block; font-size:20px; font-weight:800; color:#2c3e50; }
+.wg-metric-mini small { font-size:10px; color:#7f8c8d; text-transform:uppercase; letter-spacing:0.4px; }
+
+/* Badges */
+.wg-badge { display:inline-block; background:linear-gradient(135deg,#008A82,#00A39A); color:#ffffff; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:600; margin-left:10px; vertical-align:middle; }
+.wg-demo-badge { display:inline-block; background:linear-gradient(135deg,#e67e22,#f39c12); color:#ffffff; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; }
+
+/* Fleet reference */
+.wg-fleet-ref { display:flex; flex-direction:column; gap:10px; }
+.wg-fleet-vehicle { display:flex; align-items:center; gap:12px; padding:10px 14px; background:linear-gradient(135deg,#d4edda,#c3e6cb); border-radius:10px; border:1px solid #b2dfdb; }
+.wg-reg-plate { background:linear-gradient(135deg,#002C3C,#008A82); color:#ffffff; font-family:monospace; font-weight:800; font-size:13px; padding:6px 12px; border-radius:6px; letter-spacing:1px; }
+.wg-vehicle-detail b { color:#2c3e50; font-size:13px; display:block; }
+.wg-vehicle-detail small { color:#7f8c8d; font-size:11px; }
+
+/* Endpoint reference */
+.wg-endpoint-box p { color:#2c3e50; font-size:13px; margin-bottom:8px; }
+.wg-endpoint-box code { background:#d4edda; color:#155724; border:1px solid #b2dfdb; padding:2px 6px; border-radius:4px; font-size:11px; }
+.wg-endpoint-ref { padding:12px; background:#d4edda; border-left:3px solid #00A39A; border-radius:0 8px 8px 0; margin-bottom:10px; }
+.wg-endpoint-ref p { color:#2c3e50; }
+.wg-method-get { display:inline-block; background:linear-gradient(135deg,#008A82,#00A39A); color:#ffffff; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:800; }
+.wg-param { color:#7f8c8d; font-size:10px; display:block; margin-top:4px; }
+
+/* Empty state */
+.wg-empty-state { text-align:center; padding:40px 20px; }
+.wg-empty-state p { color:#7f8c8d; font-size:13px; }
+.wg-empty-state .fa { color:#b2dfdb; }
+
+/* DataTable wg-dt */
+table.wg-dt { font-size:12px; }
+table.wg-dt thead th {
+  background: linear-gradient(135deg, #008A82 0%, #00A39A 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 10px 12px;
+  border-bottom: none;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+table.wg-dt tbody td { color: #2c3e50; border-color: #e8f5f4; padding: 8px 12px; vertical-align: middle; }
+table.wg-dt tbody tr:nth-child(even) { background: #d4edda; }
+table.wg-dt tbody tr:hover { background: #c3e6cb; }
+.dt-buttons .btn { background:linear-gradient(135deg,#008A82,#00A39A); color:#ffffff; border:none; border-radius:6px; font-weight:600; margin-right:4px; }
+
+/* Map controls */
+.wg-map-controls { background:#d4edda; border-radius:8px; border:1px solid #b2dfdb; padding:8px 14px; margin-bottom:10px; }
+.wg-map-controls small { color:#2c3e50; font-size:11px; }
+
+/* Debug sections */
+.wg-debug-section { background:#ffffff; border:1px solid #b2dfdb; border-radius:8px; padding:14px; margin-bottom:12px; }
+.wg-debug-section h5 { color:#008A82; font-size:13px; margin-bottom:8px; font-weight:700; }
+
+/* Statistics sections */
+.wg-stat-section { margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid #b2dfdb; }
+.wg-stat-section:last-child { border-bottom:none; }
+.wg-stat-section h5 { color:#008A82; font-weight:700; font-size:13px; margin-bottom:8px; }
+.wg-geo-box { background:#d4edda; border-radius:8px; padding:14px; }
+.wg-demo-notice { background:#fff3cd; border-left:3px solid #f39c12; border-radius:4px; padding:8px 12px; font-size:12px; color:#856404; margin-top:10px; }
+
+/* Verbatim terminal output */
+.shiny-text-output {
+  background: #002C3C;
+  color: #00A39A;
+  font-family: monospace;
+  font-size: 11px;
+  border-radius: 6px;
+  padding: 12px;
+  border: 1px solid rgba(0,163,154,0.3);
+}
+
+/* Volvo context boxes */
+.volvo-context-banner { display:flex; align-items:center; gap:12px; background:linear-gradient(135deg,#002C3C,#008A82); border-radius:8px; padding:10px 16px; margin-bottom:16px; }
+.volvo-badge { background:#008A82; color:#ffffff; border-radius:20px; padding:4px 14px; font-size:11px; font-weight:800; letter-spacing:0.5px; white-space:nowrap; }
+.volvo-relevance { color:rgba(255,255,255,0.8); font-size:12px; font-style:italic; }
+.volvo-card { background:#d4edda; border-left:4px solid #00A39A; border-radius:0 8px 8px 0; padding:14px 16px; margin-bottom:14px; }
+.volvo-card h5 { color:#155724; font-weight:800; font-size:13px; margin-bottom:8px; }
+.volvo-card p, .volvo-card li { font-size:13px; line-height:1.6; color:#2c3e50; }
+.volvo-card code { background:#b2dfdb; color:#155724; padding:1px 5px; border-radius:3px; font-size:11px; }

@@ -1,0 +1,189 @@
+# modules/_module_registry.yml
+# Meta ML Interview Prep Suite v3.0 + Feedback Tabs
+
+app:
+  name: "Meta ML Interview Prep"
+  version: "3.0.0"
+
+modules:
+  python_runner:
+    enabled: true
+    priority: 5
+    name: "Python Runner"
+    icon: "terminal"
+    tabname: "python_runner"
+
+  ml_design_whiteboard:
+    enabled: true
+    priority: 6
+    name: "Design Whiteboard"
+    icon: "chalkboard"
+    tabname: "ml_design_whiteboard"
+
+  intro:
+    enabled: true
+    priority: 10
+    name: "Welcome & Overview"
+    icon: "home"
+    tabname: "intro"
+
+  intro_profile:
+    enabled: true
+    priority: 11
+    name: "Your Candidacy"
+    icon: "id-badge"
+    tabname: "intro_profile"
+
+  intro_feedback:
+    enabled: true
+    priority: 12
+    name: "Process Feedback"
+    icon: "comments"
+    tabname: "intro_feedback"
+
+  qualities:
+    enabled: true
+    priority: 20
+    name: "Engineer Qualities"
+    icon: "star"
+    tabname: "qualities"
+
+  qualities_profile:
+    enabled: true
+    priority: 21
+    name: "Your Qualities"
+    icon: "medal"
+    tabname: "qualities_profile"
+
+  coding_interview:
+    enabled: true
+    priority: 30
+    name: "Coding Interview"
+    icon: "code"
+    tabname: "coding_interview"
+
+  coding_profile:
+    enabled: true
+    priority: 31
+    name: "Your Coding Angle"
+    icon: "laptop-code"
+    tabname: "coding_profile"
+
+  coding_feedback:
+    enabled: true
+    priority: 32
+    name: "Coding Feedback"
+    icon: "comment-dots"
+    tabname: "coding_feedback"
+
+  maze_solver_tab:
+    enabled: true
+    priority: 33
+    name: "Maze Solver"
+    icon: "code-branch"
+    tabname: "maze_solver_tab"
+
+  ml_design:
+    enabled: true
+    priority: 40
+    name: "ML Design Interview"
+    icon: "brain"
+    tabname: "ml_design"
+
+  ml_design_profile:
+    enabled: true
+    priority: 41
+    name: "Your ML Systems"
+    icon: "robot"
+    tabname: "ml_design_profile"
+
+  ml_design_excalidraw:
+    enabled: true
+    priority: 42
+    name: "Sketch Whiteboard"
+    icon: "pencil-alt"
+    tabname: "ml_design_excalidraw"
+
+  ml_design_coderpad_wb:
+    enabled: true
+    priority: 43
+    name: "CoderPad Whiteboard"
+    icon: "chalkboard-teacher"
+    tabname: "ml_design_coderpad_wb"
+
+  ml_design_feedback_1:
+    enabled: true
+    priority: 44
+    name: "Design Feedback I"
+    icon: "check-circle"
+    tabname: "ml_design_feedback_1"
+
+  ml_design_feedback_2:
+    enabled: true
+    priority: 45
+    name: "Design Feedback II"
+    icon: "exclamation-circle"
+    tabname: "ml_design_feedback_2"
+
+  tech_project:
+    enabled: true
+    priority: 50
+    name: "Technical Project"
+    icon: "project-diagram"
+    tabname: "tech_project"
+
+  tech_project_profile:
+    enabled: true
+    priority: 51
+    name: "Your Projects"
+    icon: "layer-group"
+    tabname: "tech_project_profile"
+
+  tech_project_feedback:
+    enabled: true
+    priority: 52
+    name: "Retro Feedback"
+    icon: "search"
+    tabname: "tech_project_feedback"
+
+  cross_functional:
+    enabled: true
+    priority: 60
+    name: "Cross-Functional"
+    icon: "handshake"
+    tabname: "cross_functional"
+
+  cross_functional_profile:
+    enabled: true
+    priority: 61
+    name: "Your XFN Stories"
+    icon: "people-arrows"
+    tabname: "cross_functional_profile"
+
+  cross_functional_feedback:
+    enabled: true
+    priority: 62
+    name: "XFN Feedback"
+    icon: "comment-dots"
+    tabname: "cross_functional_feedback"
+
+  career_interview:
+    enabled: true
+    priority: 70
+    name: "Career Interview"
+    icon: "user-tie"
+    tabname: "career_interview"
+
+  career_profile:
+    enabled: true
+    priority: 71
+    name: "Your Career Story"
+    icon: "user-graduate"
+    tabname: "career_profile"
+
+  career_feedback:
+    enabled: true
+    priority: 72
+    name: "Behavioural Feedback"
+    icon: "comment-dots"
+    tabname: "career_feedback"

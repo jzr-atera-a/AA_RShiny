@@ -1,0 +1,450 @@
+/* ====================================
+   COMPELLING COMMUNICATION @ ATERA
+   Matching MetaMLPrep CSS structure
+   Atera Analytics Purple/Dark Theme
+   ==================================== */
+
+/* ── Main Backgrounds ── */
+.content-wrapper, .right-side {
+  background: linear-gradient(135deg, #0d0d2b 0%, #2a1a6e 50%, #12122e 100%) !important;
+  min-height: 100vh;
+}
+.sidebar, .main-sidebar {
+  background: linear-gradient(180deg, #0d0d2b 0%, #3d1f8c 100%) !important;
+}
+
+/* ── Sidebar Menu ── */
+.sidebar .sidebar-menu > li > a {
+  color: #d4b8ff !important;
+  border-left: 3px solid transparent;
+  transition: all 0.3s ease;
+  font-size: 13px;
+}
+.sidebar .sidebar-menu > li.active > a,
+.sidebar .sidebar-menu > li:hover > a {
+  background: rgba(180, 140, 255, 0.2) !important;
+  border-left: 3px solid #b48cff !important;
+  color: #ffffff !important;
+}
+
+/* ── Header ── */
+.main-header, .main-header .navbar {
+  background: linear-gradient(135deg, #0d0d2b 0%, #4c2d9c 100%) !important;
+  border-bottom: 2px solid rgba(180, 140, 255, 0.3) !important;
+}
+.main-header .logo {
+  background: linear-gradient(135deg, #0d0d2b 0%, #3d1f8c 100%) !important;
+  color: #e8d8ff !important;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+}
+.main-header .navbar .sidebar-toggle {
+  color: #e8d8ff !important;
+}
+
+/* ── Boxes ── */
+.box {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 25px rgba(13, 13, 43, 0.3) !important;
+  margin-bottom: 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(13, 13, 43, 0.4) !important;
+}
+.box-header {
+  background: linear-gradient(135deg, #4c2d9c 0%, #6b3fc8 100%) !important;
+  color: white !important;
+  border-radius: 12px 12px 0 0 !important;
+  padding: 15px 20px;
+}
+.box-header > .box-title {
+  color: #ffffff !important;
+  font-weight: 600;
+  font-size: 15px;
+}
+.box-body {
+  background-color: #ffffff !important;
+  padding: 20px;
+  border-radius: 0 0 12px 12px;
+}
+
+/* Coloured box header variants */
+.box.box-primary > .box-header { background: linear-gradient(135deg, #4c2d9c 0%, #6b3fc8 100%) !important; }
+.box.box-info    > .box-header { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%) !important; }
+.box.box-success > .box-header { background: linear-gradient(135deg, #14532d 0%, #16a34a 100%) !important; }
+.box.box-warning > .box-header { background: linear-gradient(135deg, #78350f 0%, #d97706 100%) !important; }
+.box.box-danger  > .box-header { background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%) !important; }
+
+/* ── Hero Banner (matches meta-hero structure) ── */
+.aa-hero {
+  background: linear-gradient(135deg, #0d0d2b 0%, #4c2d9c 60%, #2a1a6e 100%);
+  color: white;
+  padding: 40px 30px;
+  border-radius: 16px;
+  margin-bottom: 25px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(13, 13, 43, 0.5);
+}
+.aa-hero h1 {
+  font-size: 2.4em;
+  font-weight: 800;
+  margin-bottom: 10px;
+  letter-spacing: -0.5px;
+  color: #ffffff;
+}
+.aa-hero h2 {
+  font-size: 1.4em;
+  font-weight: 400;
+  opacity: 0.9;
+  margin-bottom: 20px;
+  color: #e0ccff;
+}
+
+/* ── Hero Badges (mirrors hero-badge from ZIP) ── */
+.hero-badge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 4px;
+}
+
+/* ── Framework Card (matches ZIP framework-card) ── */
+.framework-card {
+  background: linear-gradient(135deg, #f8f5ff 0%, #f0eaff 100%);
+  border: 1px solid #d0baff;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  transition: box-shadow 0.2s ease;
+}
+.framework-card:hover {
+  box-shadow: 0 4px 16px rgba(76, 45, 156, 0.15);
+}
+.framework-card h5 {
+  color: #4c2d9c;
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.framework-card p {
+  color: #333;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ── Concept Card (purple — theory content) ── */
+.concept-card {
+  background: linear-gradient(135deg, #f8f5ff 0%, #f0eaff 100%);
+  border: 1px solid #d0baff;
+  border-left: 5px solid #6b3fc8;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  transition: box-shadow 0.2s ease;
+}
+.concept-card:hover {
+  box-shadow: 0 4px 16px rgba(76, 45, 156, 0.15);
+}
+.concept-card h4 {
+  color: #4c2d9c;
+  font-weight: 700;
+  margin-bottom: 6px;
+  font-size: 15px;
+}
+.concept-card p {
+  color: #333;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ── Application Card (green — Atera context) ── */
+.app-card {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1px solid #86efac;
+  border-left: 5px solid #16a34a;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+.app-card h4 {
+  color: #14532d;
+  font-weight: 700;
+  margin-bottom: 6px;
+  font-size: 15px;
+}
+.app-card p {
+  color: #1a3a1a;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ── Tip / Success / Warning boxes (matches ZIP) ── */
+.tip-box {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid #fbbf24;
+  border-left: 5px solid #d97706;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 14px;
+  font-size: 13.5px;
+  color: #451a03;
+}
+.success-box {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1px solid #4ade80;
+  border-left: 5px solid #16a34a;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 14px;
+  font-size: 13.5px;
+  color: #14532d;
+}
+.warn-box {
+  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+  border: 1px solid #fca5a5;
+  border-left: 5px solid #dc2626;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 14px;
+  font-size: 13.5px;
+  color: #7f1d1d;
+}
+
+/* ── Navigation Tabs (matches ZIP nav-tabs) ── */
+.nav-tabs {
+  border-bottom: 2px solid #e0d0ff;
+}
+.nav-tabs > li > a {
+  color: #4c2d9c !important;
+  font-weight: 600;
+  border-radius: 8px 8px 0 0;
+  transition: background 0.2s ease;
+}
+.nav-tabs > li.active > a,
+.nav-tabs > li.active > a:hover,
+.nav-tabs > li.active > a:focus {
+  background: linear-gradient(135deg, #4c2d9c 0%, #6b3fc8 100%) !important;
+  color: #ffffff !important;
+  border-color: #4c2d9c #4c2d9c #ffffff !important;
+}
+.nav-tabs > li > a:hover {
+  background: rgba(76, 45, 156, 0.1) !important;
+}
+.tab-content {
+  background: #ffffff;
+  border: 1px solid #e0d0ff;
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  padding: 22px;
+}
+
+/* ── Section Headings ── */
+.section-heading {
+  color: #4c2d9c;
+  font-size: 15px;
+  font-weight: 700;
+  margin: 20px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #e0d0ff;
+}
+.section-heading-green {
+  color: #14532d;
+  font-size: 15px;
+  font-weight: 700;
+  margin: 20px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #86efac;
+}
+
+/* ── Metric Cards (matches ZIP metric-card) ── */
+.metric-card {
+  background: linear-gradient(135deg, #f8f5ff 0%, #ede9fe 100%);
+  border: 1px solid #c4b5fd;
+  border-radius: 12px;
+  padding: 16px 12px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+.metric-value {
+  display: block;
+  font-size: 24px;
+  font-weight: 800;
+  color: #4c2d9c;
+  line-height: 1.1;
+}
+.metric-label {
+  display: block;
+  font-size: 11px;
+  color: #6b21a8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+/* ── TOC Items ── */
+.toc-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 10px 14px;
+  margin-bottom: 6px;
+  background: #faf8ff;
+  border-radius: 8px;
+  border: 1px solid #e8daff;
+  transition: background 0.2s ease;
+}
+.toc-item:hover { background: #f0eaff; }
+.toc-num {
+  background: linear-gradient(135deg, #4c2d9c, #6b3fc8);
+  color: white;
+  font-weight: 700;
+  font-size: 11px;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 12px;
+  margin-top: 1px;
+}
+.toc-text { font-size: 14px; color: #333; line-height: 1.5; }
+
+/* ── Before / After Examples ── */
+.example-bad {
+  background: #fff1f2;
+  border: 1px solid #fca5a5;
+  border-left: 4px solid #dc2626;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #7f1d1d;
+}
+.example-good {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-left: 4px solid #16a34a;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #14532d;
+}
+.example-label {
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+/* ── Quote Block ── */
+.quote-block {
+  background: linear-gradient(135deg, #f8f5ff, #ede9fe);
+  border-left: 5px solid #7c3aed;
+  padding: 14px 20px;
+  border-radius: 0 10px 10px 0;
+  margin: 14px 0;
+  font-style: italic;
+  font-size: 15px;
+  color: #3b0764;
+}
+.quote-attrib {
+  font-style: normal;
+  font-size: 12px;
+  color: #6b21a8;
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+/* ── Timeline (matches ZIP timeline-item) ── */
+.timeline-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0e8ff;
+}
+.timeline-badge {
+  background: linear-gradient(135deg, #4c2d9c, #6b3fc8);
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 14px;
+  margin-top: 2px;
+}
+.timeline-content h6 {
+  color: #4c2d9c;
+  font-weight: 700;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+.timeline-content p {
+  color: #555;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ── Progress Bar (matches ZIP) ── */
+.progress-wrap { margin-bottom: 14px; }
+.progress-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4c2d9c;
+  margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+}
+.progress {
+  height: 10px;
+  border-radius: 6px;
+  background: #e8daff;
+}
+.progress-bar {
+  background: linear-gradient(90deg, #4c2d9c, #7c3aed) !important;
+  border-radius: 6px;
+}
+
+/* ── Scrollable content ── */
+.scroll-content {
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+.scroll-content::-webkit-scrollbar { width: 6px; }
+.scroll-content::-webkit-scrollbar-track { background: #f1f0ff; border-radius: 4px; }
+.scroll-content::-webkit-scrollbar-thumb { background: #b48cff; border-radius: 4px; }
+
+/* ── Divider ── */
+.divider {
+  border: none;
+  border-top: 1px solid #e0d0ff;
+  margin: 18px 0;
+}
+
+/* ── Typography ── */
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
