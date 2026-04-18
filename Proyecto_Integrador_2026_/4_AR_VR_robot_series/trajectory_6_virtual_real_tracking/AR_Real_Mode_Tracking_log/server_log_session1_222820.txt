@@ -1,0 +1,335 @@
+python3.13 trajectory_websocket_server_tracking_path.py
+
+======================================================================
+Meta Quest 3 Robot Control - WebSocket Server
+WITH AUTONOMOUS PATH FOLLOWING
+======================================================================
+
+
+Connecting to Arduino...
+✓ Found Arduino on /dev/ttyACM0
+  Arduino: Initializing MD22...
+  Arduino: MD22 found at 0x58
+  Arduino: Software version: 10
+  Arduino: Mode set to: 0
+  Arduino: Acceleration set to 10
+  Arduino: Both motors stopped
+  Arduino: MD22 initialized successfully!
+  Arduino: Arduino Dual Servo + MD22 Motor Controller Ready
+  Arduino: Commands: SERVO1:angle, SERVO2:angle, MOTORS:speed, M1_STOP, M2_STOP
+  Arduino: Servo1 (Pin 8): Range 40-140 degrees (RIGHT A/B buttons)
+  Arduino: Servo2 (Pin 9): Range 50-130 degrees (RIGHT joystick X - steering)
+  Arduino: Motors (MD22 via I2C): Speed 50-90% forward (LEFT joystick Y)
+  Arduino: MD22 Status: Connected
+  Arduino: Current state - Servo1: 90° | Servo2: 90° | Motor1: 0% | Motor2: 0%
+✓ Arduino connected successfully on /dev/ttyACM0
+
+✓ WebSocket server starting...
+
+Server Details:
+  - Port: 8444
+  - Protocol: WSS
+  - Local IP: 127.0.1.1
+  - Autonomous: ENABLED
+
+Quest 3 URL: wss://127.0.1.1:8444
+
+Press Ctrl+C to stop
+
+======================================================================
+
+Waiting for Quest 3 connection...
+
+
+============================================================
+[22:27:30.171] ✓ Quest 3 CONNECTED from 192.168.100.12:37716
+============================================================
+
+[22:27:30.227] 📨 RECEIVED: ALL:M1:0:M2:0:S1:90:S2:90...
+
+============================================================
+[22:27:51.375] ✓ Quest 3 CONNECTED from 192.168.100.12:46608
+============================================================
+
+[22:27:51.424] 📨 RECEIVED: ALL:M1:0:M2:0:S1:90:S2:90...
+[22:27:56.503] 🎮 MODE CHANGE: NONE → MODE1
+[22:28:00.236] ✓ Quest → Arduino: ALL:M1:74:M2:74:S1:90:S2:90 (#10)
+[22:28:00.236]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[22:28:05.222] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#20)
+[22:28:05.222]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[22:28:10.254] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#30)
+[22:28:10.254]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[22:28:12.066] 🎮 MODE CHANGE: MODE1 → MODE2
+
+[22:28:20.789] 🔍 MODE2_PATH message detected!
+[22:28:20.789] 📝 JSON data length: 1226 chars
+✓ CSV logging started: mode2_tracking_20260416_222820.csv
+
+
+============================================================
+[22:28:20.794] 🎯 MODE 2 PATH RECEIVED
+============================================================
+Waypoints: 20
+Differential: 0.25x
+Start: (85.6, -30.7) cm @ 175°
+End:   (27.0, -142.8) cm @ 292°
+CSV Log: mode2_tracking_20260416_222820.csv
+============================================================
+
+[22:28:23.514] 📨 RECEIVED: ALL:M1:63:M2:50:S1:90:S2:96...
+[22:28:23.518] ✓ Quest → Arduino: ALL:M1:63:M2:50:S1:90:S2:96 (#40)
+[22:28:23.518]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[22:28:23.525]   📍 Position: (82.3, 11.7) cm
+[22:28:23.525]   🧭 Heading: 292.1°
+[22:28:23.525]   🚗 Motors: M1:63% M2:50% | Steer: S2:96°
+[22:28:24.686] 📨 RECEIVED: ALL:M1:50:M2:63:S1:90:S2:76...
+[22:28:24.688] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:76 (#50)
+[22:28:24.688]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+
+============================================================
+STATISTICS (Uptime: 131.1s)
+============================================================
+Commands sent: 50
+Errors: 0
+Time since last command: 0.01s
+🎮 CURRENT MODE: MODE2
+Autonomous (Mode 2): ACTIVE
+Differential mode: 0.25x
+Path progress: 0/20 waypoints
+Recent commands:
+  1. [22:28:23.789] ALL:M1:63:M2:50:S1:90:S2:110
+  2. [22:28:23.791] ALL:M1:63:M2:50:S1:90:S2:110
+  3. [22:28:24.035] ALL:M1:63:M2:50:S1:90:S2:118
+  4. [22:28:24.036] ALL:M1:63:M2:50:S1:90:S2:118
+  5. [22:28:24.158] ALL:M1:63:M2:50:S1:90:S2:123
+  6. [22:28:24.161] ALL:M1:63:M2:50:S1:90:S2:123
+  7. [22:28:24.393] ALL:M1:50:M2:63:S1:90:S2:94
+  8. [22:28:24.395] ALL:M1:50:M2:63:S1:90:S2:94
+  9. [22:28:24.687] ALL:M1:50:M2:63:S1:90:S2:76
+  10. [22:28:24.688] ALL:M1:50:M2:63:S1:90:S2:76
+============================================================
+
+[22:28:24.696]   📍 Position: (81.7, 6.6) cm
+[22:28:24.696]   🧭 Heading: 292.1°
+[22:28:24.696]   🚗 Motors: M1:50% M2:63% | Steer: S2:76°
+[22:28:26.261] 📨 RECEIVED: ALL:M1:63:M2:50:S1:90:S2:102...
+[22:28:26.262] ✓ Quest → Arduino: ALL:M1:63:M2:50:S1:90:S2:102 (#60)
+[22:28:26.262]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[22:28:26.268]   📍 Position: (81.1, -0.5) cm
+[22:28:26.268]   🧭 Heading: 292.1°
+[22:28:26.268]   🚗 Motors: M1:63% M2:50% | Steer: S2:102°
+
+──────────────────────────────────────────────────────────────────────
+[22:28:26.269] 📊 MODE 2 PATH TRACKING
+──────────────────────────────────────────────────────────────────────
+Waypoint: 1/20
+Target:   (85.6, -30.7) cm @ 175°
+Actual:   (81.1, -0.5) cm @ 292°
+
+Deviation Analysis:
+  Position Error:    30.5 cm
+  Cross-Track Error: 30.5 cm
+  Heading Error:     -117°
+
+Actuator Commands:
+  Motors: M1=63% (RIGHT), M2=50% (LEFT)
+  Servos: S1=90° (GRIPPER), S2=102° (STEERING)
+  Steering: LEFT (+12° from center)
+
+Running Statistics:
+  Avg Deviation: 36.8 cm
+  Max Deviation: 42.5 cm
+──────────────────────────────────────────────────────────────────────
+
+[22:28:28.111] 📨 RECEIVED: ALL:M1:50:M2:63:S1:90:S2:88...
+[22:28:28.115] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:88 (#70)
+[22:28:28.115]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[22:28:28.120]   📍 Position: (79.8, -6.9) cm
+[22:28:28.120]   🧭 Heading: 292.1°
+[22:28:28.120]   🚗 Motors: M1:50% M2:63% | Steer: S2:88°
+[22:28:28.562] 📨 RECEIVED: MODE2_STOP...
+
+============================================================
+[22:28:28.562] 🏁 MODE 2 COMPLETE
+============================================================
+Duration: 7.8s
+Waypoints reached: 0/20
+Avg Deviation: 33.7 cm
+Max Deviation: 42.5 cm
+============================================================
+
+✓ CSV logging stopped
+
+[22:28:36.851] 🎮 MODE CHANGE: NONE → MODE1
+[22:28:37.858] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#80)
+[22:28:37.858]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[22:28:41.308] 📨 RECEIVED: {"command":"MODE_SELECTED","mode":2,"mode_name":"User Trajectory","timestamp":53...
+[22:28:41.312] 🎮 MODE CHANGE: MODE1 → MODE2
+
+[22:29:10.513] 🔍 MODE2_PATH message detected!
+[22:29:10.513] 📝 JSON data length: 802 chars
+✓ CSV logging started: mode2_tracking_20260416_222910.csv
+
+
+============================================================
+[22:29:10.518] 🎯 MODE 2 PATH RECEIVED
+============================================================
+Waypoints: 13
+Differential: 0.25x
+Start: (84.6, -58.4) cm @ 177°
+End:   (74.4, -117.1) cm @ 355°
+CSV Log: mode2_tracking_20260416_222910.csv
+============================================================
+
+[22:29:12.969] 📨 RECEIVED: ALL:M1:50:M2:63:S1:90:S2:74...
+[22:29:12.969] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:74 (#90)
+[22:29:12.969]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[22:29:14.022] 📨 RECEIVED: ALL:M1:50:M2:63:S1:90:S2:93...
+[22:29:14.023] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:93 (#100)
+[22:29:14.023]   Arduino → Quest: OK:M1:74:M2:74:S1:90:S2:90
+
+============================================================
+STATISTICS (Uptime: 180.4s)
+============================================================
+Commands sent: 100
+Errors: 0
+Time since last command: 0.01s
+🎮 CURRENT MODE: MODE2
+Autonomous (Mode 2): ACTIVE
+Differential mode: 0.25x
+Path progress: 0/13 waypoints
+Recent commands:
+  1. [22:29:12.975] ALL:M1:50:M2:63:S1:90:S2:74
+  2. [22:29:13.160] ALL:M1:60:M2:50:S1:90:S2:92
+  3. [22:29:13.163] ALL:M1:60:M2:50:S1:90:S2:92
+  4. [22:29:13.505] ALL:M1:63:M2:50:S1:90:S2:107
+  5. [22:29:13.507] ALL:M1:63:M2:50:S1:90:S2:107
+  6. [22:29:13.573] ALL:M1:63:M2:50:S1:90:S2:116
+  7. [22:29:13.574] ALL:M1:63:M2:50:S1:90:S2:116
+  8. [22:29:13.827] ALL:M1:63:M2:50:S1:90:S2:122
+  9. [22:29:13.829] ALL:M1:63:M2:50:S1:90:S2:122
+  10. [22:29:14.023] ALL:M1:50:M2:63:S1:90:S2:93
+============================================================
+
+[22:29:15.187] 📨 RECEIVED: ALL:M1:63:M2:50:S1:90:S2:127...
+[22:29:15.188] ✓ Quest → Arduino: ALL:M1:63:M2:50:S1:90:S2:127 (#110)
+[22:29:15.188]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+
+============================================================
+[22:29:15.540] 🏁 MODE 2 COMPLETE
+============================================================
+Duration: 5.0s
+Waypoints reached: 0/13
+============================================================
+
+✓ CSV logging stopped
+
+[22:29:27.554] 🎮 MODE CHANGE: NONE → MODE1
+[22:29:29.067] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#120)
+[22:29:29.067]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[22:29:32.342] 🎮 MODE CHANGE: MODE1 → MODE2
+[22:29:32.349] 📨 RECEIVED: ALL:M1:0:M2:0:S1:90:S2:90...
+[22:29:39.944] 🎮 MODE CHANGE: MODE2 → MODE1
+[22:29:41.538] ✓ Quest → Arduino: ALL:M1:80:M2:80:S1:90:S2:90 (#130)
+[22:29:41.538]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[22:29:46.437] ✓ Quest → Arduino: ALL:M1:80:M2:80:S1:90:S2:90 (#140)
+[22:29:46.437]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[22:29:50.798] 🎮 MODE CHANGE: MODE1 → MODE2
+
+[22:30:14.290] 🔍 MODE2_PATH message detected!
+[22:30:14.290] 📝 JSON data length: 941 chars
+✓ CSV logging started: mode2_tracking_20260416_223014.csv
+
+
+============================================================
+[22:30:14.297] 🎯 MODE 2 PATH RECEIVED
+============================================================
+Waypoints: 15
+Differential: 0.25x
+Start: (38.5, -98.3) cm @ 197°
+End:   (-4.1, -183.0) cm @ 215°
+CSV Log: mode2_tracking_20260416_223014.csv
+============================================================
+
+[22:30:14.301] ✓ Quest → Arduino: ALL:M1:60:M2:60:S1:90:S2:90 (#150)
+[22:30:14.301]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+
+============================================================
+STATISTICS (Uptime: 240.7s)
+============================================================
+Commands sent: 150
+Errors: 0
+Time since last command: 0.00s
+🎮 CURRENT MODE: MODE2
+Autonomous (Mode 2): ACTIVE
+Differential mode: 0.25x
+Path progress: 0/15 waypoints
+Recent commands:
+  1. [22:29:46.942] ALL:M1:80:M2:80:S1:90:S2:90
+  2. [22:29:47.438] ALL:M1:0:M2:0:S1:90:S2:90
+  3. [22:29:47.981] ALL:M1:0:M2:0:S1:90:S2:90
+  4. [22:29:48.441] ALL:M1:0:M2:0:S1:90:S2:90
+  5. [22:29:48.946] ALL:M1:0:M2:0:S1:90:S2:90
+  6. [22:29:49.445] ALL:M1:0:M2:0:S1:90:S2:90
+  7. [22:29:50.082] ALL:M1:0:M2:0:S1:90:S2:90
+  8. [22:29:50.438] ALL:M1:0:M2:0:S1:90:S2:90
+  9. [22:29:50.803] ALL:M1:0:M2:0:S1:90:S2:90
+  10. [22:30:14.301] ALL:M1:60:M2:60:S1:90:S2:90
+============================================================
+
+[22:30:17.684] ✓ Quest → Arduino: ALL:M1:63:M2:50:S1:90:S2:123 (#160)
+[22:30:17.684]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[22:30:36.332] ✓ Quest → Arduino: ALL:M1:63:M2:50:S1:90:S2:100 (#170)
+[22:30:36.332]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[22:31:34.208] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:104 (#180)
+[22:31:34.208]   Arduino → Quest: OK:M1:79:M2:79:S1:90:S2:90
+^C[22:31:51.173] 📨 RECEIVED: ALL:M1:0:M2:0:S1:90:S2:90...
+
+============================================================
+[22:31:56.529] 🏁 MODE 2 COMPLETE
+============================================================
+Duration: 102.2s
+Waypoints reached: 0/15
+============================================================
+
+✓ CSV logging stopped
+
+[22:31:56.571] 🎮 MODE CHANGE: NONE → MODE1
+[22:32:28.042] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#190)
+[22:32:28.042]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[22:33:20.564] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#200)
+[22:33:20.564]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+
+============================================================
+STATISTICS (Uptime: 432.2s)
+============================================================
+Commands sent: 200
+Errors: 0
+Time since last command: 5.26s
+🎮 CURRENT MODE: MODE1
+Autonomous (Mode 2): INACTIVE
+Differential mode: 0.25x
+Recent commands:
+  1. [22:32:33.310] ALL:M1:0:M2:0:S1:90:S2:90
+  2. [22:32:38.546] ALL:M1:0:M2:0:S1:90:S2:90
+  3. [22:32:43.798] ALL:M1:0:M2:0:S1:90:S2:90
+  4. [22:32:49.051] ALL:M1:0:M2:0:S1:90:S2:90
+  5. [22:32:54.303] ALL:M1:0:M2:0:S1:90:S2:90
+  6. [22:32:59.555] ALL:M1:0:M2:0:S1:90:S2:90
+  7. [22:33:04.807] ALL:M1:0:M2:0:S1:90:S2:90
+  8. [22:33:10.060] ALL:M1:0:M2:0:S1:90:S2:90
+  9. [22:33:15.312] ALL:M1:0:M2:0:S1:90:S2:90
+  10. [22:33:20.564] ALL:M1:0:M2:0:S1:90:S2:90
+============================================================
+
+[22:34:07.830] 📨 RECEIVED: {"command":"MODE_SELECTED","mode":1,"mode_name":"Manual Control","timestamp":211...
+[22:34:13.084] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#210)
+[22:34:13.084]   Arduino → Quest: OK:M1:80:M2:80:S1:90:S2:90
+[22:34:39.082] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#220)
+[22:34:39.082]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:50
+[22:34:39.118] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#230)
+[22:34:39.118]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:50
+[22:34:39.151] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#240)
+[22:34:39.151]   Arduino → Quest: ERROR: Unknown command: 0:M2:0:S1:90:S2:90ALL:M1:0:M2:0:S1
+[22:34:39.183] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#250)
+[22:34:39.183]   Arduino → Quest: ERROR: Unknown command: :90:S2:90ALL:M1:0:M2:0:

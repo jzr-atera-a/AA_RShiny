@@ -1,0 +1,70 @@
+=== MODE 2 TRAJECTORY ANALYSIS ===
+Purpose: DC Motor & Ackermann Servo Control Improvement
+
+--- GRID CONFIGURATION ---
+Grid Size: 21x21 cells (10cm x 10cm each)
+Map Area: 2.1m x 2.1m
+Grid Origin: Bottom-left corner (0,0)
+
+--- USER PATH (GREEN - PLANNED ROUTE) ---
+Total Points: 61
+Total Distance: 9.985m
+Markers Placed: 5
+
+User Path Markers (every 20cm):
+  Marker 0: Grid(18, 4), World(0.846, -0.584), Distance: 0.000m
+  Marker 1: Grid(18, 2), World(0.844, -0.780), Distance: 0.200m
+  Marker 2: Grid(18, 0), World(0.819, -0.978), Distance: 0.400m
+  Marker 3: Grid(18, -2), World(0.753, -1.164), Distance: 0.600m
+  Marker 4: Grid(17, -2), World(0.744, -1.171), Distance: 0.640m
+
+--- CONTROLLER PATH (ORANGE - ACTUAL EXECUTION) ---
+Total Points: 1035
+Total Distance: 0.205m
+Markers Placed: 2
+
+Controller Path Markers (every 20cm):
+  Marker 0: Grid(18, 9), World(0.788, -0.108), Distance: 0.000m
+  Marker 1: Grid(17, 7), World(0.730, -0.296), Distance: 0.200m
+
+--- OVERALL METRICS ---
+Total Distance Deviation: 9.780m (97.9%)
+Distance Ratio (actual/planned): 0.021
+
+--- MARKER-BY-MARKER COMPARISON ---
+Critical for DC Motor & Ackermann Servo Tuning
+
+Marker 0:
+  Spatial Deviation: 48.0cm
+  Grid Deviation: ΔX=0 cells, ΔZ=5 cells (50.0cm)
+  Distance Deviation: 0.0cm
+  Planned: Grid(18, 4) @ 0.000m
+  Actual:  Grid(18, 9) @ 0.000m
+
+Marker 1:
+  Spatial Deviation: 49.7cm
+  Grid Deviation: ΔX=1 cells, ΔZ=5 cells (51.0cm)
+  Distance Deviation: 0.0cm
+  Planned: Grid(18, 2) @ 0.200m
+  Actual:  Grid(17, 7) @ 0.200m
+  Velocity Ratio (actual/planned): 1.000
+
+--- SUMMARY STATISTICS ---
+Average Spatial Deviation: 48.8cm
+Maximum Spatial Deviation: 49.7cm at Marker 1
+Marker Count Difference: 3
+
+--- MOTOR CONTROL RECOMMENDATIONS ---
+HIGH DEVIATION DETECTED (>15cm average)
+Recommendations:
+  - Check DC motor calibration
+  - Verify Ackermann steering geometry
+  - Review PID controller gains
+  - Check wheel slip compensation
+
+--- NEXT STEPS FOR IMPROVEMENT ---
+1. Focus on markers with highest deviation
+2. Analyze velocity ratios for motor response issues
+3. Check grid deviations for systematic steering errors
+4. Correlate deviations with path curvature
+5. Adjust DC motor PWM or Ackermann servo angles accordingly

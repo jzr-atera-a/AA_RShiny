@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controller Diagnostic</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #111;
+  color: #eee;
+  font-family: monospace;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+h1 { font-size: 20px; color: #0ff; margin-bottom: 6px; text-align: center; }
+.sub { font-size: 12px; color: #555; margin-bottom: 28px; text-align: center; }
+
+#btn-ar {
+  background: #0ff; color: #000;
+  border: none; border-radius: 8px;
+  padding: 16px 0; font-size: 18px;
+  font-family: monospace; font-weight: bold;
+  cursor: pointer; width: 100%; margin-bottom: 14px;
+}
+#btn-ar:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+.info-box {
+  background: #1a1a1a; border: 1px solid #333;
+  border-radius: 8px; padding: 14px 16px;
+  font-size: 12px; color: #888;
+  width: 100%; margin-bottom: 14px;
+  line-height: 1.8;
+}
+.info-box b { color: #0ff; }
+
+#xr-error { color: #f55; font-size: 13px; margin-top: 8px; text-align: center; }
+
+/* ── AR overlay ── */
+#overlay {
+  display: none;
+  position: fixed; top: 0; left: 0;
+  width: 100vw; height: 100vh;
+}
+
+#panel {
+  position: absolute;
+  top: 24px; left: 50%;
+  transform: translateX(-50%);
+  width: 440px;
+  background: rgba(0,0,0,0.88);
+  border: 2px solid #0ff;
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+#panel h2 {
+  font-size: 14px; color: #0ff;
+  letter-spacing: 0.12em;
+  text-align: center; margin-bottom: 4px;
+}
+
+#ctrl-status {
+  font-size: 11px; text-align: center;
+  color: #f80; margin-bottom: 14px;
+}
+#ctrl-status.found { color: #0f0; }
+
+.block { margin-bottom: 14px; }
+
+.block-title {
+  font-size: 10px; color: #555;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  border-bottom: 1px solid #222;
+  padding-bottom: 3px; margin-bottom: 8px;
+}
+
+.row {
+  display: flex; align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.lbl { font-size: 12px; color: #777; width: 90px; flex-shrink: 0; }
+.lbl small { font-size: 10px; color: #444; }
+
+.val { font-size: 24px; font-weight: bold; text-align: right; flex: 1; }
+.unt { font-size: 11px; color: #444; margin-left: 5px; width: 28px; flex-shrink: 0; }
+
+.xc { color: #f55; }
+.yc { color: #5f5; }
+.zc { color: #58f; }
+.qc { color: #fa0; font-size: 14px; }
+
+#footer {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: #444;
+  margin-top: 6px; padding-top: 6px;
+  border-top: 1px solid #1a1a1a;
+}
+
+#ws-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%; background: #444;
+  margin-right: 4px; vertical-align: middle;
+}
+#ws-dot.on { background: #0f0; }
+#ws-dot.err { background: #f00; }
+</style>
+</head>
+<body>
+
+<!-- ── Start screen ───────────────────────────────────────────────── -->
+<div id="start-screen">
+  <h1>LEFT CONTROLLER DIAGNOSTIC</h1>
+  <p class="sub">Position (X Y Z) · Orientation (Pitch Yaw Roll) · Quaternion</p>
+
+  <div class="info-box">
+    <b>How to use</b><br>
+    1. Press <b>START AR</b> below<br>
+    2. Accept certificate if asked<br>
+    3. Pick up the <b>left controller</b> and move/rotate it<br>
+    4. All 6 values update live in the AR overlay<br><br>
+    <b>WebSocket (optional)</b><br>
+    Auto-connects to <b id="ws-url-display">wss://…:8446</b><br>
+    Streams data to the terminal server at 20 Hz
+  </div>
+
+  <button id="btn-ar" onclick="startAR()">START AR SESSION</button>
+  <div id="xr-error"></div>
+</div>
+
+<!-- ── AR overlay ─────────────────────────────────────────────────── -->
+<div id="overlay">
+  <div id="panel">
+    <h2>LEFT CONTROLLER DIAGNOSTIC</h2>
+    <div id="ctrl-status">Searching for left controller…</div>
+
+    <!-- Position -->
+    <div class="block">
+      <div class="block-title">Position (metres)</div>
+      <div class="row">
+        <div class="lbl xc">X <small>left/right</small></div>
+        <div class="val xc" id="px">---</div><div class="unt">m</div>
+      </div>
+      <div class="row">
+        <div class="lbl yc">Y <small>up/down</small></div>
+        <div class="val yc" id="py">---</div><div class="unt">m</div>
+      </div>
+      <div class="row">
+        <div class="lbl zc">Z <small>fwd/back</small></div>
+        <div class="val zc" id="pz">---</div><div class="unt">m</div>
+      </div>
+    </div>
+
+    <!-- Euler -->
+    <div class="block">
+      <div class="block-title">Orientation — Euler angles (degrees)</div>
+      <div class="row">
+        <div class="lbl xc">Pitch <small>X</small></div>
+        <div class="val xc" id="ep">---</div><div class="unt">deg</div>
+      </div>
+      <div class="row">
+        <div class="lbl yc">Yaw <small>Y</small></div>
+        <div class="val yc" id="ey">---</div><div class="unt">deg</div>
+      </div>
+      <div class="row">
+        <div class="lbl zc">Roll <small>Z</small></div>
+        <div class="val zc" id="er">---</div><div class="unt">deg</div>
+      </div>
+    </div>
+
+    <!-- Quaternion -->
+    <div class="block">
+      <div class="block-title">Raw quaternion</div>
+      <div class="row">
+        <div class="lbl" style="color:#555">qX</div>
+        <div class="val qc" id="qx">---</div><div class="unt"></div>
+      </div>
+      <div class="row">
+        <div class="lbl" style="color:#555">qY</div>
+        <div class="val qc" id="qy">---</div><div class="unt"></div>
+      </div>
+      <div class="row">
+        <div class="lbl" style="color:#555">qZ</div>
+        <div class="val qc" id="qz">---</div><div class="unt"></div>
+      </div>
+      <div class="row">
+        <div class="lbl" style="color:#555">qW</div>
+        <div class="val qc" id="qw">---</div><div class="unt"></div>
+      </div>
+    </div>
+
+    <div id="footer">
+      <span id="fps-label">-- fps</span>
+      <span>
+        <span id="ws-dot"></span>
+        <span id="ws-label">WS off</span>
+      </span>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── WebSocket: auto-connect to same host on port 8446 ──────────────────────
+  // window.location.hostname gives the IP the page was loaded from,
+  // so no manual IP entry is needed.
+  const WS_PORT = 8446;
+  const wsUrl   = `wss://${window.location.hostname}:${WS_PORT}`;
+
+  document.getElementById('ws-url-display').textContent = wsUrl;
+
+  let ws           = null;
+  let xrSession    = null;
+  let xrRefSpace   = null;
+  let frameCount   = 0;
+  let lastFpsTime  = performance.now();
+  let lastSendTime = 0;
+  const SEND_HZ    = 50;   // ms between sends = 20 Hz
+
+  function connectWS() {
+    try {
+      ws = new WebSocket(wsUrl);
+      ws.onopen  = () => setDot('on', 'WS on');
+      ws.onclose = () => { setDot('', 'WS off'); ws = null; };
+      ws.onerror = () => setDot('err', 'WS err');
+    } catch(e) {
+      setDot('err', 'WS err');
+    }
+  }
+
+  function setDot(cls, txt) {
+    document.getElementById('ws-dot').className   = cls;
+    document.getElementById('ws-label').textContent = txt;
+  }
+
+  function sendWS(payload) {
+    if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(payload));
+  }
+
+  // ── Quaternion → Euler (degrees) ───────────────────────────────────────────
+  function quatToEuler(qx, qy, qz, qw) {
+    const sinp  = 2 * (qw * qx - qy * qz);
+    const pitch = Math.abs(sinp) >= 1
+      ? Math.sign(sinp) * 90
+      : Math.asin(sinp) * 180 / Math.PI;
+
+    const yaw = Math.atan2(
+      2 * (qw * qy + qx * qz),
+      1 - 2 * (qy * qy + qz * qz)
+    ) * 180 / Math.PI;
+
+    const roll = Math.atan2(
+      2 * (qw * qz + qx * qy),
+      1 - 2 * (qx * qx + qy * qy)
+    ) * 180 / Math.PI;
+
+    return { pitch, yaw, roll };
+  }
+
+  const f3 = v => v.toFixed(3);
+  const f1 = v => v.toFixed(1);
+
+  // ── AR Session ─────────────────────────────────────────────────────────────
+  async function startAR() {
+    const btn = document.getElementById('btn-ar');
+    const err = document.getElementById('xr-error');
+    err.textContent = '';
+
+    if (!navigator.xr) {
+      err.textContent = 'WebXR not available in this browser.';
+      return;
+    }
+    const ok = await navigator.xr.isSessionSupported('immersive-ar').catch(() => false);
+    if (!ok) {
+      err.textContent = 'Immersive AR not supported on this device.';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Starting…';
+
+    try {
+      xrSession = await navigator.xr.requestSession('immersive-ar', {
+        requiredFeatures: ['local-floor'],
+        optionalFeatures: ['dom-overlay'],
+        domOverlay: { root: document.getElementById('overlay') }
+      });
+
+      xrRefSpace = await xrSession.requestReferenceSpace('local-floor');
+
+      // Minimal GL layer (required by WebXR even though we use dom-overlay)
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl2', { xrCompatible: true });
+      await xrSession.updateRenderState({
+        baseLayer: new XRWebGLLayer(xrSession, gl)
+      });
+
+      document.getElementById('overlay').style.display = 'block';
+      document.getElementById('start-screen').style.display = 'none';
+
+      xrSession.addEventListener('end', () => {
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('start-screen').style.display = 'flex';
+        btn.disabled = false;
+        btn.textContent = 'START AR SESSION';
+        xrSession = null;
+      });
+
+      // Connect WebSocket now that we are in-session
+      connectWS();
+
+      xrSession.requestAnimationFrame(onFrame);
+
+    } catch (e) {
+      err.textContent = 'Failed: ' + e.message;
+      btn.disabled = false;
+      btn.textContent = 'START AR SESSION';
+    }
+  }
+
+  // ── XR frame loop ──────────────────────────────────────────────────────────
+  function onFrame(t, frame) {
+    if (!xrSession) return;
+    xrSession.requestAnimationFrame(onFrame);
+
+    // FPS
+    frameCount++;
+    if (t - lastFpsTime >= 1000) {
+      document.getElementById('fps-label').textContent =
+        Math.round(frameCount * 1000 / (t - lastFpsTime)) + ' fps';
+      frameCount   = 0;
+      lastFpsTime  = t;
+    }
+
+    let found = false;
+
+    for (const src of frame.session.inputSources) {
+      if (src.handedness !== 'left' || !src.gripSpace) continue;
+
+      const pose = frame.getPose(src.gripSpace, xrRefSpace);
+      if (!pose) continue;
+
+      found = true;
+
+      const p  = pose.transform.position;
+      const o  = pose.transform.orientation;
+      const eu = quatToEuler(o.x, o.y, o.z, o.w);
+
+      // Update panel
+      document.getElementById('px').textContent = f3(p.x);
+      document.getElementById('py').textContent = f3(p.y);
+      document.getElementById('pz').textContent = f3(p.z);
+
+      document.getElementById('ep').textContent = f1(eu.pitch);
+      document.getElementById('ey').textContent = f1(eu.yaw);
+      document.getElementById('er').textContent = f1(eu.roll);
+
+      document.getElementById('qx').textContent = f3(o.x);
+      document.getElementById('qy').textContent = f3(o.y);
+      document.getElementById('qz').textContent = f3(o.z);
+      document.getElementById('qw').textContent = f3(o.w);
+
+      // Send to server at 20 Hz
+      if (t - lastSendTime >= SEND_HZ) {
+        sendWS({
+          t:     Math.round(t),
+          pos:   { x: p.x, y: p.y, z: p.z },
+          euler: { pitch: eu.pitch, yaw: eu.yaw, roll: eu.roll },
+          quat:  { x: o.x, y: o.y, z: o.z, w: o.w }
+        });
+        lastSendTime = t;
+      }
+
+      break;
+    }
+
+    const st = document.getElementById('ctrl-status');
+    if (found) {
+      st.textContent = '✓ Left controller tracked';
+      st.className   = 'found';
+    } else {
+      st.textContent = 'Searching for left controller…';
+      st.className   = '';
+      ['px','py','pz','ep','ey','er','qx','qy','qz','qw']
+        .forEach(id => document.getElementById(id).textContent = '---');
+    }
+  }
+</script>
+</body>
+</html>

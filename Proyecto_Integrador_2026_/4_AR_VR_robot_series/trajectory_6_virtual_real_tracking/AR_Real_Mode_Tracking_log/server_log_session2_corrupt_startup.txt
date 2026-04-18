@@ -1,0 +1,132 @@
+python3.13 trajectory_websocket_server_tracking_path.py
+
+======================================================================
+Meta Quest 3 Robot Control - WebSocket Server
+WITH AUTONOMOUS PATH FOLLOWING
+======================================================================
+
+
+Connecting to Arduino...
+✓ Found Arduino on /dev/ttyACM0
+  Arduino: ERROR: Unknown command: :0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: ERROR: Unknown command: :0:M2:0:S1:90:S2:90ALL:M1:
+  Arduino: ERROR: Unknown command: 0:M2:0:S1:90:S2:90ALL
+  Arduino: ERROR: Unknown command: :M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: ERROR: Unknown command: S1:90:S2:90ALL:M
+  Arduino: ERROR: Unknown command: 1:0:M2:0:S1:90:S2:90ALL:M1:0:M2:0:
+  Arduino: ERROR: Unknown command: S1:90:S2:90ALL:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: ERROR: Unknown command: 0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: ERROR: Unknown command: 0:M2:0:S1:90:S2:90ALL:M1:0:M2:0:S1:
+  Arduino: ERROR: Unknown command: 90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK: Motor2 set to 0%
+  Arduino: ERROR: Unknown command: 0:S2:90ALL:M1:0:M2
+  Arduino: ERROR: Unknown command: :0:S1:90:S2:90AL
+  Arduino: ERROR: Unknown command: L:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: ERROR: Unknown command: 2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: ERROR: Unknown command: :M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: ERROR: Unknown command: 0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: ERROR: Unknown command: 1:0:M2:0:S1:90:S2:90ALL:M1:0:M2:0
+  Arduino: ERROR: Unknown command: :S1:90:S2:90ALL:M1:0:
+  Arduino: OK: Motor2 set to 0%
+  Arduino: ERROR: Unknown command: :S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: ERROR: Unknown command: LL:M1:0:M2:0:S1:90:S2:90ALL:M1:
+  Arduino: ERROR: Unknown command: 0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: ERROR: Unknown command: :M2:0:S1:90:S2:90ALL:M1:0:M2:0:S1:
+  Arduino: ERROR: Unknown command: 90:S2:90ALL:M1:0:M2:0:
+  Arduino: ERROR: Unknown command: S1:90:S2:90ALL:M1:0:M2:0
+  Arduino: ERROR: Unknown command: :S1:90:S2:90ALL:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: ERROR: Unknown command: :90ALL:M1:0:M2:0:S1:90:S2:90ALL:M1
+  Arduino: ERROR: Unknown command: :0:M2:0:S1:90:S2:90ALL
+  Arduino: ERROR: Unknown command: :M1:0:M2:0:S1:90:S2:90ALL:M1:0:M2:0:S1:90:S2:90ALL:M
+  Arduino: ERROR: Unknown command: 1:0:M2:0:S1:90:S2:90ALL:M1:0:M2:0:S1:90:S2:90ALL:M1:0:M2:0:S1:90
+  Arduino: ERROR: Unknown command: :S2:90ALL:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: ERROR: Unknown command: L:M1:0:M2:0:S1:90:S2:90ALL:M1:0:M2
+  Arduino: ERROR: Unknown command: :0:S1:90:S2:90ALL:M1
+  Arduino: ERROR: Unknown command: :0:M2:0:S1:90:S2:90ALL:M1:0:M2:0:S1:
+  Arduino: ERROR: Unknown command: 90:S2:90ALL:M1:0:M2:0:S1:90:S2:90ALL:M1:0:M2:0:S1:90:S2:90ALL:M
+  Arduino: ERROR: Unknown command: 1:0:M2:0:S1:90:S2:90ALL:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK:M1:0:M2:0:S1:90:S2:90
+  Arduino: OK: Motor2 set to 0%
+  [... extensive corruption omitted for brevity - see full log in conversation ...]
+✓ Arduino connected successfully on /dev/ttyACM0
+
+✓ WebSocket server starting...
+
+Server Details:
+  - Port: 8444
+  - Protocol: WSS
+  - Local IP: 127.0.1.1
+  - Autonomous: ENABLED
+
+Quest 3 URL: wss://127.0.1.1:8444
+
+Press Ctrl+C to stop
+
+======================================================================
+
+Waiting for Quest 3 connection...
+
+
+============================================================
+[22:37:14.678] ✓ Quest 3 CONNECTED from 192.168.100.12:58202
+============================================================
+
+[22:37:14.691] 📨 RECEIVED: ALL:M1:0:M2:0:S1:90:S2:90...
+[22:37:17.152] 🎮 MODE CHANGE: NONE → MODE1
+[22:38:11.312] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#10)
+[22:38:11.312]   Arduino → Quest: ERROR: Unknown command: L:M1:0:M2:0:S1:90:S2:90ALL:M1:0:M2:0:S1:90:S2:90ALL:M1:0:M2:0:S1:
+[22:39:07.809] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#20)
+[22:39:07.809]   Arduino → Quest: ERROR: Unknown command: :S2:90ALL:M1:0:M2:0:S1:90:S2:90ALL:M1:0:M2:0:S1:90:S2:90ALL:0ALL:M1:0:M2:0:
+[22:40:14.105] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#30)
+[22:40:14.105]   Arduino → Quest: ERROR: Unknown command: 0:M2:0:S1:90:S2:90ALL:M1:0:M2:0:S1:90:S2:90ALL:M1:0:M2:0:S1:90:S2:90ALL:M1:0:
+[22:41:14.135] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#40)
+[22:41:14.135]   Arduino → Quest: ERROR: Unknown command: 1:0:M2:0:S1:90:S2:90
+
+============================================================
+[22:46:36.791] ✓ Quest 3 CONNECTED from 192.168.100.12:56880
+============================================================
+
+[22:46:36.829] 📨 RECEIVED: ALL:M1:0:M2:0:S1:90:S2:90...
+[22:51:46.980] ⚠️  Quest 3 disconnected
+[22:51:46.980] Connection lasted 310.2s, 1 messages
+
+NOTE: Mode 1 commands arriving at ~60s intervals instead of 0.5s (5-6s per command).
+No motor or servo response heard. No CSV logs produced.
+Root cause: OS UART kernel buffer from previous session's burst was never flushed.
+Hundreds of stacked commands drained onto Arduino at startup, corrupting its parser.

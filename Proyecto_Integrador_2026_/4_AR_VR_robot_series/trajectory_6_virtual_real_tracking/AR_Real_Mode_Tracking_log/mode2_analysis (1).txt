@@ -1,0 +1,86 @@
+=== MODE 2 TRAJECTORY ANALYSIS ===
+Purpose: DC Motor & Ackermann Servo Control Improvement
+
+--- GRID CONFIGURATION ---
+Grid Size: 21x21 cells (10cm x 10cm each)
+Map Area: 2.1m x 2.1m
+Grid Origin: Bottom-left corner (0,0)
+
+--- USER PATH (GREEN - PLANNED ROUTE) ---
+Total Points: 114
+Total Distance: 2.033m
+Markers Placed: 12
+
+User Path Markers (every 20cm):
+  Marker 0: Grid(4, 16), World(-0.569, 0.558), Distance: 0.000m
+  Marker 1: Grid(4, 17), World(-0.572, 0.746), Distance: 0.200m
+  Marker 2: Grid(5, 19), World(-0.535, 0.940), Distance: 0.400m
+  Marker 3: Grid(5, 21), World(-0.456, 1.122), Distance: 0.600m
+  Marker 4: Grid(6, 23), World(-0.353, 1.293), Distance: 0.800m
+  Marker 5: Grid(8, 24), World(-0.222, 1.443), Distance: 1.000m
+  Marker 6: Grid(9, 26), World(-0.081, 1.584), Distance: 1.200m
+  Marker 7: Grid(11, 27), World(0.094, 1.677), Distance: 1.400m
+  Marker 8: Grid(13, 28), World(0.275, 1.759), Distance: 1.600m
+  Marker 9: Grid(15, 28), World(0.467, 1.809), Distance: 1.800m
+  Marker 10: Grid(16, 28), World(0.641, 1.837), Distance: 2.000m
+  Marker 11: Grid(17, 28), World(0.663, 1.813), Distance: 2.033m
+
+--- CONTROLLER PATH (ORANGE - ACTUAL EXECUTION) ---
+Total Points: 2764
+Total Distance: 0.570m
+Markers Placed: 3
+
+Controller Path Markers (every 20cm):
+  Marker 0: Grid(5, 12), World(-0.537, 0.169), Distance: 0.000m
+  Marker 1: Grid(4, 13), World(-0.555, 0.280), Distance: 0.200m
+  Marker 2: Grid(5, 15), World(-0.532, 0.476), Distance: 0.401m
+
+--- OVERALL METRICS ---
+Total Distance Deviation: 1.463m (72.0%)
+Distance Ratio (actual/planned): 0.280
+
+--- MARKER-BY-MARKER COMPARISON ---
+Critical for DC Motor & Ackermann Servo Tuning
+
+Marker 0:
+  Spatial Deviation: 39.0cm
+  Grid Deviation: ΔX=1 cells, ΔZ=4 cells (41.2cm)
+  Distance Deviation: 0.0cm
+  Planned: Grid(4, 16) @ 0.000m
+  Actual:  Grid(5, 12) @ 0.000m
+
+Marker 1:
+  Spatial Deviation: 46.6cm
+  Grid Deviation: ΔX=0 cells, ΔZ=4 cells (40.0cm)
+  Distance Deviation: 0.0cm
+  Planned: Grid(4, 17) @ 0.200m
+  Actual:  Grid(4, 13) @ 0.200m
+  Velocity Ratio (actual/planned): 1.001
+
+Marker 2:
+  Spatial Deviation: 46.4cm
+  Grid Deviation: ΔX=0 cells, ΔZ=4 cells (40.0cm)
+  Distance Deviation: 0.1cm
+  Planned: Grid(5, 19) @ 0.400m
+  Actual:  Grid(5, 15) @ 0.401m
+  Velocity Ratio (actual/planned): 1.004
+
+--- SUMMARY STATISTICS ---
+Average Spatial Deviation: 44.0cm
+Maximum Spatial Deviation: 46.6cm at Marker 1
+Marker Count Difference: 9
+
+--- MOTOR CONTROL RECOMMENDATIONS ---
+HIGH DEVIATION DETECTED (>15cm average)
+Recommendations:
+  - Check DC motor calibration
+  - Verify Ackermann steering geometry
+  - Review PID controller gains
+  - Check wheel slip compensation
+
+--- NEXT STEPS FOR IMPROVEMENT ---
+1. Focus on markers with highest deviation
+2. Analyze velocity ratios for motor response issues
+3. Check grid deviations for systematic steering errors
+4. Correlate deviations with path curvature
+5. Adjust DC motor PWM or Ackermann servo angles accordingly
