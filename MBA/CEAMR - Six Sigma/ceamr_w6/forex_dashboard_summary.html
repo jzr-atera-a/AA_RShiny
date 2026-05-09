@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forex Analysis Dashboard - Feature Summary</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 15mm;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.5;
+            color: #2c3e50;
+            background: linear-gradient(135deg, #002C3C 0%, #008A82 100%);
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: white;
+            padding: 20mm 15mm;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            min-height: 297mm;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #008A82;
+        }
+        
+        .header h1 {
+            color: #002C3C;
+            font-size: 26px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        
+        .header .subtitle {
+            color: #008A82;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .intro {
+            background: linear-gradient(135deg, #e8f5f4 0%, #d4edea 100%);
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 18px;
+            border-left: 4px solid #008A82;
+        }
+        
+        .intro p {
+            font-size: 11px;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+        
+        .section {
+            margin-bottom: 16px;
+        }
+        
+        .section-title {
+            background: linear-gradient(135deg, #008A82 0%, #00A39A 100%);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title .icon {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            padding-left: 12px;
+        }
+        
+        .feature-item {
+            font-size: 10px;
+            padding: 6px 0;
+            display: flex;
+            align-items: start;
+        }
+        
+        .feature-item:before {
+            content: "▸";
+            color: #008A82;
+            font-weight: bold;
+            margin-right: 6px;
+            flex-shrink: 0;
+        }
+        
+        .highlight-box {
+            background: #fff9e6;
+            border-left: 3px solid #f39c12;
+            padding: 10px 12px;
+            margin: 12px 0;
+            border-radius: 4px;
+        }
+        
+        .highlight-box h4 {
+            color: #f39c12;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+        
+        .highlight-box ul {
+            margin-left: 16px;
+            font-size: 10px;
+        }
+        
+        .highlight-box li {
+            margin-bottom: 3px;
+        }
+        
+        .two-column {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .column-box {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .column-box h4 {
+            color: #008A82;
+            font-size: 12px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        
+        .column-box ul {
+            list-style: none;
+            font-size: 9.5px;
+        }
+        
+        .column-box li {
+            padding: 3px 0;
+            padding-left: 14px;
+            position: relative;
+        }
+        
+        .column-box li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .footer {
+            margin-top: 18px;
+            padding-top: 12px;
+            border-top: 2px solid #e9ecef;
+            text-align: center;
+            font-size: 9px;
+            color: #7f8c8d;
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            display: block;
+            margin: 20px auto;
+            transition: all 0.3s ease;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .container {
+                box-shadow: none;
+                padding: 0;
+            }
+            
+            .download-btn {
+                display: none;
+            }
+        }
+        
+        .tech-stack {
+            background: #e8f5f4;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-top: 12px;
+        }
+        
+        .tech-stack p {
+            font-size: 9px;
+            color: #2c3e50;
+            text-align: center;
+        }
+        
+        .tech-stack strong {
+            color: #008A82;
+        }
+    </style>
+</head>
+<body>
+    <button class="download-btn" onclick="downloadPDF()">📄 Download as PDF</button>
+    
+    <div class="container">
+        <div class="header">
+            <h1>📊 Forex Analysis Dashboard</h1>
+            <div class="subtitle">Comprehensive Technical Analysis Platform</div>
+        </div>
+        
+        <div class="intro">
+            <p><strong>Overview:</strong> A sophisticated forex trading analysis platform providing real-time market insights, technical indicators, and risk assessment tools. Built on R Shiny with MySQL integration, this dashboard delivers professional-grade analytical capabilities for currency pair trading across multiple timeframes and analytical dimensions.</p>
+        </div>
+        
+        <!-- Database Connection -->
+        <div class="section">
+            <div class="section-title">
+                <span class="icon">🔌</span> Database Connection & Data Management
+            </div>
+            <div class="features">
+                <div class="feature-item">MySQL database integration with real-time connectivity</div>
+                <div class="feature-item">Configurable connection parameters (host, port, credentials)</div>
+                <div class="feature-item">Multi-currency pair data loading and synchronization</div>
+                <div class="feature-item">Bid/Ask price filtering with quality validation</div>
+                <div class="feature-item">Automated data refresh and update mechanisms</div>
+                <div class="feature-item">Connection status monitoring and error handling</div>
+            </div>
+        </div>
+        
+        <!-- Market Overview -->
+        <div class="section">
+            <div class="section-title">
+                <span class="icon">📈</span> Market Overview
+            </div>
+            <div class="features">
+                <div class="feature-item">Real-time price displays with current rates and daily changes</div>
+                <div class="feature-item">Interactive candlestick charts with customizable timeframes</div>
+                <div class="feature-item">Volume analysis with trading activity visualization</div>
+                <div class="feature-item">Price trend identification and pattern recognition</div>
+                <div class="feature-item">Key metrics dashboard (open, high, low, close, volume)</div>
+                <div class="feature-item">Multi-pair comparison views and heat maps</div>
+            </div>
+        </div>
+        
+        <!-- Price Analysis -->
+        <div class="section">
+            <div class="section-title">
+                <span class="icon">💹</span> Price Analysis & Chart Tools
+            </div>
+            <div class="features">
+                <div class="feature-item">OHLC (Open-High-Low-Close) detailed visualizations</div>
+                <div class="feature-item">Bid-Ask spread analysis with real-time tracking</div>
+                <div class="feature-item">Price distribution histograms and statistical summaries</div>
+                <div class="feature-item">Support and resistance level identification</div>
+                <div class="feature-item">Time-series decomposition and trend analysis</div>
+                <div class="feature-item">Customizable chart intervals (1min, 5min, 1H, 1D, 1W)</div>
+                <div class="feature-item">Zoom and pan functionality for detailed examination</div>
+                <div class="feature-item">Price forecasting with confidence intervals</div>
+            </div>
+        </div>
+        
+        <!-- Technical Indicators -->
+        <div class="section">
+            <div class="section-title">
+                <span class="icon">⚙️</span> Technical Indicators Suite
+            </div>
+            <div class="two-column">
+                <div class="column-box">
+                    <h4>Momentum Indicators</h4>
+                    <ul>
+                        <li>RSI (Relative Strength Index) - 14, 21, 28 periods</li>
+                        <li>MACD (Moving Average Convergence Divergence)</li>
+                        <li>Stochastic Oscillator with %K and %D lines</li>
+                        <li>Momentum indicator with customizable periods</li>
+                    </ul>
+                </div>
+                <div class="column-box">
+                    <h4>Trend Indicators</h4>
+                    <ul>
+                        <li>Simple Moving Averages (SMA) - 20, 50, 100, 200</li>
+                        <li>Exponential Moving Averages (EMA)</li>
+                        <li>Bollinger Bands with standard deviation controls</li>
+                        <li>Average Directional Index (ADX)</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="features">
+                <div class="feature-item">Customizable indicator parameters and periods</div>
+                <div class="feature-item">Overbought/oversold zone highlighting (RSI 70/30)</div>
+                <div class="feature-item">Signal line crossover detection and alerts</div>
+                <div class="feature-item">Multi-indicator overlay capabilities</div>
+            </div>
+        </div>
+        
+        <!-- Volatility Analysis -->
+        <div class="section">
+            <div class="section-title">
+                <span class="icon">📉</span> Volatility Analysis
+            </div>
+            <div class="features">
+                <div class="feature-item">Historical volatility calculations (realized volatility)</div>
+                <div class="feature-item">Implied volatility estimations and comparisons</div>
+                <div class="feature-item">ATR (Average True Range) for volatility measurement</div>
+                <div class="feature-item">Volatility clustering identification</div>
+                <div class="feature-item">Rolling window volatility with adjustable periods</div>
+                <div class="feature-item">Volatility cones and forecasting models</div>
+            </div>
+        </div>
+        
+        <!-- Risk Metrics -->
+        <div class="section">
+            <div class="section-title">
+                <span class="icon">⚠️</span> Risk Metrics & Portfolio Analysis
+            </div>
+            <div class="two-column">
+                <div class="column-box">
+                    <h4>Risk Measures</h4>
+                    <ul>
+                        <li>Value at Risk (VaR) - 95% and 99% confidence</li>
+                        <li>Maximum Drawdown calculation and visualization</li>
+                        <li>Sharpe Ratio for risk-adjusted returns</li>
+                        <li>Sortino Ratio focusing on downside risk</li>
+                    </ul>
+                </div>
+                <div class="column-box">
+                    <h4>Performance Metrics</h4>
+                    <ul>
+                        <li>Cumulative returns tracking</li>
+                        <li>Win/loss ratio analysis</li>
+                        <li>Profit factor calculations</li>
+                        <li>Recovery period assessment</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Correlation Matrix -->
+        <div class="section">
+            <div class="section-title">
+                <span class="icon">🔗</span> Correlation & Multi-Pair Analysis
+            </div>
+            <div class="features">
+                <div class="feature-item">Dynamic correlation matrix for multiple currency pairs</div>
+                <div class="feature-item">Rolling correlation analysis with adjustable windows</div>
+                <div class="feature-item">Heatmap visualizations with color-coded strength indicators</div>
+                <div class="feature-item">Correlation network graphs showing pair relationships</div>
+                <div class="feature-item">Statistical significance testing (p-values, confidence intervals)</div>
+                <div class="feature-item">Time-varying correlation tracking</div>
+                <div class="feature-item">Correlation breakdown analysis (positive/negative trends)</div>
+                <div class="feature-item">Pearson and Spearman correlation methods</div>
+            </div>
+        </div>
+        
+        <!-- Key Features Box -->
+        <div class="highlight-box">
+            <h4>🎯 Key Platform Capabilities</h4>
+            <ul>
+                <li><strong>Interactive Visualizations:</strong> Plotly-powered charts with zoom, pan, and hover details</li>
+                <li><strong>Real-Time Updates:</strong> Live data synchronization from MySQL database</li>
+                <li><strong>Export Functionality:</strong> Download charts as PNG/SVG and data as CSV</li>
+                <li><strong>Multi-Timeframe Analysis:</strong> Analyze across minutes, hours, days, and weeks simultaneously</li>
+                <li><strong>Customizable Dashboards:</strong> User-defined layouts and indicator combinations</li>
+                <li><strong>Professional Design:</strong> Teal gradient theme with intuitive navigation</li>
+            </ul>
+        </div>
+        
+        <!-- Tech Stack -->
+        <div class="tech-stack">
+            <p><strong>Technology Stack:</strong> R Shiny Framework | Plotly Interactive Charts | MySQL Database | TTR Technical Indicators | DT Data Tables | Quantmod Financial Analysis | RMySQL Connector</p>
+        </div>
+        
+        <div class="footer">
+            <p><strong>Forex Analysis Dashboard</strong> | Professional-Grade Technical Analysis Platform</p>
+            <p>Comprehensive market insights for informed trading decisions</p>
+        </div>
+    </div>
+    
+    <script>
+        function downloadPDF() {
+            window.print();
+        }
+        
+        // Alternative PDF generation using modern browser API
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set page title for PDF
+            document.title = 'Forex Analysis Dashboard - Feature Summary';
+        });
+    </script>
+</body>
+</html>

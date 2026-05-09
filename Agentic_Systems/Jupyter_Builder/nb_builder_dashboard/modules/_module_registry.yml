@@ -1,0 +1,49 @@
+# ============================================================================
+# NOTEBOOK BUILDER - MODULE REGISTRY
+# ============================================================================
+
+modules:
+  - id: settings
+    name: "Initialisation & Settings"
+    enabled: true
+    packages:
+      - jsonlite
+      - shinyFiles
+      - fs
+    menu:
+      label: "Settings"
+      tabname: "settings"
+      icon: "cog"
+
+  - id: task
+    name: "Task Definition"
+    enabled: true
+    packages:
+      - jsonlite
+    menu:
+      label: "Task"
+      tabname: "task"
+      icon: "pencil-alt"
+
+  - id: monitor
+    name: "Monitoring Dashboard"
+    enabled: true
+    packages:
+      - jsonlite
+      - processx
+    menu:
+      label: "Monitor"
+      tabname: "monitor"
+      icon: "tachometer-alt"
+
+  - id: outputs
+    name: "Cell Outputs"
+    enabled: true
+    packages:
+      - jsonlite
+      - DT
+      - shinyFiles
+    menu:
+      label: "Outputs"
+      tabname: "outputs"
+      icon: "file-code"

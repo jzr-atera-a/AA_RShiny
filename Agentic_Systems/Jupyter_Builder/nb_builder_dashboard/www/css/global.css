@@ -1,0 +1,181 @@
+/* ============================================================
+   NOTEBOOK BUILDER DASHBOARD - Global CSS
+   Follows Modular_Audio_Text_LLM design language
+   ============================================================ */
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ── Boxes ── */
+.box {
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important;
+  transition: box-shadow 0.3s ease;
+}
+.box:hover { box-shadow: 0 6px 25px rgba(0,0,0,0.13) !important; }
+.box-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  border-radius: 12px 12px 0 0 !important;
+}
+.box-header .box-title { font-weight: 600; }
+
+/* ── Buttons ── */
+.btn { transition: all 0.3s ease; font-weight: 600; border-radius: 8px !important; }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+.btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border: none !important; }
+.btn-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important; border: none !important; }
+.btn-warning { background: linear-gradient(135deg, #f093fb 0%, #f5a623 100%) !important; border: none !important; }
+.btn-danger  { background: linear-gradient(135deg, #ff6b6b 0%, #ee0979 100%) !important; border: none !important; }
+.btn-info    { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important; border: none !important; color: #fff !important; }
+
+/* ── Info / reference boxes ── */
+.info-box {
+  background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+  border-left: 5px solid #667eea;
+  padding: 15px; border-radius: 8px; margin: 10px 0;
+}
+.reference-box {
+  background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+  border: 1px solid #e3e8ff;
+  border-left: 5px solid #4f46e5;
+  padding: 20px; margin-top: 15px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(79,70,229,0.1);
+}
+
+/* ── Terminal / log pane ── */
+.terminal-pane {
+  background: #0d1117;
+  color: #e6edf3;
+  font-family: "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", monospace;
+  font-size: 12.5px;
+  line-height: 1.65;
+  padding: 14px 18px;
+  border-radius: 10px;
+  min-height: 320px;
+  max-height: 420px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.terminal-pane .log-info    { color: #58a6ff; }
+.terminal-pane .log-success { color: #3fb950; }
+.terminal-pane .log-warning { color: #d29922; }
+.terminal-pane .log-error   { color: #f85149; }
+.terminal-pane .log-dim     { color: #7d8590; }
+.terminal-pane .log-agent1  { color: #58a6ff; font-weight: 600; }
+.terminal-pane .log-agent2  { color: #d29922; font-weight: 600; }
+.terminal-pane .log-kernel  { color: #3fb950; }
+.terminal-pane .log-rule    { color: #30363d; }
+
+/* ── Stats cards ── */
+.stat-card {
+  background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+  border: 1px solid #e3e8ff;
+  border-radius: 10px;
+  padding: 14px 16px;
+  text-align: center;
+  margin: 4px;
+}
+.stat-card .stat-label { font-size: 11px; color: #8892b0; text-transform: uppercase; letter-spacing: .05em; }
+.stat-card .stat-value { font-size: 22px; font-weight: 700; color: #4f46e5; margin: 2px 0; }
+.stat-card .stat-value.green  { color: #059669; }
+.stat-card .stat-value.amber  { color: #d97706; }
+.stat-card .stat-value.red    { color: #dc2626; }
+.stat-card .stat-sub  { font-size: 11px; color: #94a3b8; }
+
+/* ── Progress bar ── */
+.progress { border-radius: 6px; height: 10px; }
+.progress-bar {
+  background: linear-gradient(90deg, #667eea, #764ba2) !important;
+  transition: width 0.5s ease;
+}
+
+/* ── Agent badges ── */
+.agent-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .03em;
+}
+.badge-writer   { background: #dbeafe; color: #1d4ed8; }
+.badge-verifier { background: #fef3c7; color: #92400e; }
+.badge-kernel   { background: #d1fae5; color: #065f46; }
+.badge-human    { background: #ede9fe; color: #5b21b6; }
+.badge-idle     { background: #f1f5f9; color: #475569; }
+
+/* ── Human checkpoint panel ── */
+.checkpoint-panel {
+  background: linear-gradient(135deg, #ede9fe 0%, #faf5ff 100%);
+  border: 2px solid #8b5cf6;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 10px 0;
+  animation: pulse-border 2s ease-in-out infinite;
+}
+@keyframes pulse-border {
+  0%,100% { box-shadow: 0 0 0 0 rgba(139,92,246,0.4); }
+  50%      { box-shadow: 0 0 0 8px rgba(139,92,246,0); }
+}
+
+/* ── Cell output cards ── */
+.cell-card {
+  background: #fff;
+  border: 1px solid #e3e8ff;
+  border-left: 4px solid #667eea;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+.cell-card .cell-num  { font-size: 11px; color: #8892b0; font-weight: 600; text-transform: uppercase; }
+.cell-card .cell-title{ font-size: 15px; font-weight: 600; color: #1e1b4b; margin: 4px 0; }
+.cell-card pre {
+  background: #0d1117; color: #e6edf3;
+  border-radius: 8px; padding: 10px 14px;
+  font-size: 12px; margin: 8px 0;
+  white-space: pre-wrap; word-break: break-all;
+}
+.cell-card .cell-output {
+  background: #f8fffe; color: #065f46;
+  border: 1px solid #d1fae5;
+  border-radius: 8px; padding: 8px 12px;
+  font-size: 12px; font-family: monospace;
+  white-space: pre-wrap;
+}
+
+/* ── Form styles ── */
+.form-control { border-radius: 8px !important; border: 1.5px solid #e3e8ff !important; }
+.form-control:focus { border-color: #667eea !important; box-shadow: 0 0 0 3px rgba(102,126,234,0.15) !important; }
+.control-label { font-weight: 600; color: #374151; }
+
+/* ── Sidebar ── */
+.main-sidebar  { background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%) !important; }
+.sidebar-menu > li > a { color: #c7d2fe !important; }
+.sidebar-menu > li.active > a,
+.sidebar-menu > li > a:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+}
+
+/* ── Header ── */
+.main-header .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; }
+.main-header .logo   { background: linear-gradient(135deg, #4f46e5 0%, #6d28d9 100%) !important; }
+
+/* ── Content ── */
+.content-wrapper { background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%) !important; }
+
+/* ── Plan table ── */
+.plan-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.plan-table th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 8px 12px; }
+.plan-table td { padding: 7px 12px; border-bottom: 1px solid #f0f0ff; }
+.plan-table tr:nth-child(even) td { background: #f8f9ff; }
+.badge-low    { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+.badge-medium { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+.badge-high   { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+
+/* ── Scrollable areas ── */
+.scrollable-outputs { max-height: 70vh; overflow-y: auto; padding-right: 4px; }

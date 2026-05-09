@@ -1,0 +1,8 @@
+# Drop your reference files here:
+#   API docs (.md, .txt)
+#   JSON schemas (.json)
+#   Sample code (.py)
+#   Any text the agents should always know about
+#
+# They are read ONCE at the start of a new run and stored in session.json,
+# so they persist across restarts without being re-read from disk.
