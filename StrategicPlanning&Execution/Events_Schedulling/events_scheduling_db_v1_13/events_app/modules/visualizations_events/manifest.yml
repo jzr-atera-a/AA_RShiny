@@ -1,0 +1,16 @@
+module:
+  id: "visualizations_events"
+  name: "Event Visualizations"
+  description: "Map, calendar and list views for events"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Visualizations"
+    icon: "map-marked-alt"
+    tabname: "visualizations_events"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, leaflet, plotly, DT, dplyr]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

@@ -8,7 +8,6 @@ cat("╚════════════════════════
 
 options(shiny.maxRequestSize = 50 * 1024^2)
 
-# ── Core packages ─────────────────────────────────────────────────────────
 suppressPackageStartupMessages({
   library(shiny)
   library(shinydashboard)
@@ -21,16 +20,13 @@ suppressPackageStartupMessages({
   library(processx)
 })
 
-# ── Utility files ─────────────────────────────────────────────────────────
 source("R/module_loader.R")
-source("R/utils_session.R")
+source("R/utils_session.R")   # defines %||% and SessionManager
 source("R/utils_python.R")
-
-`%||%` <- function(x, y) if (is.null(x) || length(x) == 0) y else x
 
 # ── UI factory ────────────────────────────────────────────────────────────
 create_ui <- function(module_loader) {
-  enabled <- module_loader$get_enabled_modules()
+  enabled  <- module_loader$get_enabled_modules()
 
   all_tabs <- lapply(enabled, function(module) {
     mid   <- module$module$id
@@ -56,19 +52,16 @@ create_ui <- function(module_loader) {
 
     dashboardSidebar(
       width = 280,
-      tags$head(
-        tags$link(rel = "stylesheet", type = "text/css", href = "css/global.css"),
-        useShinyjs()
-      ),
       sidebarMenu(id = "sidebar_menu", do.call(tagList, all_menu))
     ),
 
     dashboardBody(
       useShinyjs(),
       tags$head(
+        tags$link(rel = "stylesheet", type = "text/css", href = "css/global.css"),
         tags$style(HTML("
           .sidebar-toggle { display: none !important; }
-          details > summary { user-select: none; }
+          details > summary { user-select: none; cursor: pointer; }
           details > summary::-webkit-details-marker { color: #667eea; }
         "))
       ),
@@ -81,9 +74,11 @@ create_ui <- function(module_loader) {
 create_server <- function(module_loader, session_mgr, python_bridge, session) {
   enabled <- module_loader$get_enabled_modules()
 
-  # Shared reactive app state (passed to all modules)
+  # IMPORTANT: start with empty run_dir so the monitor does NOT poll a
+  # previous run on a fresh session start.  The resume dropdown in the
+  # Task tab is the correct way to re-attach to an old run.
   app_state <- reactiveValues(
-    run_dir  = session_mgr$get("last_run_dir", ""),
+    run_dir  = "",     # intentionally blank — set only when user starts/resumes
     running  = FALSE,
     resuming = FALSE,
     plan     = NULL
@@ -95,21 +90,17 @@ create_server <- function(module_loader, session_mgr, python_bridge, session) {
     mid    <- module$module$id
     servfn <- paste0(mid, "_server")
     if (!exists(servfn, envir = .GlobalEnv)) next
-
     fn <- get(servfn, envir = .GlobalEnv)
 
-    # Pass appropriate singletons to each module
-    if (mid == "settings") {
-      fn(mid, session_mgr, python_bridge, session)
-    } else if (mid == "task") {
-      fn(mid, session_mgr, python_bridge, app_state, session)
-    } else if (mid == "monitor") {
-      fn(mid, session_mgr, python_bridge, app_state, session)
-    } else if (mid == "outputs") {
-      fn(mid, session_mgr, app_state, session)
-    } else {
-      fn(mid, session_mgr, session)
-    }
+    tryCatch({
+      if      (mid == "settings") fn(mid, session_mgr, python_bridge, session)
+      else if (mid == "task")     fn(mid, session_mgr, python_bridge, app_state, session)
+      else if (mid == "monitor")  fn(mid, session_mgr, python_bridge, app_state, session)
+      else if (mid == "outputs")  fn(mid, session_mgr, app_state, session)
+      else                        fn(mid, session_mgr, session)
+    }, error = function(e) {
+      cat("  ⚠ Error initialising module", mid, ":", e$message, "\n")
+    })
   }
 
   cat("✓ All module servers initialised\n")

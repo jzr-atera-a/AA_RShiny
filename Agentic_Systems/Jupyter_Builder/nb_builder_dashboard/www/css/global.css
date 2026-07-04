@@ -169,9 +169,14 @@ body {
 .content-wrapper { background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%) !important; }
 
 /* ── Plan table ── */
-.plan-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.plan-table th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 8px 12px; }
-.plan-table td { padding: 7px 12px; border-bottom: 1px solid #f0f0ff; }
+.plan-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+.plan-table th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 8px 12px; white-space: nowrap; }
+.plan-table th:nth-child(1) { width: 40px; }
+.plan-table th:nth-child(2) { width: 22%; }
+.plan-table th:nth-child(3) { width: auto; }
+.plan-table th:nth-child(4) { width: 90px; }
+.plan-table td { padding: 8px 12px; border-bottom: 1px solid #f0f0ff; vertical-align: top;
+                 overflow-wrap: break-word; white-space: normal; word-break: normal; }
 .plan-table tr:nth-child(even) td { background: #f8f9ff; }
 .badge-low    { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
 .badge-medium { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 10px; font-size: 11px; }

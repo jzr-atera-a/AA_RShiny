@@ -1,0 +1,5 @@
+Cell 3: Cell 3 searches ArcGIS Online for public Australian mining layers using outside_org=True to search public content. It validates results geographically by sampling up to 20 points from each candidate layer and checking that at least 60% fall within the Australia bounding box (lat -45 to -10, lon 113 to 154). Once a valid layer is found, it queries the full layer to a Spatially-enabled DataFrame (SDF). Uses gis.users.me pattern and ends with print confirmation.
+Executed: 2026-05-10T06:08:19.273937
+Success: True
+--- output ---
+(no output)

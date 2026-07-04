@@ -1,0 +1,34 @@
+module:
+  id: "bigquery_auth"
+  name: "BigQuery Authentication"
+  description: "Authenticate to Google BigQuery for cloud database storage"
+  version: "1.0.0"
+  author: "Book Summary Suite Team"
+  
+  enabled: true
+  
+  menu:
+    label: "BigQuery Setup"
+    icon: "database"
+    tabname: "bigquery_auth"
+    badge:
+      label: null
+      color: null
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - bigrquery
+      - jsonlite
+    
+    package_versions:
+      bigrquery: ">= 1.4.0"
+  
+  api:
+    required: []
+    optional: []
+  
+  data:
+    required: []
+    optional: []

@@ -14,7 +14,7 @@ APIManager <- R6::R6Class(
   public = list(
     # Claude API credentials
     claude_api_key = NULL,
-    claude_model = "claude-sonnet-4-20250514",
+    claude_model = "claude-sonnet-4-6",
     claude_max_tokens = 16000,
     claude_timeout = 300,  # 5 minutes default timeout
     claude_authenticated = FALSE,
@@ -30,10 +30,17 @@ APIManager <- R6::R6Class(
     # ⭐ CRITICAL: Reactive trigger for cross-module updates
     state_trigger = NULL,
     
+    # ⭐ Cross-module data handoff: lets generate_summary push text into
+    # bulk_import's textarea without either module knowing about the other's
+    # internals. bulk_import observes this value and updates its own input
+    # when it changes.
+    pending_bulk_text = NULL,
+    
     # Initialize
     initialize = function() {
       # Initialize reactive trigger - MUST be inside a reactive context
       self$state_trigger <- shiny::reactiveVal(0)
+      self$pending_bulk_text <- shiny::reactiveVal("")
       self$bq_full_table_id <- paste0(self$bq_project_id, ".", 
                                        self$bq_dataset_id, ".", 
                                        self$bq_table_id)
@@ -45,6 +52,11 @@ APIManager <- R6::R6Class(
       current <- self$state_trigger()
       self$state_trigger(current + 1)
       cat("🔔 State trigger fired:", current + 1, "\n")
+    },
+    
+    # Push generated summary text to the Bulk Import module
+    set_pending_bulk_text = function(text) {
+      self$pending_bulk_text(text)
     },
     
     # ============================================================
@@ -89,7 +101,26 @@ APIManager <- R6::R6Class(
           self$trigger_state_update()
           return(TRUE)
         } else {
-          stop(paste("Status code:", status_code(response)))
+          status <- status_code(response)
+          
+          error_content <- tryCatch({
+            content(response, "parsed", encoding = "UTF-8")
+          }, error = function(e) {
+            content(response, "text", encoding = "UTF-8")
+          })
+          
+          cat("❌ [test_claude_connection] Non-200 response body:\n")
+          cat("   ", utils::capture.output(str(error_content)), sep = "\n   ")
+          
+          detail <- if (is.list(error_content) && !is.null(error_content$error$message)) {
+            error_content$error$message
+          } else if (is.character(error_content)) {
+            error_content
+          } else {
+            "(no error detail in response body)"
+          }
+          
+          stop(sprintf("Status code: %d - %s", status, detail))
         }
       }, error = function(e) {
         self$claude_authenticated <- FALSE
@@ -99,6 +130,8 @@ APIManager <- R6::R6Class(
     
     # Call Claude API with comprehensive error handling
     call_claude = function(prompt, max_tokens = NULL, progress_callback = NULL) {
+      cat("🔧 [APIManager$call_claude] Entered. claude_authenticated =", self$claude_authenticated, "\n")
+      
       if (!self$claude_authenticated) {
         stop("Not authenticated to Claude API. Please save credentials first.")
       }
@@ -108,6 +141,9 @@ APIManager <- R6::R6Class(
       }
       
       tokens <- max_tokens %||% self$claude_max_tokens
+      cat("🔧 [APIManager$call_claude] model =", self$claude_model,
+          "| max_tokens =", tokens,
+          "| timeout =", self$claude_timeout, "seconds\n")
       
       # Notify progress
       if (!is.null(progress_callback)) {
@@ -115,6 +151,8 @@ APIManager <- R6::R6Class(
       }
       
       tryCatch({
+        cat("🔧 [APIManager$call_claude] Sending POST to https://api.anthropic.com/v1/messages ...\n")
+        
         response <- POST(
           url = "https://api.anthropic.com/v1/messages",
           add_headers(
@@ -130,6 +168,8 @@ APIManager <- R6::R6Class(
           encode = "json",
           timeout(self$claude_timeout)  # Use configurable timeout
         )
+        
+        cat("🔧 [APIManager$call_claude] POST returned. HTTP status =", status_code(response), "\n")
         
         # Check for timeout specifically
         if (inherits(response, "error")) {
@@ -149,6 +189,9 @@ APIManager <- R6::R6Class(
           }, error = function(e) {
             content(response, "text", encoding = "UTF-8")
           })
+          
+          cat("❌ [APIManager$call_claude] Non-200 response body:\n")
+          cat("   ", utils::capture.output(str(error_content)), sep = "\n   ")
           
           error_msg <- if (is.list(error_content) && !is.null(error_content$error)) {
             paste0("API Error (", status, "): ", error_content$error$message)
@@ -180,6 +223,8 @@ APIManager <- R6::R6Class(
         result <- content(response, "parsed", encoding = "UTF-8")
         
         if (is.null(result$content) || length(result$content) == 0) {
+          cat("❌ [APIManager$call_claude] Parsed response has no $content -",
+              "the request succeeded (HTTP 200) but the response body was unexpected.\n")
           stop("Claude API returned empty response. Please try again.")
         }
         
@@ -188,9 +233,21 @@ APIManager <- R6::R6Class(
           progress_callback("Complete!")
         }
         
-        return(result$content[[1]]$text)
+        stop_reason <- result$stop_reason %||% "unknown"
+        truncated <- identical(stop_reason, "max_tokens")
+        
+        cat("✅ [APIManager$call_claude] Success - stop_reason =", stop_reason,
+            if (truncated) "(TRUNCATED - hit max_tokens limit!)" else "", "\n")
+        
+        return(list(
+          text = result$content[[1]]$text,
+          stop_reason = stop_reason,
+          truncated = truncated
+        ))
         
       }, error = function(e) {
+        cat("❌ [APIManager$call_claude] Raw error before message rewrite:", e$message, "\n")
+        
         # Enhanced error messages
         error_msg <- e$message
         
@@ -312,6 +369,29 @@ APIManager <- R6::R6Class(
       
       job <- bq_project_query(self$bq_project_id, query)
       return(bq_table_download(job))
+    },
+    
+    # Get distinct genre/topic/book/author combinations, used to build
+    # the cascading Genre -> Topic -> Book dropdowns in generate_summary,
+    # add_single, and visualizations.
+    bq_get_taxonomy = function() {
+      empty_result <- data.frame(genre = character(), topic = character(),
+                                  book_name = character(), author = character(),
+                                  stringsAsFactors = FALSE)
+      
+      if (!self$bq_authenticated) return(empty_result)
+      
+      query <- sprintf(
+        "SELECT DISTINCT genre, topic, book_name, author FROM `%s` ORDER BY genre, topic, book_name",
+        self$bq_full_table_id
+      )
+      
+      tryCatch({
+        self$bq_query(query)
+      }, error = function(e) {
+        cat("⚠️  [bq_get_taxonomy] Query failed:", e$message, "\n")
+        empty_result
+      })
     },
     
     # Insert data to BigQuery

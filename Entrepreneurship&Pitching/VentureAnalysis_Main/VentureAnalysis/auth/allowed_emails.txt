@@ -1,0 +1,6 @@
+# FALLBACK: used only when Google Sheets is unavailable
+# When Sheets IS connected, this file is ignored.
+# Edit the Google Sheet directly to manage users.
+
+admin@yourcompany.com
+user1@yourcompany.com

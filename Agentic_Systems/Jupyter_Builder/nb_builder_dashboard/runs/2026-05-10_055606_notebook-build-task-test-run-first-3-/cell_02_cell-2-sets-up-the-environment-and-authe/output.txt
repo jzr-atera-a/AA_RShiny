@@ -1,0 +1,7 @@
+Cell 2: Cell 2 sets up the environment and authentication. It reads RUN_DIR from environment variables (no hardcoding), uses the locked GIS auth pattern with profile='josephzr', validates authentication using gis.users.me (not gis.properties.user), and creates a curated DataFrame of 8 Australian mine sites with relevant metadata. Ends with print confirmation.
+Executed: 2026-05-10T06:07:39.839061
+Success: False
+--- output ---
+(no output)
+--- error ---
+OSError: RUN_DIR environment variable is not set

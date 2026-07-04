@@ -1,0 +1,5 @@
+# Never commit Google service account credentials
+auth/google_service_account.json
+auth/login_log.txt
+.Renviron
+*.placeholder

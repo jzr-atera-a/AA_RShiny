@@ -15,6 +15,7 @@ rsconnect::removeAccount("gorgeous-little-pear") #0 apps, sarai.m@atera-
 rsconnect::setAccountInfo(name='oy68gf-frank-zr',
                           token='73D1775008C36CE26E46BE2BDB273602',
                           secret='1GvMM+5UtUAD3PjahUldP2FtXBhbx+4FbgzaypvM')
+#Apps	profile_jfz_ai_leadership -	ccaf_w4a_schain   -	forex_trading_strategies     #
 
 ##One and only account under jfz.003a@gmail.com
 rsconnect::setAccountInfo(name='haaf4j-theone-andonly',
@@ -84,9 +85,28 @@ rsconnect::deployApp(
   forceUpdate = TRUE
 )
 
+#Atera Analytics Confirmed
+rsconnect::deployApp('C:/101_Code/R/Entrepreneurship&Pitching/VentureAnalysis_Main/VentureAnalysis/')
+rsconnect::deployApp('C:/101_Code/R/Literature/DB_Material_Compilation/DB_Books_LLM_modular/Modular_db_books_llm/')
+#rsconnect::deployApp('C:/101_Code/R/Entrepreneurship&Pitching/VentureDeals_DeepTech_Suite/VentureDeals/')
+rsconnect::deployApp('C:/101_Code/R/StrategicPlanning&Execution/Events_Schedulling/events_app/')
+
+##
+rsconnect::deployApp('C:/101_Code/R/Research/RTCMA/Besancon France/')
+rsconnect::deployApp('C:/101_Code/R/Research/RTCMA/Montevideo Uruguay/')
+rsconnect::deployApp('C:/101_Code/R/Research/Academic_Research/Thesis/')
+rsconnect::deployApp('C:/101_Code/R/Research/Academic_Research/ICRA/')
+
+rsconnect::deployApp('C:/101_Code/R/Skills/Coding/ML Interview Preparation/MTSFrontierAIPrep/')
+rsconnect::deployApp('C:/101_Code/R/Skills/Coding/ML Design & Architecture/RecommenderSystemsKB/')
+rsconnect::deployApp('C:/101_Code/R/Skills/Coding/ML Design & Architecture/MLDesignPrep_ChipHuyen_v1_0/')
+rsconnect::deployApp('C:/101_Code/R/Skills/Communication/CompComm_v7/Simon_Hall_CC/')
+rsconnect::deployApp('C:/101_Code/R/Finance/crypto_&_equities_analysis/')
+#Pear stuff:
 rsconnect::deployApp('C:/101_Code/R/Atera A Shiny Apps Site/energy_planning_geo_a/')
 rsconnect::deployApp('C:/101_Code/R/Health&Nutrition/SaraiMazu_MetodologiaCostosYPrecios/')
 rsconnect::deployApp('C:/101_Code/R/Health&Nutrition/SaraiMazu-Relato-Fotografico/')
+
 rsconnect::deployApp('C:/101_Code/R/Skills/Productivity/10x_productivity/')
 rsconnect::deployApp('C:/101_Code/R/Health&Nutrition/SaraiMazu_MenuDegustacionTest/')
 rsconnect::deployApp('C:/101_Code/R/Health&Nutrition/SaraiMazu_MenuDegustacion_Nov/')

@@ -75,6 +75,10 @@ def wait_for_checkpoint_response(run_dir, timeout=300):
         time.sleep(1)
     return "skip"  # timeout → auto-skip
 
+def reset_control(run_dir):
+    """Write 'run' to control.json — clears any stale checkpoint/pause command."""
+    Path(run_dir, "control.json").write_text(json.dumps({"command": "run"}))
+
 def check_pause_stop(run_dir, run_dir_obj, cell_num, plan_total, stats):
     """Block if paused; return True if should stop."""
     while True:
@@ -83,11 +87,16 @@ def check_pause_stop(run_dir, run_dir_obj, cell_num, plan_total, stats):
             log("Stop command received.", "WARNING")
             write_progress(run_dir, cell_num, plan_total, "stopped", "Stopped by user.", stats=stats)
             return True
-        if cmd in ("run", "continue", ""):
+        # "run", "continue", empty, OR leftover checkpoint commands → all mean continue
+        if cmd in ("run", "continue", "", "checkpoint_accept", "checkpoint_skip", "awaiting_checkpoint"):
             return False
-        # paused — wait
-        write_progress(run_dir, cell_num, plan_total, "paused", "Paused by user.", stats=stats)
-        time.sleep(2)
+        # Only truly "pause" if the command is literally "pause"
+        if cmd == "pause":
+            write_progress(run_dir, cell_num, plan_total, "paused", "Paused — click Continue to resume.", stats=stats)
+            time.sleep(2)
+        else:
+            # Unknown command — treat as run to avoid getting stuck
+            return False
 
 # ── Stats ───────────────────────────────────────────────────────────────────
 
@@ -120,12 +129,48 @@ class Stats:
             return f"{self.consecutive_fails} consecutive failures"
         return None
 
+# ── Rate-limit retry wrapper ─────────────────────────────────────────────────
+
+def api_with_retry(fn, run_dir="", max_attempts=6):
+    """Retry an Anthropic API call on RateLimitError with exponential backoff."""
+    for attempt in range(max_attempts):
+        try:
+            return fn()
+        except anthropic.RateLimitError as e:
+            if attempt == max_attempts - 1:
+                log(f"Rate limit: max retries reached. Aborting.", "ERROR")
+                raise
+            wait = min(60 * (2 ** attempt), 300)   # 60s, 120s, 240s, 300s cap
+            log(f"Rate limit (429) — waiting {wait}s before retry {attempt+2}/{max_attempts}...", "WARNING")
+            # Write paused-style progress so R dashboard shows waiting state
+            if run_dir:
+                try:
+                    prog_path = Path(run_dir) / "progress.json"
+                    if prog_path.exists():
+                        prog = json.loads(prog_path.read_text())
+                        prog["message"] = f"Rate limit — retrying in {wait}s ({attempt+2}/{max_attempts})"
+                        prog_path.write_text(json.dumps(prog, indent=2))
+                except Exception:
+                    pass
+            time.sleep(wait)
+        except Exception:
+            raise
+
 # ── Kernel ──────────────────────────────────────────────────────────────────
 
 class Kernel:
     def __init__(self, kernel_name="python3"):
-        self.km = jupyter_client.KernelManager(kernel_name=kernel_name)
-        self.km.start_kernel()
+        try:
+            self.km = jupyter_client.KernelManager(kernel_name=kernel_name)
+            self.km.start_kernel()
+        except Exception as e:
+            if kernel_name != "python3":
+                log(f"Kernel '{kernel_name}' not found ({e}), falling back to python3", "WARNING")
+                self.km = jupyter_client.KernelManager(kernel_name="python3")
+                self.km.start_kernel()
+                kernel_name = "python3"
+            else:
+                raise
         self.kc = self.km.client()
         self.kc.start_channels()
         self.kc.wait_for_ready(timeout=30)
@@ -156,16 +201,20 @@ class Kernel:
 # ── Context loader ──────────────────────────────────────────────────────────
 
 def load_context(context_dir):
+    """Load ALL reference files in full — do NOT truncate."""
     if not context_dir or not os.path.isdir(context_dir):
         return {}
     files = {}
     for p in sorted(Path(context_dir).iterdir()):
         if p.is_file() and not p.name.startswith("."):
             try:
-                files[p.name] = p.read_text(encoding="utf-8", errors="replace")
-                log(f"Context file loaded: {p.name} ({len(files[p.name]):,} chars)")
+                content = p.read_text(encoding="utf-8", errors="replace")
+                files[p.name] = content
+                log(f"Context file loaded: {p.name} ({len(content):,} chars)")
             except Exception as e:
                 log(f"Could not read {p.name}: {e}", "WARNING")
+    total = sum(len(v) for v in files.values())
+    log(f"Total context: {total:,} chars (~{total//4:,} tokens) — ensure token budget is set accordingly")
     return files
 
 def context_block(files):
@@ -240,10 +289,12 @@ Respond ONLY with valid JSON (no markdown fences):
 def plan_task(client, model, spec, ctx_block, stats):
     log("Planning task...", "AGENT1")
     system = PLANNER_SYSTEM.format(ctx=ctx_block or "(no reference files)")
-    response = client.messages.create(
-        model=model, max_tokens=1024,
-        system=system,
-        messages=[{"role":"user","content":f"Spec:\n{spec}"}]
+    response = api_with_retry(
+        lambda: client.messages.create(
+            model=model, max_tokens=1024,
+            system=system,
+            messages=[{"role":"user","content":f"Spec:\n{spec}"}]
+        )
     )
     stats.add(response.usage)
     plan = parse_json(response.content[0].text)
@@ -267,7 +318,9 @@ Rules: one cell per response; fix current cell on error feedback; stand by on ap
 def writer_call(client, model, history, prompt, ctx_block, plan, stats):
     system = WRITER_SYSTEM.format(ctx=ctx_block or "(context in session)", plan=json.dumps(plan, indent=2))
     history.append({"role":"user","content":prompt})
-    response = client.messages.create(model=model, max_tokens=2048, system=system, messages=history)
+    response = api_with_retry(
+        lambda: client.messages.create(model=model, max_tokens=2048, system=system, messages=history)
+    )
     stats.add(response.usage)
     raw = response.content[0].text
     history.append({"role":"assistant","content":raw})
@@ -284,7 +337,9 @@ def verifier_call(client, model, history, cell, result, stats):
     msg = (f"Explanation: {cell['explanation']}\n\nCode:\n```python\n{cell['code']}\n```\n\n"
            f"Success: {result['success']}\nOutput: {result['output'][:600] or '(none)'}\nError: {result['error'] or '(none)'}")
     history.append({"role":"user","content":msg})
-    response = client.messages.create(model=model, max_tokens=512, system=VERIFIER_SYSTEM, messages=history)
+    response = api_with_retry(
+        lambda: client.messages.create(model=model, max_tokens=512, system=VERIFIER_SYSTEM, messages=history)
+    )
     stats.add(response.usage)
     raw = response.content[0].text
     history.append({"role":"assistant","content":raw})
@@ -372,10 +427,28 @@ def main():
     outline      = plan.get("outline", [])
     cells_done   = len(approved_cells)
 
+    # ── Budget check after planning (planning itself costs tokens) ──────────
+    post_plan_budget = stats.check_budget(max_cost, max_tokens, max_consec)
+    if post_plan_budget:
+        log(f"Budget exhausted during planning: {post_plan_budget}", "ERROR")
+        log(f"Planning alone cost ${stats.total_cost_usd:.4f} / budget ${max_cost:.2f}", "WARNING")
+        log("Increase Max Spend in Settings Tab 1 and try again.", "WARNING")
+        write_progress(run_dir, 0, plan_total, "stopped",
+                       f"Budget hit during planning: ${stats.total_cost_usd:.4f} >= ${max_cost:.2f}",
+                       "idle", stats.to_dict())
+        save_session(run_dir, {
+            "session_id": run_dir.name, "spec": spec,
+            "task_plan": plan, "reference_files": ctx_files,
+            "approved_cells": [], "writer_history": [],
+            "verifier_history": [], "stats": stats.to_dict(),
+        })
+        sys.exit(0)
+
     # Register the kernel name (use same one as R configured, default python3)
     kernel_name = cfg.get("kernel_name", "python3")
+    log(f"Starting kernel: {kernel_name}", "SUCCESS")
     kernel = Kernel(kernel_name)
-    log(f"Kernel started: {kernel_name}", "SUCCESS")
+    log(f"Kernel ready: {kernel_name}", "SUCCESS")
 
     # ── Cell loop ──────────────────────────────────────────────────────────
     for cell_num in range(cells_done + 1, plan_total + 1):
@@ -425,9 +498,10 @@ def main():
             log("Executing...", "KERNEL")
             result = kernel.execute(cell["code"])
             if result["success"]:
-                log(f"✓ {(result['output'] or '(no output)')[:200]}", "SUCCESS")
+                output_preview = (result['output'] or '(no output)')[:300]
+                log(f"✓ Execution OK — output: {output_preview}", "SUCCESS")
             else:
-                log(f"✗ {result['error'][:300]}", "ERROR")
+                log(f"✗ Execution FAILED: {result['error'][:400]}", "ERROR")
 
             # ── Verifier ───────────────────────────────────────────────────
             write_progress(run_dir, cell_num, plan_total, "running",
@@ -440,8 +514,10 @@ def main():
                 retries += 1; stats.retries_total += 1
                 continue
 
+            verifier_feedback = verdict.get("feedback", "")
+            verifier_risk     = verdict.get("risk", "?")
             if verdict["approved"]:
-                log(f"✅ Approved  risk={verdict.get('risk','?')}", "SUCCESS")
+                log(f"✅ Agent 2 APPROVED — {verifier_feedback}  [risk={verifier_risk}]", "SUCCESS")
 
                 # ── Human checkpoint ────────────────────────────────────────
                 risk = verdict.get("risk", "low")
@@ -462,6 +538,9 @@ def main():
 
                     action = wait_for_checkpoint_response(str(run_dir))
                     log(f"Human decision: {action}", "WARNING")
+                    # CRITICAL: reset control.json so the next cell's check_pause_stop
+                    # doesn't misread "checkpoint_accept" as a pause command
+                    reset_control(str(run_dir))
 
                     if action == "stop":
                         write_progress(run_dir, cell_num, plan_total, "stopped",
@@ -505,9 +584,9 @@ def main():
                 break
 
             else:
-                log(f"✗ Rejected: {verdict['feedback']}", "ERROR")
+                log(f"❌ Agent 2 REJECTED — {verifier_feedback}", "ERROR")
                 retries += 1; stats.retries_total += 1
-                prompt = f"Rejected. Fix it.\n\nFeedback: {verdict['feedback']}"
+                prompt = f"Rejected. Fix it.\n\nFeedback: {verifier_feedback}"
                 log(f"Retry {retries}/{max_retries}", "WARNING")
 
             # Check control between retries

@@ -1,0 +1,18 @@
+{
+  "cell_current": 3,
+  "plan_total": 3,
+  "status": "done",
+  "message": "Complete \u2014 2/3 approved",
+  "current_agent": "idle",
+  "timestamp": "2026-05-10T06:08:21.922935",
+  "stats": {
+    "total_input_tokens": 54674,
+    "total_output_tokens": 3244,
+    "total_cost_usd": 1.0634099999999997,
+    "cells_approved": 2,
+    "cells_skipped": 1,
+    "retries_total": 0,
+    "consecutive_fails": 0
+  },
+  "checkpoint": null
+}

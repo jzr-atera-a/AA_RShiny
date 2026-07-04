@@ -1,0 +1,18 @@
+{
+  "cell_current": 2,
+  "plan_total": 3,
+  "status": "paused",
+  "message": "Paused by user.",
+  "current_agent": "idle",
+  "timestamp": "2026-05-10T05:07:31.952097",
+  "stats": {
+    "total_input_tokens": 14005,
+    "total_output_tokens": 623,
+    "total_cost_usd": 0.2568,
+    "cells_approved": 1,
+    "cells_skipped": 0,
+    "retries_total": 0,
+    "consecutive_fails": 0
+  },
+  "checkpoint": null
+}

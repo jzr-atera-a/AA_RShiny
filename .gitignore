@@ -1,7 +1,12 @@
+Set-Content -Path .gitignore -Encoding utf8 -Value @"
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
-
 replacements.txt
 passwords.txt
+google_service_account.json
+nb_session_config.json
+launch_config.json
+"@
+ 

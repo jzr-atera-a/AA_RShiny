@@ -25,7 +25,7 @@ ui <- dashboardPage(
         selectInput("assetClass", 
                     "Select Asset Class:",
                     choices = c("Cryptocurrencies" = "crypto", 
-                                "Private Equity" = "equity",
+                                "Equities" = "equity",
                                 "Commodities" = "commodity"),
                     selected = "crypto",
                     width = "100%")
@@ -46,7 +46,7 @@ ui <- dashboardPage(
         conditionalPanel(
           condition = "input.assetClass == 'equity'",
           selectInput("equityAsset", 
-                      "Select Private Equity Stock:",
+                      "Select Equity Stock:",
                       choices = c("NVIDIA (NVDA)" = "NVDA",
                                   "Microsoft (MSFT)" = "MSFT",
                                   "Apple (AAPL)" = "AAPL"),
@@ -66,14 +66,17 @@ ui <- dashboardPage(
     ),
     
     sidebarMenu(
-      menuItem("Market Overview", tabName = "overview", icon = icon("chart-line")),
-      menuItem("Price Analysis", tabName = "price", icon = icon("chart-simple")),
+      id = "main_menu",
+      menuItem("About & Overview",     tabName = "about",     icon = icon("circle-info"), selected = TRUE),
+      menuItem("Market Overview",      tabName = "overview",  icon = icon("chart-line")),
+      menuItem("Price Analysis",       tabName = "price",     icon = icon("chart-simple")),
       menuItem("Technical Indicators", tabName = "technical", icon = icon("chart-bar")),
-      menuItem("Volatility Analysis", tabName = "volatility", icon = icon("wave-square")),
-      menuItem("Risk Metrics", tabName = "risk", icon = icon("exclamation-triangle")),
-      menuItem("Advanced Metrics", tabName = "advanced", icon = icon("star")),
-      menuItem("Hedging Strategies", tabName = "hedging", icon = icon("shield-alt")),
-      menuItem("Composite Analysis", tabName = "composite", icon = icon("layer-group"))
+      menuItem("Volatility Analysis",  tabName = "volatility",icon = icon("wave-square")),
+      menuItem("Risk Metrics",         tabName = "risk",      icon = icon("exclamation-triangle")),
+      menuItem("Advanced Metrics",     tabName = "advanced",  icon = icon("star")),
+      menuItem("Hedging Strategies",   tabName = "hedging",   icon = icon("shield-alt")),
+      menuItem("Composite Analysis",   tabName = "composite", icon = icon("layer-group")),
+      menuItem("Feedback",             tabName = "feedback",  icon = icon("envelope"))
     )
   ),
   
@@ -288,6 +291,355 @@ ui <- dashboardPage(
     ),
     
     tabItems(
+      
+      # ── ABOUT & OVERVIEW TAB ──────────────────────────────────────────────────
+      tabItem(tabName = "about",
+        
+        # ── TOP BOX: Creator profile ────────────────────────────────────────────
+        fluidRow(
+          box(
+            width = 12,
+            solidHeader = TRUE,
+            status = "primary",
+            title = NULL,
+            div(
+              style = paste0(
+                "background: linear-gradient(135deg, #002C3C 0%, #005f5a 60%, #00A39A 100%);",
+                "border-radius: 10px; padding: 32px 36px; color: #ffffff;"
+              ),
+              fluidRow(
+                column(8,
+                  tags$h1(
+                    "Joseph Francisco Zubizarreta",
+                    style = "font-size:28px; font-weight:700; margin:0 0 6px 0; color:#ffffff;"
+                  ),
+                  tags$p(
+                    HTML("<strong style='color:#7fffd4;'>MBA Alumni</strong> &nbsp;|&nbsp;
+                          Judge Business School, University of Cambridge &nbsp;|&nbsp;
+                          <strong style='color:#7fffd4;'>Founder</strong>, Atera Analytics"),
+                    style = "font-size:15px; margin:0 0 18px 0; color:#d0f0ec;"
+                  ),
+                  tags$p(
+                    HTML(paste0(
+                      "Atera Analytics is an entrepreneurial platform built on the principle that ",
+                      "complex, production-grade analytical applications should be accessible to ",
+                      "domain experts — not just software engineers. This app is one artefact of that ",
+                      "mission: a fully integrated, multi-asset financial analytics suite designed for ",
+                      "rigorous quantitative analysis across <strong>Cryptocurrencies</strong>, ",
+                      "<strong>Equities</strong>, and <strong>Commodities</strong>."
+                    )),
+                    style = "font-size:14px; line-height:1.7; color:#e8f8f6; margin:0 0 14px 0;"
+                  ),
+                  tags$p(
+                    HTML(paste0(
+                      "Combining real-time market data via Yahoo Finance, institutional-grade risk ",
+                      "metrics, technical analysis, hedging strategy modelling, and cross-asset ",
+                      "composite analysis — all within a single deployable Shiny application."
+                    )),
+                    style = "font-size:14px; line-height:1.7; color:#e8f8f6; margin:0;"
+                  )
+                ),
+                column(4,
+                  div(
+                    style = paste0(
+                      "background:rgba(255,255,255,0.08); border-radius:10px; ",
+                      "padding:20px 22px; text-align:center; height:100%;"
+                    ),
+                    tags$div(
+                      icon("graduation-cap", style = "font-size:38px; color:#7fffd4; margin-bottom:10px;"),
+                      tags$h4("Judge Business School", style = "color:#ffffff; font-weight:600; margin:0 0 4px 0; font-size:15px;"),
+                      tags$p("University of Cambridge", style = "color:#b2e0db; font-size:13px; margin:0 0 16px 0;"),
+                      tags$hr(style = "border-color:rgba(255,255,255,0.2); margin:12px 0;"),
+                      tags$div(
+                        icon("building", style = "font-size:28px; color:#7fffd4; margin-bottom:8px;"),
+                        tags$h4("Atera Analytics", style = "color:#ffffff; font-weight:600; margin:0 0 4px 0; font-size:15px;"),
+                        tags$p("Entrepreneurial Analytics Platform", style = "color:#b2e0db; font-size:13px; margin:0;")
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        ),
+        
+        # ── ASSET CLASS QUICK REFERENCE ─────────────────────────────────────────
+        fluidRow(
+          box(
+            width = 12, solidHeader = TRUE, status = "primary",
+            title = "Asset Classes Covered",
+            fluidRow(
+              column(4,
+                div(style = "text-align:center; padding:16px;",
+                  icon("bitcoin", style = "font-size:36px; color:#f39c12; margin-bottom:10px;"),
+                  tags$h4("Cryptocurrencies", style = "color:#2c3e50; font-weight:700; margin:0 0 6px 0;"),
+                  tags$p(HTML("Bitcoin (BTC-USD) &bull; Ethereum (ETH-USD) &bull; Cardano (ADA-USD)"),
+                    style = "font-size:13px; color:#555; margin:0 0 8px 0;"),
+                  tags$p("24/7 market data. Highest volatility class — ideal for testing tail-risk and drawdown metrics.",
+                    style = "font-size:12px; color:#777; line-height:1.5;")
+                )
+              ),
+              column(4,
+                div(style = "text-align:center; padding:16px; border-left:1px solid #e8e8e8; border-right:1px solid #e8e8e8;",
+                  icon("chart-line", style = "font-size:36px; color:#3498db; margin-bottom:10px;"),
+                  tags$h4("Equities", style = "color:#2c3e50; font-weight:700; margin:0 0 6px 0;"),
+                  tags$p(HTML("NVIDIA (NVDA) &bull; Microsoft (MSFT) &bull; Apple (AAPL)"),
+                    style = "font-size:13px; color:#555; margin:0 0 8px 0;"),
+                  tags$p("NYSE/NASDAQ large-cap equities. Full OHLCV data with adjusted close for accurate return calculations.",
+                    style = "font-size:12px; color:#777; line-height:1.5;")
+                )
+              ),
+              column(4,
+                div(style = "text-align:center; padding:16px;",
+                  icon("oil-well", style = "font-size:36px; color:#e67e22; margin-bottom:10px;"),
+                  tags$h4("Commodities", style = "color:#2c3e50; font-weight:700; margin:0 0 6px 0;"),
+                  tags$p(HTML("Gold (GC=F) &bull; Crude Oil (CL=F) &bull; Natural Gas (NG=F)"),
+                    style = "font-size:13px; color:#555; margin:0 0 8px 0;"),
+                  tags$p("Front-month continuous futures contracts. Key inflation hedges and macro regime indicators.",
+                    style = "font-size:12px; color:#777; line-height:1.5;")
+                )
+              )
+            )
+          )
+        ),
+        
+        # ── TAB-BY-TAB OVERVIEW ─────────────────────────────────────────────────
+        fluidRow(
+          box(
+            width = 12, solidHeader = TRUE, status = "primary",
+            title = "Application Modules — Detailed Overview",
+            
+            # Tab 1 — Market Overview
+            div(style = "margin-bottom:28px;",
+              fluidRow(
+                column(1, div(style="text-align:center; padding-top:4px;",
+                  icon("chart-line", style="font-size:28px; color:#008A82;"))),
+                column(11,
+                  tags$h4("1 · Market Overview", style="color:#002C3C; font-weight:700; margin:0 0 6px 0;"),
+                  tags$p(HTML(paste0(
+                    "The entry point for any asset. Displays a live price and volume chart for the selected ",
+                    "instrument with optional moving-average overlay. Four summary value boxes report the ",
+                    "<strong>current price</strong>, <strong>daily % change</strong>, ",
+                    "<strong>average volume</strong>, and <strong>data range</strong> at a glance. ",
+                    "Three statistics tables break down market statistics, price movement patterns, and volume ",
+                    "behaviour. A returns histogram and price distribution chart complete the panel, giving an ",
+                    "immediate statistical fingerprint of the asset before deeper analysis."
+                  )), style="font-size:13px; color:#444; line-height:1.7; margin:0;")
+                )
+              )
+            ),
+            tags$hr(style="border-color:#e8eeee; margin:4px 0 20px 0;"),
+            
+            # Tab 2 — Price Analysis
+            div(style = "margin-bottom:28px;",
+              fluidRow(
+                column(1, div(style="text-align:center; padding-top:4px;",
+                  icon("chart-simple", style="font-size:28px; color:#2980b9;"))),
+                column(11,
+                  tags$h4("2 · Price Analysis", style="color:#002C3C; font-weight:700; margin:0 0 6px 0;"),
+                  tags$p(HTML(paste0(
+                    "A fully configurable deep-dive into price action. A <strong>date range selector</strong> ",
+                    "focuses the analysis on any sub-period. Component toggles show/hide Close, High/Low, and Open. ",
+                    "A configurable moving average and optional <strong>Bollinger Bands</strong> overlay are added ",
+                    "directly to the price chart. The tab also contains a professional ",
+                    "<strong>OHLC candlestick chart</strong> (last 200 bars) with a companion statistics table, ",
+                    "plus separate panels for <strong>daily returns time series</strong> and ",
+                    "<strong>cumulative returns</strong> — essential for visualising compounding over time."
+                  )), style="font-size:13px; color:#444; line-height:1.7; margin:0;")
+                )
+              )
+            ),
+            tags$hr(style="border-color:#e8eeee; margin:4px 0 20px 0;"),
+            
+            # Tab 3 — Technical Indicators
+            div(style = "margin-bottom:28px;",
+              fluidRow(
+                column(1, div(style="text-align:center; padding-top:4px;",
+                  icon("chart-bar", style="font-size:28px; color:#8e44ad;"))),
+                column(11,
+                  tags$h4("3 · Technical Indicators", style="color:#002C3C; font-weight:700; margin:0 0 6px 0;"),
+                  tags$p(HTML(paste0(
+                    "Six configurable technical indicators applied to any asset class: ",
+                    "<strong>SMA</strong> (Simple Moving Average), <strong>EMA</strong> (Exponential MA), ",
+                    "<strong>RSI</strong> (Relative Strength Index), <strong>MACD</strong> ",
+                    "(Moving Average Convergence Divergence), <strong>Bollinger Bands</strong>, and the ",
+                    "<strong>Stochastic Oscillator</strong>. Each indicator has an independently configurable ",
+                    "period parameter. The main chart overlays selected indicators on the price series, while ",
+                    "RSI, MACD, and Stochastic each expand into a dedicated sub-chart with standard ",
+                    "overbought/oversold reference lines. A live signals panel interprets current RSI level ",
+                    "and price-vs-MA position in plain language."
+                  )), style="font-size:13px; color:#444; line-height:1.7; margin:0;")
+                )
+              )
+            ),
+            tags$hr(style="border-color:#e8eeee; margin:4px 0 20px 0;"),
+            
+            # Tab 4 — Volatility Analysis
+            div(style = "margin-bottom:28px;",
+              fluidRow(
+                column(1, div(style="text-align:center; padding-top:4px;",
+                  icon("wave-square", style="font-size:28px; color:#16a085;"))),
+                column(11,
+                  tags$h4("4 · Volatility Analysis", style="color:#002C3C; font-weight:700; margin:0 0 6px 0;"),
+                  tags$p(HTML(paste0(
+                    "Three volatility estimation methodologies are offered: ",
+                    "<strong>Realized (Close-to-Close)</strong>, ",
+                    "<strong>Parkinson (High-Low range)</strong> — more efficient for assets with intraday extremes — ",
+                    "and <strong>Garman-Klass (full OHLC)</strong>, the most statistically efficient estimator. ",
+                    "Rolling volatility is plotted with a configurable window and confidence bands. ",
+                    "A volatility distribution histogram reveals regime characteristics, while a ",
+                    "<strong>volatility clustering</strong> chart visualises GARCH-type autocorrelation in absolute ",
+                    "returns. The <strong>Regime Analysis</strong> panel colour-codes observations into Low / Normal / High ",
+                    "volatility states using the 25th and 75th percentiles as boundaries — particularly ",
+                    "informative for crypto and commodity assets."
+                  )), style="font-size:13px; color:#444; line-height:1.7; margin:0;")
+                )
+              )
+            ),
+            tags$hr(style="border-color:#e8eeee; margin:4px 0 20px 0;"),
+            
+            # Tab 5 — Risk Metrics
+            div(style = "margin-bottom:28px;",
+              fluidRow(
+                column(1, div(style="text-align:center; padding-top:4px;",
+                  icon("exclamation-triangle", style="font-size:28px; color:#e74c3c;"))),
+                column(11,
+                  tags$h4("5 · Risk Metrics", style="color:#002C3C; font-weight:700; margin:0 0 6px 0;"),
+                  tags$p(HTML(paste0(
+                    "Institutional-grade downside risk quantification. ",
+                    "<strong>Value at Risk (VaR)</strong> is computed via two methods — ",
+                    "Historical Simulation and Parametric Normal — across a configurable portfolio value, ",
+                    "confidence level (90–99.5%), and time horizon. Rolling VaR is plotted against daily P&amp;L ",
+                    "to reveal periods of VaR breach. <strong>Expected Shortfall (CVaR)</strong> complements VaR by ",
+                    "measuring the average loss beyond the VaR threshold. A full ",
+                    "<strong>Drawdown Analysis</strong> chart shows the underwater equity curve. The ",
+                    "<strong>Stress Test</strong> table quantifies 2σ through 4σ tail events and market crisis ",
+                    "scenarios in dollar terms against the configured portfolio size."
+                  )), style="font-size:13px; color:#444; line-height:1.7; margin:0;")
+                )
+              )
+            ),
+            tags$hr(style="border-color:#e8eeee; margin:4px 0 20px 0;"),
+            
+            # Tab 6 — Advanced Metrics
+            div(style = "margin-bottom:28px;",
+              fluidRow(
+                column(1, div(style="text-align:center; padding-top:4px;",
+                  icon("star", style="font-size:28px; color:#f39c12;"))),
+                column(11,
+                  tags$h4("6 · Advanced Metrics", style="color:#002C3C; font-weight:700; margin:0 0 6px 0;"),
+                  tags$p(HTML(paste0(
+                    "Four risk-adjusted performance ratios displayed as headline value boxes: ",
+                    "<strong>Sharpe Ratio</strong> (excess return per unit of total risk), ",
+                    "<strong>Sortino Ratio</strong> (excess return per unit of downside risk), ",
+                    "<strong>Calmar Ratio</strong> (annualised return divided by maximum drawdown), and the ",
+                    "<strong>Omega Ratio</strong> (probability-weighted ratio of gains to losses above a threshold). ",
+                    "All metrics are configurable via risk-free rate, target return, and rolling window inputs. ",
+                    "Rolling Sharpe and Sortino charts expose how risk-adjusted performance evolves through ",
+                    "market cycles. Downside risk, upside vs downside capture, maximum drawdown detail, and ",
+                    "recovery period analysis complete the tab."
+                  )), style="font-size:13px; color:#444; line-height:1.7; margin:0;")
+                )
+              )
+            ),
+            tags$hr(style="border-color:#e8eeee; margin:4px 0 20px 0;"),
+            
+            # Tab 7 — Hedging Strategies
+            div(style = "margin-bottom:28px;",
+              fluidRow(
+                column(1, div(style="text-align:center; padding-top:4px;",
+                  icon("shield-alt", style="font-size:28px; color:#27ae60;"))),
+                column(11,
+                  tags$h4("7 · Hedging Strategies", style="color:#002C3C; font-weight:700; margin:0 0 6px 0;"),
+                  tags$p(HTML(paste0(
+                    "Models the effectiveness of hedging the selected asset against a second instrument. ",
+                    "Four hedge construction methods are available: <strong>Static</strong> (fixed ratio), ",
+                    "<strong>Dynamic Correlation-based</strong> (ratio updated using rolling correlation), ",
+                    "<strong>Beta-Adjusted</strong> (market beta as the hedge multiplier), and ",
+                    "<strong>Minimum Variance</strong> (ratio that minimises portfolio variance). ",
+                    "The main performance chart overlays hedged vs unhedged cumulative returns. Rolling hedge ratio ",
+                    "and correlation charts expose how the relationship between the two instruments evolves. A ",
+                    "<strong>Cost-Benefit Analysis</strong> table estimates transaction costs against the volatility ",
+                    "reduction achieved — directly answering whether the hedge pays for itself."
+                  )), style="font-size:13px; color:#444; line-height:1.7; margin:0;")
+                )
+              )
+            ),
+            tags$hr(style="border-color:#e8eeee; margin:4px 0 20px 0;"),
+            
+            # Tab 8 — Composite Analysis
+            div(style = "margin-bottom:8px;",
+              fluidRow(
+                column(1, div(style="text-align:center; padding-top:4px;",
+                  icon("layer-group", style="font-size:28px; color:#9b59b6;"))),
+                column(11,
+                  tags$h4("8 · Composite Analysis", style="color:#002C3C; font-weight:700; margin:0 0 6px 0;"),
+                  tags$p(HTML(paste0(
+                    "The only tab that loads data for <em>multiple assets simultaneously</em>, enabling ",
+                    "true cross-asset and cross-class comparison. Up to 9 instruments — spanning all three asset ",
+                    "classes — can be selected together. Three normalisation modes are available: ",
+                    "<strong>Index (Base 100)</strong> for return comparison, <strong>Cumulative %</strong>, or ",
+                    "<strong>Raw Price</strong>. A <strong>Correlation Heatmap</strong> (using corrplot) reveals ",
+                    "diversification potential between assets. A <strong>Risk-Return scatter</strong> plots ",
+                    "annualised volatility against annualised return for every selected asset. A ",
+                    "<strong>Rolling 60-day Correlation</strong> chart tracks how pairwise relationships evolve ",
+                    "over time. The Asset Class Comparison panel summarises average returns and volatility by ",
+                    "Crypto, Equity, and Commodity class, with a best-performer and most-volatile identifier."
+                  )), style="font-size:13px; color:#444; line-height:1.7; margin:0;")
+                )
+              )
+            )
+          )
+        ),
+        
+        # ── DATA FLOW DIAGRAM ────────────────────────────────────────────────────
+        fluidRow(
+          box(
+            width = 12, solidHeader = TRUE, status = "info",
+            title = "Data & Analysis Flow",
+            div(style = "padding: 10px 0;",
+              fluidRow(
+                column(3,
+                  div(style=paste0("background:linear-gradient(135deg,#002C3C,#005f5a);",
+                    "color:#fff;border-radius:8px;padding:16px;text-align:center;height:90px;",
+                    "display:flex;flex-direction:column;justify-content:center;"),
+                    icon("database", style="font-size:20px; margin-bottom:6px;"),
+                    tags$strong("Yahoo Finance API", style="display:block; font-size:13px;"),
+                    tags$span("quantmod · real-time OHLCV", style="font-size:11px; color:#b2e0db;")
+                  )
+                ),
+                column(1, div(style="display:flex;align-items:center;justify-content:center;height:90px;",
+                  icon("arrow-right", style="font-size:22px; color:#008A82;")
+                )),
+                column(3,
+                  div(style=paste0("background:linear-gradient(135deg,#005f5a,#008A82);",
+                    "color:#fff;border-radius:8px;padding:16px;text-align:center;height:90px;",
+                    "display:flex;flex-direction:column;justify-content:center;"),
+                    icon("gears", style="font-size:20px; margin-bottom:6px;"),
+                    tags$strong("R Processing Layer", style="display:block; font-size:13px;"),
+                    tags$span("dplyr · TTR · zoo · quantmod", style="font-size:11px; color:#d0f0ec;")
+                  )
+                ),
+                column(1, div(style="display:flex;align-items:center;justify-content:center;height:90px;",
+                  icon("arrow-right", style="font-size:22px; color:#008A82;")
+                )),
+                column(4,
+                  div(style=paste0("background:linear-gradient(135deg,#008A82,#00A39A);",
+                    "color:#fff;border-radius:8px;padding:16px;text-align:center;height:90px;",
+                    "display:flex;flex-direction:column;justify-content:center;"),
+                    icon("display", style="font-size:20px; margin-bottom:6px;"),
+                    tags$strong("Interactive Visualisation", style="display:block; font-size:13px;"),
+                    tags$span("plotly · DT · shinydashboard", style="font-size:11px; color:#e8f8f6;")
+                  )
+                )
+              )
+            )
+          )
+        )
+        
+      ), # end tabItem about
+      
+      # ── MARKET OVERVIEW TAB ──────────────────────────────────────────────────
       # Market Overview Tab
       tabItem(tabName = "overview",
               fluidRow(
@@ -335,7 +687,15 @@ ui <- dashboardPage(
                   status = "primary", 
                   solidHeader = TRUE, 
                   width = 12,
-                  withSpinner(plotlyOutput("overviewChart", height = "500px"))
+                  withSpinner(plotlyOutput("overviewChart", height = "500px")),
+                  tags$p(paste0(
+                    "Combined price and volume chart for the selected asset. The main line shows the daily ",
+                    "closing price over the full loaded history. Volume bars at the bottom indicate how many ",
+                    "units were traded each session; high-volume sessions accompanied by large price moves ",
+                    "are generally considered more significant signals than low-volume moves. ",
+                    "The optional moving average overlay helps identify whether the asset is in an uptrend, ",
+                    "downtrend, or sideways range."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               ),
               
@@ -345,21 +705,37 @@ ui <- dashboardPage(
                   status = "primary", 
                   solidHeader = TRUE, 
                   width = 4,
-                  withSpinner(DT::dataTableOutput("marketStats"))
+                  withSpinner(DT::dataTableOutput("marketStats")),
+                  tags$p(paste0(
+                    "Key price level statistics across the full loaded data range, including average, ",
+                    "minimum, and maximum closing prices. These anchor values provide context for where ",
+                    "the current price sits relative to the asset's historical range."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 ),
                 box(
                   title = "Price Movement Analysis", 
                   status = "primary", 
                   solidHeader = TRUE, 
                   width = 4,
-                  withSpinner(DT::dataTableOutput("priceMovementStats"))
+                  withSpinner(DT::dataTableOutput("priceMovementStats")),
+                  tags$p(paste0(
+                    "Breakdown of daily price behaviour patterns: average daily range, frequency of gap ",
+                    "opens, and session-level directional statistics. Useful for understanding the typical ",
+                    "intraday volatility character of the asset and identifying any systematic patterns."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 ),
                 box(
                   title = "Volume Analysis", 
                   status = "primary", 
                   solidHeader = TRUE, 
                   width = 4,
-                  withSpinner(DT::dataTableOutput("volumeStats"))
+                  withSpinner(DT::dataTableOutput("volumeStats")),
+                  tags$p(paste0(
+                    "Summary of trading volume across the data range. Mean, median, and standard deviation ",
+                    "of daily volume reveal whether liquidity is consistent or episodic. ",
+                    "Note: volume data is not available for commodity futures or certain crypto feeds ",
+                    "and will display as N/A for those instruments."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               ),
               
@@ -369,14 +745,27 @@ ui <- dashboardPage(
                   status = "info", 
                   solidHeader = TRUE, 
                   width = 6,
-                  withSpinner(plotlyOutput("returnsDistribution", height = "300px"))
+                  withSpinner(plotlyOutput("returnsDistribution", height = "300px")),
+                  tags$p(paste0(
+                    "Histogram of all daily returns over the full loaded history. A symmetrical bell shape ",
+                    "centred near zero is consistent with a random walk. A distribution with fat tails ",
+                    "indicates more frequent extreme moves than a normal distribution would predict, ",
+                    "which is characteristic of crypto and commodity markets. Skew to one side reveals ",
+                    "an asymmetric return profile."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 ),
                 box(
                   title = "Price Distribution", 
                   status = "info", 
                   solidHeader = TRUE, 
                   width = 6,
-                  withSpinner(plotlyOutput("priceDistribution", height = "300px"))
+                  withSpinner(plotlyOutput("priceDistribution", height = "300px")),
+                  tags$p(paste0(
+                    "Histogram of all closing price levels over the full loaded history. Price distributions ",
+                    "are typically not bell-shaped for financial assets; they often show peaks at key ",
+                    "support and resistance levels where the asset spent extended periods of time. ",
+                    "Multiple peaks indicate a ranging market; a single peak suggests a trending period."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               )
       ),
@@ -389,7 +778,6 @@ ui <- dashboardPage(
                   status = "primary", 
                   solidHeader = TRUE, 
                   width = 12,
-                  
                   fluidRow(
                     column(3,
                            dateRangeInput("priceRange", "Analysis Period:",
@@ -422,24 +810,51 @@ ui <- dashboardPage(
                   status = "primary", 
                   solidHeader = TRUE, 
                   width = 12,
-                  withSpinner(plotlyOutput("detailedPriceChart", height = "600px"))
+                  withSpinner(plotlyOutput("detailedPriceChart", height = "500px")),
+                  tags$p(paste0(
+                    "Price series for the selected asset and date range. Toggle Close, High/Low, and Open ",
+                    "in the controls above to show or hide each component. The moving average line ",
+                    "smooths short-term fluctuations to reveal the underlying trend direction. ",
+                    "Bollinger Bands, when enabled, form an upper and lower envelope two standard deviations ",
+                    "either side of the moving average: price touching the upper band signals potential overbought ",
+                    "conditions, while touching the lower band signals potential oversold conditions."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               ),
               
+              # OHLC chart full-width to prevent overlap
               fluidRow(
                 box(
                   title = "OHLC Candlestick Chart", 
                   status = "primary", 
                   solidHeader = TRUE, 
-                  width = 8,
-                  withSpinner(plotlyOutput("ohlcChart", height = "450px"))
-                ),
+                  width = 12,
+                  withSpinner(plotlyOutput("ohlcChart", height = "450px")),
+                  tags$p(paste0(
+                    "Each candlestick represents one trading session. A green candle means the price closed ",
+                    "higher than it opened (bullish session); a red candle means the price closed lower than ",
+                    "it opened (bearish session). The body shows the Open-to-Close range; the thin wicks above ",
+                    "and below extend to the session High and Low. Wide bodies indicate strong directional ",
+                    "conviction; long wicks suggest price rejection at the extremes."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
+                )
+              ),
+              
+              # Stats table full-width below the chart
+              fluidRow(
                 box(
                   title = "OHLC Statistics", 
                   status = "info", 
                   solidHeader = TRUE, 
-                  width = 4,
-                  withSpinner(DT::dataTableOutput("ohlcStats"))
+                  width = 12,
+                  withSpinner(DT::dataTableOutput("ohlcStats")),
+                  tags$p(paste0(
+                    "Summary statistics computed across all sessions in the selected period. ",
+                    "Avg Range (High minus Low) is the typical daily price swing, a direct measure of intraday ",
+                    "volatility. Max Range identifies the most extreme single-session swing. ",
+                    "Bullish Days and Bearish Days express the proportion of sessions where price closed ",
+                    "above or below its open, indicating the directional bias of the period."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               ),
               
@@ -449,14 +864,26 @@ ui <- dashboardPage(
                   status = "primary", 
                   solidHeader = TRUE, 
                   width = 6,
-                  withSpinner(plotlyOutput("returnsTimeSeries", height = "350px"))
+                  withSpinner(plotlyOutput("returnsTimeSeries", height = "320px")),
+                  tags$p(paste0(
+                    "Daily log returns expressed as a percentage. Each bar or spike represents a single ",
+                    "session's percentage gain or loss relative to the prior close. Spikes far from zero ",
+                    "identify extreme event days. The distribution of these returns around the zero line ",
+                    "reveals whether the asset has a positive or negative return bias over the period."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 ),
                 box(
                   title = "Cumulative Returns", 
                   status = "primary", 
                   solidHeader = TRUE, 
                   width = 6,
-                  withSpinner(plotlyOutput("cumulativeReturns", height = "350px"))
+                  withSpinner(plotlyOutput("cumulativeReturns", height = "320px")),
+                  tags$p(paste0(
+                    "The compounded growth of a hypothetical investment in the selected asset over the period, ",
+                    "expressed as a cumulative percentage. A rising line indicates the investment has grown in ",
+                    "value; a declining line indicates loss of capital. Steep drops reveal drawdown periods. ",
+                    "The final value on the right-hand side is the total return over the entire date range shown."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               )
       ),
@@ -495,7 +922,15 @@ ui <- dashboardPage(
                   status = "primary", 
                   solidHeader = TRUE, 
                   width = 9,
-                  withSpinner(plotlyOutput("technicalChart", height = "600px"))
+                  withSpinner(plotlyOutput("technicalChart", height = "600px")),
+                  tags$p(paste0(
+                    "Price chart with the selected technical indicator overlays. SMA and EMA lines track ",
+                    "the trend: when price is above the line the asset is in an uptrend relative to that ",
+                    "period; below signals a downtrend. EMA reacts faster than SMA to recent price changes. ",
+                    "Bollinger Bands form a volatility envelope; a squeeze (bands narrowing) often precedes ",
+                    "a significant price move. Use the Current Signals panel on the left for a plain-language ",
+                    "interpretation of the active indicators."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               ),
               
@@ -507,7 +942,14 @@ ui <- dashboardPage(
                     status = "primary", 
                     solidHeader = TRUE, 
                     width = 12,
-                    withSpinner(plotlyOutput("rsiChart", height = "300px"))
+                    withSpinner(plotlyOutput("rsiChart", height = "300px")),
+                    tags$p(paste0(
+                      "The Relative Strength Index oscillates between 0 and 100. Readings above 70 (red dashed line) ",
+                      "indicate the asset may be overbought and due for a pullback. Readings below 30 (green dashed line) ",
+                      "suggest oversold conditions and a potential bounce. The RSI crossing back through these thresholds ",
+                      "is often used as an entry or exit signal. In strong trending markets the RSI can remain in ",
+                      "overbought or oversold territory for extended periods."
+                    ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                   )
                 )
               ),
@@ -520,7 +962,14 @@ ui <- dashboardPage(
                     status = "primary", 
                     solidHeader = TRUE, 
                     width = 12,
-                    withSpinner(plotlyOutput("macdChart", height = "300px"))
+                    withSpinner(plotlyOutput("macdChart", height = "300px")),
+                    tags$p(paste0(
+                      "The MACD line (blue) is the difference between the 12-period and 26-period EMAs. ",
+                      "The Signal line (red) is a 9-period EMA of the MACD line. When MACD crosses above ",
+                      "the Signal line it is considered a bullish signal; crossing below is bearish. ",
+                      "The histogram bars show the gap between the two lines: growing green bars indicate ",
+                      "strengthening upward momentum; growing red bars indicate strengthening downward momentum."
+                    ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                   )
                 )
               ),
@@ -533,7 +982,14 @@ ui <- dashboardPage(
                     status = "primary", 
                     solidHeader = TRUE, 
                     width = 12,
-                    withSpinner(plotlyOutput("stochChart", height = "300px"))
+                    withSpinner(plotlyOutput("stochChart", height = "300px")),
+                    tags$p(paste0(
+                      "The Stochastic Oscillator compares the closing price to the High-Low range over the ",
+                      "lookback period. The %K line (blue) is the raw reading; the %D line (red) is a ",
+                      "smoothed signal line. Readings above 80 (red dashed line) indicate overbought conditions; ",
+                      "below 20 (green dashed line) indicate oversold. A %K crossover above %D near the 20 level ",
+                      "is a classic buy signal; a crossover below %D near 80 is a sell signal."
+                    ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                   )
                 )
               )
@@ -572,7 +1028,14 @@ ui <- dashboardPage(
                   status = "primary", 
                   solidHeader = TRUE, 
                   width = 8,
-                  withSpinner(plotlyOutput("volatilityChart", height = "450px"))
+                  withSpinner(plotlyOutput("volatilityChart", height = "450px")),
+                  tags$p(paste0(
+                    "Rolling volatility of the selected asset computed using the chosen method and window. ",
+                    "The central line is the rolling estimate; the dashed upper and lower bands mark the ",
+                    "confidence interval around the historical average. Peaks in this chart identify periods ",
+                    "of elevated market stress. Sustained readings near the upper band suggest a high-volatility ",
+                    "regime; readings near the lower band suggest a calm, low-risk environment."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               ),
               
@@ -582,14 +1045,27 @@ ui <- dashboardPage(
                   status = "primary", 
                   solidHeader = TRUE, 
                   width = 6,
-                  withSpinner(plotlyOutput("volatilityDist", height = "350px"))
+                  withSpinner(plotlyOutput("volatilityDist", height = "350px")),
+                  tags$p(paste0(
+                    "Histogram of all rolling volatility readings over the full history. A narrow, tall ",
+                    "distribution means the asset spends most of its time at a consistent volatility level. ",
+                    "A wide, flat distribution indicates highly variable volatility regimes. A right skew ",
+                    "means occasional spikes to very high volatility are common, which is typical of crypto ",
+                    "and commodity markets."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 ),
                 box(
                   title = "Volatility Clustering", 
                   status = "primary", 
                   solidHeader = TRUE, 
                   width = 6,
-                  withSpinner(plotlyOutput("volatilityClustering", height = "350px"))
+                  withSpinner(plotlyOutput("volatilityClustering", height = "350px")),
+                  tags$p(paste0(
+                    "Absolute daily returns plotted as a time series. Volatility clustering is visible when ",
+                    "tall spikes appear in groups rather than randomly distributed across time. This autocorrelation ",
+                    "in volatility is the empirical basis for GARCH models and means that a volatile period today ",
+                    "is statistically likely to be followed by another volatile period tomorrow."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               ),
               
@@ -599,7 +1075,14 @@ ui <- dashboardPage(
                   status = "info", 
                   solidHeader = TRUE, 
                   width = 12,
-                  withSpinner(plotlyOutput("volatilityRegimes", height = "300px"))
+                  withSpinner(plotlyOutput("volatilityRegimes", height = "300px")),
+                  tags$p(paste0(
+                    "Each observation is colour-coded into one of three volatility regimes based on historical ",
+                    "percentile thresholds: Low (below the 25th percentile, green), Normal (between the 25th and ",
+                    "75th percentile, blue), and High (above the 75th percentile, red). This chart makes it ",
+                    "immediately clear which periods were unusually calm or turbulent and whether the asset is ",
+                    "currently in an elevated-risk regime."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               )
       ),
@@ -641,7 +1124,14 @@ ui <- dashboardPage(
                   status = "primary", 
                   solidHeader = TRUE, 
                   width = 8,
-                  withSpinner(plotlyOutput("varChart", height = "450px"))
+                  withSpinner(plotlyOutput("varChart", height = "450px")),
+                  tags$p(paste0(
+                    "The red line shows the rolling Value at Risk in dollar terms for the configured portfolio size ",
+                    "and confidence level. Blue bars represent the actual daily P&L. Any blue bar that extends ",
+                    "below the red VaR line is a VaR breach, meaning the actual loss on that day exceeded the ",
+                    "model's prediction. Under a 95% confidence level, you would statistically expect approximately ",
+                    "one breach every 20 trading sessions."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               ),
               
@@ -651,14 +1141,28 @@ ui <- dashboardPage(
                   status = "primary", 
                   solidHeader = TRUE, 
                   width = 6,
-                  withSpinner(plotlyOutput("expectedShortfall", height = "350px"))
+                  withSpinner(plotlyOutput("expectedShortfall", height = "350px")),
+                  tags$p(paste0(
+                    "Expected Shortfall (also called CVaR or Conditional Value at Risk) measures the average ",
+                    "loss on the worst days beyond the VaR threshold. While VaR answers 'how bad could it get?', ",
+                    "Expected Shortfall answers 'when things go wrong, how bad does it actually get on average?'. ",
+                    "A rising ES line indicates that tail-event severity is increasing, even if the frequency of ",
+                    "breaches remains the same."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 ),
                 box(
                   title = "Drawdown Analysis", 
                   status = "primary", 
                   solidHeader = TRUE, 
                   width = 6,
-                  withSpinner(plotlyOutput("drawdownAnalysis", height = "350px"))
+                  withSpinner(plotlyOutput("drawdownAnalysis", height = "350px")),
+                  tags$p(paste0(
+                    "The drawdown chart shows how far the asset has fallen below its most recent all-time high ",
+                    "at each point in time, expressed as a percentage. The shaded area fills the space between ",
+                    "zero (at a new high) and the current underwater position. The depth of each trough is the ",
+                    "maximum drawdown for that period; the width of the trough indicates how long recovery took. ",
+                    "Frequent deep troughs characterise high-risk assets."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               ),
               
@@ -668,14 +1172,26 @@ ui <- dashboardPage(
                   status = "info", 
                   solidHeader = TRUE, 
                   width = 6,
-                  withSpinner(DT::dataTableOutput("riskStatsTable"))
+                  withSpinner(DT::dataTableOutput("riskStatsTable")),
+                  tags$p(paste0(
+                    "A consolidated table of key risk and performance statistics for the asset over the VaR window. ",
+                    "Mean Return and Volatility are both time-horizon-adjusted. Sharpe Ratio above 1 is generally ",
+                    "considered good; above 2 is very strong. Sortino Ratio above 1 is healthy. Max Loss and Max Gain ",
+                    "are the single worst and best sessions within the window."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 ),
                 box(
                   title = "Stress Testing", 
                   status = "info", 
                   solidHeader = TRUE, 
                   width = 6,
-                  withSpinner(DT::dataTableOutput("stressTestResults"))
+                  withSpinner(DT::dataTableOutput("stressTestResults")),
+                  tags$p(paste0(
+                    "Hypothetical stress scenarios applied to the configured portfolio value. Each row multiplies ",
+                    "a multiple of the historical daily volatility by the portfolio size to estimate the dollar ",
+                    "impact. A 2-sigma event occurs roughly 4.5% of trading days; a 4-sigma event is extremely rare ",
+                    "under a normal distribution but observed more frequently in financial markets due to fat tails."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               )
       ),
@@ -702,12 +1218,12 @@ ui <- dashboardPage(
                                         value = 4.5, min = 0, max = 10, step = 0.1)
                     ),
                     column(3,
-                           numericInput("targetReturn", "Target Return (%):",
+                           numericInput("targetReturn", "Target Return for Omega/Downside Dev (%):",
                                         value = 0, min = -10, max = 20, step = 0.5)
                     ),
                     column(3,
                            numericInput("rollingWindow", "Rolling Window (days):",
-                                        value = 252, min = 30, max = 500, step = 10)
+                                        value = 50, min = 30, max = 500, step = 10)
                     ),
                     column(3,
                            checkboxInput("annualizeMetrics", "Annualize Metrics", TRUE)
@@ -722,7 +1238,14 @@ ui <- dashboardPage(
                   status = "primary",
                   solidHeader = TRUE,
                   width = 12,
-                  withSpinner(DT::dataTableOutput("advancedMetricsTable"))
+                  withSpinner(DT::dataTableOutput("advancedMetricsTable")),
+                  tags$p(paste0(
+                    "Comprehensive table of risk-adjusted metrics computed over the full data history. ",
+                    "Downside Deviation measures volatility on losing days only. Upside Potential Ratio compares ",
+                    "average gains to downside deviation. Max Drawdown is the largest peak-to-trough decline. ",
+                    "Annualised Return and Volatility are scaled to a 252 trading-day year for comparability ",
+                    "across assets with different data lengths."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               ),
               
@@ -732,14 +1255,26 @@ ui <- dashboardPage(
                   status = "primary",
                   solidHeader = TRUE,
                   width = 6,
-                  withSpinner(plotlyOutput("rollingSharpeChart", height = "400px"))
+                  withSpinner(plotlyOutput("rollingSharpeChart", height = "400px")),
+                  tags$p(paste0(
+                    "The Sharpe Ratio computed over a rolling window of the configured length. Periods above zero ",
+                    "indicate the asset is generating excess return above the risk-free rate per unit of risk. ",
+                    "A trend from negative to positive Sharpe suggests improving risk-adjusted performance. ",
+                    "Sharp drops identify periods where drawdowns overwhelmed returns relative to volatility."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 ),
                 box(
                   title = "Rolling Sortino Ratio",
                   status = "primary",
                   solidHeader = TRUE,
                   width = 6,
-                  withSpinner(plotlyOutput("rollingSortinoChart", height = "400px"))
+                  withSpinner(plotlyOutput("rollingSortinoChart", height = "400px")),
+                  tags$p(paste0(
+                    "The Sortino Ratio computed over a rolling window. Unlike the Sharpe, it only penalises ",
+                    "downside volatility below the target return. This makes it a more appropriate metric for ",
+                    "assets like crypto or commodities that can have large upside spikes alongside large drawdowns. ",
+                    "A Sortino consistently above the Sharpe indicates the asset's volatility is predominantly upside."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               ),
               
@@ -749,14 +1284,25 @@ ui <- dashboardPage(
                   status = "info",
                   solidHeader = TRUE,
                   width = 6,
-                  withSpinner(plotlyOutput("downsideRiskChart", height = "350px"))
+                  withSpinner(plotlyOutput("downsideRiskChart", height = "350px")),
+                  tags$p(paste0(
+                    "Focuses exclusively on the distribution and magnitude of negative return sessions. ",
+                    "This chart reveals the frequency and depth of losing days, helping quantify the left-tail ",
+                    "risk profile of the asset independently from upside volatility."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 ),
                 box(
                   title = "Upside vs Downside Capture",
                   status = "info",
                   solidHeader = TRUE,
                   width = 6,
-                  withSpinner(plotlyOutput("upsideDownsideChart", height = "350px"))
+                  withSpinner(plotlyOutput("upsideDownsideChart", height = "350px")),
+                  tags$p(paste0(
+                    "Compares the asset's participation in positive versus negative market moves. ",
+                    "An asset that captures more of the upside than the downside is considered asymmetrically ",
+                    "attractive. A ratio greater than 1 on the upside and less than 1 on the downside is the ",
+                    "ideal profile for a long-only investor."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               ),
               
@@ -766,20 +1312,51 @@ ui <- dashboardPage(
                   status = "primary",
                   solidHeader = TRUE,
                   width = 6,
-                  withSpinner(plotlyOutput("maxDrawdownDetailChart", height = "350px"))
+                  withSpinner(plotlyOutput("maxDrawdownDetailChart", height = "350px")),
+                  tags$p(paste0(
+                    "Detailed view of the maximum drawdown episode: the full path from the prior peak, through ",
+                    "the trough, and the subsequent recovery. The depth of the trough shows the maximum capital ",
+                    "loss an investor holding through the period would have experienced before recovery began."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 ),
                 box(
                   title = "Recovery Period Analysis",
                   status = "primary",
                   solidHeader = TRUE,
                   width = 6,
-                  withSpinner(DT::dataTableOutput("recoveryPeriodTable"))
+                  withSpinner(DT::dataTableOutput("recoveryPeriodTable")),
+                  tags$p(paste0(
+                    "Table of significant drawdown episodes with their start date, trough date, recovery date, ",
+                    "maximum depth, and recovery duration in trading days. Longer recovery periods indicate ",
+                    "more persistent damage to the investment. Assets with short recovery periods are considered ",
+                    "more resilient to drawdowns."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               )
       ),
       
       # Hedging Strategies Tab (NEW)
       tabItem(tabName = "hedging",
+              fluidRow(
+                box(
+                  width = 12, solidHeader = FALSE, status = "warning",
+                  div(style = "display:flex; align-items:flex-start; gap:14px;",
+                    icon("circle-info", style = "font-size:22px; color:#e67e22; margin-top:2px; flex-shrink:0;"),
+                    div(
+                      tags$strong("How to use this tab:", style = "color:#7d4a00; font-size:14px;"),
+                      tags$p(HTML(paste0(
+                        "1. Ensure you have selected your primary asset from the sidebar (e.g. Bitcoin or Gold). ",
+                        "2. In the configuration panel on the left, choose a <strong>Hedge Instrument</strong> to hedge against ",
+                        "(e.g. S&P 500 or Gold). ",
+                        "3. Set the <strong>Initial Hedge Ratio</strong>, <strong>Rebalance Frequency</strong>, ",
+                        "<strong>Hedge Method</strong>, and <strong>Lookback Period</strong> as required. ",
+                        "4. Click the <strong>Run Hedge Analysis</strong> button to load the hedge instrument data and ",
+                        "generate all charts and metrics below."
+                      )), style = "font-size:13px; color:#5a3500; margin:4px 0 0 0; line-height:1.6;")
+                    )
+                  )
+                )
+              ),
               fluidRow(
                 box(
                   title = "Hedging Strategy Configuration",
@@ -820,7 +1397,6 @@ ui <- dashboardPage(
                   status = "info",
                   solidHeader = TRUE,
                   width = 8,
-                  
                   fluidRow(
                     column(6,
                            h5("Without Hedge:"),
@@ -830,7 +1406,13 @@ ui <- dashboardPage(
                            h5("With Hedge:"),
                            verbatimTextOutput("hedgedStats")
                     )
-                  )
+                  ),
+                  tags$p(paste0(
+                    "Side-by-side comparison of the unhedged versus hedged portfolio statistics after clicking ",
+                    "Run Hedge Analysis. Key metrics to compare are Volatility (a lower hedged volatility confirms ",
+                    "the hedge is reducing risk) and Return (the cost of the hedge is visible as any reduction in ",
+                    "return). An effective hedge significantly reduces volatility at an acceptable cost to return."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               ),
               
@@ -840,7 +1422,13 @@ ui <- dashboardPage(
                   status = "primary",
                   solidHeader = TRUE,
                   width = 12,
-                  withSpinner(plotlyOutput("hedgePerformanceChart", height = "500px"))
+                  withSpinner(plotlyOutput("hedgePerformanceChart", height = "500px")),
+                  tags$p(paste0(
+                    "Cumulative return of the unhedged position (holding the primary asset alone) plotted against ",
+                    "the hedged portfolio (primary asset combined with the hedge instrument at the configured ratio). ",
+                    "The gap between the two lines reveals the cost or benefit of the hedge at each point in time. ",
+                    "A good hedge reduces the depth and duration of drawdowns even if it modestly reduces peak returns."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               ),
               
@@ -850,14 +1438,26 @@ ui <- dashboardPage(
                   status = "primary",
                   solidHeader = TRUE,
                   width = 6,
-                  withSpinner(plotlyOutput("hedgeRatioChart", height = "350px"))
+                  withSpinner(plotlyOutput("hedgeRatioChart", height = "350px")),
+                  tags$p(paste0(
+                    "For dynamic hedge methods, this chart shows how the optimal hedge ratio changes over time. ",
+                    "A rising ratio means a larger position in the hedge instrument is required to offset the ",
+                    "primary asset's risk. Significant variation in the ratio over time indicates the relationship ",
+                    "between the two assets is unstable, which is an important consideration for practical implementation."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 ),
                 box(
                   title = "Rolling Correlation",
                   status = "primary",
                   solidHeader = TRUE,
                   width = 6,
-                  withSpinner(plotlyOutput("hedgeCorrelationChart", height = "350px"))
+                  withSpinner(plotlyOutput("hedgeCorrelationChart", height = "350px")),
+                  tags$p(paste0(
+                    "The rolling correlation between the primary asset and the hedge instrument. A consistently ",
+                    "negative correlation confirms the hedge instrument moves in the opposite direction to the ",
+                    "primary asset, providing effective protection. Correlation drifting towards zero or positive ",
+                    "values signals that the hedge is losing its effectiveness."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               ),
               
@@ -867,14 +1467,26 @@ ui <- dashboardPage(
                   status = "info",
                   solidHeader = TRUE,
                   width = 6,
-                  withSpinner(DT::dataTableOutput("hedgeEffectivenessTable"))
+                  withSpinner(DT::dataTableOutput("hedgeEffectivenessTable")),
+                  tags$p(paste0(
+                    "Quantitative measures of how well the hedge performed over the analysis period. ",
+                    "Variance Reduction shows the percentage reduction in portfolio variance achieved by the hedge. ",
+                    "Hedge Ratio Stability measures consistency of the optimal ratio over time. ",
+                    "Higher values in these metrics indicate a more effective and reliable hedging relationship."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 ),
                 box(
                   title = "Beta Analysis",
                   status = "info",
                   solidHeader = TRUE,
                   width = 6,
-                  withSpinner(plotlyOutput("betaAnalysisChart", height = "350px"))
+                  withSpinner(plotlyOutput("betaAnalysisChart", height = "350px")),
+                  tags$p(paste0(
+                    "Rolling beta of the primary asset relative to the hedge instrument. A beta of 1 means the ",
+                    "asset moves in lockstep with the hedge; above 1 means it is more sensitive; below 1 means less. ",
+                    "Negative beta confirms an inverse relationship. The beta is used directly as the hedge multiplier ",
+                    "when the Beta-Adjusted method is selected."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               ),
               
@@ -884,13 +1496,39 @@ ui <- dashboardPage(
                   status = "primary",
                   solidHeader = TRUE,
                   width = 12,
-                  withSpinner(DT::dataTableOutput("hedgeCostBenefitTable"))
+                  withSpinner(DT::dataTableOutput("hedgeCostBenefitTable")),
+                  tags$p(paste0(
+                    "Estimates the return given up to implement the hedge (the cost) against the volatility or ",
+                    "drawdown reduction achieved (the benefit). The cost-benefit ratio answers directly whether the ",
+                    "hedge is economically worthwhile: a ratio below 1 means the reduction in risk exceeds the ",
+                    "reduction in return, indicating an efficient hedge."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               )
       ),
       
       # Composite Analysis Tab
       tabItem(tabName = "composite",
+              fluidRow(
+                box(
+                  width = 12, solidHeader = FALSE, status = "warning",
+                  div(style = "display:flex; align-items:flex-start; gap:14px;",
+                    icon("circle-info", style = "font-size:22px; color:#e67e22; margin-top:2px; flex-shrink:0;"),
+                    div(
+                      tags$strong("How to use this tab:", style = "color:#7d4a00; font-size:14px;"),
+                      tags$p(HTML(paste0(
+                        "1. Tick two or more assets from the <strong>Select Assets to Compare</strong> checklist ",
+                        "(you may select across all three asset classes simultaneously). ",
+                        "2. Set the <strong>Analysis Period</strong> date range to the window you wish to examine. ",
+                        "3. Choose a <strong>Normalisation</strong> method: Index (Base 100) is recommended for ",
+                        "comparing returns across assets with very different price levels. ",
+                        "4. Click the <strong>Run Analysis</strong> button to fetch data for all selected assets and ",
+                        "populate the comparison charts, correlation heatmap, risk-return scatter, and class summary panels below."
+                      )), style = "font-size:13px; color:#5a3500; margin:4px 0 0 0; line-height:1.6;")
+                    )
+                  )
+                )
+              ),
               fluidRow(
                 box(
                   title = "Composite Analysis Settings", 
@@ -939,7 +1577,14 @@ ui <- dashboardPage(
                   status = "primary", 
                   solidHeader = TRUE, 
                   width = 12,
-                  withSpinner(plotlyOutput("compositePerformance", height = "500px"))
+                  withSpinner(plotlyOutput("compositePerformance", height = "500px")),
+                  tags$p(paste0(
+                    "All selected assets plotted together on a common scale determined by the chosen normalisation. ",
+                    "Index (Base 100) mode is most useful for comparing returns: an asset at 130 has returned 30% ",
+                    "since the start of the period regardless of its raw price level. Use this chart to identify ",
+                    "which assets led and which lagged over the period, and to spot divergences where one asset ",
+                    "decoupled from the others."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               ),
               
@@ -949,14 +1594,28 @@ ui <- dashboardPage(
                   status = "primary", 
                   solidHeader = TRUE, 
                   width = 6,
-                  withSpinner(plotOutput("compositeCorrelation", height = "400px"))
+                  withSpinner(plotOutput("compositeCorrelation", height = "400px")),
+                  tags$p(paste0(
+                    "Pairwise return correlations between all selected assets over the analysis period. ",
+                    "Dark blue cells indicate high positive correlation (assets move together). Dark red cells ",
+                    "indicate negative correlation (assets move in opposite directions, providing diversification). ",
+                    "Values near zero (white) indicate independence. Assets from different classes typically show ",
+                    "lower correlations, confirming the diversification benefit of cross-class portfolios."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 ),
                 box(
                   title = "Risk-Return Scatter", 
                   status = "primary", 
                   solidHeader = TRUE, 
                   width = 6,
-                  withSpinner(plotlyOutput("riskReturnScatter", height = "400px"))
+                  withSpinner(plotlyOutput("riskReturnScatter", height = "400px")),
+                  tags$p(paste0(
+                    "Each dot represents one of the selected assets. The horizontal axis is annualised volatility ",
+                    "(risk); the vertical axis is annualised return. Assets in the upper-left quadrant offer the ",
+                    "best risk-adjusted profile: high return for low risk. Assets in the lower-right quadrant ",
+                    "are the least efficient. The diagonal from lower-left to upper-right represents a consistent ",
+                    "risk-return trade-off."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               ),
               
@@ -966,14 +1625,25 @@ ui <- dashboardPage(
                   status = "info", 
                   solidHeader = TRUE, 
                   width = 6,
-                  withSpinner(DT::dataTableOutput("compositeMetrics"))
+                  withSpinner(DT::dataTableOutput("compositeMetrics")),
+                  tags$p(paste0(
+                    "Side-by-side table of key metrics for every selected asset over the analysis period, ",
+                    "including annualised return, volatility, Sharpe Ratio, and maximum drawdown. ",
+                    "Sort any column to identify which asset ranks best on each dimension."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 ),
                 box(
                   title = "Rolling Correlations", 
                   status = "info", 
                   solidHeader = TRUE, 
                   width = 6,
-                  withSpinner(plotlyOutput("rollingCorrelations", height = "350px"))
+                  withSpinner(plotlyOutput("rollingCorrelations", height = "350px")),
+                  tags$p(paste0(
+                    "The 60-day rolling correlation between the first two selected assets over time. ",
+                    "Stable correlations indicate a reliable long-run relationship. Rising correlation during ",
+                    "market stress is a well-documented phenomenon and means diversification benefits can ",
+                    "disappear exactly when they are most needed."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
                 )
               ),
               
@@ -983,7 +1653,6 @@ ui <- dashboardPage(
                   status = "primary", 
                   solidHeader = TRUE, 
                   width = 12,
-                  
                   fluidRow(
                     column(3,
                            h5("Crypto Average Performance:"),
@@ -1001,13 +1670,136 @@ ui <- dashboardPage(
                            h5("Class Comparison:"),
                            verbatimTextOutput("classComparison")
                     )
+                  ),
+                  tags$p(paste0(
+                    "Average return and volatility grouped by asset class across all selected instruments. ",
+                    "This panel is only populated for asset classes where at least one instrument has been ",
+                    "selected. The Class Comparison column identifies the best-performing class by average return ",
+                    "and the highest-volatility class, providing a top-level summary of cross-class dynamics ",
+                    "in the selected period."
+                  ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
+                )
+              )
+      ), # end composite tabItem
+      
+      # ── FEEDBACK TAB ────────────────────────────────────────────────────────
+      tabItem(tabName = "feedback",
+        
+        fluidRow(
+          box(
+            width = 12, solidHeader = TRUE, status = "primary", title = NULL,
+            div(
+              style = paste0(
+                "background:linear-gradient(135deg,#002C3C 0%,#005f5a 60%,#00A39A 100%);",
+                "border-radius:10px; padding:32px 36px; color:#ffffff; text-align:center;"
+              ),
+              icon("envelope-open-text", style = "font-size:52px; color:#7fffd4; margin-bottom:16px;"),
+              tags$h2("We Would Love to Hear from You",
+                style = "font-size:26px; font-weight:700; color:#ffffff; margin:0 0 10px 0;"),
+              tags$p(HTML(paste0(
+                "Your feedback is invaluable in helping us improve the Atera Analytics platform. ",
+                "Whether you have suggestions for new features, additional asset classes or instruments, ",
+                "improvements to existing analytics, or you are interested in a bespoke version of this application ",
+                "tailored to your organisation, we want to hear from you.")),
+                style = "font-size:15px; color:#d0f0ec; line-height:1.7; max-width:700px; margin:0 auto 24px auto;"),
+              tags$a(
+                href = "mailto:admin@atera-analytics.co.uk",
+                HTML(paste0(
+                  "<span style='font-size:20px; font-weight:700; color:#7fffd4;'>",
+                  "admin@atera-analytics.co.uk</span>"
+                )),
+                style = paste0(
+                  "display:inline-block; background:rgba(255,255,255,0.12); ",
+                  "border:2px solid #7fffd4; border-radius:8px; ",
+                  "padding:14px 32px; text-decoration:none;"
+                )
+              )
+            )
+          )
+        ),
+        
+        fluidRow(
+          box(
+            width = 4, solidHeader = TRUE, status = "primary",
+            title = tagList(icon("lightbulb"), " Feature Suggestions"),
+            tags$p(paste0(
+              "Tell us which additional asset classes, instruments, or analytical modules you would find most ",
+              "valuable. We are actively developing extensions to this platform including additional equity markets, ",
+              "FX pairs, fixed income, and alternative assets."
+            ), style = "font-size:13px; color:#444; line-height:1.6;"),
+            tags$p(HTML(paste0(
+              "Write to: <a href='mailto:admin@atera-analytics.co.uk' style='color:#008A82; font-weight:600;'>",
+              "admin@atera-analytics.co.uk</a>"
+            )), style = "font-size:13px; margin-top:12px;")
+          ),
+          box(
+            width = 4, solidHeader = TRUE, status = "primary",
+            title = tagList(icon("robot"), " AI and Algorithmic Trading"),
+            tags$p(paste0(
+              "Atera Analytics has the full capability to extend this platform into automated algorithmic ",
+              "trading systems, AI-driven signal generation, and bespoke quantitative tools. If your organisation ",
+              "is exploring these capabilities, we would be delighted to discuss how we can help."
+            ), style = "font-size:13px; color:#444; line-height:1.6;"),
+            tags$p(HTML(paste0(
+              "Write to: <a href='mailto:admin@atera-analytics.co.uk' style='color:#008A82; font-weight:600;'>",
+              "admin@atera-analytics.co.uk</a>"
+            )), style = "font-size:13px; margin-top:12px;")
+          ),
+          box(
+            width = 4, solidHeader = TRUE, status = "primary",
+            title = tagList(icon("bug"), " Bug Reports and Improvements"),
+            tags$p(paste0(
+              "If you encounter any unexpected behaviour, errors, or charts that do not display as expected, ",
+              "please let us know. Include the asset class and specific instrument you were analysing and a brief ",
+              "description of what you observed. We aim to respond promptly."
+            ), style = "font-size:13px; color:#444; line-height:1.6;"),
+            tags$p(HTML(paste0(
+              "Write to: <a href='mailto:admin@atera-analytics.co.uk' style='color:#008A82; font-weight:600;'>",
+              "admin@atera-analytics.co.uk</a>"
+            )), style = "font-size:13px; margin-top:12px;")
+          )
+        ),
+        
+        fluidRow(
+          box(
+            width = 12, solidHeader = TRUE, status = "info",
+            title = "About Atera Analytics",
+            fluidRow(
+              column(8,
+                tags$p(HTML(paste0(
+                  "Atera Analytics is an entrepreneurial platform founded by ",
+                  "<strong>Joseph Francisco Zubizarreta</strong>, MBA Alumni of the ",
+                  "<strong>Judge Business School, University of Cambridge</strong>. ",
+                  "The platform is dedicated to making complex, production-grade analytical applications ",
+                  "accessible to domain experts across finance, investment management, and quantitative research. ",
+                  "This multi-asset analytics suite is one of several applications developed under the Atera Analytics umbrella, ",
+                  "with a growing portfolio of tools spanning financial markets, autonomous vehicle analytics, ",
+                  "and AI-powered enterprise applications."
+                )), style = "font-size:14px; color:#444; line-height:1.7; margin:0;")
+              ),
+              column(4,
+                div(style = paste0(
+                  "background:linear-gradient(135deg,#002C3C,#008A82);",
+                  "border-radius:8px; padding:20px; text-align:center; color:#fff;"
+                ),
+                  icon("envelope", style = "font-size:28px; color:#7fffd4; margin-bottom:10px;"),
+                  tags$h5("Get in Touch", style = "color:#fff; font-weight:700; margin:0 0 8px 0;"),
+                  tags$a(
+                    "admin@atera-analytics.co.uk",
+                    href = "mailto:admin@atera-analytics.co.uk",
+                    style = "color:#7fffd4; font-size:13px; font-weight:600; text-decoration:none;"
                   )
                 )
               )
-      )
-    )
-  )
-)
+            )
+          )
+        )
+        
+      ) # end tabItem feedback
+      
+    ) # end tabItems
+  ) # end dashboardBody
+) # end dashboardPage
 
 # Define Server
 server <- function(input, output, session) {
@@ -1023,36 +1815,113 @@ server <- function(input, output, session) {
   )
   
   # Function to fetch data from Yahoo Finance
+  # Fixed for shinyapps.io: URL-encodes special chars in tickers (= ^ for futures/indices),
+  # uses browser User-Agent to avoid bot-detection for crypto, safely handles
+  # missing Volume/Adjusted columns common in futures and crypto feeds.
   fetch_asset_data <- function(symbol, months_back = 24) {
+    
+    # Set network timeout and browser-like User-Agent before any Yahoo request
+    old_timeout <- getOption("timeout")
+    old_ua     <- getOption("HTTPUserAgent")
+    on.exit({
+      options(timeout = old_timeout)
+      options(HTTPUserAgent = old_ua)
+    }, add = TRUE)
+    options(timeout = 60)
+    options(HTTPUserAgent = paste0(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ",
+      "AppleWebKit/537.36 (KHTML, like Gecko) ",
+      "Chrome/120.0.0.0 Safari/537.36"
+    ))
+    
     tryCatch({
       start_date <- Sys.Date() - months(months_back)
-      end_date <- Sys.Date()
+      end_date   <- Sys.Date()
       
-      # Fetch data using quantmod
-      data <- getSymbols(symbol, src = "yahoo", from = start_date, to = end_date, auto.assign = FALSE)
+      # quantmod's Yahoo URL builder breaks on literal '=' (futures e.g. GC=F)
+      # and '^' (indices e.g. ^GSPC). Use the encoded form as the env var name
+      # but pass the raw symbol to getSymbols.
+      safe_name <- gsub("[^A-Za-z0-9]", "_", symbol)   # used only as env key
       
-      # Convert to data frame
-      df <- data.frame(
-        Date = index(data),
-        Open = as.numeric(Op(data)),
-        High = as.numeric(Hi(data)),
-        Low = as.numeric(Lo(data)),
-        Close = as.numeric(Cl(data)),
-        Volume = as.numeric(Vo(data)),
-        Adjusted = as.numeric(Ad(data))
+      env <- new.env()
+      withCallingHandlers(
+        getSymbols(
+          symbol,
+          src          = "yahoo",
+          from         = start_date,
+          to           = end_date,
+          auto.assign  = TRUE,
+          env          = env,
+          warnings     = FALSE
+        ),
+        warning = function(w) invokeRestart("muffleWarning")
       )
+      
+      # getSymbols stores the result under the sanitised ticker name
+      stored_name <- ls(env)[1]
+      if (length(stored_name) == 0 || is.null(env[[stored_name]])) {
+        showNotification(paste("No data returned for", symbol), type = "warning")
+        return(NULL)
+      }
+      raw <- env[[stored_name]]
+      
+      # ── Safe column extraction (futures lack Adjusted; crypto often lacks Volume) ──
+      safe_col <- function(fn, xts_obj) {
+        tryCatch({
+          v <- as.numeric(fn(xts_obj))
+          if (all(is.na(v))) NA_real_ else v
+        }, error = function(e) NA_real_)
+      }
+      
+      close_prices <- safe_col(Cl, raw)
+      vol_raw      <- safe_col(Vo, raw)
+      adj_raw      <- safe_col(Ad, raw)
+      
+      # Futures have no meaningful Adjusted close — fall back to Close
+      if (length(adj_raw) == 1 && is.na(adj_raw)) adj_raw <- close_prices
+      
+      # Replace NA / NaN / negative volume with 0 (futures, crypto weekends, etc.)
+      if (length(vol_raw) == 1 && is.na(vol_raw)) {
+        vol_raw <- rep(0, nrow(raw))
+      } else {
+        vol_raw[is.na(vol_raw) | is.nan(vol_raw) | vol_raw < 0] <- 0
+      }
+      
+      df <- data.frame(
+        Date     = index(raw),
+        Open     = safe_col(Op, raw),
+        High     = safe_col(Hi, raw),
+        Low      = safe_col(Lo, raw),
+        Close    = close_prices,
+        Volume   = vol_raw,
+        Adjusted = adj_raw
+      )
+      
+      # Remove rows where Close is NA (can happen at roll dates for futures)
+      df <- df[!is.na(df$Close), ]
+      
+      if (nrow(df) == 0) {
+        showNotification(paste("Empty dataset returned for", symbol), type = "warning")
+        return(NULL)
+      }
       
       # Calculate returns
       df <- df %>%
         arrange(Date) %>%
         mutate(
-          returns = c(NA, diff(log(Close))),
+          returns     = c(NA, diff(log(Close))),
           returns_pct = c(NA, diff(Close) / head(Close, -1) * 100)
         )
       
       return(df)
+      
     }, error = function(e) {
-      showNotification(paste("Error fetching data for", symbol, ":", e$message), type = "error")
+      msg <- conditionMessage(e)
+      showNotification(
+        paste0("Error fetching ", symbol, ": ", msg,
+               ". Try refreshing or switching assets."),
+        type = "error", duration = 8
+      )
       return(NULL)
     })
   }
@@ -1068,23 +1937,36 @@ server <- function(input, output, session) {
     }
   })
   
-  # Load data when asset selection changes or refresh is clicked
-  observeEvent(c(current_asset(), input$refreshData), {
+  # Load data when asset selection changes or refresh is clicked.
+  # Uses list() not c() to ensure both reactives trigger reliably on shinyapps.io.
+  # Retries once on failure to handle transient Yahoo Finance rate-limits.
+  observeEvent(list(current_asset(), input$refreshData), {
     showNotification("Fetching data...", type = "message", duration = 2)
     
     symbol <- current_asset()
-    data <- fetch_asset_data(symbol)
+    data   <- fetch_asset_data(symbol)
+    
+    # One automatic retry after a short pause (handles transient Yahoo 429s)
+    if (is.null(data)) {
+      Sys.sleep(2)
+      data <- fetch_asset_data(symbol)
+    }
     
     if (!is.null(data) && nrow(data) > 0) {
-      values$asset_data <- data
+      values$asset_data  <- data
       values$data_loaded <- TRUE
       values$last_update <- Sys.time()
-      
-      showNotification(paste("Successfully loaded", nrow(data), "records for", symbol), 
-                       type = "message", duration = 3)
+      showNotification(
+        paste("Loaded", nrow(data), "records for", symbol),
+        type = "message", duration = 3
+      )
     } else {
       values$data_loaded <- FALSE
-      showNotification("Failed to load data", type = "error")
+      showNotification(
+        paste0("Failed to load data for ", symbol,
+               ". Yahoo Finance may be temporarily unavailable — please try Refresh."),
+        type = "error", duration = 8
+      )
     }
   }, ignoreNULL = FALSE)
   
@@ -1097,7 +1979,7 @@ server <- function(input, output, session) {
     asset_name <- if (input$assetClass == "crypto") {
       paste("Cryptocurrency:", current_asset())
     } else if (input$assetClass == "equity") {
-      paste("Private Equity:", current_asset())
+      paste("Equities:", current_asset())
     } else {
       paste("Commodity:", current_asset())
     }
@@ -1118,11 +2000,17 @@ server <- function(input, output, session) {
     req(values$asset_data)
     current_price <- tail(values$asset_data$Close, 1)
     
+    price_display <- if (is.na(current_price) || is.nan(current_price)) {
+      "N/A"
+    } else {
+      paste0("$", format(round(current_price, 2), big.mark = ",", nsmall = 2))
+    }
+    
     valueBox(
-      value = paste0("$", format(round(current_price, 2), big.mark = ",", nsmall = 2)),
+      value    = price_display,
       subtitle = paste("Current Price -", current_asset()),
-      icon = icon("dollar-sign"),
-      color = "blue"
+      icon     = icon("dollar-sign"),
+      color    = "blue"
     )
   })
   
@@ -1153,11 +2041,16 @@ server <- function(input, output, session) {
     req(values$asset_data)
     avg_volume <- mean(values$asset_data$Volume, na.rm = TRUE)
     
+    # Futures and some crypto feeds return 0 or NA volume — display gracefully
+    has_volume  <- !is.nan(avg_volume) && !is.na(avg_volume) && avg_volume > 0
+    vol_display <- if (has_volume) format(round(avg_volume, 0), big.mark = ",") else "N/A"
+    vol_label   <- if (has_volume) "Average Daily Volume" else "Volume Not Available"
+    
     valueBox(
-      value = format(round(avg_volume, 0), big.mark = ","),
-      subtitle = "Average Daily Volume",
-      icon = icon("chart-bar"),
-      color = "yellow"
+      value    = vol_display,
+      subtitle = vol_label,
+      icon     = icon("chart-bar"),
+      color    = "yellow"
     )
   })
   
@@ -1194,10 +2087,13 @@ server <- function(input, output, session) {
                            line = list(color = "#e74c3c", width = 2, dash = "dash"))
     }
     
-    # Add volume
+    # Add volume — skip silently when the asset has no volume data (futures, crypto)
     if ("volume" %in% input$overviewComponents) {
-      p <- p %>% add_bars(data = data, x = ~Date, y = ~Volume, name = "Volume",
-                          yaxis = "y2", marker = list(color = "#95a5a6", opacity = 0.3))
+      has_vol <- any(!is.na(data$Volume) & data$Volume > 0, na.rm = TRUE)
+      if (has_vol) {
+        p <- p %>% add_bars(data = data, x = ~Date, y = ~Volume, name = "Volume",
+                            yaxis = "y2", marker = list(color = "#95a5a6", opacity = 0.3))
+      }
     }
     
     p <- p %>% layout(
@@ -1259,15 +2155,25 @@ server <- function(input, output, session) {
     req(values$asset_data)
     data <- values$asset_data
     
+    vol <- data$Volume
+    has_vol <- any(!is.na(vol) & vol > 0, na.rm = TRUE)
+    
+    safe_fmt <- function(x) {
+      if (is.na(x) || is.nan(x) || is.infinite(x)) "N/A"
+      else format(round(x), big.mark = ",")
+    }
+    
     stats <- data.frame(
       Metric = c("Mean Volume", "Median Volume", "Max Volume", "Min Volume", "Std Dev"),
-      Value = c(
-        format(round(mean(data$Volume)), big.mark = ","),
-        format(round(median(data$Volume)), big.mark = ","),
-        format(round(max(data$Volume)), big.mark = ","),
-        format(round(min(data$Volume)), big.mark = ","),
-        format(round(sd(data$Volume)), big.mark = ",")
-      )
+      Value  = if (has_vol) {
+        c(safe_fmt(mean(vol, na.rm = TRUE)),
+          safe_fmt(median(vol, na.rm = TRUE)),
+          safe_fmt(max(vol,  na.rm = TRUE)),
+          safe_fmt(min(vol,  na.rm = TRUE)),
+          safe_fmt(sd(vol,   na.rm = TRUE)))
+      } else {
+        rep("N/A (no volume data)", 5)
+      }
     )
     
     datatable(stats, options = list(dom = 't'), rownames = FALSE)
@@ -1921,7 +2827,12 @@ server <- function(input, output, session) {
         round(mean(adj_returns) * 100, 4),
         round(sd(adj_returns) * 100, 4),
         round(mean(returns) / sd(returns) * sqrt(252), 3),
-        round(mean(returns) / sqrt(mean(pmin(returns, 0)^2)) * sqrt(252), 3),
+        round({
+          rf_d   <- getOption("risk_free_daily", 0.045/252)
+          exc    <- returns - rf_d
+          ann_dd <- sqrt(mean(pmin(exc, 0)^2, na.rm = TRUE)) * sqrt(252)
+          if (ann_dd == 0) NA else mean(exc, na.rm = TRUE) * 252 / ann_dd
+        }, 3),
         round(min(adj_returns) * 100, 4),
         round(max(adj_returns) * 100, 4)
       )
@@ -1959,14 +2870,25 @@ server <- function(input, output, session) {
   }
   
   # Helper function to calculate Sortino Ratio
-  calculate_sortino <- function(returns, target_return, annualize = TRUE) {
-    target_daily <- target_return / 100 / 252
-    excess_returns <- returns - target_daily
-    downside_returns <- pmin(excess_returns, 0)
-    downside_dev <- sqrt(mean(downside_returns^2, na.rm = TRUE))
-    if (downside_dev == 0) return(NA)
-    sortino <- mean(excess_returns, na.rm = TRUE) / downside_dev
-    if (annualize) sortino <- sortino * sqrt(252)
+  # Denominator = annualised downside deviation (returns below the risk-free hurdle).
+  # Using the same rf_rate as Sharpe ensures the two ratios are directly comparable:
+  # the only difference is that Sharpe penalises ALL volatility while Sortino penalises
+  # only DOWNSIDE volatility.  Assets whose upside volatility >> downside will show
+  # a materially higher Sortino than Sharpe; assets with symmetric returns will show
+  # Sortino ~ sqrt(2) * Sharpe (approx 1.41x).
+  calculate_sortino <- function(returns, rf_rate, annualize = TRUE) {
+    rf_daily      <- rf_rate / 100 / 252
+    excess        <- returns - rf_daily
+    downside      <- pmin(excess, 0)
+    # Annualised mean excess return (numerator)
+    ann_mean      <- mean(excess, na.rm = TRUE) * 252
+    # Annualised downside deviation (denominator)
+    # sqrt(252) scales daily semi-deviation to annual, matching the numerator's scale
+    ann_dd        <- sqrt(mean(downside^2, na.rm = TRUE)) * sqrt(252)
+    if (ann_dd == 0 || is.nan(ann_dd)) return(NA)
+    sortino       <- ann_mean / ann_dd
+    # If caller requests non-annualised, de-scale back
+    if (!annualize) sortino <- sortino / sqrt(252)
     return(sortino)
   }
   
@@ -2017,12 +2939,12 @@ server <- function(input, output, session) {
     if (length(returns) < 30) {
       sortino <- NA
     } else {
-      sortino <- calculate_sortino(returns, input$targetReturn, input$annualizeMetrics)
+      sortino <- calculate_sortino(returns, input$riskFreeRate, input$annualizeMetrics)
     }
     
     valueBox(
       value = ifelse(is.na(sortino), "N/A", round(sortino, 3)),
-      subtitle = "Sortino Ratio",
+      subtitle = "Sortino Ratio (hurdle = Rf rate)",
       icon = icon("arrow-trend-down"),
       color = "green"
     )
@@ -2074,7 +2996,7 @@ server <- function(input, output, session) {
     
     # Calculate all metrics
     sharpe <- calculate_sharpe(returns, input$riskFreeRate, input$annualizeMetrics)
-    sortino <- calculate_sortino(returns, input$targetReturn, input$annualizeMetrics)
+    sortino <- calculate_sortino(returns, input$riskFreeRate, input$annualizeMetrics)
     calmar <- calculate_calmar(returns)
     omega <- calculate_omega(returns, input$targetReturn)
     
@@ -2156,15 +3078,16 @@ server <- function(input, output, session) {
       return(plot_ly() %>% layout(title = "Insufficient data"))
     }
     
-    target_daily <- input$targetReturn / 100 / 252
+    target_daily <- input$riskFreeRate / 100 / 252
     rolling_sortino <- rollapply(returns, input$rollingWindow,
                                  function(x) {
-                                   excess <- x - target_daily
-                                   downside <- pmin(excess, 0)
-                                   downside_dev <- sqrt(mean(downside^2, na.rm = TRUE))
-                                   if (downside_dev == 0) return(NA)
-                                   sortino <- mean(excess, na.rm = TRUE) / downside_dev
-                                   if (input$annualizeMetrics) sortino <- sortino * sqrt(252)
+                                   exc        <- x - target_daily
+                                   downside   <- pmin(exc, 0)
+                                   ann_dd     <- sqrt(mean(downside^2, na.rm = TRUE)) * sqrt(252)
+                                   if (ann_dd == 0 || is.nan(ann_dd)) return(NA)
+                                   ann_mean   <- mean(exc, na.rm = TRUE) * 252
+                                   sortino    <- ann_mean / ann_dd
+                                   if (!input$annualizeMetrics) sortino <- sortino / sqrt(252)
                                    return(sortino)
                                  },
                                  fill = NA, align = "right")
@@ -2194,7 +3117,7 @@ server <- function(input, output, session) {
       return(plot_ly() %>% layout(title = "Insufficient data"))
     }
     
-    target_daily <- input$targetReturn / 100 / 252
+    target_daily <- input$riskFreeRate / 100 / 252
     downside_returns <- pmin(returns - target_daily, 0) * 100
     
     plot_data <- data.frame(
@@ -2222,7 +3145,7 @@ server <- function(input, output, session) {
       return(plot_ly() %>% layout(title = "Insufficient data"))
     }
     
-    target_daily <- input$targetReturn / 100 / 252
+    target_daily <- input$riskFreeRate / 100 / 252
     upside <- mean(pmax(returns - target_daily, 0), na.rm = TRUE) * 252 * 100
     downside <- abs(mean(pmin(returns - target_daily, 0), na.rm = TRUE)) * 252 * 100
     
@@ -2330,11 +3253,19 @@ server <- function(input, output, session) {
   observeEvent(input$runHedgeAnalysis, {
     showNotification("Running hedge analysis...", type = "message", duration = 3)
     
-    # Fetch hedge asset data
+    # fetch_asset_data already handles URL encoding for GC=F, ^GSPC, etc.
     hedge_data <- fetch_asset_data(input$hedgeAsset)
     
-    if (is.null(hedge_data) || is.null(values$asset_data)) {
-      showNotification("Failed to load hedge or asset data", type = "error")
+    if (is.null(hedge_data) || nrow(hedge_data) == 0) {
+      showNotification(
+        paste0("Could not load hedge asset '", input$hedgeAsset, "'. ",
+               "Yahoo Finance may be rate-limiting — wait a moment and try again."),
+        type = "error", duration = 8
+      )
+      return()
+    }
+    if (is.null(values$asset_data)) {
+      showNotification("No primary asset data loaded yet", type = "warning")
       return()
     }
     
@@ -2647,23 +3578,35 @@ server <- function(input, output, session) {
     }
     
     composite_list <- list()
+    failed_assets  <- c()
     
     for (symbol in selected_assets) {
       data <- fetch_asset_data(symbol)
-      if (!is.null(data)) {
+      if (!is.null(data) && nrow(data) > 0) {
         data <- data %>%
           filter(Date >= input$compositeRange[1] & Date <= input$compositeRange[2]) %>%
           select(Date, Close, returns) %>%
           mutate(asset = symbol)
         composite_list[[symbol]] <- data
+      } else {
+        failed_assets <- c(failed_assets, symbol)
       }
     }
     
-    if (length(composite_list) > 0) {
+    if (length(failed_assets) > 0) {
+      showNotification(
+        paste("Could not load:", paste(failed_assets, collapse = ", ")),
+        type = "warning", duration = 6
+      )
+    }
+    
+    if (length(composite_list) >= 2) {
       values$composite_data <- bind_rows(composite_list)
       showNotification(paste("Loaded", length(composite_list), "assets"), type = "message")
+    } else if (length(composite_list) == 1) {
+      showNotification("Need at least 2 assets with data for composite analysis", type = "warning")
     } else {
-      showNotification("Failed to load composite data", type = "error")
+      showNotification("Failed to load composite data — check your internet connection", type = "error")
     }
   })
   
@@ -2860,7 +3803,7 @@ server <- function(input, output, session) {
       )
     
     paste(
-      "Private Equity Class:",
+      "Equity Class:",
       paste("Avg Return:", round(mean(summary$ret), 2), "%"),
       paste("Avg Volatility:", round(mean(summary$vol), 2), "%"),
       paste("Assets:", nrow(summary)),

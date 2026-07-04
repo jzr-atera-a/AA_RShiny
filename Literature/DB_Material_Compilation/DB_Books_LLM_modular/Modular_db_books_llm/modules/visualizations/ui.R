@@ -12,13 +12,18 @@ visualizations_ui <- function(id) {
         width = 12,
         
         h4("Select Book to Visualize"),
-        p("Choose a book from your BigQuery database to see rich HTML visualizations."),
+        p("Filter by Genre and Topic to find the book you want, then load its visualizations."),
         
         fluidRow(
-          column(4, selectInput(ns("select_book"), "Select Book:", choices = NULL)),
-          column(4, selectInput(ns("filter_chapter"), "Filter by Chapter (Optional):",
-                                choices = c("All Chapters" = "all"))),
-          column(4, actionButton(ns("load_viz"), "Load Visualizations",
+          column(3, selectInput(ns("viz_genre"), "Genre:", choices = NULL)),
+          column(3, selectInput(ns("viz_topic"), "Topic:", choices = NULL)),
+          column(3, selectInput(ns("select_book"), "Book:", choices = NULL)),
+          column(3, selectInput(ns("filter_chapter"), "Filter by Chapter (Optional):",
+                                choices = c("All Chapters" = "all")))
+        ),
+        
+        fluidRow(
+          column(12, actionButton(ns("load_viz"), "Load Visualizations",
                                  class = "btn-success btn-lg", icon = icon("chart-bar"),
                                  style = "width: 100%;"))
         ),
@@ -56,15 +61,6 @@ visualizations_ui <- function(id) {
       )
     ),
     
-    fluidRow(
-      box(
-        title = "Numeric Data Trends",
-        status = "warning",
-        solidHeader = TRUE,
-        width = 12,
-        collapsible = TRUE,
-        plotlyOutput(ns("numeric_chart"), height = "500px")
-      )
-    )
+    uiOutput(ns("numeric_chart_section"))
   )
 }

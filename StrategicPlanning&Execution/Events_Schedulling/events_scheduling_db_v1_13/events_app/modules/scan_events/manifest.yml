@@ -1,0 +1,16 @@
+module:
+  id: "scan_events"
+  name: "Scan Events"
+  description: "AI-powered city event scanning via Claude"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Scan Events"
+    icon: "search-location"
+    tabname: "scan_events"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, httr, jsonlite, shinyjs]
+    package_versions: {}
+  api: {required: [claude], optional: []}
+  data: {required: [], optional: []}

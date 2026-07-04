@@ -1,0 +1,94 @@
+# modules/_module_registry.yml
+# Venture Analysis by Atera Analytics
+# Brad Feld & Jason Mendelson: Applied to DeepTech
+# Version 1.0
+
+app:
+  name: "Venture Analysis: DeepTech Fundraising Suite"
+  version: "1.0.0"
+  description: "VC deal terms, fundraising strategy and Monte Carlo simulations for DeepTech founders"
+
+modules:
+  guide:
+    enabled: true
+    priority: 5
+    name: "App Guide"
+    icon: "compass"
+    tabname: "guide"
+
+  overview:
+    enabled: true
+    priority: 10
+    name: "Overview"
+    icon: "home"
+    tabname: "overview"
+
+  players:
+    enabled: true
+    priority: 20
+    name: "1 · The Players"
+    icon: "users"
+    tabname: "players"
+
+  term_sheet:
+    enabled: true
+    priority: 30
+    name: "2 · Term Sheet"
+    icon: "file-contract"
+    tabname: "term_sheet"
+
+  economic_terms:
+    enabled: true
+    priority: 40
+    name: "3 · Economic Terms"
+    icon: "chart-pie"
+    tabname: "economic_terms"
+
+  control_terms:
+    enabled: true
+    priority: 50
+    name: "4 · Control Terms"
+    icon: "chess-king"
+    tabname: "control_terms"
+
+  cap_table:
+    enabled: true
+    priority: 60
+    name: "5 · Cap Table"
+    icon: "table"
+    tabname: "cap_table"
+
+  convertible:
+    enabled: true
+    priority: 70
+    name: "6 · Convertible Debt"
+    icon: "sync-alt"
+    tabname: "convertible"
+
+  montecarlo_valuation:
+    enabled: true
+    priority: 80
+    name: "7 · MC Valuation"
+    icon: "dice"
+    tabname: "montecarlo_valuation"
+
+  montecarlo_runway:
+    enabled: true
+    priority: 90
+    name: "8 · MC Runway"
+    icon: "road"
+    tabname: "montecarlo_runway"
+
+  negotiation:
+    enabled: true
+    priority: 100
+    name: "9 · Negotiation"
+    icon: "handshake"
+    tabname: "negotiation"
+
+  deeptech_deals:
+    enabled: true
+    priority: 110
+    name: "10 · DeepTech Deals"
+    icon: "microchip"
+    tabname: "deeptech_deals"

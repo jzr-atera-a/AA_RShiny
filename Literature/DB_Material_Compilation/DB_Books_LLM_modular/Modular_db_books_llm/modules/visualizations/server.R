@@ -5,34 +5,77 @@ visualizations_server <- function(id, api_manager) {
     
     viz_data <- reactiveVal(NULL)
     
-    # Watch for BigQuery authentication AND data updates
-    observe({
+    # Genre -> Topic -> Book cascade, refreshed whenever state_trigger fires
+    # (e.g. after any new BigQuery upload elsewhere in the app)
+    viz_taxonomy <- reactive({
       api_manager$state_trigger()
-      
-      if (api_manager$bq_authenticated) {
-        update_book_dropdown()
+      if (!api_manager$bq_authenticated) {
+        return(data.frame(genre = character(), topic = character(),
+                           book_name = character(), author = character(),
+                           stringsAsFactors = FALSE))
       }
+      tryCatch(api_manager$bq_get_taxonomy(), error = function(e) {
+        data.frame(genre = character(), topic = character(),
+                   book_name = character(), author = character(),
+                   stringsAsFactors = FALSE)
+      })
     })
     
-    # Update book dropdown
-    update_book_dropdown <- function() {
-      if (!api_manager$bq_authenticated) return()
+    observeEvent(viz_taxonomy(), {
+      tax <- viz_taxonomy()
+      genres <- sort(unique(tax$genre[nchar(trimws(tax$genre)) > 0]))
       
-      tryCatch({
-        query <- sprintf("SELECT DISTINCT book_name FROM `%s` ORDER BY book_name",
-                         api_manager$bq_full_table_id)
-        books <- api_manager$bq_query(query)
-        
-        if (nrow(books) > 0) {
-          updateSelectInput(session, "select_book",
-                            choices = setNames(books$book_name, books$book_name))
-        }
-      }, error = function(e) {})
-    }
+      current <- isolate(input$viz_genre)
+      
+      if (length(genres) == 0) {
+        updateSelectInput(session, "viz_genre", choices = c("(no genres yet)" = ""))
+      } else {
+        selected <- if (!is.null(current) && current %in% genres) current else genres[1]
+        updateSelectInput(session, "viz_genre", choices = setNames(genres, genres), selected = selected)
+      }
+    }, ignoreNULL = FALSE)
+    
+    observeEvent(input$viz_genre, {
+      tax <- viz_taxonomy()
+      
+      if (is.null(input$viz_genre) || input$viz_genre == "") {
+        updateSelectInput(session, "viz_topic", choices = c("(select a genre first)" = ""))
+        return()
+      }
+      
+      topics <- sort(unique(tax$topic[tax$genre == input$viz_genre & nchar(trimws(tax$topic)) > 0]))
+      
+      if (length(topics) == 0) {
+        updateSelectInput(session, "viz_topic", choices = c("(no topics for this genre)" = ""))
+      } else {
+        updateSelectInput(session, "viz_topic", choices = setNames(topics, topics))
+      }
+    }, ignoreInit = TRUE)
+    
+    observeEvent(input$viz_topic, {
+      tax <- viz_taxonomy()
+      
+      if (is.null(input$viz_genre) || is.null(input$viz_topic) ||
+          input$viz_genre == "" || input$viz_topic == "") {
+        updateSelectInput(session, "select_book", choices = c("(select a topic first)" = ""))
+        return()
+      }
+      
+      subset_rows <- tax[tax$genre == input$viz_genre & tax$topic == input$viz_topic, ]
+      subset_rows <- unique(subset_rows[, c("book_name", "author")])
+      
+      if (nrow(subset_rows) == 0) {
+        updateSelectInput(session, "select_book", choices = c("(no books found)" = ""))
+      } else {
+        labels <- paste0(subset_rows$book_name, " — ", subset_rows$author)
+        updateSelectInput(session, "select_book",
+                          choices = setNames(subset_rows$book_name, labels))
+      }
+    }, ignoreInit = TRUE)
     
     # Update chapter dropdown when book selected
     observeEvent(input$select_book, {
-      if (!api_manager$bq_authenticated || is.null(input$select_book)) return()
+      if (!api_manager$bq_authenticated || is.null(input$select_book) || input$select_book == "") return()
       
       tryCatch({
         safe_book <- gsub("'", "''", input$select_book)
@@ -56,7 +99,7 @@ visualizations_server <- function(id, api_manager) {
         return()
       }
       
-      if (is.null(input$select_book)) {
+      if (is.null(input$select_book) || input$select_book == "") {
         showNotification("Please select a book!", type = "warning")
         return()
       }
@@ -108,16 +151,39 @@ visualizations_server <- function(id, api_manager) {
           valueBox(length(unique(data$section)), "Sections", icon = icon("list-ol"), color = "blue")
         })
         
-        avg_numeric <- tryCatch({
+        avg_numeric_raw <- tryCatch({
           all_nums <- unlist(lapply(data$numeric_data, function(x) {
-            if (is.na(x) || trimws(x) == "") return(NULL)
+            if (!has_real_value(x)) return(NULL)
             as.numeric(unlist(strsplit(as.character(x), ",")))
           }))
-          round(mean(all_nums, na.rm = TRUE), 1)
-        }, error = function(e) { 0 })
+          if (length(all_nums) == 0) NA else round(mean(all_nums, na.rm = TRUE), 1)
+        }, error = function(e) { NA })
         
         output$avg_numeric <- renderValueBox({
-          valueBox(avg_numeric, "Avg Metric", icon = icon("chart-line"), color = "yellow")
+          if (is.na(avg_numeric_raw)) {
+            valueBox("N/A", "Avg Metric", icon = icon("chart-line"), color = "light-blue")
+          } else {
+            valueBox(avg_numeric_raw, "Avg Metric", icon = icon("chart-line"), color = "yellow")
+          }
+        })
+        
+        # Numeric Data Trends chart only appears at all if this book
+        # actually has numeric data on at least one row
+        book_has_numeric <- any(sapply(data$numeric_data, has_real_value))
+        
+        output$numeric_chart_section <- renderUI({
+          if (!book_has_numeric) return(NULL)
+          
+          fluidRow(
+            box(
+              title = "Numeric Data Trends",
+              status = "warning",
+              solidHeader = TRUE,
+              width = 12,
+              collapsible = TRUE,
+              plotlyOutput(ns("numeric_chart"), height = "500px")
+            )
+          )
         })
         
         output$total_entries <- renderValueBox({
@@ -174,13 +240,13 @@ visualizations_server <- function(id, api_manager) {
               }
               
               # Metrics
-              if (!is.na(row$numeric_data) && trimws(as.character(row$numeric_data)) != "") {
+              if (has_real_value(row$numeric_data)) {
                 nums <- as.numeric(unlist(strsplit(as.character(row$numeric_data), ",")))
                 if (length(nums) > 0) {
                   html_parts <- c(html_parts, '<div style="margin-top: 15px;">')
                   html_parts <- c(html_parts, '<h5><i class="fa fa-chart-bar"></i> Metrics:</h5>')
                   
-                  if (!is.na(row$numeric_data_description) && trimws(as.character(row$numeric_data_description)) != "") {
+                  if (has_real_value(row$numeric_data_description)) {
                     html_parts <- c(html_parts, sprintf('<p style="color: #666; font-size: 0.9em; font-style: italic; margin-bottom: 10px; background: #f8f9fa; padding: 8px; border-radius: 5px;"><i class="fa fa-info-circle"></i> %s</p>', 
                                                         as.character(row$numeric_data_description)))
                   }
@@ -251,13 +317,13 @@ visualizations_server <- function(id, api_manager) {
                 }
                 
                 # Metrics
-                if (!is.na(row$numeric_data) && trimws(as.character(row$numeric_data)) != "") {
+                if (has_real_value(row$numeric_data)) {
                   nums <- as.numeric(unlist(strsplit(as.character(row$numeric_data), ",")))
                   if (length(nums) > 0) {
                     html_parts <- c(html_parts, '<div style="margin-top: 15px;">')
                     html_parts <- c(html_parts, '<h5><i class="fa fa-chart-bar"></i> Metrics:</h5>')
                     
-                    if (!is.na(row$numeric_data_description) && trimws(as.character(row$numeric_data_description)) != "") {
+                    if (has_real_value(row$numeric_data_description)) {
                       html_parts <- c(html_parts, sprintf('<p style="color: #666; font-size: 0.9em; font-style: italic; margin-bottom: 10px; background: #f8f9fa; padding: 8px; border-radius: 5px;"><i class="fa fa-info-circle"></i> %s</p>', 
                                                           as.character(row$numeric_data_description)))
                     }
@@ -295,7 +361,7 @@ visualizations_server <- function(id, api_manager) {
           
           for (i in seq_len(nrow(data))) {
             row <- data[i, ]
-            if (!is.na(row$numeric_data) && trimws(row$numeric_data) != "") {
+            if (has_real_value(row$numeric_data)) {
               nums <- as.numeric(unlist(strsplit(as.character(row$numeric_data), ",")))
               if (length(nums) > 0) {
                 for (j in seq_along(nums)) {
@@ -343,6 +409,7 @@ visualizations_server <- function(id, api_manager) {
     output$status <- renderUI({ tags$div() })
     output$book_header <- renderUI({ tags$div() })
     output$chapters_html <- renderUI({ tags$div() })
+    output$numeric_chart_section <- renderUI({ tags$div() })
     output$numeric_chart <- renderPlotly({ plot_ly() })
     
     output$total_chapters <- renderValueBox({
