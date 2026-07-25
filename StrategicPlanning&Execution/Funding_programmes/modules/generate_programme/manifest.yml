@@ -1,0 +1,33 @@
+module:
+  id: "generate_programme"
+  name: "Generate Programme"
+  description: "AI-assisted grant/incubator/competition discovery"
+  version: "1.0.0"
+  author: "Funding Programmes Suite Team"
+  
+  enabled: true
+  
+  menu:
+    label: "Find Programmes"
+    icon: "search-dollar"
+    tabname: "generate_programme"
+    badge:
+      label: null
+      color: null
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - httr
+      - jsonlite
+      - shinyjs
+    package_versions: {}
+  
+  api:
+    required: ["claude"]
+    optional: []
+  
+  data:
+    required: []
+    optional: []

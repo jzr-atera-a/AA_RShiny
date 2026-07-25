@@ -86,6 +86,8 @@ rsconnect::deployApp(
 )
 
 #Atera Analytics Confirmed
+rsconnect::deployApp('C:/101_Code/R/SelfManagement/daily_scheduler/')
+
 rsconnect::deployApp('C:/101_Code/R/Entrepreneurship&Pitching/VentureAnalysis_Main/VentureAnalysis/')
 rsconnect::deployApp('C:/101_Code/R/Literature/DB_Material_Compilation/DB_Books_LLM_modular/Modular_db_books_llm/')
 #rsconnect::deployApp('C:/101_Code/R/Entrepreneurship&Pitching/VentureDeals_DeepTech_Suite/VentureDeals/')

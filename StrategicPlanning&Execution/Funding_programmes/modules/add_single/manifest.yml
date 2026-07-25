@@ -1,0 +1,17 @@
+module:
+  id: "add_single"
+  name: "Add Single Entry"
+  description: "Add a single programme entry manually"
+  version: "1.0.0"
+  author: "Funding Programmes Suite Team"
+  enabled: true
+  menu:
+    label: "Add Single Entry"
+    icon: "plus-circle"
+    tabname: "add_single"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

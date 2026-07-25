@@ -1,0 +1,34 @@
+module:
+  id: "generate_schedule"
+  name: "Generate Schedule"
+  description: "AI-powered day schedule generation with Claude"
+  version: "1.0.0"
+  author: "Daily Scheduler Suite Team"
+  
+  enabled: true
+  
+  menu:
+    label: "Generate Schedule"
+    icon: "route"
+    tabname: "generate_schedule"
+    badge:
+      label: null
+      color: null
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - httr
+      - jsonlite
+      - shinyjs
+    
+    package_versions: {}
+  
+  api:
+    required: ["claude"]
+    optional: []
+  
+  data:
+    required: []
+    optional: []
