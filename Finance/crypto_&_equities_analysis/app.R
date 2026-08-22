@@ -68,6 +68,9 @@ ui <- dashboardPage(
     sidebarMenu(
       id = "main_menu",
       menuItem("About & Overview",     tabName = "about",     icon = icon("circle-info"), selected = TRUE),
+      menuItem("Futures, Options & FX",tabName = "derivatives",icon = icon("right-left")),
+      menuItem("Extended Indicators",  tabName = "extra_ta",  icon = icon("chart-area")),
+      menuItem("Psychology & Macro",   tabName = "psych_macro",icon = icon("brain")),
       menuItem("Market Overview",      tabName = "overview",  icon = icon("chart-line")),
       menuItem("Price Analysis",       tabName = "price",     icon = icon("chart-simple")),
       menuItem("Technical Indicators", tabName = "technical", icon = icon("chart-bar")),
@@ -638,6 +641,403 @@ ui <- dashboardPage(
         )
         
       ), # end tabItem about
+      
+      # ── FUTURES, OPTIONS & FX TAB ─────────────────────────────────────────────
+      tabItem(tabName = "derivatives",
+        
+        fluidRow(
+          box(
+            width = 12, solidHeader = FALSE, status = "warning",
+            div(style = "display:flex; align-items:flex-start; gap:14px;",
+              icon("circle-info", style = "font-size:22px; color:#e67e22; margin-top:2px; flex-shrink:0;"),
+              div(
+                tags$strong("About this tab:", style = "color:#7d4a00; font-size:14px;"),
+                tags$p(HTML(paste0(
+                  "Covers the core derivatives concepts from the Futures &amp; Options and Introduction to FX ",
+                  "reference manuals. Each sub-tab pairs a short explanation with a live, interactive calculator ",
+                  "or chart. Numeric defaults are seeded from the currently selected asset's latest closing price ",
+                  "where relevant, but every field can be edited freely to explore different scenarios."
+                )), style = "font-size:13px; color:#5a3500; margin:4px 0 0 0; line-height:1.6;")
+              )
+            )
+          )
+        ),
+        
+        tabsetPanel(
+          id = "derivativesSubTabs", type = "tabs",
+          
+          # -- Sub-tab: Futures Mechanics --
+          tabPanel("Futures Mechanics",
+            br(),
+            fluidRow(
+              box(
+                title = "Long vs Short Futures Position", status = "primary", solidHeader = TRUE, width = 4,
+                tags$p(HTML(paste0(
+                  "A <strong>futures contract</strong> is a binding agreement to buy (long) or sell (short) an ",
+                  "underlying asset at an agreed price on a future date. A <strong>long</strong> position profits ",
+                  "if the price rises above the entry price at expiry; a <strong>short</strong> position profits ",
+                  "if the price falls below it. The two profiles are exact mirror images — maximum gain for one ",
+                  "equals maximum loss for the other, which is why futures are described as a zero-sum game."
+                )), style = "font-size:13px; color:#444; line-height:1.7;"),
+                numericInput("futuresEntryPrice", "Entry / Agreed Price:", value = 100, min = 0.01, step = 0.01),
+                tags$p("Defaults to the current asset's latest close price and updates automatically when you change asset in the sidebar.",
+                       style = "font-size:11px; color:#888; font-style:italic;")
+              ),
+              box(
+                title = "Profit & Loss at Expiry", status = "primary", solidHeader = TRUE, width = 8,
+                withSpinner(plotlyOutput("futuresPnLChart", height = "400px")),
+                tags$p(paste0(
+                  "The diagonal lines show profit/loss per unit at expiry across a range of underlying prices. ",
+                  "Long (green) has unlimited upside and downside capped at the entry price; short (red) has the ",
+                  "opposite profile — capped gain, unlimited loss."
+                ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
+              )
+            ),
+            fluidRow(
+              box(
+                title = "Position Summary", status = "info", solidHeader = TRUE, width = 12,
+                withSpinner(DT::dataTableOutput("futuresPnLSummaryTable"))
+              )
+            )
+          ),
+          
+          # -- Sub-tab: Futures Pricing & Basis --
+          tabPanel("Pricing, Basis & Carry",
+            br(),
+            fluidRow(
+              box(
+                title = "Fair Value Calculator", status = "primary", solidHeader = TRUE, width = 4,
+                tags$p(HTML(paste0(
+                  "<strong>Fair value = Cash price + Net cost of carry.</strong> Cost of carry includes lost ",
+                  "interest and storage/insurance costs, less any benefit of holding the asset (e.g. dividend or ",
+                  "convenience yield). When a future trades above fair value, a <strong>Cash &amp; Carry</strong> ",
+                  "arbitrage is possible; below fair value, a <strong>Reverse Cash &amp; Carry</strong> arbitrage ",
+                  "is possible. As expiry nears, cost of carry shrinks to zero and cash/futures prices <em>converge</em>."
+                )), style = "font-size:12px; color:#444; line-height:1.6;"),
+                numericInput("fvCashPrice", "Cash / Spot Price:", value = 100, min = 0.01, step = 0.01),
+                numericInput("fvInterestRate", "Interest Rate (% p.a.):", value = 5, min = 0, max = 30, step = 0.25),
+                numericInput("fvStorageCost", "Storage/Insurance (absolute, over period):", value = 0, min = 0, step = 0.1),
+                numericInput("fvDividendYield", "Dividend/Convenience Yield (% p.a.):", value = 0, min = 0, max = 30, step = 0.25),
+                numericInput("fvDaysToExpiry", "Days to Expiry:", value = 90, min = 1, max = 720, step = 1)
+              ),
+              box(
+                title = "Fair Value, Basis & Market State", status = "info", solidHeader = TRUE, width = 8,
+                uiOutput("fairValueResult"),
+                tags$hr(),
+                withSpinner(plotlyOutput("convergenceChart", height = "300px")),
+                tags$p(paste0(
+                  "Convergence: as time to expiry falls to zero, the cost of carry falls to zero and the future's ",
+                  "price converges onto the cash price. This chart assumes the cash price itself stays constant."
+                ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
+              )
+            )
+          ),
+          
+          # -- Sub-tab: Options P&L --
+          tabPanel("Options P&L Profiles",
+            br(),
+            fluidRow(
+              box(
+                title = "Options Configuration", status = "primary", solidHeader = TRUE, width = 4,
+                tags$p(HTML(paste0(
+                  "An <strong>option</strong> gives the buyer the right, but not the obligation, to buy (call) or ",
+                  "sell (put) the underlying at the <strong>strike price</strong> on or before expiry, in exchange ",
+                  "for a <strong>premium</strong> paid to the seller (writer). The four basic positions — long call, ",
+                  "short call, long put, short put — each carry a distinct risk/reward profile."
+                )), style = "font-size:12px; color:#444; line-height:1.6;"),
+                radioButtons("optType", "Position:",
+                             choices = c("Long Call (Bullish)"          = "long_call",
+                                         "Short Call (Bearish/Neutral)" = "short_call",
+                                         "Long Put (Bearish)"           = "long_put",
+                                         "Short Put (Bullish/Neutral)"  = "short_put",
+                                         "All Four Positions"           = "all_four"),
+                             selected = "long_call"),
+                numericInput("optStrike", "Strike Price:", value = 100, min = 0.01, step = 0.01),
+                numericInput("optPremium", "Premium:", value = 5, min = 0.01, step = 0.01)
+              ),
+              box(
+                title = "Payoff Diagram at Expiry", status = "primary", solidHeader = TRUE, width = 8,
+                withSpinner(plotlyOutput("optionsPnLChart", height = "400px")),
+                tags$p(paste0(
+                  "Buying options (long call/long put) caps the maximum loss at the premium paid, while the seller ",
+                  "on the other side of the trade carries the mirror-image, and typically larger, risk."
+                ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
+              )
+            ),
+            fluidRow(
+              box(
+                title = "Max Gain / Max Loss / Breakeven", status = "info", solidHeader = TRUE, width = 12,
+                withSpinner(DT::dataTableOutput("optionsSummaryTable"))
+              )
+            )
+          ),
+          
+          # -- Sub-tab: FX Fundamentals --
+          tabPanel("FX Fundamentals",
+            br(),
+            fluidRow(
+              box(
+                title = "Pip Value & Margin Calculator", status = "primary", solidHeader = TRUE, width = 4,
+                tags$p(HTML(paste0(
+                  "Currency pairs are quoted <strong>XXX/YYY</strong>, where XXX (the base currency) is priced in ",
+                  "units of YYY (the counter currency). A <strong>pip</strong> is typically the fourth decimal ",
+                  "place (second for JPY pairs). Retail FX is highly <strong>leveraged</strong> — margin is the ",
+                  "deposit required to control a much larger notional position."
+                )), style = "font-size:12px; color:#444; line-height:1.6;"),
+                selectInput("fxPair", "Currency Pair:",
+                            choices = c("EUR/USD", "GBP/USD", "USD/JPY", "AUD/USD",
+                                        "USD/CHF", "USD/CAD", "EUR/GBP", "EUR/JPY"),
+                            selected = "EUR/USD"),
+                selectInput("fxLotType", "Position Size:",
+                            choices = c("Standard Lot (100,000)" = "100000",
+                                        "Mini Lot (10,000)"      = "10000",
+                                        "Micro Lot (1,000)"      = "1000"),
+                            selected = "100000"),
+                numericInput("fxLeverage", "Leverage (e.g. 100 = 100:1):", value = 100, min = 1, max = 500, step = 1)
+              ),
+              box(
+                title = "Calculated Exposure", status = "info", solidHeader = TRUE, width = 8,
+                uiOutput("fxCalcResult"),
+                tags$p(paste0(
+                  "Pip value depends on which currency is the counter (quote) currency of the pair. Margin required ",
+                  "= Notional Value / Leverage. Higher leverage reduces the margin needed to control the same ",
+                  "notional exposure, but increases the impact of adverse price moves on the account."
+                ), style = "font-size:12px; color:#666; margin:14px 0 0 0; line-height:1.5;")
+              )
+            ),
+            fluidRow(
+              box(
+                title = "Global Trading Sessions (GMT)", status = "primary", solidHeader = TRUE, width = 12,
+                withSpinner(plotlyOutput("fxSessionChart", height = "380px")),
+                tags$p(paste0(
+                  "FX trades 24 hours a day as the Asian, European, and North American sessions hand over to one ",
+                  "another. Overlapping sessions (e.g. London/New York) typically see the highest liquidity and ",
+                  "volatility."
+                ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
+              )
+            )
+          )
+        )
+      ), # end tabItem derivatives
+      
+      # ── EXTENDED TECHNICAL INDICATORS TAB ─────────────────────────────────────
+      tabItem(tabName = "extra_ta",
+        
+        fluidRow(
+          box(
+            width = 12, solidHeader = FALSE, status = "warning",
+            div(style = "display:flex; align-items:flex-start; gap:14px;",
+              icon("circle-info", style = "font-size:22px; color:#e67e22; margin-top:2px; flex-shrink:0;"),
+              div(
+                tags$strong("About this tab:", style = "color:#7d4a00; font-size:14px;"),
+                tags$p(HTML(paste0(
+                  "Implements the indicator formulae from the Technical Analysis Indicator Formulae reference ",
+                  "manual that are not already covered on the Technical Indicators tab (which has RSI, MACD, and ",
+                  "Stochastic). Every chart below is computed live from the asset currently selected in the sidebar."
+                )), style = "font-size:13px; color:#5a3500; margin:4px 0 0 0; line-height:1.6;")
+              )
+            )
+          )
+        ),
+        
+        tabsetPanel(
+          id = "extraTASubTabs", type = "tabs",
+          
+          # -- Sub-tab: Moving Averages --
+          tabPanel("Moving Averages",
+            br(),
+            fluidRow(
+              box(
+                title = "Configuration", status = "primary", solidHeader = TRUE, width = 3,
+                tags$p(HTML(paste0(
+                  "<strong>SMA</strong> weights every price in the window equally. <strong>WMA</strong> applies ",
+                  "linearly increasing weights, favouring recent prices. <strong>EMA</strong> applies exponentially ",
+                  "decaying weights via EMA<sub>t</sub> = EMA<sub>t-1</sub> + (C<sub>t</sub> &minus; EMA<sub>t-1</sub>) ",
+                  "&times; 2/(n+1), making it the most responsive of the three to new information."
+                )), style = "font-size:12px; color:#444; line-height:1.6;"),
+                numericInput("maPeriod", "Period (n):", value = 20, min = 2, max = 200, step = 1),
+                checkboxGroupInput("maTypes", "Show:",
+                                   choices = c("SMA" = "sma", "WMA" = "wma", "EMA" = "ema"),
+                                   selected = c("sma", "wma", "ema"))
+              ),
+              box(
+                title = "Moving Average Comparison", status = "primary", solidHeader = TRUE, width = 9,
+                withSpinner(plotlyOutput("maComparisonChart", height = "450px")),
+                tags$p(paste0(
+                  "All three moving averages use the same lookback period, so any separation between the lines is ",
+                  "purely a function of how they weight recent versus older prices. EMA typically hugs price most ",
+                  "closely; SMA the least."
+                ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
+              )
+            )
+          ),
+          
+          # -- Sub-tab: Momentum & ROC --
+          tabPanel("Momentum & ROC",
+            br(),
+            fluidRow(
+              box(
+                title = "Configuration", status = "primary", solidHeader = TRUE, width = 3,
+                tags$p(HTML(paste0(
+                  "<strong>Momentum(n)</strong> = C<sub>t</sub> &minus; C<sub>t-n</sub>. <strong>Rate of Change(n)</strong> ",
+                  "= [Momentum(n) / C<sub>t-n</sub>] &times; 100 — the same idea expressed as a percentage, which ",
+                  "makes it comparable across assets trading at very different price levels."
+                )), style = "font-size:12px; color:#444; line-height:1.6;"),
+                numericInput("momPeriod", "Period (n):", value = 10, min = 1, max = 100, step = 1)
+              ),
+              box(
+                title = "Momentum & Rate of Change", status = "primary", solidHeader = TRUE, width = 9,
+                withSpinner(plotlyOutput("momentumROCChart", height = "450px")),
+                tags$p(paste0(
+                  "Both oscillate around zero. Positive values indicate the price is higher than n periods ago ",
+                  "(upward momentum); negative values indicate the price has fallen over the period."
+                ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
+              )
+            )
+          ),
+          
+          # -- Sub-tab: Volume (OBV) --
+          tabPanel("Volume Indicators",
+            br(),
+            fluidRow(
+              box(
+                title = "About On-Balance Volume", status = "primary", solidHeader = TRUE, width = 12,
+                tags$p(HTML(paste0(
+                  "<strong>On-Balance Volume (OBV)</strong> is a cumulative total: today's volume is added if the ",
+                  "close is higher than yesterday's, subtracted if lower, and unchanged if equal. ",
+                  "<strong>Weighted OBV (WOBV)</strong> scales each day's contribution by the size of the price move ",
+                  "(WOBV<sub>t</sub> = WOBV<sub>t-1</sub> + V<sub>t</sub> &times; (C<sub>t</sub> &minus; C<sub>t-1</sub>)), ",
+                  "so a large price move on high volume carries proportionally more weight than a small move on the ",
+                  "same volume. Both indicators aim to reveal whether volume is confirming or diverging from price."
+                )), style = "font-size:12px; color:#444; line-height:1.6;")
+              )
+            ),
+            fluidRow(
+              box(
+                title = "OBV & Weighted OBV", status = "primary", solidHeader = TRUE, width = 12,
+                withSpinner(plotlyOutput("obvChart", height = "450px")),
+                tags$p(paste0(
+                  "If volume data is unavailable or zero for the selected asset (common for some futures and crypto ",
+                  "feeds), OBV and WOBV will be flat and are not meaningful — try switching to an equity ticker."
+                ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
+              )
+            )
+          ),
+          
+          # -- Sub-tab: Parabolic SAR --
+          tabPanel("Parabolic SAR",
+            br(),
+            fluidRow(
+              box(
+                title = "Configuration", status = "primary", solidHeader = TRUE, width = 3,
+                tags$p(HTML(paste0(
+                  "Wilder's <strong>Parabolic SAR</strong> (Stop and Reverse) trails price to flag potential trend ",
+                  "reversals. SAR<sub>t</sub> = SAR<sub>t-1</sub> + &alpha;(EP &minus; SAR<sub>t-1</sub>), where EP is ",
+                  "the Extreme Point of the current trend and &alpha; is an acceleration factor that increases each ",
+                  "time a new extreme is reached, up to a maximum."
+                )), style = "font-size:12px; color:#444; line-height:1.6;"),
+                numericInput("sarAccelStart", "Acceleration Start:", value = 0.02, min = 0.01, max = 0.2, step = 0.01),
+                numericInput("sarAccelMax", "Acceleration Max:", value = 0.2, min = 0.05, max = 0.5, step = 0.01)
+              ),
+              box(
+                title = "Price with Parabolic SAR", status = "primary", solidHeader = TRUE, width = 9,
+                withSpinner(plotlyOutput("sarChart", height = "450px")),
+                tags$p(paste0(
+                  "SAR dots plotted below price indicate an uptrend (potential long bias); dots above price indicate ",
+                  "a downtrend. A flip from below to above price (or vice versa) is the 'stop and reverse' signal."
+                ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
+              )
+            )
+          ),
+          
+          # -- Sub-tab: Pivot Points --
+          tabPanel("Pivot Points",
+            br(),
+            fluidRow(
+              box(
+                title = "About Pivot Points", status = "primary", solidHeader = TRUE, width = 12,
+                tags$p(HTML(paste0(
+                  "Pivot Points are calculated from the <em>previous</em> period's High, Low, and Close: ",
+                  "PP = (H + L + C) / 3. Resistance levels R1&ndash;R3 sit above the pivot and support levels ",
+                  "S1&ndash;S3 sit below it, giving a full map of likely intraday support/resistance for the next session."
+                )), style = "font-size:12px; color:#444; line-height:1.6;")
+              )
+            ),
+            fluidRow(
+              box(
+                title = "Pivot Levels (most recent completed session)", status = "info", solidHeader = TRUE, width = 4,
+                withSpinner(DT::dataTableOutput("pivotPointsTable"))
+              ),
+              box(
+                title = "Recent Price vs Pivot Levels", status = "primary", solidHeader = TRUE, width = 8,
+                withSpinner(plotlyOutput("pivotPointsChart", height = "420px")),
+                tags$p(paste0(
+                  "The last 30 sessions of closing price plotted against the pivot, resistance, and support levels ",
+                  "derived from the most recently completed session."
+                ), style = "font-size:12px; color:#666; margin:10px 0 0 0; line-height:1.5;")
+              )
+            )
+          )
+        )
+      ), # end tabItem extra_ta
+      
+      # ── TRADER PSYCHOLOGY & MACRO CALENDAR TAB ────────────────────────────────
+      tabItem(tabName = "psych_macro",
+        
+        tabsetPanel(
+          id = "psychMacroSubTabs", type = "tabs",
+          
+          # -- Sub-tab: Ten Steps --
+          tabPanel("Ten Steps to Successful Trading",
+            br(),
+            fluidRow(
+              box(
+                width = 12, solidHeader = TRUE, status = "primary",
+                title = "Ten Steps to Becoming a Successful Trader",
+                tags$p("Reference: London Academy of Trading — Ten Steps to Becoming a Successful Trader.",
+                       style = "font-size:12px; color:#888; font-style:italic; margin-bottom:16px;"),
+                uiOutput("tenStepsUI")
+              )
+            )
+          ),
+          
+          # -- Sub-tab: Macro Calendar --
+          tabPanel("US Macro Calendar",
+            br(),
+            fluidRow(
+              box(
+                width = 12, solidHeader = FALSE, status = "warning",
+                div(style = "display:flex; align-items:flex-start; gap:14px;",
+                  icon("circle-info", style = "font-size:22px; color:#e67e22; margin-top:2px; flex-shrink:0;"),
+                  div(
+                    tags$strong("About this table:", style = "color:#7d4a00; font-size:14px;"),
+                    tags$p(paste0(
+                      "Reference data reproduced from the US Macro Crib Sheet, covering the highest-impact scheduled ",
+                      "US economic releases. Expected outcomes are general historical tendencies, subject to prevailing ",
+                      "financial conditions and monetary policy stance — not a guaranteed reaction."
+                    ), style = "font-size:13px; color:#5a3500; margin:4px 0 0 0; line-height:1.6;")
+                  )
+                )
+              )
+            ),
+            fluidRow(
+              box(
+                title = "Reaction Simulator", status = "primary", solidHeader = TRUE, width = 4,
+                selectInput("macroIndicator", "Select Release:", choices = NULL),
+                radioButtons("macroDirection", "Scenario:",
+                             choices = c("Actual beats Forecast"  = "beat",
+                                         "Actual misses Forecast" = "miss"),
+                             selected = "beat"),
+                uiOutput("macroReactionResult")
+              ),
+              box(
+                title = "Full Calendar Reference", status = "info", solidHeader = TRUE, width = 8,
+                withSpinner(DT::dataTableOutput("macroCalendarTable"))
+              )
+            )
+          )
+        )
+      ), # end tabItem psych_macro
       
       # ── MARKET OVERVIEW TAB ──────────────────────────────────────────────────
       # Market Overview Tab
@@ -3884,6 +4284,590 @@ server <- function(input, output, session) {
       if(!is.na(equity_ret)) paste("Equity Return:", round(equity_ret, 2), "%") else NULL,
       if(!is.na(commodity_ret)) paste("Commodity Return:", round(commodity_ret, 2), "%") else NULL,
       sep = "\n"
+    )
+  })
+  
+  # ══════════════════════════════════════════════════════════════════════════
+  # NEW TAB 1: FUTURES, OPTIONS & FX
+  # ══════════════════════════════════════════════════════════════════════════
+  
+  # Seed calculator defaults from the currently loaded asset's latest close
+  observeEvent(values$asset_data, {
+    req(values$asset_data)
+    latest_close <- round(tail(values$asset_data$Close, 1), 4)
+    if (!is.na(latest_close) && latest_close > 0) {
+      updateNumericInput(session, "futuresEntryPrice", value = latest_close)
+      updateNumericInput(session, "fvCashPrice", value = latest_close)
+      updateNumericInput(session, "optStrike", value = latest_close)
+      updateNumericInput(session, "optPremium", value = round(latest_close * 0.05, 4))
+    }
+  }, ignoreInit = FALSE)
+  
+  # -- Futures Mechanics --
+  output$futuresPnLChart <- renderPlotly({
+    req(input$futuresEntryPrice)
+    entry <- input$futuresEntryPrice
+    price_range <- seq(entry * 0.7, entry * 1.3, length.out = 100)
+    long_pnl  <- price_range - entry
+    short_pnl <- entry - price_range
+    
+    plot_ly() %>%
+      add_trace(x = price_range, y = long_pnl, type = "scatter", mode = "lines",
+                name = "Long Futures", line = list(color = "#27ae60", width = 3)) %>%
+      add_trace(x = price_range, y = short_pnl, type = "scatter", mode = "lines",
+                name = "Short Futures", line = list(color = "#e74c3c", width = 3)) %>%
+      layout(
+        title = "Futures P&L at Expiry",
+        xaxis = list(title = "Underlying Price at Expiry"),
+        yaxis = list(title = "Profit / Loss per Unit"),
+        shapes = list(
+          list(type = "line", x0 = min(price_range), x1 = max(price_range), y0 = 0, y1 = 0,
+               line = list(color = "#bdc3c7", width = 1, dash = "dash")),
+          list(type = "line", x0 = entry, x1 = entry,
+               y0 = min(c(long_pnl, short_pnl)), y1 = max(c(long_pnl, short_pnl)),
+               line = list(color = "#7f8c8d", width = 1, dash = "dot"))
+        ),
+        plot_bgcolor = "white", paper_bgcolor = "white"
+      )
+  })
+  
+  output$futuresPnLSummaryTable <- renderDT({
+    req(input$futuresEntryPrice)
+    entry <- round(input$futuresEntryPrice, 2)
+    df <- data.frame(
+      Position   = c("Long Futures", "Short Futures"),
+      `Max Gain` = c("Unlimited", paste0("Limited to entry price (", entry, ")")),
+      `Max Loss` = c(paste0("Limited to entry price (", entry, ")"), "Unlimited"),
+      Breakeven  = c(entry, entry),
+      check.names = FALSE
+    )
+    datatable(df, options = list(dom = 't'), rownames = FALSE)
+  })
+  
+  # -- Futures Pricing & Basis --
+  output$fairValueResult <- renderUI({
+    req(input$fvCashPrice, input$fvInterestRate, input$fvDaysToExpiry)
+    
+    cash     <- input$fvCashPrice
+    rate     <- input$fvInterestRate / 100
+    storage  <- if (is.null(input$fvStorageCost)) 0 else input$fvStorageCost
+    div_yld  <- (if (is.null(input$fvDividendYield)) 0 else input$fvDividendYield) / 100
+    days     <- input$fvDaysToExpiry
+    
+    lost_interest     <- cash * rate * (days / 365)
+    dividend_benefit  <- cash * div_yld * (days / 365)
+    net_cost_of_carry <- lost_interest + storage - dividend_benefit
+    fair_value        <- cash + net_cost_of_carry
+    basis             <- cash - fair_value
+    
+    state <- if (net_cost_of_carry > 0) "Contango (basis negative)" else
+             if (net_cost_of_carry < 0) "Backwardation (basis positive)" else "At Fair Value"
+    state_color <- if (net_cost_of_carry > 0) "#008A82" else
+                   if (net_cost_of_carry < 0) "#e67e22" else "#7f8c8d"
+    
+    tagList(
+      fluidRow(
+        column(4, div(style = "text-align:center;", tags$h5("Cost of Carry"),
+                      tags$h3(round(net_cost_of_carry, 4), style = paste0("color:", state_color, ";")))),
+        column(4, div(style = "text-align:center;", tags$h5("Fair Value"),
+                      tags$h3(round(fair_value, 4), style = "color:#002C3C;"))),
+        column(4, div(style = "text-align:center;", tags$h5("Basis"),
+                      tags$h3(round(basis, 4), style = "color:#002C3C;")))
+      ),
+      div(style = paste0("text-align:center; margin-top:10px; padding:10px; border-radius:8px; background:", state_color, "22;"),
+          tags$strong(paste("Market State:", state), style = paste0("color:", state_color, ";"))
+      )
+    )
+  })
+  
+  output$convergenceChart <- renderPlotly({
+    req(input$fvCashPrice, input$fvInterestRate, input$fvDaysToExpiry)
+    cash       <- input$fvCashPrice
+    rate       <- input$fvInterestRate / 100
+    storage    <- if (is.null(input$fvStorageCost)) 0 else input$fvStorageCost
+    div_yld    <- (if (is.null(input$fvDividendYield)) 0 else input$fvDividendYield) / 100
+    total_days <- max(input$fvDaysToExpiry, 1)
+    
+    days_remaining <- seq(total_days, 0, length.out = 50)
+    carry <- cash * rate * (days_remaining / 365) +
+             storage * (days_remaining / total_days) -
+             cash * div_yld * (days_remaining / 365)
+    future_price <- cash + carry
+    
+    plot_ly() %>%
+      add_trace(x = total_days - days_remaining, y = future_price, type = "scatter", mode = "lines",
+                name = "Future's Fair Value", line = list(color = "#008A82", width = 3)) %>%
+      add_trace(x = c(0, total_days), y = c(cash, cash), type = "scatter", mode = "lines",
+                name = "Constant Cash Price", line = list(color = "#e67e22", width = 2, dash = "dash")) %>%
+      layout(title = "Convergence to Expiry",
+             xaxis = list(title = "Days Elapsed"), yaxis = list(title = "Price"),
+             plot_bgcolor = "white", paper_bgcolor = "white")
+  })
+  
+  # -- Options P&L --
+  options_payoff <- function(S, K, premium, type) {
+    switch(type,
+      long_call  = pmax(S - K, 0) - premium,
+      short_call = premium - pmax(S - K, 0),
+      long_put   = pmax(K - S, 0) - premium,
+      short_put  = premium - pmax(K - S, 0)
+    )
+  }
+  
+  output$optionsPnLChart <- renderPlotly({
+    req(input$optStrike, input$optPremium, input$optType)
+    K <- input$optStrike
+    premium <- input$optPremium
+    S <- seq(K * 0.5, K * 1.5, length.out = 150)
+    
+    types_to_plot <- if (input$optType == "all_four") {
+      c("long_call", "short_call", "long_put", "short_put")
+    } else {
+      input$optType
+    }
+    
+    labels <- c(long_call = "Long Call", short_call = "Short Call",
+                long_put = "Long Put", short_put = "Short Put")
+    colors <- c(long_call = "#27ae60", short_call = "#e74c3c",
+                long_put = "#3498db", short_put = "#9b59b6")
+    
+    p <- plot_ly()
+    for (t in types_to_plot) {
+      payoff <- options_payoff(S, K, premium, t)
+      p <- p %>% add_trace(x = S, y = payoff, type = "scatter", mode = "lines",
+                            name = labels[[t]], line = list(color = colors[[t]], width = 3))
+    }
+    p %>% layout(
+      title = "Option Payoff at Expiry",
+      xaxis = list(title = "Underlying Price at Expiry"),
+      yaxis = list(title = "Profit / Loss"),
+      shapes = list(
+        list(type = "line", x0 = min(S), x1 = max(S), y0 = 0, y1 = 0,
+             line = list(color = "#bdc3c7", width = 1, dash = "dash")),
+        list(type = "line", x0 = K, x1 = K, y0 = -premium * 3, y1 = premium * 3,
+             line = list(color = "#95a5a6", width = 1, dash = "dot"))
+      ),
+      plot_bgcolor = "white", paper_bgcolor = "white"
+    )
+  })
+  
+  output$optionsSummaryTable <- renderDT({
+    req(input$optStrike, input$optPremium, input$optType)
+    K <- input$optStrike
+    premium <- input$optPremium
+    
+    types_to_plot <- if (input$optType == "all_four") {
+      c("long_call", "short_call", "long_put", "short_put")
+    } else {
+      input$optType
+    }
+    
+    labels    <- c(long_call = "Long Call", short_call = "Short Call",
+                   long_put = "Long Put", short_put = "Short Put")
+    strategy  <- c(long_call = "Bullish", short_call = "Bearish/Neutral",
+                   long_put = "Bearish", short_put = "Bullish/Neutral")
+    max_loss  <- c(long_call = as.character(round(premium, 2)), short_call = "Unlimited",
+                   long_put = as.character(round(premium, 2)), short_put = as.character(round(K - premium, 2)))
+    max_gain  <- c(long_call = "Unlimited", short_call = as.character(round(premium, 2)),
+                   long_put = as.character(round(K - premium, 2)), short_put = as.character(round(premium, 2)))
+    breakeven <- c(long_call = as.character(round(K + premium, 2)), short_call = as.character(round(K + premium, 2)),
+                   long_put = as.character(round(K - premium, 2)), short_put = as.character(round(K - premium, 2)))
+    
+    df <- data.frame(
+      Position    = unname(labels[types_to_plot]),
+      Strategy    = unname(strategy[types_to_plot]),
+      `Max Loss`  = unname(max_loss[types_to_plot]),
+      `Max Gain`  = unname(max_gain[types_to_plot]),
+      Breakeven   = unname(breakeven[types_to_plot]),
+      check.names = FALSE
+    )
+    datatable(df, options = list(dom = 't'), rownames = FALSE)
+  })
+  
+  # -- FX Fundamentals --
+  output$fxCalcResult <- renderUI({
+    req(input$fxPair, input$fxLotType, input$fxLeverage)
+    
+    pair        <- input$fxPair
+    lot_size    <- as.numeric(input$fxLotType)
+    leverage    <- input$fxLeverage
+    counter_ccy <- strsplit(pair, "/")[[1]][2]
+    
+    pip_size <- if (counter_ccy == "JPY") 0.01 else 0.0001
+    pip_value_usd <- if (counter_ccy == "USD") {
+      lot_size * pip_size
+    } else if (counter_ccy == "JPY") {
+      round(lot_size * pip_size / 150, 2)   # illustrative approx. USD/JPY conversion
+    } else {
+      round(lot_size * pip_size, 2)          # illustrative approximation
+    }
+    
+    notional        <- lot_size
+    margin_required <- notional / leverage
+    
+    tagList(
+      fluidRow(
+        column(4, div(style = "text-align:center;", tags$h5("Notional Value"),
+                      tags$h3(format(notional, big.mark = ","), style = "color:#002C3C;"))),
+        column(4, div(style = "text-align:center;", tags$h5("Margin Required"),
+                      tags$h3(paste0("$", format(round(margin_required, 2), big.mark = ",")), style = "color:#008A82;"))),
+        column(4, div(style = "text-align:center;", tags$h5("Approx. Pip Value"),
+                      tags$h3(paste0("$", pip_value_usd), style = "color:#002C3C;")))
+      ),
+      tags$p(paste0(
+        "At ", leverage, ":1 leverage on a ", format(lot_size, big.mark = ","), "-unit position in ", pair,
+        ", you control $", format(notional, big.mark = ","), " of notional exposure for a deposit of $",
+        format(round(margin_required, 2), big.mark = ","), ". Pip value is illustrative and approximated to USD."
+      ), style = "font-size:11px; color:#888; text-align:center; margin-top:10px; font-style:italic;")
+    )
+  })
+  
+  output$fxSessionChart <- renderPlotly({
+    sessions <- data.frame(
+      Center = c("Sydney", "Tokyo", "Singapore/HK", "Bahrain", "Frankfurt",
+                 "London", "New York", "Chicago", "San Francisco"),
+      Start  = c(-2, 0, 0, 7, 7, 8, 13, 14, 15),
+      End    = c(6, 9, 9, 16, 16, 17, 22, 23, 24)
+    )
+    sessions$Center   <- factor(sessions$Center, levels = rev(sessions$Center))
+    sessions$Duration <- sessions$End - sessions$Start
+    
+    plot_ly(sessions, y = ~Center, x = ~Duration, base = ~Start, type = "bar", orientation = "h",
+            marker = list(color = "#008A82")) %>%
+      layout(
+        title = "FX Trading Sessions Across GMT Hours",
+        xaxis = list(title = "GMT Hour", range = c(-2, 24), dtick = 2),
+        yaxis = list(title = ""),
+        plot_bgcolor = "white", paper_bgcolor = "white"
+      )
+  })
+  
+  # ══════════════════════════════════════════════════════════════════════════
+  # NEW TAB 2: EXTENDED TECHNICAL INDICATORS
+  # ══════════════════════════════════════════════════════════════════════════
+  
+  output$maComparisonChart <- renderPlotly({
+    req(values$asset_data, input$maPeriod)
+    data <- values$asset_data %>% arrange(Date)
+    n <- input$maPeriod
+    req(nrow(data) > n)
+    
+    p <- plot_ly() %>%
+      add_trace(x = data$Date, y = data$Close, type = "scatter", mode = "lines",
+                name = "Close", line = list(color = "#95a5a6", width = 1.5))
+    
+    if ("sma" %in% input$maTypes) {
+      p <- p %>% add_trace(x = data$Date, y = as.numeric(SMA(data$Close, n = n)), type = "scatter", mode = "lines",
+                            name = paste0("SMA(", n, ")"), line = list(color = "#3498db", width = 2))
+    }
+    if ("wma" %in% input$maTypes) {
+      p <- p %>% add_trace(x = data$Date, y = as.numeric(WMA(data$Close, n = n)), type = "scatter", mode = "lines",
+                            name = paste0("WMA(", n, ")"), line = list(color = "#f39c12", width = 2))
+    }
+    if ("ema" %in% input$maTypes) {
+      p <- p %>% add_trace(x = data$Date, y = as.numeric(EMA(data$Close, n = n)), type = "scatter", mode = "lines",
+                            name = paste0("EMA(", n, ")"), line = list(color = "#e74c3c", width = 2))
+    }
+    
+    p %>% layout(
+      title = paste("Moving Average Comparison —", current_asset()),
+      xaxis = list(title = "Date"), yaxis = list(title = "Price"),
+      plot_bgcolor = "white", paper_bgcolor = "white"
+    )
+  })
+  
+  output$momentumROCChart <- renderPlotly({
+    req(values$asset_data, input$momPeriod)
+    n <- input$momPeriod
+    data <- values$asset_data %>%
+      arrange(Date) %>%
+      mutate(
+        MOM = Close - lag(Close, n),
+        ROC = (MOM / lag(Close, n)) * 100
+      )
+    req(nrow(data) > n)
+    
+    p1 <- plot_ly(data, x = ~Date, y = ~MOM, type = "scatter", mode = "lines",
+                  name = paste0("Momentum(", n, ")"), line = list(color = "#3498db", width = 2)) %>%
+      layout(yaxis = list(title = "Momentum"))
+    p2 <- plot_ly(data, x = ~Date, y = ~ROC, type = "scatter", mode = "lines",
+                  name = paste0("ROC(", n, ")"), line = list(color = "#e67e22", width = 2)) %>%
+      layout(yaxis = list(title = "ROC (%)"))
+    
+    subplot(p1, p2, nrows = 2, shareX = TRUE, titleY = TRUE) %>%
+      layout(title = paste("Momentum & Rate of Change —", current_asset()),
+             plot_bgcolor = "white", paper_bgcolor = "white")
+  })
+  
+  output$obvChart <- renderPlotly({
+    req(values$asset_data)
+    data <- values$asset_data %>% arrange(Date)
+    
+    delta <- c(0, diff(data$Close))
+    obv_incr  <- ifelse(delta > 0, data$Volume, ifelse(delta < 0, -data$Volume, 0))
+    data$OBV  <- cumsum(ifelse(is.na(obv_incr), 0, obv_incr))
+    wobv_incr <- data$Volume * delta
+    data$WOBV <- cumsum(ifelse(is.na(wobv_incr), 0, wobv_incr))
+    
+    p1 <- plot_ly(data, x = ~Date, y = ~OBV, type = "scatter", mode = "lines",
+                  name = "OBV", line = list(color = "#3498db", width = 2)) %>%
+      layout(yaxis = list(title = "OBV"))
+    p2 <- plot_ly(data, x = ~Date, y = ~WOBV, type = "scatter", mode = "lines",
+                  name = "Weighted OBV", line = list(color = "#9b59b6", width = 2)) %>%
+      layout(yaxis = list(title = "Weighted OBV"))
+    
+    subplot(p1, p2, nrows = 2, shareX = TRUE, titleY = TRUE) %>%
+      layout(title = paste("On-Balance Volume —", current_asset()),
+             plot_bgcolor = "white", paper_bgcolor = "white")
+  })
+  
+  output$sarChart <- renderPlotly({
+    req(values$asset_data, input$sarAccelStart, input$sarAccelMax)
+    data <- values$asset_data %>% arrange(Date)
+    req(nrow(data) > 5)
+    
+    hl <- data.frame(High = data$High, Low = data$Low)
+    sar_vals <- tryCatch(
+      SAR(hl, accel = c(input$sarAccelStart, input$sarAccelMax)),
+      error = function(e) rep(NA_real_, nrow(data))
+    )
+    data$SAR <- as.numeric(sar_vals)
+    
+    plot_ly() %>%
+      add_trace(data = data, x = ~Date, y = ~Close, type = "scatter", mode = "lines",
+                name = "Close", line = list(color = "#002C3C", width = 1.5)) %>%
+      add_trace(data = data, x = ~Date, y = ~SAR, type = "scatter", mode = "markers",
+                name = "Parabolic SAR", marker = list(color = "#e67e22", size = 4)) %>%
+      layout(
+        title = paste("Parabolic SAR —", current_asset()),
+        xaxis = list(title = "Date"), yaxis = list(title = "Price"),
+        plot_bgcolor = "white", paper_bgcolor = "white"
+      )
+  })
+  
+  pivot_levels <- reactive({
+    req(values$asset_data)
+    data <- values$asset_data %>% arrange(Date)
+    req(nrow(data) >= 1)
+    
+    last_row <- tail(data, 1)
+    H <- last_row$High; L <- last_row$Low; C <- last_row$Close
+    
+    PP <- (H + L + C) / 3
+    R1 <- (2 * PP) - L
+    S1 <- (2 * PP) - H
+    R2 <- PP + (H - L)
+    S2 <- PP - (H - L)
+    R3 <- H + 2 * (PP - L)
+    S3 <- L - 2 * (H - PP)
+    
+    data.frame(
+      Level = c("R3", "R2", "R1", "PP", "S1", "S2", "S3"),
+      Value = round(c(R3, R2, R1, PP, S1, S2, S3), 4)
+    )
+  })
+  
+  output$pivotPointsTable <- renderDT({
+    lv <- pivot_levels()
+    datatable(lv, options = list(dom = 't', paging = FALSE), rownames = FALSE) %>%
+      formatStyle("Level",
+                  backgroundColor = styleEqual(
+                    c("R3", "R2", "R1", "PP", "S1", "S2", "S3"),
+                    c("#fadbd8", "#fadbd8", "#fadbd8", "#d6eaf8", "#d5f5e3", "#d5f5e3", "#d5f5e3")
+                  ))
+  })
+  
+  output$pivotPointsChart <- renderPlotly({
+    req(values$asset_data)
+    data <- tail(values$asset_data %>% arrange(Date), 30)
+    lv <- pivot_levels()
+    
+    p <- plot_ly(data, x = ~Date, y = ~Close, type = "scatter", mode = "lines",
+                 name = "Close", line = list(color = "#002C3C", width = 2))
+    
+    colors <- c(R3 = "#c0392b", R2 = "#e74c3c", R1 = "#e67e22", PP = "#2980b9",
+                S1 = "#27ae60", S2 = "#16a085", S3 = "#1abc9c")
+    for (i in seq_len(nrow(lv))) {
+      lvl <- lv$Level[i]; val <- lv$Value[i]
+      p <- p %>% add_trace(x = data$Date, y = rep(val, nrow(data)), type = "scatter", mode = "lines",
+                            name = lvl, line = list(color = colors[[lvl]], width = 1, dash = "dot"))
+    }
+    
+    p %>% layout(title = paste("Recent Price vs Pivot Levels —", current_asset()),
+                 xaxis = list(title = "Date"), yaxis = list(title = "Price"),
+                 plot_bgcolor = "white", paper_bgcolor = "white")
+  })
+  
+  # ══════════════════════════════════════════════════════════════════════════
+  # NEW TAB 3: TRADER PSYCHOLOGY & MACRO CALENDAR
+  # ══════════════════════════════════════════════════════════════════════════
+  
+  output$tenStepsUI <- renderUI({
+    steps <- list(
+      list(n = 1,  title = "Hard Work!", icon = "dumbbell",
+           text = "As with any skill, the harder you work, the better you get at it. Learn the skills, practise applying them, and only start trading with real money once you're really ready."),
+      list(n = 2,  title = "Self-Confidence", icon = "hand-fist",
+           text = "Believe in yourself and your ability. If you've taken time to learn about trading, don't be afraid of taking controlled risk or trying new approaches."),
+      list(n = 3,  title = "Education", icon = "graduation-cap",
+           text = "It's possible to get lucky without really knowing what you're doing — but nobody becomes a successful trader over a weekend. Commit time and effort to a proper education."),
+      list(n = 4,  title = "Get a Mentor", icon = "user-tie",
+           text = "Get feedback on your trading as you apply new knowledge and skills. Find a role model whose advice you trust and learn from their process."),
+      list(n = 5,  title = "Honesty & Responsibility", icon = "scale-balanced",
+           text = "All traders lose money from time to time — it doesn't make you a bad trader. Be honest with yourself about your decisions, or you'll keep repeating the same mistakes."),
+      list(n = 6,  title = "Don't Just Copy Other Traders", icon = "user-slash",
+           text = "Copying gives you no control over your trading decisions. If you want to be a trader, learn how to be a trader."),
+      list(n = 7,  title = "Learn From Your Mistakes", icon = "rotate-left",
+           text = "Go back and review each losing trade. Did you follow your process? Could you have avoided or reduced the loss? Would you do things differently next time?"),
+      list(n = 8,  title = "Set 'Process' Goals, Not Monetary Goals", icon = "bullseye",
+           text = "Monetary goals build emotional pressure after early losses. Process goals — always follow your rules, never exceed your risk limit, always use stop losses — bring discipline, and profits follow."),
+      list(n = 9,  title = "Be Organised and Disciplined", icon = "list-check",
+           text = "Work out a set of trading rules that suits your character and fits around your other life commitments — then stick to them."),
+      list(n = 10, title = "Patience", icon = "hourglass-half",
+           text = "By deciding not to take a trade, you are still making a decision. Don't enter trades just to feel like you're trading — wait for the right opportunity.")
+    )
+    
+    card_color <- "#008A82"
+    cards <- lapply(steps, function(s) {
+      column(6,
+        div(style = paste0(
+              "background:#f7fbfb; border-left:4px solid ", card_color, "; border-radius:8px; ",
+              "padding:14px 16px; margin-bottom:14px; display:flex; gap:12px; align-items:flex-start;"
+            ),
+            div(style = paste0(
+                  "background:", card_color, "; color:#fff; border-radius:50%; width:34px; height:34px; ",
+                  "min-width:34px; display:flex; align-items:center; justify-content:center; font-weight:700;"
+                ),
+                s$n
+            ),
+            div(
+              tags$h5(HTML(paste0(as.character(icon(s$icon)), " ", s$title)),
+                      style = "margin:0 0 4px 0; color:#002C3C; font-weight:700;"),
+              tags$p(s$text, style = "margin:0; font-size:12.5px; color:#444; line-height:1.6;")
+            )
+        )
+      )
+    })
+    
+    fluidRow(cards)
+  })
+  
+  macro_calendar_data <- data.frame(
+    Release = c("ISM Manufacturing PMI", "ISM Services PMI", "ADP Employment Change",
+                "Average Hourly Earnings m/m", "Non-Farm Payrolls", "Unemployment Rate",
+                "PPI", "CPI", "Core CPI", "Core PCE Price Index", "Core Retail Sales m/m",
+                "Retail Sales m/m", "FOMC Economic Projections", "FOMC Statement",
+                "Federal Funds Rate", "FOMC Press Conference", "Advance GDP q/q"),
+    Frequency = c("Monthly (1st/2nd business day)", "Monthly (3rd business day)", "Monthly (1st Wednesday)",
+                  "Monthly (1st Friday)", "Monthly (1st Friday)", "Monthly (1st business day)",
+                  "Monthly (mid-month)", "Monthly (mid-month)", "Monthly (mid-month)", "Monthly (end of month)",
+                  "Monthly (mid-month)", "Monthly (mid-month)", "4x per year", "8x per year",
+                  "8x per year", "8x per year", "Quarterly (~30 days after quarter end)"),
+    WhatIsIt = c(
+      "Diffusion index of surveyed manufacturing purchasing managers.",
+      "Diffusion index of surveyed purchasing managers, excluding manufacturing.",
+      "Estimated change in private-sector employment, excluding farming and government.",
+      "Change in the price businesses pay for labour, excluding farming.",
+      "Change in the number of employed people, excluding farming.",
+      "Percentage of the workforce unemployed and actively seeking work.",
+      "Change in the price of finished goods and services sold by producers.",
+      "Change in the price of goods and services purchased by consumers.",
+      "CPI excluding food and energy.",
+      "Fed's preferred inflation gauge; consumer spending ex food & energy.",
+      "Change in total retail sales value, excluding automobiles.",
+      "Change in total retail sales value.",
+      "FOMC's projections for growth, inflation, and individual members' rate forecasts ('dot plot').",
+      "FOMC's statement on the interest rate decision and economic outlook.",
+      "Rate at which depository institutions lend to each other overnight.",
+      "Press conference following the FOMC statement; often the primary driver of volatility.",
+      "Annualised, inflation-adjusted change in the value of all goods and services produced."
+    ),
+    WhyTradersCare = c(
+      "Leading indicator of economic health; businesses react quickly to market conditions.",
+      "Leading indicator of economic health in the (much larger) services sector.",
+      "Leading indicator of consumer spending, which drives most of economic activity.",
+      "Leading indicator of consumer inflation via labour cost pass-through.",
+      "Leading indicator of consumer spending and overall economic activity.",
+      "Signals overall economic health; heavily weighted in monetary policy decisions.",
+      "Leading indicator of consumer inflation via producer cost pass-through.",
+      "Central to currency valuation — drives central bank interest rate decisions.",
+      "Removes volatile components to show the underlying inflation trend.",
+      "Rumoured to be the Fed's favourite inflation measure.",
+      "Considered a better gauge of underlying spending trends than headline retail sales.",
+      "Primary gauge of consumer spending, the majority of economic activity.",
+      "Primary tool for communicating the Fed's economic and rate projections to markets.",
+      "Primary tool for communicating monetary policy outcomes and outlook.",
+      "The paramount short-term interest rate driving currency valuation.",
+      "Unscripted Q&A creates the heaviest volatility of any scheduled US release.",
+      "Broadest single measure of economic activity and health."
+    ),
+    ExpectedOutcome = c(
+      "Actual > Forecast: USD up / Indices down. Actual < Forecast: USD down / Indices up.",
+      "Actual > Forecast: USD up / Indices down. Actual < Forecast: USD down / Indices up.",
+      "Actual > Forecast: USD up / Indices down. Actual < Forecast: USD down / Indices up.",
+      "Actual > Forecast: USD up / Indices down. Actual < Forecast: USD down / Indices up.",
+      "Actual > Forecast: USD up / Indices down. Actual < Forecast: USD down / Indices up.",
+      "Actual > Forecast: USD down / Indices up. Actual < Forecast: USD up / Indices down.",
+      "Actual > Forecast: USD up / Indices down. Actual < Forecast: USD down / Indices up.",
+      "Actual > Forecast: USD up / Indices down. Actual < Forecast: USD down / Indices up.",
+      "Actual > Forecast: USD up / Indices down. Actual < Forecast: USD down / Indices up.",
+      "Actual > Forecast: USD up / Indices down. Actual < Forecast: USD down / Indices up.",
+      "Actual > Forecast: USD up / Indices down. Actual < Forecast: USD down / Indices up.",
+      "Actual > Forecast: USD up / Indices down. Actual < Forecast: USD down / Indices up.",
+      "More hawkish than expected: USD up / Indices down. More dovish: USD down / Indices up.",
+      "More hawkish than expected: USD up / Indices down. More dovish: USD down / Indices up.",
+      "Actual > Forecast: USD up / Indices down. Actual < Forecast: USD down / Indices up.",
+      "More hawkish than expected: USD up / Indices down. More dovish: USD down / Indices up.",
+      "Actual > Forecast: USD up / Indices down. Actual < Forecast: USD down / Indices up."
+    ),
+    stringsAsFactors = FALSE
+  )
+  
+  observe({
+    updateSelectInput(session, "macroIndicator", choices = macro_calendar_data$Release)
+  })
+  
+  output$macroCalendarTable <- renderDT({
+    datatable(macro_calendar_data,
+              colnames = c("Release", "Frequency", "What Is It?", "Why Traders Care", "Expected Outcome"),
+              options = list(pageLength = 8, scrollX = TRUE), rownames = FALSE)
+  })
+  
+  output$macroReactionResult <- renderUI({
+    req(input$macroIndicator, input$macroDirection)
+    row <- macro_calendar_data[macro_calendar_data$Release == input$macroIndicator, ]
+    req(nrow(row) == 1)
+    
+    is_unemployment <- row$Release == "Unemployment Rate"
+    is_narrative <- row$Release %in% c("FOMC Economic Projections", "FOMC Statement", "FOMC Press Conference")
+    
+    if (input$macroDirection == "beat") {
+      usd_dir <- if (is_unemployment) "Down" else "Up"
+      idx_dir <- if (is_unemployment) "Up" else "Down"
+      scenario_label <- if (is_narrative) "More hawkish than expected" else "Actual beats Forecast"
+    } else {
+      usd_dir <- if (is_unemployment) "Up" else "Down"
+      idx_dir <- if (is_unemployment) "Down" else "Up"
+      scenario_label <- if (is_narrative) "More dovish than expected" else "Actual misses Forecast"
+    }
+    
+    usd_color <- if (usd_dir == "Up") "#27ae60" else "#e74c3c"
+    idx_color <- if (idx_dir == "Up") "#27ae60" else "#e74c3c"
+    
+    tagList(
+      tags$p(tags$strong(row$Release), style = "margin-bottom:2px;"),
+      tags$p(scenario_label, style = "font-size:12px; color:#888; margin-bottom:10px;"),
+      div(style = "display:flex; gap:12px;",
+        div(style = paste0("flex:1; text-align:center; padding:10px; border-radius:8px; background:", usd_color, "22;"),
+            tags$div("USD", style = "font-size:12px; color:#666;"),
+            tags$h4(usd_dir, style = paste0("color:", usd_color, "; margin:2px 0 0 0;"))
+        ),
+        div(style = paste0("flex:1; text-align:center; padding:10px; border-radius:8px; background:", idx_color, "22;"),
+            tags$div("Indices", style = "font-size:12px; color:#666;"),
+            tags$h4(idx_dir, style = paste0("color:", idx_color, "; margin:2px 0 0 0;"))
+        )
+      ),
+      tags$p("General historical tendency only — actual reaction depends on prevailing financial conditions and monetary policy stance.",
+             style = "font-size:11px; color:#999; font-style:italic; margin-top:10px;")
     )
   })
 }

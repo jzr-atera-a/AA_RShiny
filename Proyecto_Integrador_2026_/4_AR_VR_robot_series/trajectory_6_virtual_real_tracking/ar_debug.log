@@ -1,103 +1,473 @@
-=== AR Debug Log Started: 2026-03-15 17:06:47 ===
-[2026-03-15 17:08:27.826] INFO: === AR SESSION STARTING ===
-[2026-03-15 17:08:30.823] INFO: floorDetected=true, floorY=-1.585
-[2026-03-15 17:08:30.840] INFO: Starting London map load...
-[2026-03-15 17:08:30.879] INFO: Fetching sample_campus_map.geojson...
-[2026-03-15 17:08:30.893] INFO: AR SESSION STARTED
-[2026-03-15 17:08:30.909] INFO: FLOOR DETECTED! RefSpace: viewer/local (estimated), HeadY: 0.015m, floorY: -1.585m
-[2026-03-15 17:08:30.928] INFO: === BUILDING SCENE START ===
-[2026-03-15 17:08:30.946] INFO: Called from:     at detectFloor (https://192.168.101.243:8443/trajectory_6modes.html:565:21)
-[2026-03-15 17:08:30.959] INFO: GeoJSON fetch complete, parsing...
-[2026-03-15 17:08:30.973] INFO: GeoJSON parsed, creating texture...
-[2026-03-15 17:08:30.987] INFO: M25 path loaded: 133 waypoints
-[2026-03-15 17:08:31.001] INFO: M25 first point: lat=0.00136, lon=-0.00059
-[2026-03-15 17:08:31.383] INFO: London map loaded successfully
-[2026-03-15 17:08:31.395] INFO: Building 3D chart...
-[2026-03-15 17:08:31.411] INFO: Chart built
-[2026-03-15 17:08:31.427] INFO: Building control panel...
-[2026-03-15 17:08:31.442] INFO: Control panel built
-[2026-03-15 17:08:31.457] INFO: Building vehicle panel...
-[2026-03-15 17:08:31.473] INFO: Mode 4: Controller detected at (-0.10, -0.32), heading: 44.7°
-[2026-03-15 17:08:31.486] INFO: Mode 4: Robot VISIBLE at controller position
-[2026-03-15 17:08:31.500] INFO: Vehicle selection panel built
-[2026-03-15 17:08:31.546] INFO: Current vehicle: robot
-[2026-03-15 17:08:31.571] INFO: showMode0Robot called
-[2026-03-15 17:08:31.585] INFO: Building procedural robot...
-[2026-03-15 17:08:31.598] INFO: Robot created at (0, -1.544, 0), rotation: -90°. floorY=-1.585
-[2026-03-15 17:08:31.612] INFO: Robot added to scene
-[2026-03-15 17:08:31.626] INFO: Robot made visible
-[2026-03-15 17:08:31.641] INFO: Robot should be visible now
-[2026-03-15 17:08:31.659] INFO: Mode 4 started with currentVehicle: robot
-[2026-03-15 17:08:31.671] INFO: Waiting for left controller detection...
-[2026-03-15 17:08:31.684] INFO: Robot created but hidden until controller detected
-[2026-03-15 17:08:31.697] INFO: Mode 4 started
-[2026-03-15 17:08:31.710] INFO: === SCENE BUILD COMPLETE ===
-[2026-03-15 17:08:31.726] INFO: Texture created, placing map...
-[2026-03-15 17:08:31.743] INFO: London map placed at (0, -1.584, 0). floorY=-1.585
-[2026-03-15 17:08:31.755] WARN: Map should be on floor. If floating at head level, check AR reference space!
-[2026-03-15 17:08:31.770] INFO: GeoJSON map loaded successfully!
-[2026-03-15 17:08:31.792] INFO: Auto-starting Mode 4 (Track Robot)...
-[2026-03-15 17:08:31.809] INFO: === EXECUTE MODE 4 ===
-[2026-03-15 17:08:31.822] INFO: Vehicle panel built
-[2026-03-15 17:09:24.976] INFO: AR SESSION ENDED
-[2026-03-15 17:09:46.740] INFO: === AR SESSION STARTING ===
-[2026-03-15 17:09:54.369] INFO: floorDetected=true, floorY=-1.837
-[2026-03-15 17:09:54.384] INFO: Starting London map load...
-[2026-03-15 17:09:54.400] INFO: Fetching sample_campus_map.geojson...
-[2026-03-15 17:09:54.426] INFO: AR SESSION STARTED
-[2026-03-15 17:09:54.439] INFO: FLOOR DETECTED! RefSpace: viewer/local (estimated), HeadY: -0.237m, floorY: -1.837m
-[2026-03-15 17:09:54.453] INFO: === BUILDING SCENE START ===
-[2026-03-15 17:09:54.498] INFO: M25 path loaded: 133 waypoints
-[2026-03-15 17:09:54.512] INFO: M25 first point: lat=0.00136, lon=-0.00059
-[2026-03-15 17:09:54.879] INFO: Robot added to scene
-[2026-03-15 17:09:54.893] INFO: Robot made visible
-[2026-03-15 17:09:54.927] INFO: Mode 4 started with currentVehicle: robot
-[2026-03-15 17:09:55.025] INFO: London map loaded successfully
-[2026-03-15 17:09:55.035] INFO: Building 3D chart...
-[2026-03-15 17:09:55.050] INFO: Chart built
-[2026-03-15 17:09:55.060] INFO: Building control panel...
-[2026-03-15 17:09:55.085] INFO: Control panel built
-[2026-03-15 17:09:55.095] INFO: Building vehicle panel...
-[2026-03-15 17:09:55.110] INFO: Vehicle selection panel built
-[2026-03-15 17:09:55.126] INFO: Vehicle panel built
-[2026-03-15 17:09:55.135] INFO: Auto-starting Mode 4 (Track Robot)...
-[2026-03-15 17:09:55.148] INFO: === EXECUTE MODE 4 ===
-[2026-03-15 17:09:55.169] INFO: Current vehicle: robot
-[2026-03-15 17:09:55.196] INFO: Building procedural robot...
-[2026-03-15 17:09:55.210] INFO: Mode 4: Controller detected at (0.01, -0.16), heading: 8.3°
-[2026-03-15 17:09:55.224] INFO: Mode 4: Robot VISIBLE at controller position
-[2026-03-15 17:09:55.237] INFO: Called from:     at detectFloor (https://192.168.101.243:8443/trajectory_6modes.html:565:21)
-[2026-03-15 17:09:55.251] INFO: GeoJSON fetch complete, parsing...
-[2026-03-15 17:09:55.265] INFO: Robot created at (0, -1.796, 0), rotation: -90°. floorY=-1.837
-[2026-03-15 17:09:55.301] INFO: Waiting for left controller detection...
-[2026-03-15 17:09:55.316] INFO: Robot created but hidden until controller detected
-[2026-03-15 17:09:55.326] INFO: Mode 4 started
-[2026-03-15 17:09:55.338] INFO: === SCENE BUILD COMPLETE ===
-[2026-03-15 17:09:55.349] INFO: Texture created, placing map...
-[2026-03-15 17:09:55.360] INFO: London map placed at (0, -1.836, 0). floorY=-1.837
-[2026-03-15 17:09:55.370] WARN: Map should be on floor. If floating at head level, check AR reference space!
-[2026-03-15 17:09:55.389] INFO: GeoJSON map loaded successfully!
-[2026-03-15 17:09:55.409] INFO: showMode0Robot called
-[2026-03-15 17:09:55.424] INFO: GeoJSON parsed, creating texture...
-[2026-03-15 17:09:56.313] INFO: Robot should be visible now
-[2026-03-15 17:11:06.745] INFO: Mode 2: Drawing ARMED, press trigger again to start
-[2026-03-15 17:11:08.005] INFO: Robot should be visible now
-[2026-03-15 17:11:08.019] INFO: Mode 2: Grid created (21x21, 10cm cells)
-[2026-03-15 17:11:08.037] INFO: Mode 2: Initialized - cleared old data, grid created
-[2026-03-15 17:11:08.049] INFO: Mode 2: Drawing ARMED, press trigger again to start
-[2026-03-15 17:11:08.065] INFO: === EXECUTE MODE 2 ===
-[2026-03-15 17:11:08.075] INFO: Current vehicle: robot
-[2026-03-15 17:11:08.089] INFO: showMode0Robot called
-[2026-03-15 17:11:08.121] INFO: Robot made visible
-[2026-03-15 17:11:16.027] INFO: === EXECUTE MODE 1 ===
-[2026-03-15 17:11:16.037] INFO: Current vehicle: robot
-[2026-03-15 17:11:16.060] INFO: showMode0Robot called
-[2026-03-15 17:11:16.075] INFO: Robot made visible
-[2026-03-15 17:11:16.087] INFO: Robot should be visible now
-[2026-03-15 17:11:16.170] INFO: Mode 1: Manual control started
-[2026-03-15 17:11:20.158] INFO: Mode 1: Button start
-[2026-03-15 17:11:20.202] INFO: Mode 1: Tracking STARTED
-[2026-03-15 17:11:20.976] INFO: Mode 1: Button start
-[2026-03-15 17:11:20.992] INFO: Mode 1: Tracking STARTED
-[2026-03-15 17:17:47.327] INFO: AR SESSION ENDED
-[2026-03-15 17:17:53.737] INFO: === AR SESSION STARTING ===
+=== AR Debug Log Started: 2026-07-31 05:55:05 ===
+[2026-07-31 06:04:59.865] INFO: === AR SESSION STARTING ===
+[2026-07-31 06:05:29.826] INFO: === AR SESSION STARTING ===
+[2026-07-31 06:05:34.451] INFO: floorDetected=true, floorY=-1.576
+[2026-07-31 06:05:34.531] INFO: Starting London map load...
+[2026-07-31 06:05:34.572] INFO: Fetching sample_campus_map.geojson...
+[2026-07-31 06:05:34.689] INFO: AR SESSION STARTED
+[2026-07-31 06:05:34.708] INFO: FLOOR DETECTED! RefSpace: viewer/local (estimated), HeadY: 0.024m, floorY: -1.576m
+[2026-07-31 06:05:34.730] INFO: === BUILDING SCENE START ===
+[2026-07-31 06:05:34.773] INFO: M25 path loaded: 133 waypoints
+[2026-07-31 06:05:34.797] INFO: M25 first point: lat=0.00136, lon=-0.00059
+[2026-07-31 06:05:35.047] INFO: === EXECUTE MODE 4 ===
+[2026-07-31 06:05:35.154] INFO: Robot made visible
+[2026-07-31 06:05:35.173] INFO: Robot should be visible now
+[2026-07-31 06:05:35.416] INFO: London map loaded successfully
+[2026-07-31 06:05:35.452] INFO: Building 3D chart...
+[2026-07-31 06:05:35.469] INFO: Chart built
+[2026-07-31 06:05:35.516] INFO: Building control panel...
+[2026-07-31 06:05:35.547] INFO: Control panel built
+[2026-07-31 06:05:35.547] INFO: Building vehicle panel...
+[2026-07-31 06:05:35.570] INFO: Called from:     at detectFloor (https://10.97.144.22:8443/trajectory_6modes.html:565:21)
+[2026-07-31 06:05:35.581] INFO: Vehicle selection panel built
+[2026-07-31 06:05:35.611] INFO: Vehicle panel built
+[2026-07-31 06:05:35.627] INFO: Auto-starting Mode 4 (Track Robot)...
+[2026-07-31 06:05:35.650] INFO: Current vehicle: robot
+[2026-07-31 06:05:35.659] INFO: showMode0Robot called
+[2026-07-31 06:05:35.676] INFO: Building procedural robot...
+[2026-07-31 06:05:35.694] INFO: GeoJSON fetch complete, parsing...
+[2026-07-31 06:05:35.725] INFO: GeoJSON parsed, creating texture...
+[2026-07-31 06:05:35.739] INFO: Robot created at (0, -1.535, 0), rotation: -90°. floorY=-1.576
+[2026-07-31 06:05:35.760] INFO: Robot added to scene
+[2026-07-31 06:05:35.770] INFO: Mode 4 started with currentVehicle: robot
+[2026-07-31 06:05:35.789] INFO: Waiting for left controller detection...
+[2026-07-31 06:05:35.802] INFO: Robot created but hidden until controller detected
+[2026-07-31 06:05:35.823] INFO: Mode 4 started
+[2026-07-31 06:05:35.849] INFO: === SCENE BUILD COMPLETE ===
+[2026-07-31 06:05:35.865] INFO: Mode 4: Controller detected at (-0.07, -0.17), heading: -4.3°
+[2026-07-31 06:05:35.877] INFO: Mode 4: Robot VISIBLE at controller position
+[2026-07-31 06:05:35.893] INFO: Texture created, placing map...
+[2026-07-31 06:05:35.921] INFO: London map placed at (0, -1.575, 0). floorY=-1.576
+[2026-07-31 06:05:35.933] WARN: Map should be on floor. If floating at head level, check AR reference space!
+[2026-07-31 06:05:36.056] INFO: GeoJSON map loaded successfully!
+[2026-07-31 06:05:39.201] INFO: === EXECUTE MODE 0 ===
+[2026-07-31 06:05:39.213] INFO: Current vehicle: robot
+[2026-07-31 06:05:39.229] INFO: showMode0Robot called
+[2026-07-31 06:05:39.248] INFO: Robot made visible
+[2026-07-31 06:05:39.266] INFO: Robot should be visible now
+[2026-07-31 06:05:44.677] INFO: === EXECUTE MODE 7 ===
+[2026-07-31 06:05:44.692] INFO: Current vehicle: robot
+[2026-07-31 06:05:44.695] INFO: showMode0Robot called
+[2026-07-31 06:05:44.724] INFO: Robot made visible
+[2026-07-31 06:05:44.741] INFO: Robot should be visible now
+[2026-07-31 06:05:47.340] INFO: === EXECUTE MODE 6 ===
+[2026-07-31 06:05:47.343] INFO: Current vehicle: robot
+[2026-07-31 06:05:47.363] INFO: showMode0Robot called
+[2026-07-31 06:05:47.384] INFO: Robot made visible
+[2026-07-31 06:05:47.398] INFO: Robot should be visible now
+[2026-07-31 06:05:51.008] INFO: === EXECUTE MODE 1 ===
+[2026-07-31 06:05:51.020] INFO: Current vehicle: robot
+[2026-07-31 06:05:51.040] INFO: showMode0Robot called
+[2026-07-31 06:05:51.070] INFO: Robot made visible
+[2026-07-31 06:05:51.085] INFO: Robot should be visible now
+[2026-07-31 06:05:53.596] INFO: Current vehicle: robot
+[2026-07-31 06:05:53.627] INFO: showMode0Robot called
+[2026-07-31 06:05:53.641] INFO: Robot made visible
+[2026-07-31 06:05:53.653] INFO: Robot should be visible now
+[2026-07-31 06:05:53.673] INFO: === EXECUTE MODE 0 ===
+[2026-07-31 06:05:54.499] INFO: Mode 2: Drawing ARMED, press trigger again to start
+[2026-07-31 06:05:59.916] INFO: Mode 2: Drawing STARTED
+[2026-07-31 06:06:00.045] INFO: Mode 2: Creating markers from 2 points
+[2026-07-31 06:06:00.118] INFO: Mode 2: Creating markers from 3 points
+[2026-07-31 06:06:00.193] INFO: Mode 2: Creating markers from 4 points
+[2026-07-31 06:06:00.256] INFO: Mode 2: Placed 2 user markers at exact 20cm intervals
+[2026-07-31 06:06:00.287] INFO: Mode 2: Creating markers from 5 points
+[2026-07-31 06:06:00.291] INFO: Mode 2: Placed 5 user markers at exact 20cm intervals
+[2026-07-31 06:06:00.307] INFO: Mode 2: Creating markers from 6 points
+[2026-07-31 06:06:00.327] INFO: Mode 2: Placed 8 user markers at exact 20cm intervals
+[2026-07-31 06:06:00.336] INFO: Mode 2: Placed 3 user markers at exact 20cm intervals
+[2026-07-31 06:06:00.348] INFO: Mode 2: Drawing STOPPED
+[2026-07-31 06:06:01.094] INFO: Robot should be visible now
+[2026-07-31 06:06:01.237] INFO: Robot made visible
+[2026-07-31 06:06:01.265] INFO: Mode 2: Drawing STARTED
+[2026-07-31 06:06:01.277] INFO: Mode 2: Creating markers from 7 points
+[2026-07-31 06:06:01.303] INFO: Mode 2: Placed 32 user markers at exact 20cm intervals
+[2026-07-31 06:06:01.316] INFO: Mode 2: Creating markers from 8 points
+[2026-07-31 06:06:01.331] INFO: Mode 2: Placed 32 user markers at exact 20cm intervals
+[2026-07-31 06:06:01.348] INFO: Mode 2: Drawing STOPPED
+[2026-07-31 06:06:01.373] INFO: Mode 2: Placed 3 user markers at exact 20cm intervals
+[2026-07-31 06:06:01.383] INFO: === EXECUTE MODE 2 ===
+[2026-07-31 06:06:01.395] INFO: Current vehicle: robot
+[2026-07-31 06:06:01.478] INFO: Mode 2: Placed 36 user markers at exact 20cm intervals
+[2026-07-31 06:06:01.511] INFO: showMode0Robot called
+[2026-07-31 06:06:01.521] INFO: Mode 2: Drawing STARTED
+[2026-07-31 06:06:01.673] INFO: Mode 2: Placed 36 user markers at exact 20cm intervals
+[2026-07-31 06:06:01.825] INFO: Mode 2: Placed 37 user markers at exact 20cm intervals
+[2026-07-31 06:06:01.923] INFO: Mode 2: Placed 37 user markers at exact 20cm intervals
+[2026-07-31 06:06:01.991] INFO: Mode 2: Creating markers from 14 points
+[2026-07-31 06:06:02.016] INFO: Mode 2: Placed 37 user markers at exact 20cm intervals
+[2026-07-31 06:06:02.031] INFO: Mode 2: Placed 37 user markers at exact 20cm intervals
+[2026-07-31 06:06:02.048] INFO: Mode 2: Creating markers from 13 points
+[2026-07-31 06:06:02.080] INFO: Mode 2: Creating markers from 15 points
+[2026-07-31 06:06:02.100] INFO: Mode 2: Placed 37 user markers at exact 20cm intervals
+[2026-07-31 06:06:02.201] INFO: Mode 2: Creating markers from 11 points
+[2026-07-31 06:06:02.226] INFO: Mode 2: Creating markers from 10 points
+[2026-07-31 06:06:02.278] INFO: Mode 2: Creating markers from 17 points
+[2026-07-31 06:06:02.294] INFO: Mode 2: Placed 38 user markers at exact 20cm intervals
+[2026-07-31 06:06:02.309] INFO: Mode 2: Creating markers from 16 points
+[2026-07-31 06:06:02.588] INFO: Mode 2: Placed 38 user markers at exact 20cm intervals
+[2026-07-31 06:06:02.605] INFO: Mode 2: Creating markers from 9 points
+[2026-07-31 06:06:02.643] INFO: Mode 2: Creating markers from 18 points
+[2026-07-31 06:06:02.675] INFO: Mode 2: Placed 39 user markers at exact 20cm intervals
+[2026-07-31 06:06:02.685] INFO: Mode 2: Creating markers from 19 points
+[2026-07-31 06:06:02.859] INFO: Mode 2: Creating markers from 20 points
+[2026-07-31 06:06:02.886] INFO: Mode 2: Creating markers from 21 points
+[2026-07-31 06:06:03.118] INFO: Mode 2: Creating markers from 22 points
+[2026-07-31 06:06:03.197] INFO: Mode 2: Placed 41 user markers at exact 20cm intervals
+[2026-07-31 06:06:03.201] INFO: Mode 2: Creating markers from 24 points
+[2026-07-31 06:06:03.218] INFO: Mode 2: Placed 41 user markers at exact 20cm intervals
+[2026-07-31 06:06:03.228] INFO: Mode 2: Creating markers from 12 points
+[2026-07-31 06:06:03.244] INFO: Mode 2: Creating markers from 23 points
+[2026-07-31 06:06:03.262] INFO: Mode 2: Placed 39 user markers at exact 20cm intervals
+[2026-07-31 06:06:03.308] INFO: Mode 2: Placed 42 user markers at exact 20cm intervals
+[2026-07-31 06:06:03.318] INFO: Mode 2: Placed 40 user markers at exact 20cm intervals
+[2026-07-31 06:06:03.323] INFO: Mode 2: Creating markers from 26 points
+[2026-07-31 06:06:03.354] INFO: Mode 2: Placed 42 user markers at exact 20cm intervals
+[2026-07-31 06:06:03.390] INFO: Mode 2: Placed 43 user markers at exact 20cm intervals
+[2026-07-31 06:06:03.445] INFO: Mode 2: Creating markers from 29 points
+[2026-07-31 06:06:03.511] INFO: Mode 2: Placed 40 user markers at exact 20cm intervals
+[2026-07-31 06:06:03.534] INFO: Mode 2: Creating markers from 28 points
+[2026-07-31 06:06:03.544] INFO: Mode 2: Placed 44 user markers at exact 20cm intervals
+[2026-07-31 06:06:03.572] INFO: Mode 2: Placed 43 user markers at exact 20cm intervals
+[2026-07-31 06:06:03.582] INFO: Mode 2: Placed 41 user markers at exact 20cm intervals
+[2026-07-31 06:06:03.608] INFO: Mode 2: Placed 43 user markers at exact 20cm intervals
+[2026-07-31 06:06:03.618] INFO: Mode 2: Creating markers from 25 points
+[2026-07-31 06:06:03.633] INFO: Mode 2: Creating markers from 27 points
+[2026-07-31 06:06:03.656] INFO: Mode 2: Creating markers from 30 points
+[2026-07-31 06:06:03.681] INFO: Mode 2: Creating markers from 31 points
+[2026-07-31 06:06:04.033] INFO: Mode 2: Creating markers from 34 points
+[2026-07-31 06:06:04.292] INFO: Mode 2: Creating markers from 33 points
+[2026-07-31 06:06:04.397] INFO: Mode 2: Placed 44 user markers at exact 20cm intervals
+[2026-07-31 06:06:04.579] INFO: Mode 2: Placed 44 user markers at exact 20cm intervals
+[2026-07-31 06:06:04.731] INFO: Mode 2: Creating markers from 38 points
+[2026-07-31 06:06:04.777] INFO: Mode 2: Placed 47 user markers at exact 20cm intervals
+[2026-07-31 06:06:04.789] INFO: Mode 2: Placed 45 user markers at exact 20cm intervals
+[2026-07-31 06:06:04.930] INFO: Mode 2: Creating markers from 36 points
+[2026-07-31 06:06:04.975] INFO: Mode 2: Placed 45 user markers at exact 20cm intervals
+[2026-07-31 06:06:05.038] INFO: Mode 2: Placed 44 user markers at exact 20cm intervals
+[2026-07-31 06:06:05.056] INFO: Mode 2: Creating markers from 41 points
+[2026-07-31 06:06:05.139] INFO: Mode 2: Placed 46 user markers at exact 20cm intervals
+[2026-07-31 06:06:05.153] INFO: Mode 2: Creating markers from 32 points
+[2026-07-31 06:06:05.276] INFO: Mode 2: Placed 51 user markers at exact 20cm intervals
+[2026-07-31 06:06:05.299] INFO: Mode 2: Creating markers from 35 points
+[2026-07-31 06:06:05.389] INFO: Mode 2: Placed 52 user markers at exact 20cm intervals
+[2026-07-31 06:06:05.404] INFO: Mode 2: Creating markers from 40 points
+[2026-07-31 06:06:05.506] INFO: Mode 2: Placed 49 user markers at exact 20cm intervals
+[2026-07-31 06:06:05.579] INFO: Mode 2: Placed 53 user markers at exact 20cm intervals
+[2026-07-31 06:06:05.619] INFO: Mode 2: Placed 50 user markers at exact 20cm intervals
+[2026-07-31 06:06:05.704] INFO: Mode 2: Placed 44 user markers at exact 20cm intervals
+[2026-07-31 06:06:05.816] INFO: Mode 2: Placed 54 user markers at exact 20cm intervals
+[2026-07-31 06:06:05.875] INFO: Mode 2: Creating markers from 46 points
+[2026-07-31 06:06:05.911] INFO: Mode 2: Placed 54 user markers at exact 20cm intervals
+[2026-07-31 06:06:05.927] INFO: Mode 2: Creating markers from 39 points
+[2026-07-31 06:06:06.033] INFO: Mode 2: Creating markers from 47 points
+[2026-07-31 06:06:06.054] INFO: Mode 2: Placed 55 user markers at exact 20cm intervals
+[2026-07-31 06:06:06.133] INFO: Mode 2: Creating markers from 44 points
+[2026-07-31 06:06:06.196] INFO: Mode 2: Creating markers from 37 points
+[2026-07-31 06:06:06.245] INFO: Mode 2: Creating markers from 48 points
+[2026-07-31 06:06:06.323] INFO: Mode 2: Placed 55 user markers at exact 20cm intervals
+[2026-07-31 06:06:06.323] INFO: Mode 2: Creating markers from 49 points
+[2026-07-31 06:06:06.338] INFO: Mode 2: Placed 55 user markers at exact 20cm intervals
+[2026-07-31 06:06:06.417] INFO: Mode 2: Creating markers from 43 points
+[2026-07-31 06:06:06.433] INFO: Mode 2: Creating markers from 45 points
+[2026-07-31 06:06:06.480] INFO: Mode 2: Creating markers from 42 points
+[2026-07-31 06:06:06.486] INFO: Mode 2: Drawing STOPPED
+[2026-07-31 06:06:06.640] INFO: Mode 2: Placed 48 user markers at exact 20cm intervals
+[2026-07-31 06:06:10.105] INFO: Mode 2: Drawing STARTED
+[2026-07-31 06:06:10.167] INFO: Mode 2: Creating markers from 50 points
+[2026-07-31 06:06:10.183] INFO: Mode 2: Placed 73 user markers at exact 20cm intervals
+[2026-07-31 06:06:10.298] INFO: Mode 2: Creating markers from 51 points
+[2026-07-31 06:06:10.422] INFO: Mode 2: Placed 73 user markers at exact 20cm intervals
+[2026-07-31 06:06:10.466] INFO: Mode 2: Drawing STOPPED
+[2026-07-31 06:06:11.521] INFO: Mode 2: Drawing STARTED
+[2026-07-31 06:06:11.536] INFO: Mode 2: Creating markers from 52 points
+[2026-07-31 06:06:11.568] INFO: Mode 2: Placed 75 user markers at exact 20cm intervals
+[2026-07-31 06:06:11.604] INFO: showMode0Truck called
+[2026-07-31 06:06:11.617] INFO: Mode 2: Drawing STOPPED
+[2026-07-31 06:06:11.648] INFO: Truck not built yet, building now...
+[2026-07-31 06:06:11.656] INFO: Loading truck model - FORCING LIGHT GREY...
+[2026-07-31 06:06:11.673] INFO: Truck loading: 7%
+[2026-07-31 06:06:11.696] INFO: Truck loading: 14%
+[2026-07-31 06:06:11.707] INFO: Truck loading: 20%
+[2026-07-31 06:06:11.722] INFO: Truck loading: 27%
+[2026-07-31 06:06:12.155] INFO: Truck loading: 61%
+[2026-07-31 06:06:12.174] INFO: Truck loading: 68%
+[2026-07-31 06:06:12.186] INFO: Truck loading: 75%
+[2026-07-31 06:06:12.212] INFO: Truck loading: 82%
+[2026-07-31 06:06:12.224] INFO: Truck loading: 89%
+[2026-07-31 06:06:12.237] INFO: Truck loading: 100%
+[2026-07-31 06:06:12.260] INFO: Removed vertex colors from mesh 1
+[2026-07-31 06:06:12.298] INFO: Truck created at (0, -1.535, 0), rotation: -90°
+[2026-07-31 06:06:12.315] INFO: Truck added to scene
+[2026-07-31 06:06:12.326] INFO: Truck made visible
+[2026-07-31 06:06:12.341] INFO: Vehicle switched successfully to: truck
+[2026-07-31 06:06:12.363] INFO: Vehicle switched to: truck
+[2026-07-31 06:06:12.374] INFO: Truck loading: 34%
+[2026-07-31 06:06:12.382] INFO: Truck loading: 41%
+[2026-07-31 06:06:12.423] INFO: Truck loading: 48%
+[2026-07-31 06:06:12.870] INFO: Truck loading: 54%
+[2026-07-31 06:06:19.088] INFO: Truck should be visible now
+[2026-07-31 06:06:19.117] INFO: Mode 4 started with currentVehicle: truck
+[2026-07-31 06:06:19.130] INFO: Waiting for left controller detection...
+[2026-07-31 06:06:19.137] INFO: Truck created but hidden until controller detected
+[2026-07-31 06:06:19.169] INFO: Mode 4: Controller detected at (-0.31, -0.11), heading: 46.4°
+[2026-07-31 06:06:19.177] INFO: Mode 4: Truck VISIBLE at controller position
+[2026-07-31 06:06:19.189] INFO: === EXECUTE MODE 4 ===
+[2026-07-31 06:06:19.222] INFO: Current vehicle: truck
+[2026-07-31 06:06:19.232] INFO: showMode0Truck called
+[2026-07-31 06:06:19.342] INFO: Truck made visible
+[2026-07-31 06:06:25.204] INFO: === EXECUTE MODE 0 ===
+[2026-07-31 06:06:25.221] INFO: Current vehicle: truck
+[2026-07-31 06:06:25.248] INFO: showMode0Truck called
+[2026-07-31 06:06:25.270] INFO: Truck made visible
+[2026-07-31 06:06:25.280] INFO: Truck should be visible now
+[2026-07-31 06:06:43.204] INFO: AR SESSION ENDED
+[2026-07-31 06:06:59.654] INFO: === AR SESSION STARTING ===
+[2026-07-31 06:07:07.102] INFO: floorDetected=true, floorY=-1.142
+[2026-07-31 06:07:07.118] INFO: Starting London map load...
+[2026-07-31 06:07:07.152] INFO: Fetching sample_campus_map.geojson...
+[2026-07-31 06:07:07.169] INFO: AR SESSION STARTED
+[2026-07-31 06:07:07.247] INFO: FLOOR DETECTED! RefSpace: viewer/local (estimated), HeadY: 0.458m, floorY: -1.142m
+[2026-07-31 06:07:07.310] INFO: === BUILDING SCENE START ===
+[2026-07-31 06:07:07.315] INFO: Called from:     at detectFloor (https://10.97.144.22:8443/trajectory_6modes.html:565:21)
+[2026-07-31 06:07:07.327] INFO: GeoJSON fetch complete, parsing...
+[2026-07-31 06:07:07.357] INFO: GeoJSON parsed, creating texture...
+[2026-07-31 06:07:07.373] INFO: M25 path loaded: 133 waypoints
+[2026-07-31 06:07:07.415] INFO: M25 first point: lat=0.00136, lon=-0.00059
+[2026-07-31 06:07:07.892] INFO: London map loaded successfully
+[2026-07-31 06:07:07.923] INFO: Building 3D chart...
+[2026-07-31 06:07:07.929] INFO: Chart built
+[2026-07-31 06:07:07.945] INFO: Building control panel...
+[2026-07-31 06:07:07.978] INFO: Control panel built
+[2026-07-31 06:07:08.029] INFO: Vehicle selection panel built
+[2026-07-31 06:07:08.043] INFO: Vehicle panel built
+[2026-07-31 06:07:08.064] INFO: Auto-starting Mode 4 (Track Robot)...
+[2026-07-31 06:07:08.083] INFO: === EXECUTE MODE 4 ===
+[2026-07-31 06:07:08.109] INFO: Current vehicle: robot
+[2026-07-31 06:07:08.135] INFO: showMode0Robot called
+[2026-07-31 06:07:08.141] INFO: Building procedural robot...
+[2026-07-31 06:07:08.160] INFO: Robot created at (0, -1.101, 0), rotation: -90°. floorY=-1.142
+[2026-07-31 06:07:08.172] INFO: Robot added to scene
+[2026-07-31 06:07:08.190] INFO: Robot made visible
+[2026-07-31 06:07:08.219] INFO: Robot should be visible now
+[2026-07-31 06:07:08.237] INFO: Mode 4 started with currentVehicle: robot
+[2026-07-31 06:07:08.253] INFO: Waiting for left controller detection...
+[2026-07-31 06:07:08.262] INFO: Robot created but hidden until controller detected
+[2026-07-31 06:07:08.281] INFO: Mode 4 started
+[2026-07-31 06:07:08.294] INFO: === SCENE BUILD COMPLETE ===
+[2026-07-31 06:07:08.334] INFO: Mode 4: Controller detected at (-0.10, -0.11), heading: -0.6°
+[2026-07-31 06:07:08.352] INFO: Mode 4: Robot VISIBLE at controller position
+[2026-07-31 06:07:08.360] INFO: Texture created, placing map...
+[2026-07-31 06:07:08.372] INFO: London map placed at (0, -1.141, 0). floorY=-1.142
+[2026-07-31 06:07:08.384] WARN: Map should be on floor. If floating at head level, check AR reference space!
+[2026-07-31 06:07:08.394] INFO: GeoJSON map loaded successfully!
+[2026-07-31 06:07:08.429] INFO: Building vehicle panel...
+[2026-07-31 06:07:20.230] INFO: AR SESSION ENDED
+[2026-07-31 06:07:23.923] INFO: === AR SESSION STARTING ===
+[2026-07-31 06:07:44.305] INFO: floorDetected=true, floorY=-1.655
+[2026-07-31 06:07:44.313] INFO: Starting London map load...
+[2026-07-31 06:07:44.329] INFO: Fetching sample_campus_map.geojson...
+[2026-07-31 06:07:44.370] INFO: AR SESSION STARTED
+[2026-07-31 06:07:44.380] INFO: FLOOR DETECTED! RefSpace: viewer/local (estimated), HeadY: -0.055m, floorY: -1.655m
+[2026-07-31 06:07:44.391] INFO: === BUILDING SCENE START ===
+[2026-07-31 06:07:44.409] INFO: Called from:     at detectFloor (https://10.97.144.22:8443/trajectory_6modes.html:565:21)
+[2026-07-31 06:07:44.429] INFO: GeoJSON fetch complete, parsing...
+[2026-07-31 06:07:44.458] INFO: GeoJSON parsed, creating texture...
+[2026-07-31 06:07:44.486] INFO: M25 path loaded: 133 waypoints
+[2026-07-31 06:07:45.152] INFO: GeoJSON map loaded successfully!
+[2026-07-31 06:07:45.183] INFO: London map loaded successfully
+[2026-07-31 06:07:45.199] INFO: Building 3D chart...
+[2026-07-31 06:07:45.230] INFO: Building control panel...
+[2026-07-31 06:07:45.246] INFO: Control panel built
+[2026-07-31 06:07:45.279] INFO: Building vehicle panel...
+[2026-07-31 06:07:45.314] INFO: Vehicle selection panel built
+[2026-07-31 06:07:45.326] INFO: Vehicle panel built
+[2026-07-31 06:07:45.342] INFO: Auto-starting Mode 4 (Track Robot)...
+[2026-07-31 06:07:45.373] INFO: === EXECUTE MODE 4 ===
+[2026-07-31 06:07:45.389] INFO: Current vehicle: robot
+[2026-07-31 06:07:45.405] INFO: showMode0Robot called
+[2026-07-31 06:07:45.421] INFO: Building procedural robot...
+[2026-07-31 06:07:45.431] INFO: Robot created at (0, -1.614, 0), rotation: -90°. floorY=-1.655
+[2026-07-31 06:07:45.436] INFO: Robot added to scene
+[2026-07-31 06:07:45.452] INFO: Robot made visible
+[2026-07-31 06:07:45.492] INFO: Robot should be visible now
+[2026-07-31 06:07:45.508] INFO: Mode 4 started with currentVehicle: robot
+[2026-07-31 06:07:45.516] INFO: Waiting for left controller detection...
+[2026-07-31 06:07:45.532] INFO: Robot created but hidden until controller detected
+[2026-07-31 06:07:45.547] INFO: Mode 4 started
+[2026-07-31 06:07:45.557] INFO: === SCENE BUILD COMPLETE ===
+[2026-07-31 06:07:45.585] INFO: Mode 4: Controller detected at (-0.16, -0.07), heading: 21.1°
+[2026-07-31 06:07:45.605] INFO: Mode 4: Robot VISIBLE at controller position
+[2026-07-31 06:07:45.611] INFO: M25 first point: lat=0.00136, lon=-0.00059
+[2026-07-31 06:07:45.631] INFO: Texture created, placing map...
+[2026-07-31 06:07:45.631] INFO: London map placed at (0, -1.654, 0). floorY=-1.655
+[2026-07-31 06:07:45.650] WARN: Map should be on floor. If floating at head level, check AR reference space!
+[2026-07-31 06:07:45.843] INFO: Chart built
+[2026-07-31 06:07:54.228] INFO: === EXECUTE MODE 0 ===
+[2026-07-31 06:07:54.317] INFO: Current vehicle: robot
+[2026-07-31 06:07:54.325] INFO: showMode0Robot called
+[2026-07-31 06:07:54.344] INFO: Robot made visible
+[2026-07-31 06:07:54.360] INFO: Robot should be visible now
+[2026-07-31 06:08:01.670] INFO: Mode 2: Drawing ARMED, press trigger again to start
+[2026-07-31 06:08:08.025] INFO: === EXECUTE MODE 1 ===
+[2026-07-31 06:08:08.093] INFO: Current vehicle: robot
+[2026-07-31 06:08:08.146] INFO: showMode0Robot called
+[2026-07-31 06:08:08.152] INFO: Robot made visible
+[2026-07-31 06:08:08.214] INFO: Robot should be visible now
+[2026-07-31 06:10:29.217] INFO: showMode0Truck called
+[2026-07-31 06:10:29.250] INFO: Truck not built yet, building now...
+[2026-07-31 06:10:29.268] INFO: Loading truck model - FORCING LIGHT GREY...
+[2026-07-31 06:10:29.696] INFO: Truck created at (0, -1.614, 0), rotation: -90°
+[2026-07-31 06:10:29.845] INFO: Truck loading: 48%
+[2026-07-31 06:10:29.862] INFO: Truck loading: 75%
+[2026-07-31 06:10:29.878] INFO: Truck loading: 82%
+[2026-07-31 06:10:29.950] INFO: Truck loading: 89%
+[2026-07-31 06:10:29.998] INFO: Truck loading: 100%
+[2026-07-31 06:10:30.046] INFO: Truck loading: 7%
+[2026-07-31 06:10:30.062] INFO: Removed vertex colors from mesh 1
+[2026-07-31 06:10:30.126] INFO: Truck added to scene
+[2026-07-31 06:10:30.142] INFO: Truck made visible
+[2026-07-31 06:10:30.180] INFO: Vehicle switched successfully to: truck
+[2026-07-31 06:10:30.194] INFO: Vehicle switched to: truck
+[2026-07-31 06:10:30.213] INFO: Truck loading: 20%
+[2026-07-31 06:10:30.249] INFO: Truck loading: 27%
+[2026-07-31 06:10:30.255] INFO: Truck loading: 34%
+[2026-07-31 06:10:30.653] INFO: Truck loading: 41%
+[2026-07-31 06:10:50.258] INFO: showMode0Robot called
+[2026-07-31 06:10:50.294] INFO: Robot made visible
+[2026-07-31 06:10:50.319] INFO: Vehicle switched successfully to: robot
+[2026-07-31 06:10:50.334] INFO: Vehicle switched to: robot
+[2026-07-31 06:11:15.127] INFO: Robot should be visible now
+[2026-07-31 06:11:15.172] INFO: Mode 4 started with currentVehicle: robot
+[2026-07-31 06:11:15.198] INFO: Waiting for left controller detection...
+[2026-07-31 06:11:15.214] INFO: Robot created but hidden until controller detected
+[2026-07-31 06:11:15.225] INFO: Mode 4: Controller detected at (-0.06, -0.13), heading: 69.4°
+[2026-07-31 06:11:15.235] INFO: Mode 4: Robot VISIBLE at controller position
+[2026-07-31 06:11:15.260] INFO: === EXECUTE MODE 4 ===
+[2026-07-31 06:11:15.273] INFO: Current vehicle: robot
+[2026-07-31 06:11:15.300] INFO: showMode0Robot called
+[2026-07-31 06:11:15.428] INFO: Robot made visible
+[2026-07-31 06:12:49.847] INFO: === EXECUTE MODE 1 ===
+[2026-07-31 06:12:49.866] INFO: Current vehicle: robot
+[2026-07-31 06:12:49.894] INFO: showMode0Robot called
+[2026-07-31 06:12:49.929] INFO: Robot made visible
+[2026-07-31 06:12:49.941] INFO: Robot should be visible now
+[2026-07-31 06:13:32.934] INFO: Mode 2: Creating markers from 3 points
+[2026-07-31 06:13:32.952] INFO: Mode 2: Placed 2 user markers at exact 20cm intervals
+[2026-07-31 06:13:33.012] INFO: Mode 2: Placed 2 user markers at exact 20cm intervals
+[2026-07-31 06:13:33.150] INFO: Mode 2: Creating markers from 5 points
+[2026-07-31 06:13:33.165] INFO: Mode 2: Placed 2 user markers at exact 20cm intervals
+[2026-07-31 06:13:33.217] INFO: Mode 2: Creating markers from 6 points
+[2026-07-31 06:13:33.405] INFO: Mode 2: Placed 3 user markers at exact 20cm intervals
+[2026-07-31 06:13:33.464] INFO: Mode 2: Placed 3 user markers at exact 20cm intervals
+[2026-07-31 06:13:33.517] INFO: Mode 2: Creating markers from 8 points
+[2026-07-31 06:13:33.532] INFO: Mode 2: Placed 4 user markers at exact 20cm intervals
+[2026-07-31 06:13:33.595] INFO: Mode 2: Creating markers from 9 points
+[2026-07-31 06:13:33.661] INFO: Mode 2: Placed 5 user markers at exact 20cm intervals
+[2026-07-31 06:13:33.680] INFO: Mode 2: Drawing STARTED
+[2026-07-31 06:13:33.737] INFO: Mode 2: Creating markers from 2 points
+[2026-07-31 06:13:33.801] INFO: Mode 2: Drawing STOPPED
+[2026-07-31 06:13:33.853] INFO: Mode 2: Placed 1 user markers at exact 20cm intervals
+[2026-07-31 06:13:33.869] INFO: === EXECUTE MODE 2 ===
+[2026-07-31 06:13:33.881] INFO: Current vehicle: robot
+[2026-07-31 06:13:33.960] INFO: showMode0Robot called
+[2026-07-31 06:13:33.984] INFO: Robot made visible
+[2026-07-31 06:13:34.124] INFO: Mode 2: Creating markers from 7 points
+[2026-07-31 06:13:34.230] INFO: Mode 2: Creating markers from 13 points
+[2026-07-31 06:13:34.329] INFO: Mode 2: Creating markers from 14 points
+[2026-07-31 06:13:34.358] INFO: Mode 2: Placed 29 user markers at exact 20cm intervals
+[2026-07-31 06:13:34.374] INFO: Mode 2: Creating markers from 4 points
+[2026-07-31 06:13:34.389] INFO: Mode 2: Creating markers from 11 points
+[2026-07-31 06:13:34.409] INFO: Mode 2: Drawing STOPPED
+[2026-07-31 06:13:34.435] INFO: Mode 2: Creating markers from 15 points
+[2026-07-31 06:13:34.449] INFO: Mode 2: Placed 30 user markers at exact 20cm intervals
+[2026-07-31 06:13:34.468] INFO: Mode 2: Drawing STARTED
+[2026-07-31 06:13:34.486] INFO: Mode 2: Creating markers from 12 points
+[2026-07-31 06:13:34.517] INFO: Mode 2: Placed 30 user markers at exact 20cm intervals
+[2026-07-31 06:13:34.540] INFO: Mode 2: Placed 29 user markers at exact 20cm intervals
+[2026-07-31 06:13:34.566] INFO: Robot should be visible now
+[2026-07-31 06:13:34.610] INFO: Mode 2: Placed 26 user markers at exact 20cm intervals
+[2026-07-31 06:13:34.643] INFO: Mode 2: Creating markers from 17 points
+[2026-07-31 06:13:34.660] INFO: Mode 2: Placed 30 user markers at exact 20cm intervals
+[2026-07-31 06:13:34.684] INFO: Mode 2: Placed 26 user markers at exact 20cm intervals
+[2026-07-31 06:13:34.707] INFO: Mode 2: Creating markers from 18 points
+[2026-07-31 06:13:34.755] INFO: Mode 2: Creating markers from 16 points
+[2026-07-31 06:13:34.795] INFO: Mode 2: Drawing STARTED
+[2026-07-31 06:13:34.807] INFO: Mode 2: Creating markers from 10 points
+[2026-07-31 06:13:34.901] INFO: Mode 2: Placed 31 user markers at exact 20cm intervals
+[2026-07-31 06:13:34.913] INFO: Mode 2: Creating markers from 21 points
+[2026-07-31 06:13:34.961] INFO: Mode 2: Creating markers from 19 points
+[2026-07-31 06:13:35.015] INFO: Mode 2: Placed 31 user markers at exact 20cm intervals
+[2026-07-31 06:13:35.127] INFO: Mode 2: Creating markers from 22 points
+[2026-07-31 06:13:35.152] INFO: Mode 2: Placed 32 user markers at exact 20cm intervals
+[2026-07-31 06:13:35.164] INFO: Mode 2: Placed 29 user markers at exact 20cm intervals
+[2026-07-31 06:13:35.184] INFO: Mode 2: Placed 32 user markers at exact 20cm intervals
+[2026-07-31 06:13:35.221] INFO: Mode 2: Creating markers from 20 points
+[2026-07-31 06:13:35.250] INFO: Mode 2: Drawing STOPPED
+[2026-07-31 06:13:35.263] INFO: Mode 2: Placed 31 user markers at exact 20cm intervals
+[2026-07-31 06:13:49.070] INFO: Mode 2: Drawing STARTED
+[2026-07-31 06:13:49.085] INFO: Mode 2: Creating markers from 23 points
+[2026-07-31 06:13:49.121] INFO: Mode 2: Placed 36 user markers at exact 20cm intervals
+[2026-07-31 06:13:49.143] INFO: Mode 2: Creating markers from 24 points
+[2026-07-31 06:13:49.182] INFO: Mode 2: Placed 36 user markers at exact 20cm intervals
+[2026-07-31 06:13:49.215] INFO: Mode 2: Creating markers from 25 points
+[2026-07-31 06:13:49.225] INFO: Mode 2: Placed 36 user markers at exact 20cm intervals
+[2026-07-31 06:13:49.277] INFO: Mode 2: Creating markers from 26 points
+[2026-07-31 06:13:49.291] INFO: Mode 2: Placed 36 user markers at exact 20cm intervals
+[2026-07-31 06:13:49.376] INFO: Mode 2: Creating markers from 27 points
+[2026-07-31 06:13:49.387] INFO: Mode 2: Placed 36 user markers at exact 20cm intervals
+[2026-07-31 06:13:49.582] INFO: Mode 2: Drawing STOPPED
+[2026-07-31 06:13:49.997] INFO: Mode 2: Drawing STARTED
+[2026-07-31 06:13:50.010] INFO: Mode 2: Creating markers from 28 points
+[2026-07-31 06:13:50.033] INFO: Mode 2: Placed 36 user markers at exact 20cm intervals
+[2026-07-31 06:13:50.050] INFO: Mode 2: Creating markers from 29 points
+[2026-07-31 06:13:50.068] INFO: Mode 2: Placed 37 user markers at exact 20cm intervals
+[2026-07-31 06:13:50.088] INFO: Mode 2: Placed 37 user markers at exact 20cm intervals
+[2026-07-31 06:13:50.104] INFO: Mode 2: Creating markers from 30 points
+[2026-07-31 06:13:50.151] INFO: Mode 2: Creating markers from 31 points
+[2026-07-31 06:13:50.168] INFO: Mode 2: Placed 37 user markers at exact 20cm intervals
+[2026-07-31 06:13:50.268] INFO: Mode 2: Creating markers from 32 points
+[2026-07-31 06:13:50.293] INFO: Mode 2: Placed 37 user markers at exact 20cm intervals
+[2026-07-31 06:13:50.408] INFO: Mode 2: Creating markers from 33 points
+[2026-07-31 06:13:50.423] INFO: Mode 2: Placed 38 user markers at exact 20cm intervals
+[2026-07-31 06:13:50.533] INFO: Mode 2: Creating markers from 34 points
+[2026-07-31 06:13:50.549] INFO: Mode 2: Placed 38 user markers at exact 20cm intervals
+[2026-07-31 06:13:50.809] INFO: Mode 2: Creating markers from 35 points
+[2026-07-31 06:13:50.826] INFO: Mode 2: Placed 38 user markers at exact 20cm intervals
+[2026-07-31 06:13:50.849] INFO: Mode 2: Creating markers from 36 points
+[2026-07-31 06:13:50.871] INFO: Mode 2: Creating markers from 37 points
+[2026-07-31 06:13:50.886] INFO: Mode 2: Placed 38 user markers at exact 20cm intervals
+[2026-07-31 06:13:50.909] INFO: Mode 2: Placed 39 user markers at exact 20cm intervals
+[2026-07-31 06:13:51.010] INFO: Mode 2: Creating markers from 38 points
+[2026-07-31 06:13:51.024] INFO: Mode 2: Placed 39 user markers at exact 20cm intervals
+[2026-07-31 06:13:51.123] INFO: Mode 2: Creating markers from 39 points
+[2026-07-31 06:13:51.137] INFO: Mode 2: Placed 39 user markers at exact 20cm intervals
+[2026-07-31 06:13:51.280] INFO: Mode 2: Creating markers from 40 points
+[2026-07-31 06:13:51.288] INFO: Mode 2: Placed 40 user markers at exact 20cm intervals
+[2026-07-31 06:13:51.418] INFO: Mode 2: Creating markers from 41 points
+[2026-07-31 06:13:51.430] INFO: Mode 2: Placed 40 user markers at exact 20cm intervals
+[2026-07-31 06:13:51.495] INFO: Mode 2: Creating markers from 42 points
+[2026-07-31 06:13:51.529] INFO: Mode 2: Placed 40 user markers at exact 20cm intervals
+[2026-07-31 06:13:51.604] INFO: Mode 2: Creating markers from 43 points
+[2026-07-31 06:13:51.633] INFO: Mode 2: Placed 40 user markers at exact 20cm intervals
+[2026-07-31 06:13:51.781] INFO: Mode 2: Creating markers from 44 points
+[2026-07-31 06:13:51.796] INFO: Mode 2: Placed 41 user markers at exact 20cm intervals
+[2026-07-31 06:13:51.886] INFO: Mode 2: Creating markers from 45 points
+[2026-07-31 06:13:51.982] INFO: Mode 2: Placed 41 user markers at exact 20cm intervals
+[2026-07-31 06:13:52.037] INFO: Mode 2: Creating markers from 46 points
+[2026-07-31 06:13:52.047] INFO: Mode 2: Placed 41 user markers at exact 20cm intervals
+[2026-07-31 06:13:52.118] INFO: Mode 2: Creating markers from 47 points
+[2026-07-31 06:13:52.144] INFO: Mode 2: Placed 41 user markers at exact 20cm intervals
+[2026-07-31 06:13:52.298] INFO: Mode 2: Creating markers from 48 points
+[2026-07-31 06:13:52.318] INFO: Mode 2: Placed 41 user markers at exact 20cm intervals
+[2026-07-31 06:13:52.791] INFO: Mode 2: Placed 42 user markers at exact 20cm intervals
+[2026-07-31 06:13:52.807] INFO: Mode 2: Creating markers from 51 points
+[2026-07-31 06:13:52.840] INFO: Mode 2: Placed 43 user markers at exact 20cm intervals
+[2026-07-31 06:13:52.865] INFO: Mode 2: Placed 42 user markers at exact 20cm intervals
+[2026-07-31 06:13:52.886] INFO: Mode 2: Creating markers from 50 points
+[2026-07-31 06:13:52.914] INFO: Mode 2: Placed 43 user markers at exact 20cm intervals
+[2026-07-31 06:13:52.922] INFO: Mode 2: Creating markers from 49 points
+[2026-07-31 06:13:53.179] INFO: Mode 2: Placed 43 user markers at exact 20cm intervals
+[2026-07-31 06:13:53.271] INFO: Mode 2: Drawing STOPPED
+[2026-07-31 06:13:53.284] INFO: Mode 2: Creating markers from 53 points
+[2026-07-31 06:13:53.786] INFO: Mode 2: Creating markers from 52 points

@@ -86,8 +86,9 @@ rsconnect::deployApp(
 )
 
 #Atera Analytics Confirmed
+rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Finance/JBS_CME_Forex_Symp_2026/trading_analysis_f1/')
 rsconnect::deployApp('C:/101_Code/R/SelfManagement/daily_scheduler/')
-
+rsconnect::deployApp('C:/101_Code/R/Finance/crypto_&_equities_analysis/')
 rsconnect::deployApp('C:/101_Code/R/Entrepreneurship&Pitching/VentureAnalysis_Main/VentureAnalysis/')
 rsconnect::deployApp('C:/101_Code/R/Literature/DB_Material_Compilation/DB_Books_LLM_modular/Modular_db_books_llm/')
 #rsconnect::deployApp('C:/101_Code/R/Entrepreneurship&Pitching/VentureDeals_DeepTech_Suite/VentureDeals/')
@@ -103,7 +104,7 @@ rsconnect::deployApp('C:/101_Code/R/Skills/Coding/ML Interview Preparation/MTSFr
 rsconnect::deployApp('C:/101_Code/R/Skills/Coding/ML Design & Architecture/RecommenderSystemsKB/')
 rsconnect::deployApp('C:/101_Code/R/Skills/Coding/ML Design & Architecture/MLDesignPrep_ChipHuyen_v1_0/')
 rsconnect::deployApp('C:/101_Code/R/Skills/Communication/CompComm_v7/Simon_Hall_CC/')
-rsconnect::deployApp('C:/101_Code/R/Finance/crypto_&_equities_analysis/')
+
 #Pear stuff:
 rsconnect::deployApp('C:/101_Code/R/Atera A Shiny Apps Site/energy_planning_geo_a/')
 rsconnect::deployApp('C:/101_Code/R/Health&Nutrition/SaraiMazu_MetodologiaCostosYPrecios/')
