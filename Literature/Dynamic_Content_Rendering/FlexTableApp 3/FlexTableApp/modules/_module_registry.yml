@@ -1,0 +1,62 @@
+# modules/_module_registry.yml
+# Central Module Registry - THE CONTROL CENTER
+# Change 'enabled: false' to disable any module
+# =============================================
+
+modules:
+  # API Authentication Modules (Load First)
+  bigquery_auth:
+    enabled: true
+    priority: 1
+    description: "BigQuery authentication and configuration"
+
+  claude_api_config:
+    enabled: true
+    priority: 2
+    description: "Claude API credentials management"
+
+  # Core Feature Modules
+  generate_table:
+    enabled: true
+    priority: 10
+    description: "AI-powered flexible comparison table generation"
+
+  bulk_import:
+    enabled: true
+    priority: 11
+    description: "Parse and upload generated tables in bulk"
+
+  add_entry:
+    enabled: true
+    priority: 12
+    description: "Manually add a single row with custom columns"
+
+  browse_data:
+    enabled: true
+    priority: 13
+    description: "Browse and download all stored table rows"
+
+  table_viewer:
+    enabled: true
+    priority: 14
+    description: "Render stored tables as a scrollable comparison grid with LaTeX support"
+
+  about:
+    enabled: true
+    priority: 99
+    description: "Application information and schema"
+
+# Global Settings
+settings:
+  auto_install: false
+  check_versions: true
+  verbose: true
+  dev_mode: false
+
+# Application Metadata
+app:
+  name: "Flexible Comparison Table Suite"
+  version: "1.0.0"
+  description: "AI-powered generation and storage of comparison tables with an ever-changing number of columns, backed by a single delimited-text BigQuery column"
+  author: "Your Team"
+  table: "atera-2.Wonderfulp_March.flex_comparison_tables"

@@ -1,0 +1,31 @@
+module:
+  id: "table_viewer"
+  name: "Table Viewer"
+  description: "Look up one Category+Topic+Row+Columns_Data combination and render its stored value, with LaTeX support"
+  version: "1.0.0"
+  author: "Flex Table Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Table Viewer"
+    icon: "th"
+    tabname: "table_viewer"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+
+    package_versions: {}
+
+  api:
+    required: ["bigquery"]
+    optional: []
+
+  data:
+    required: []
+    optional: []

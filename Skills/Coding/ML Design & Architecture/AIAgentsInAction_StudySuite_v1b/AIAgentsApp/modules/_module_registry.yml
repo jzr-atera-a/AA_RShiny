@@ -1,0 +1,96 @@
+app:
+  name: "AI Agents in Action — Study Suite"
+  version: "1.0.0"
+  description: "Complete study companion for AI Agents in Action by Michael Lanham (Manning)"
+
+modules:
+  overview:
+    enabled: true
+    priority: 10
+    name: "Overview & Roadmap"
+    icon: "home"
+    tabname: "overview"
+
+  llm_foundations:
+    enabled: true
+    priority: 20
+    name: "LLM Foundations"
+    icon: "brain"
+    tabname: "llm_foundations"
+
+  local_agents:
+    enabled: true
+    priority: 30
+    name: "Local Models"
+    icon: "server"
+    tabname: "local_agents"
+
+  autogen_crewai:
+    enabled: true
+    priority: 40
+    name: "AutoGen & CrewAI"
+    icon: "users"
+    tabname: "autogen_crewai"
+
+  semantic_kernel:
+    enabled: true
+    priority: 50
+    name: "Semantic Kernel"
+    icon: "cogs"
+    tabname: "semantic_kernel"
+
+  behavior_trees:
+    enabled: true
+    priority: 60
+    name: "Behavior Trees"
+    icon: "sitemap"
+    tabname: "behavior_trees"
+
+  chat_uis:
+    enabled: true
+    priority: 70
+    name: "Chat UIs"
+    icon: "comments"
+    tabname: "chat_uis"
+
+  memory_rag:
+    enabled: true
+    priority: 80
+    name: "Memory & RAG"
+    icon: "database"
+    tabname: "memory_rag"
+
+  prompt_flow:
+    enabled: true
+    priority: 90
+    name: "Prompt Flow & DAGs"
+    icon: "project-diagram"
+    tabname: "prompt_flow"
+
+  prompting_techniques:
+    enabled: true
+    priority: 100
+    name: "Prompting Techniques"
+    icon: "magic"
+    tabname: "prompting_techniques"
+
+  assistants_api:
+    enabled: true
+    priority: 110
+    name: "Assistants API"
+    icon: "robot"
+    tabname: "assistants_api"
+
+  deprecations:
+    enabled: true
+    priority: 120
+    name: "API Sunset Tracker"
+    icon: "clock"
+    tabname: "deprecations"
+
+  quiz:
+    enabled: true
+    priority: 130
+    name: "Chapter Quiz"
+    icon: "question-circle"
+    tabname: "quiz"

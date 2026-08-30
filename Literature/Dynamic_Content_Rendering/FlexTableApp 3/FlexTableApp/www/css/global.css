@@ -1,0 +1,427 @@
+/* ====================================
+   CORPORATE TEAL/CYAN THEME
+   Flexible Comparison Table Suite v1.0
+   (same design system as Book Summary Complete Suite)
+   ==================================== */
+
+/* Main Backgrounds */
+.content-wrapper, .right-side {
+  background: linear-gradient(135deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+  min-height: 100vh;
+}
+.sidebar, .main-sidebar {
+  background: linear-gradient(180deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+}
+
+/* Sidebar Menu */
+.sidebar .sidebar-menu > li > a {
+  color: #ffffff !important;
+  border-left: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+.sidebar .sidebar-menu > li.active > a,
+.sidebar .sidebar-menu > li:hover > a {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-left: 3px solid #00A39A !important;
+}
+
+/* Header */
+.main-header, .main-header .navbar {
+  background: linear-gradient(135deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+}
+.main-header .logo {
+  background: linear-gradient(135deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+/* Boxes */
+.box {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 25px rgba(0, 44, 60, 0.2) !important;
+  margin-bottom: 20px;
+  transition: transform 0.2s ease;
+}
+.box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(0, 44, 60, 0.3) !important;
+}
+.box-header {
+  background: linear-gradient(135deg, #008A82 0%, #00A39A 100%) !important;
+  color: white !important;
+  border-radius: 12px 12px 0 0 !important;
+  padding: 15px 20px;
+}
+.box-header > .box-title {
+  color: #ffffff !important;
+  font-weight: 600;
+  font-size: 16px;
+}
+.box-body {
+  background-color: #ffffff !important;
+  padding: 20px;
+}
+
+/* Status Boxes */
+.status-success {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%) !important;
+  color: #155724 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #00A39A !important;
+  margin: 10px 0;
+}
+.status-error {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%) !important;
+  color: #721c24 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #e74c3c !important;
+  margin: 10px 0;
+}
+.status-info {
+  background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%) !important;
+  color: #0c5460 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #17a2b8 !important;
+  margin: 10px 0;
+}
+.status-warning {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%) !important;
+  color: #856404 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #f39c12 !important;
+  margin: 10px 0;
+}
+
+/* Form Controls */
+.form-control {
+  border-radius: 8px !important;
+  border: 2px solid #ddd !important;
+  transition: border-color 0.3s ease;
+}
+.form-control:focus {
+  border-color: #008A82 !important;
+  box-shadow: 0 0 0 3px rgba(0, 138, 130, 0.1) !important;
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, #008A82 0%, #00A39A 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+  font-weight: 600;
+  transition: transform 0.2s ease;
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #006b63 0%, #007d75 100%) !important;
+  transform: translateY(-1px);
+}
+.btn-success {
+  background: linear-gradient(135deg, #00A39A 0%, #008A82 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+  font-weight: 600;
+}
+.btn-info {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+  font-weight: 600;
+}
+.btn-danger {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+}
+.btn-warning {
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+}
+
+/* Small Boxes */
+.small-box {
+  border-radius: 12px !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+  transition: transform 0.2s ease;
+}
+.small-box:hover {
+  transform: translateY(-3px);
+}
+.small-box.bg-aqua {
+  background: linear-gradient(135deg, #00A39A 0%, #008A82 100%) !important;
+}
+.small-box.bg-blue {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+}
+.small-box.bg-green {
+  background: linear-gradient(135deg, #27ae60 0%, #229954 100%) !important;
+}
+.small-box.bg-yellow {
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
+}
+
+/* Text Areas */
+textarea.form-control {
+  min-height: 100px;
+}
+#summary_upload_text, #generated_table_text {
+  min-height: 500px !important;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
+
+/* Preview */
+.preview-section {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 10px 0;
+  border-left: 4px solid #008A82;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Book/Table Header */
+.book-header {
+  background: linear-gradient(135deg, #002C3C 0%, #008A82 100%);
+  color: white;
+  padding: 25px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 20px rgba(0, 44, 60, 0.3);
+}
+.book-header h2 {
+  margin: 0 0 10px 0;
+  font-size: 2em;
+}
+.book-header .author {
+  font-size: 1.2em;
+  opacity: 0.9;
+}
+
+/* Alerts */
+.alert-info {
+  background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%) !important;
+  border-left: 4px solid #17a2b8 !important;
+  border-radius: 8px;
+}
+
+/* Loading */
+#loading_spinner {
+  color: #008A82;
+}
+
+/* ====================================
+   FLEXIBLE COMPARISON TABLE
+   Scrolls left-right (many columns) AND
+   top-bottom (many rows), with a sticky
+   ("frozen") header row and sticky first
+   column - like Excel freeze panes - so
+   the row label stays visible while
+   scrolling horizontally, and the column
+   headers stay visible while scrolling
+   vertically. Responsive: on narrow
+   (mobile) screens, only a couple of
+   columns and a few rows may be visible
+   at once, which is expected - the user
+   scrolls both directions to see more.
+   ==================================== */
+:root {
+  --flex-col-width: 70ch; /* overridden live by the Column Width slider */
+}
+.flex-table-outer {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 44, 60, 0.15);
+  border-left: 5px solid #008A82;
+  padding: 10px;
+  margin: 15px 0;
+}
+.flex-table-scroll {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 75vh;   /* scales with viewport - works on phone and desktop */
+  width: 100%;
+  border-radius: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+table.flex-comparison-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: max-content;
+  min-width: 100%;
+  font-size: 0.92em;
+}
+table.flex-comparison-table th,
+table.flex-comparison-table td {
+  padding: 12px 16px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid #e6ecec;
+  border-right: 1px solid #e6ecec;
+  line-height: 1.5;
+  /* Wrap at word boundaries only - never chop a word mid-way. A single
+     word longer than the column will overflow rather than being cut. */
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+}
+/* Data columns (everything except the frozen leftmost row-label column)
+   are sized by the Column Width slider, via --flex-col-width. */
+table.flex-comparison-table th:not(:first-child),
+table.flex-comparison-table td:not(.row-index-cell) {
+  width: var(--flex-col-width);
+  min-width: var(--flex-col-width);
+  max-width: var(--flex-col-width);
+}
+
+/* ---- Frozen header row ---- */
+table.flex-comparison-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: linear-gradient(135deg, #008A82 0%, #00A39A 100%);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 44, 60, 0.25); /* visually separates frozen row from scrolling body */
+}
+/* ---- Frozen top-left corner (row axis label) ---- */
+table.flex-comparison-table thead th:first-child {
+  position: sticky;
+  left: 0;
+  top: 0;
+  z-index: 5;
+  background: linear-gradient(135deg, #002C3C 0%, #008A82 100%);
+  min-width: 200px;
+  width: 200px;
+  max-width: 200px;
+  box-shadow: 2px 2px 6px rgba(0, 44, 60, 0.3);
+}
+/* ---- Frozen leftmost column (row labels) ---- */
+table.flex-comparison-table tbody th.row-index-cell {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #e8f5f4;
+  color: #002C3C;
+  font-weight: 700;
+  border-right: 2px solid #00A39A;
+  min-width: 200px;
+  width: 200px;
+  max-width: 200px;
+  box-shadow: 2px 0 4px rgba(0, 44, 60, 0.12);
+}
+
+/* ---- Checkerboard shading: subtle alternating tint by BOTH row and
+   column, so it's easy to trace a specific row or column by eye across
+   a wide/tall scrollable grid. ---- */
+table.flex-comparison-table tbody tr:nth-child(odd) td:nth-child(odd)   { background-color: #ffffff; }
+table.flex-comparison-table tbody tr:nth-child(odd) td:nth-child(even)  { background-color: #f3f9f8; }
+table.flex-comparison-table tbody tr:nth-child(even) td:nth-child(odd)  { background-color: #eef7f6; }
+table.flex-comparison-table tbody tr:nth-child(even) td:nth-child(even) { background-color: #e6f2f1; }
+
+table.flex-comparison-table tbody tr:hover td,
+table.flex-comparison-table tbody tr:hover th.row-index-cell {
+  background-color: #cfe9e6 !important;
+}
+
+.flex-table-note {
+  color: #666;
+  font-size: 0.85em;
+  font-style: italic;
+  margin-top: 6px;
+}
+.flex-column-count-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #00A39A 0%, #008A82 100%);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  margin-left: 8px;
+}
+
+/* ---- Mobile: tighter padding/font so more of the frozen row/column
+   context is visible alongside the 1-2 scrollable data columns that
+   fit on a phone screen at once. ---- */
+@media (max-width: 600px) {
+  table.flex-comparison-table {
+    font-size: 0.85em;
+  }
+  table.flex-comparison-table th,
+  table.flex-comparison-table td {
+    padding: 8px 10px;
+  }
+  table.flex-comparison-table thead th:first-child,
+  table.flex-comparison-table tbody th.row-index-cell {
+    min-width: 130px;
+    width: 130px;
+    max-width: 130px;
+  }
+  .flex-table-scroll {
+    max-height: 60vh;
+  }
+}
+
+.viz-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 15px 0;
+  box-shadow: 0 4px 15px rgba(0, 44, 60, 0.15);
+  border-left: 5px solid #008A82;
+}
+.viz-card .chapter-title {
+  font-size: 1.3em;
+  color: #002C3C;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+.viz-card .section-tag {
+  display: inline-block;
+  background: linear-gradient(135deg, #00A39A 0%, #008A82 100%);
+  color: white;
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 0.85em;
+  margin: 5px 5px 5px 0;
+}
+.viz-card .details-text {
+  line-height: 1.8;
+  color: #2c3e50;
+  margin: 15px 0;
+  text-align: justify;
+}
+
+/* Metrics */
+.metric-box {
+  display: inline-block;
+  background: linear-gradient(135deg, #e8f5f4 0%, #d4edea 100%);
+  padding: 10px 20px;
+  border-radius: 8px;
+  margin: 5px;
+  border: 2px solid #00A39A;
+}
+.metric-label {
+  font-size: 0.8em;
+  color: #666;
+  text-transform: uppercase;
+}
+.metric-value {
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #008A82;
+}
+

@@ -86,6 +86,7 @@ rsconnect::deployApp(
 )
 
 #Atera Analytics Confirmed
+rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Literature/Dynamic_Content_Rendering/FlexTableApp 3/FlexTableApp/')
 rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Finance/JBS_CME_Forex_Symp_2026/trading_analysis_f1/')
 rsconnect::deployApp('C:/101_Code/R/SelfManagement/daily_scheduler/')
 rsconnect::deployApp('C:/101_Code/R/Finance/crypto_&_equities_analysis/')

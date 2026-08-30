@@ -1,0 +1,31 @@
+module:
+  id: "add_entry"
+  name: "Add Single Entry"
+  description: "Manually add one row (with any number of custom columns) to a table"
+  version: "1.0.0"
+  author: "Flex Table Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Add Single Entry"
+    icon: "plus-circle"
+    tabname: "add_entry"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+
+    package_versions: {}
+
+  api:
+    required: ["bigquery"]
+    optional: []
+
+  data:
+    required: []
+    optional: []

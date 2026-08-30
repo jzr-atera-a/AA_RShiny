@@ -1,0 +1,31 @@
+module:
+  id: "about"
+  name: "About"
+  description: "Application information, schema, and delimiter format documentation"
+  version: "1.0.0"
+  author: "Flex Table Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "About"
+    icon: "info-circle"
+    tabname: "about"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: []
+
+  data:
+    required: []
+    optional: []
