@@ -1,384 +1,591 @@
 # modules/Travel Planning/travel_itinerary_planner/server.R
-# Travel Itinerary Planner Server Logic with Claude API
+# FIXED: High-quality HTML and PDF generation
 
 travel_itinerary_planner_server <- function(id, api_manager) {
   moduleServer(id, function(input, output, session) {
     
-    ns <- session$ns
+    cat("\n🔍 Module initialized: travel_itinerary_planner\n")
     
-    # ==================
-    # Reactive Values
-    # ==================
+    ns <- session$ns
+    map_source <- "trip_map_click"
+    
     rv <- reactiveValues(
       discovered_places = NULL,
       selected_places = character(0),
       generated_itinerary = NULL,
-      places_data = NULL
+      itinerary_data = NULL,
+      places_data = NULL,
+      selected_attraction = NULL
     )
     
     # ==================
-    # DATE HANDLING
+    # DISCOVER PLACES
     # ==================
     
-    # Calculate duration when dates change
-    observeEvent(input$trip_start_date, {
-      if (!is.null(input$trip_end_date)) {
-        duration <- as.numeric(difftime(input$trip_end_date, input$trip_start_date, units = "days")) + 1
-        duration <- max(1, min(duration, 7))  # Constrain to 1-7 days
-        
-        # Update the slider
-        updateSliderInput(session, "num_days", value = duration)
-      }
-    })
-    
-    observeEvent(input$trip_end_date, {
-      if (!is.null(input$trip_start_date)) {
-        duration <- as.numeric(difftime(input$trip_end_date, input$trip_start_date, units = "days")) + 1
-        duration <- max(1, min(duration, 7))  # Constrain to 1-7 days
-        
-        # Update the slider
-        updateSliderInput(session, "num_days", value = duration)
-      }
-    })
-    
-    # Display calculated duration
-    output$duration_display <- renderText({
-      if (!is.null(input$trip_start_date) && !is.null(input$trip_end_date)) {
-        duration <- as.numeric(difftime(input$trip_end_date, input$trip_start_date, units = "days")) + 1
-        duration <- max(1, min(duration, 7))
-        start_str <- format(input$trip_start_date, "%b %d, %Y")
-        end_str <- format(input$trip_end_date, "%b %d, %Y")
-        paste0(" <strong style='color: #27ae60;'>", duration, " day", 
-               if(duration != 1) "s" else "", 
-               "</strong> (", start_str, " to ", end_str, ")")
-      } else {
-        " (Select dates to calculate)"
-      }
-    })
-    
-    # ==================
-    # STEP 1: DISCOVER PLACES
-    # ==================
     observeEvent(input$discover_places, {
+      cat("\n🔍 [DISCOVER] Button clicked for:", input$destination, "\n")
+      
       req(input$destination, input$num_places)
       
-      # Show loading spinner
-      shinyjs::hide("places_checkboxes", anim = TRUE)
       shinyjs::show("loading_spinner", anim = TRUE)
       output$discovery_status <- renderUI({
         tags$div(class = "alert alert-info",
-                tags$strong("Status: "), "Discovering attractions in ", input$destination, "...")
+                tags$strong("Status: "), "Discovering attractions...")
       })
       
       tryCatch({
-        # Build prompt for Claude
         prompt <- paste0(
-          "Please provide the top ", input$num_places, " places to visit in ", input$destination, 
-          " according to TripAdvisor and other reputable tourism sources.\n\n",
-          "Format your response EXACTLY as follows - one place per line, numbered:\n",
-          "1. Attraction Name (Category)\n",
-          "2. Another Attraction (Category)\n",
-          "... and so on\n\n",
-          "Categories can be: Museum, Park, Landmark, Restaurant, Historical Site, Shopping, ",
-          "Entertainment, Nature, Cultural Site, etc.\n\n",
-          "Only provide the numbered list with no additional text or explanations."
+          "List top ", input$num_places, " places in ", input$destination, 
+          ". Format: 1. Name (Category). No explanations."
         )
         
-        # Call Claude API
-        if (!is.null(api_manager)) {
-          response <- api_manager$call_claude_api(prompt)
-        } else {
-          stop("API Manager not available. Please configure Claude API credentials first.")
+        cat("  Calling api_manager$call_claude()...\n")
+        response <- api_manager$call_claude(prompt)
+        
+        if (!is.character(response)) {
+          response <- as.character(response)
         }
         
-        # Parse response into places
-        lines <- strsplit(response, "\n")[[1]]
-        places_list <- grep("^\\d+\\.", lines, value = TRUE)
-        places_list <- trimws(places_list)
-        places_list <- places_list[places_list != ""]
+        lines <- strsplit(response, "\n", fixed = TRUE)[[1]]
+        cat("  Lines parsed:", length(lines), "\n")
         
-        if (length(places_list) == 0) {
-          stop("No places found in response. Please try again.")
+        parsed_places <- character()
+        for (line in lines) {
+          line <- trimws(line)
+          if (nchar(line) > 2) {
+            cleaned <- sub("^[0-9]+\\.\\s*", "", line)
+            if (cleaned != line && nchar(cleaned) > 0) {
+              parsed_places <- c(parsed_places, cleaned)
+            }
+          }
         }
         
-        # Store places data
-        rv$places_data <- data.frame(
-          id = seq_along(places_list),
-          name = places_list,
-          selected = FALSE,
-          stringsAsFactors = FALSE
-        )
+        cat("  Total places parsed:", length(parsed_places), "\n")
         
-        rv$discovered_places <- places_list
-        rv$selected_places <- character(0)
+        if (length(parsed_places) == 0) {
+          stop("No places parsed from response")
+        }
         
-        # Hide loading, show places
+        rv$discovered_places <- parsed_places
+        rv$places_data <- data.frame(name = parsed_places, stringsAsFactors = FALSE)
+        
         shinyjs::hide("loading_spinner", anim = TRUE)
-        shinyjs::show("places_checkboxes", anim = TRUE)
+        
+        output$places_checkboxes <- renderUI({
+          tags$div(
+            lapply(1:length(parsed_places), function(i) {
+              tagList(
+                checkboxInput(ns(paste0("place_", i)), parsed_places[i], value = FALSE)
+              )
+            })
+          )
+        })
+        
+        output$places_counter <- renderUI({
+          HTML(sprintf("<strong>%d of %d selected</strong>", 0, length(parsed_places)))
+        })
         
         output$discovery_status <- renderUI({
           tags$div(class = "alert alert-success",
-                  tags$strong("✓ Success! "), "Found ", length(places_list), " attractions in ", 
-                  input$destination, ". Select the ones you want to visit.")
+                  tags$strong("✓ Found "), length(parsed_places), " attractions!")
         })
         
-        # Render checkboxes
-        output$places_checkboxes <- renderUI({
-          if (is.null(rv$places_data)) return(NULL)
-          
-          lapply(1:nrow(rv$places_data), function(i) {
-            div(
-              style = "margin-bottom: 10px;",
-              checkboxInput(ns(paste0("place_", i)), 
-                          rv$places_data$name[i],
-                          value = FALSE),
-              tags$small(class = "text-muted", style = "margin-left: 20px;")
-            )
-          })
-        })
+        cat("✅ [DISCOVER] Success!\n")
         
       }, error = function(e) {
+        cat("❌ [ERROR]:", e$message, "\n")
         shinyjs::hide("loading_spinner", anim = TRUE)
         output$discovery_status <- renderUI({
           tags$div(class = "alert alert-danger",
-                  tags$strong("Error: "), e$message)
+                  tags$strong("❌ Error: "), e$message)
         })
-        showNotification(paste("Error discovering places:", e$message), type = "error", duration = 10)
       })
     })
     
-    # Update selected places count
-    output$places_counter <- renderUI({
-      req(rv$places_data)
-      selected_count <- sum(sapply(1:nrow(rv$places_data), function(i) {
-        isTRUE(input[[paste0("place_", i)]])
-      }))
-      tags$span(tags$strong("Selected: "), selected_count, " / ", nrow(rv$places_data))
-    })
-    
-    # Select all places
-    observeEvent(input$select_all_places, {
-      if (!is.null(rv$places_data)) {
-        for (i in 1:nrow(rv$places_data)) {
-          shinyjs::runjs(paste0("$('#", ns(paste0("place_", i)), "').prop('checked', true).change();"))
-        }
-      }
-    })
-    
-    # Deselect all places
-    observeEvent(input$deselect_all_places, {
-      if (!is.null(rv$places_data)) {
-        for (i in 1:nrow(rv$places_data)) {
-          shinyjs::runjs(paste0("$('#", ns(paste0("place_", i)), "').prop('checked', false).change();"))
-        }
-      }
-    })
-    
-    # Reset discovery
-    observeEvent(input$reset_discovery, {
-      rv$discovered_places <- NULL
-      rv$selected_places <- character(0)
-      rv$places_data <- NULL
-      output$places_checkboxes <- renderUI(NULL)
-      output$discovery_status <- renderUI(NULL)
-      shinyjs::show("places_checkboxes", anim = TRUE)
-      shinyjs::hide("loading_spinner", anim = TRUE)
-    })
-    
     # ==================
-    # STEP 2 & 3: GENERATE ITINERARY
+    # GENERATE ITINERARY
     # ==================
+    
     observeEvent(input$generate_itinerary, {
+      cat("\n🔍 [GENERATE] Button clicked\n")
+      
       req(input$destination, input$num_days)
       
-      # Get selected places
-      if (!is.null(rv$places_data)) {
-        selected_indices <- which(sapply(1:nrow(rv$places_data), function(i) {
-          isTRUE(input[[paste0("place_", i)]])
-        }))
-        
-        if (length(selected_indices) == 0) {
-          showNotification("Please select at least one place to visit!", type = "warning")
-          return()
-        }
-        
-        selected_places_list <- rv$places_data$name[selected_indices]
-      } else {
-        showNotification("Please discover places first!", type = "warning")
+      if (is.null(rv$places_data) || nrow(rv$places_data) == 0) {
+        showNotification("Click 'Discover Places' first!", type = "warning")
         return()
       }
       
-      # Show loading spinner
+      selected_indices <- which(sapply(1:nrow(rv$places_data), function(i) {
+        isTRUE(input[[paste0("place_", i)]])
+      }))
+      
+      if (length(selected_indices) == 0) {
+        showNotification("Select at least one place!", type = "warning")
+        return()
+      }
+      
+      selected_places_list <- rv$places_data$name[selected_indices]
+      
+      cat("  Selected", length(selected_places_list), "places\n")
+      
       shinyjs::show("itinerary_loading_spinner", anim = TRUE)
       shinyjs::hide("itinerary_content", anim = TRUE)
       output$itinerary_status <- renderUI({
         tags$div(class = "alert alert-info",
-                tags$strong("Status: "), "Generating your personalized itinerary...")
+                tags$strong("Status: "), "Generating itinerary...")
       })
       
       tryCatch({
-        # Build comprehensive prompt for itinerary generation
         selected_places_text <- paste(sprintf("- %s", selected_places_list), collapse = "\n")
         
-        constraints_text <- if (input$constraints == "") {
-          "No specific constraints."
-        } else {
-          paste("User constraints:\n", input$constraints)
-        }
-        
         prompt <- paste0(
-          "Create a detailed ", input$num_days, "-day itinerary for visiting ", input$destination, ".\\n\\n",
-          "TRIP DATES:\\n",
-          "- Start Date: ", format(input$trip_start_date, "%A, %B %d, %Y"), "\\n",
-          "- End Date: ", format(input$trip_end_date, "%A, %B %d, %Y"), "\\n",
-          "- Total Days: ", input$num_days, "\\n\\n",
-          "SELECTED ATTRACTIONS (must include all of these):\\n",
-          selected_places_text, "\\n\\n",
-          "TRIP PARAMETERS:\\n",
-          "- Location: ", input$destination, "\\n",
-          "- Daily start time: ", input$start_time, "\\n",
-          "- Daily end time: ", input$end_time, "\\n\\n",
-          "CONSTRAINTS & PREFERENCES:\\n", constraints_text, "\\n\\n",
-          "REQUIREMENTS FOR YOUR RESPONSE:\\n",
-          "1. Create a day-by-day breakdown for each day from ", format(input$trip_start_date, "%B %d"), " to ", format(input$trip_end_date, "%B %d"), "\\n",
-          "2. Include exact times for each activity (e.g., 9:00-11:00 AM: CN Tower)\\n",
-          "3. Include travel time between attractions using public transit estimates\\n",
-          "4. Include 1-2 meal breaks per day at appropriate times\\n",
-          "5. Group nearby attractions to minimize travel\\n",
-          "6. Provide realistic visit durations based on the attraction type\\n",
-          "7. Include transit details (subway lines, streetcars, walking time)\\n",
-          "8. Format as clear text with day headers (e.g., 'DAY 1: ", format(input$trip_start_date, "%A, %B %d"), "')\\\\
-",
-          "9. Include opening hours verification and seasonal considerations\\n",
-          "10. Add weather-appropriate tips for each day (umbrella, sunscreen, etc.)\\n",
-          "11. Consider weather patterns for ", input$destination, " during ", format(input$trip_start_date, "%B"), "\\n\\n",
-          "Please create the itinerary now, optimized for minimum travel distance between attractions and maximum enjoyment."
+          "Create ", input$num_days, "-day itinerary for ", input$destination, "\n\n",
+          "Must visit these attractions:\n", selected_places_text, "\n\n",
+          "For EACH attraction, provide:\n",
+          "- Time (HH:MM-HH:MM format, e.g., 09:00-11:30)\n",
+          "- 1-2 sentence description\n",
+          "- GPS coordinates (latitude as number, longitude as number)\n\n",
+          "End with JSON block EXACTLY like this (no markdown, just raw JSON):\n\n",
+          "```json\n",
+          "{\n",
+          "  \"itinerary\": [\n",
+          "    {\n",
+          "      \"day\": 1,\n",
+          "      \"day_label\": \"Day 1 - Monday\",\n",
+          "      \"attractions\": [\n",
+          "        {\n",
+          "          \"name\": \"Eiffel Tower\",\n",
+          "          \"latitude\": 48.8584,\n",
+          "          \"longitude\": 2.2945,\n",
+          "          \"time_start\": \"09:00\",\n",
+          "          \"time_end\": \"11:30\",\n",
+          "          \"description\": \"Iconic iron tower with 3 floors and restaurant.\"\n",
+          "        }\n",
+          "      ]\n",
+          "    }\n",
+          "  ]\n",
+          "}\n",
+          "```"
         )
-        # Call Claude API
-        if (!is.null(api_manager)) {
-          itinerary_response <- api_manager$call_claude_api(prompt)
-        } else {
-          stop("API Manager not available. Please configure Claude API credentials first.")
+        
+        cat("  Calling api_manager$call_claude()...\n")
+        itinerary_response <- api_manager$call_claude(prompt)
+        
+        if (!is.character(itinerary_response)) {
+          itinerary_response <- paste(as.character(itinerary_response), collapse = " ")
         }
         
-        # Store generated itinerary
+        cat("  Response received:", nchar(itinerary_response), "chars\n")
+        
+        # EXTRACT JSON
+        json_text <- NULL
+        patterns <- c(
+          "```json\\s*\\{[^`]*\"itinerary\"[^`]*\\}[^`]*```",
+          "\\{[^}]*\"itinerary\"[^}]*\\}",
+          "```\\s*\\{[^`]*\"itinerary\"[^`]*\\}\\s*```"
+        )
+        
+        for (pattern in patterns) {
+          match <- gregexpr(pattern, itinerary_response, perl = TRUE)
+          if (match[[1]][1] > 0) {
+            matched_text <- regmatches(itinerary_response, match)[[1]][1]
+            json_text <- gsub("```json\\s*|```\\s*|\\s*```", "", matched_text)
+            cat("  JSON found:", nchar(json_text), "chars\n")
+            break
+          }
+        }
+        
+        # PARSE JSON
+        if (!is.null(json_text) && nchar(json_text) > 50) {
+          tryCatch({
+            raw_json <- jsonlite::fromJSON(json_text, simplifyDataFrame = FALSE)
+            
+            if (!is.null(raw_json$itinerary) && is.list(raw_json$itinerary)) {
+              itinerary_list <- lapply(raw_json$itinerary, function(day) {
+                list(
+                  day = as.numeric(day$day) %||% 1,
+                  day_label = as.character(day$day_label) %||% paste0("Day ", day$day),
+                  attractions = lapply(day$attractions, function(attr) {
+                    list(
+                      name = as.character(attr$name),
+                      latitude = as.numeric(attr$latitude),
+                      longitude = as.numeric(attr$longitude),
+                      time_start = as.character(attr$time_start),
+                      time_end = as.character(attr$time_end),
+                      description = as.character(attr$description) %||% ""
+                    )
+                  })
+                )
+              })
+              
+              rv$itinerary_data <- itinerary_list
+              cat("  ✅ Parsed", length(itinerary_list), "days with GPS\n")
+            }
+          }, error = function(e) {
+            cat("  JSON parse error:", e$message, "\n")
+          })
+        }
+        
         rv$generated_itinerary <- itinerary_response
         
-        # Hide loading, show content
         shinyjs::hide("itinerary_loading_spinner", anim = TRUE)
         shinyjs::show("itinerary_content", anim = TRUE)
         
+        # RENDER ITINERARY
         output$itinerary_html <- renderUI({
-          # Format the itinerary with better readability
-          itinerary_formatted <- gsub("\\n", "<br/>", itinerary_response)
-          itinerary_formatted <- gsub("DAY (\\d+)", "<h3 style='color: #27ae60; margin-top: 20px;'>DAY \\1</h3>", 
-                                     itinerary_formatted)
+          if (!is.null(rv$itinerary_data) && length(rv$itinerary_data) > 0) {
+            cat("  Rendering", length(rv$itinerary_data), "days with boxes\n")
+            
+            return(tagList(lapply(rv$itinerary_data, function(day) {
+              if (is.null(day) || is.null(day$attractions)) return(NULL)
+              
+              day_label <- day$day_label %||% paste0("Day ", day$day)
+              
+              attraction_boxes <- tagList(lapply(day$attractions, function(attr) {
+                if (is.null(attr$name)) return(NULL)
+                
+                time_label <- paste0(attr$time_start %||% "??:??", " - ", attr$time_end %||% "??:??")
+                
+                tags$details(
+                  tags$summary(
+                    tags$strong(attr$name),
+                    tags$span(class = "text-muted", style = "float:right; font-size:0.85em;",
+                             time_label)
+                  ),
+                  tags$div(
+                    style = "background-color: #f9f9f9; padding: 12px; border-radius: 4px; margin-top: 8px;",
+                    tags$p(tags$strong("Time: "), time_label),
+                    tags$p(attr$description %||% "No description"),
+                    tags$p(class = "text-muted", style = "font-size:0.9em;",
+                          "📍 ", 
+                          if (!is.null(attr$latitude)) round(attr$latitude, 4) else "?",
+                          ", ", 
+                          if (!is.null(attr$longitude)) round(attr$longitude, 4) else "?")
+                  )
+                )
+              }))
+              
+              tags$div(
+                style = "background-color: #f0f8ff; padding: 12px; border-radius: 4px; margin-bottom: 12px; border-left: 4px solid #2196F3;",
+                tags$h5(day_label),
+                attraction_boxes
+              )
+            })))
+          }
           
-          HTML(paste0(
-            "<div style='background-color: #f9f9f9; padding: 20px; border-radius: 4px; ",
-            "border-left: 4px solid #27ae60;'>",
-            itinerary_formatted,
-            "</div>"
-          ))
+          # FALLBACK
+          cat("  Falling back to text display\n")
+          tags$div(
+            tags$div(class = "alert alert-warning",
+              "⚠️ GPS coordinates not available. Showing text itinerary:"),
+            tags$div(
+              style = "background-color: #f9f9f9; padding: 15px; border-radius: 4px; margin-top: 10px; white-space: pre-wrap; max-height: 500px; overflow-y: auto;",
+              tags$code(rv$generated_itinerary)
+            )
+          )
         })
         
         output$itinerary_status <- renderUI({
-          tags$div(class = "alert alert-success",
-                  tags$strong("✓ Itinerary Generated! "),
-                  "Your ", input$num_days, "-day plan is ready. ",
-                  "You can refine it, download it, or start a new search.",
-                  style = "margin-top: 20px;")
+          if (!is.null(rv$itinerary_data) && length(rv$itinerary_data) > 0) {
+            tags$div(class = "alert alert-success",
+                    tags$strong("✓ Itinerary created with GPS!"))
+          } else {
+            tags$div(class = "alert alert-warning",
+                    tags$strong("⚠️ Itinerary created (text mode)"))
+          }
         })
         
+        cat("✅ [GENERATE] Success!\n")
+        
       }, error = function(e) {
+        cat("❌ [ERROR]:", e$message, "\n")
         shinyjs::hide("itinerary_loading_spinner", anim = TRUE)
         output$itinerary_status <- renderUI({
           tags$div(class = "alert alert-danger",
-                  tags$strong("Error: "), e$message)
+                  tags$strong("❌ Error: "), e$message)
         })
-        showNotification(paste("Error generating itinerary:", e$message), type = "error", duration = 10)
       })
     })
     
     # ==================
-    # DOWNLOAD ITINERARY
+    # MAP
     # ==================
-    output$download_itinerary <- downloadHandler(
-      filename = function() {
-        paste0(input$destination, "_itinerary_", input$num_days, "days.txt")
-      },
-      content = function(file) {
-        if (!is.null(rv$generated_itinerary)) {
-          writeLines(rv$generated_itinerary, file)
+    
+    output$trip_map <- plotly::renderPlotly({
+      if (is.null(rv$itinerary_data) || length(rv$itinerary_data) == 0) {
+        return(plotly::plot_ly() %>%
+          plotly::layout(title = "Map will appear after generating itinerary"))
+      }
+      
+      tryCatch({
+        all_attractions <- do.call(rbind, lapply(seq_along(rv$itinerary_data), function(i) {
+          day <- rv$itinerary_data[[i]]
+          if (is.null(day$attractions)) return(NULL)
+          
+          do.call(rbind, lapply(day$attractions, function(attr) {
+            data.frame(
+              day = day$day,
+              day_label = day$day_label,
+              name = attr$name,
+              latitude = as.numeric(attr$latitude),
+              longitude = as.numeric(attr$longitude),
+              time_start = attr$time_start,
+              time_end = attr$time_end,
+              description = attr$description,
+              stringsAsFactors = FALSE
+            )
+          }))
+        }))
+        
+        if (is.null(all_attractions) || nrow(all_attractions) == 0) {
+          return(plotly::plot_ly() %>%
+            plotly::layout(title = "No attractions with coordinates"))
+        }
+        
+        all_attractions <- all_attractions[!is.na(all_attractions$latitude) & !is.na(all_attractions$longitude), ]
+        
+        if (nrow(all_attractions) == 0) {
+          return(plotly::plot_ly() %>%
+            plotly::layout(title = "No valid coordinates available"))
+        }
+        
+        day_colors <- c("#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#98D8C8", "#F7DC6F", "#BB8FCE")
+        all_attractions$day_color <- day_colors[(all_attractions$day - 1) %% length(day_colors) + 1]
+        
+        all_attractions$hover_detail <- paste0(
+          "<b>", all_attractions$name, "</b><br>",
+          all_attractions$day_label, "<br>",
+          all_attractions$time_start, " - ", all_attractions$time_end, "<br>",
+          all_attractions$description
+        )
+        
+        p <- plotly::plot_ly(source = map_source, data = all_attractions)
+        
+        for (d in unique(all_attractions$day)) {
+          day_data <- all_attractions[all_attractions$day == d, ]
+          day_label <- day_data$day_label[1]
+          day_color <- day_data$day_color[1]
+          
+          p <- plotly::add_trace(p,
+            data = day_data,
+            type = "scattermapbox",
+            lon = ~longitude,
+            lat = ~latitude,
+            mode = "markers",
+            name = day_label,
+            marker = list(size = 12, color = day_color, opacity = 0.85),
+            text = ~hover_detail,
+            hovertemplate = "%{text}<extra></extra>",
+            customdata = ~name
+          )
+        }
+        
+        lat_center <- mean(all_attractions$latitude, na.rm = TRUE)
+        lon_center <- mean(all_attractions$longitude, na.rm = TRUE)
+        
+        p |> plotly::layout(
+          mapbox = list(
+            style = "open-street-map",
+            center = list(lon = lon_center, lat = lat_center),
+            zoom = 12
+          ),
+          showlegend = TRUE,
+          legend = list(orientation = "h", y = -0.02, bgcolor = "rgba(255,255,255,0.85)"),
+          margin = list(l = 0, r = 0, t = 0, b = 0)
+        ) |>
+          plotly::config(displaylogo = FALSE)
+        
+      }, error = function(e) {
+        cat("Map rendering error:", e$message, "\n")
+        plotly::plot_ly() %>%
+          plotly::layout(title = paste("Map Error:", e$message))
+      })
+    })
+    
+    observeEvent(plotly::event_data("plotly_click", source = map_source), {
+      click <- plotly::event_data("plotly_click", source = map_source)
+      if (!is.null(click) && !is.null(click$customdata)) {
+        rv$selected_attraction <- click$customdata[1]
+      }
+    })
+    
+    output$attraction_detail <- renderUI({
+      if (is.null(rv$selected_attraction) || is.null(rv$itinerary_data)) {
+        return(tags$p("Click a marker to see details", class = "text-muted"))
+      }
+      
+      for (day in rv$itinerary_data) {
+        if (is.null(day$attractions)) next
+        for (attr in day$attractions) {
+          if (!is.null(attr$name) && attr$name == rv$selected_attraction) {
+            return(tagList(
+              tags$h4(attr$name),
+              tags$p(tags$strong("Day: "), day$day_label %||% paste0("Day ", day$day)),
+              tags$p(tags$strong("Time: "), attr$time_start, " - ", attr$time_end),
+              tags$p(attr$description),
+              tags$p(class = "text-muted",
+                    "📍 ", attr$latitude, ", ", attr$longitude)
+            ))
+          }
         }
       }
-    )
+      tags$p("Not found", class = "text-muted")
+    })
     
     # ==================
-    # EXPORT FORMATS: HTML, PDF, CALENDAR
+    # DOWNLOADS - HIGH QUALITY HTML
     # ==================
     
-    # HTML Export (with map placeholder)
     output$download_html <- downloadHandler(
-      filename = function() {
-        paste0(input$destination, "_itinerary_", input$num_days, "days.html")
-      },
+      filename = function() { paste0(input$destination, "_itinerary.html") },
       content = function(file) {
-        if (!is.null(rv$generated_itinerary)) {
-          # Format itinerary for HTML
-          itinerary_html_content <- gsub("\\n", "</p><p>", rv$generated_itinerary)
-          itinerary_html_content <- gsub("DAY (\\d+)", "<h2 style='color: #27ae60; page-break-before: avoid; margin-top: 30px;'>DAY \\1</h2>", 
-                                        itinerary_html_content)
-          
-          html_content <- paste0(
+        tryCatch({
+          # Build HTML from structured itinerary
+          html_content <- c(
             "<!DOCTYPE html>",
-            "<html lang='en'>",
+            "<html lang=\"en\">",
             "<head>",
-            "  <meta charset='UTF-8'>",
-            "  <meta name='viewport' content='width=device-width, initial-scale=1.0'>",
-            "  <title>", input$destination, " - ", input$num_days, " Day Itinerary</title>",
+            "  <meta charset=\"UTF-8\">",
+            "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">",
+            paste0("  <title>", input$destination, " Itinerary</title>"),
             "  <style>",
             "    * { margin: 0; padding: 0; box-sizing: border-box; }",
-            "    body { font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; line-height: 1.6; color: #333; }",
-            "    .container { max-width: 900px; margin: 0 auto; padding: 20px; }",
-            "    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; text-align: center; }",
-            "    .header h1 { font-size: 2.5em; margin-bottom: 10px; }",
-            "    .header p { font-size: 1.1em; opacity: 0.9; }",
-            "    .trip-info { background: #f0f7ff; border-left: 4px solid #667eea; padding: 15px; margin-bottom: 30px; border-radius: 4px; }",
-            "    .trip-info p { margin: 8px 0; }",
-            "    h2 { color: #27ae60; margin-top: 40px; margin-bottom: 15px; border-bottom: 2px solid #27ae60; padding-bottom: 10px; }",
-            "    p { margin-bottom: 12px; text-align: justify; }",
-            "    .map-section { margin: 40px 0; padding: 30px; background: #f5f5f5; border: 2px dashed #ccc; border-radius: 8px; text-align: center; }",
-            "    .map-section h3 { color: #667eea; margin-bottom: 10px; }",
-            "    .map-section p { color: #999; font-size: 0.95em; }",
-            "    .footer { text-align: center; margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 0.9em; }",
-            "    @media print { .map-section { page-break-inside: avoid; } }",
-            "    @media (max-width: 768px) { .header { padding: 20px; } .header h1 { font-size: 1.8em; } .container { padding: 15px; } }",
+            "    body {",
+            "      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;",
+            "      line-height: 1.6;",
+            "      color: #333;",
+            "      background-color: #f5f5f5;",
+            "      padding: 20px;",
+            "    }",
+            "    .container {",
+            "      max-width: 900px;",
+            "      margin: 0 auto;",
+            "      background-color: white;",
+            "      padding: 40px;",
+            "      border-radius: 8px;",
+            "      box-shadow: 0 2px 10px rgba(0,0,0,0.1);",
+            "    }",
+            "    .header {",
+            "      border-bottom: 3px solid #2196F3;",
+            "      padding-bottom: 20px;",
+            "      margin-bottom: 30px;",
+            "    }",
+            "    .header h1 {",
+            "      color: #2196F3;",
+            "      font-size: 2.5em;",
+            "      margin-bottom: 10px;",
+            "    }",
+            "    .trip-info {",
+            "      background-color: #e3f2fd;",
+            "      padding: 15px;",
+            "      border-radius: 4px;",
+            "      margin-bottom: 20px;",
+            "    }",
+            "    .trip-info p {",
+            "      margin: 5px 0;",
+            "    }",
+            "    .day-section {",
+            "      margin-bottom: 40px;",
+            "      page-break-inside: avoid;",
+            "    }",
+            "    .day-header {",
+            "      background: linear-gradient(135deg, #2196F3, #1976D2);",
+            "      color: white;",
+            "      padding: 15px;",
+            "      border-radius: 4px;",
+            "      margin-bottom: 15px;",
+            "      font-size: 1.3em;",
+            "      font-weight: bold;",
+            "    }",
+            "    .attraction {",
+            "      border-left: 4px solid #2196F3;",
+            "      padding: 15px;",
+            "      margin-bottom: 15px;",
+            "      background-color: #f9f9f9;",
+            "      border-radius: 4px;",
+            "      page-break-inside: avoid;",
+            "    }",
+            "    .attraction-name {",
+            "      font-size: 1.2em;",
+            "      font-weight: bold;",
+            "      color: #1976D2;",
+            "      margin-bottom: 8px;",
+            "    }",
+            "    .attraction-time {",
+            "      background-color: #e3f2fd;",
+            "      padding: 8px 12px;",
+            "      border-radius: 4px;",
+            "      display: inline-block;",
+            "      font-weight: bold;",
+            "      color: #1976D2;",
+            "      margin-bottom: 10px;",
+            "    }",
+            "    .attraction-description {",
+            "      margin: 10px 0;",
+            "      line-height: 1.6;",
+            "    }",
+            "    .attraction-coords {",
+            "      font-size: 0.9em;",
+            "      color: #999;",
+            "      margin-top: 8px;",
+            "    }",
+            "    .footer {",
+            "      border-top: 1px solid #ddd;",
+            "      padding-top: 20px;",
+            "      margin-top: 40px;",
+            "      text-align: center;",
+            "      color: #999;",
+            "      font-size: 0.9em;",
+            "    }",
+            "    @media print {",
+            "      body { background: white; }",
+            "      .container { box-shadow: none; padding: 0; }",
+            "    }",
             "  </style>",
             "</head>",
             "<body>",
-            "  <div class='container'>",
-            "    <div class='header'>",
-            "      <h1>🌍 ", input$destination, " Itinerary</h1>",
-            "      <p>", input$num_days, "-Day Travel Plan</p>",
+            "  <div class=\"container\">",
+            "    <div class=\"header\">",
+            paste0("      <h1>🌍 ", input$destination, " Itinerary</h1>"),
             "    </div>",
-            "    <div class='trip-info'>",
-            "      <p><strong>Destination:</strong> ", input$destination, "</p>",
-            "      <p><strong>Duration:</strong> ", input$num_days, " day(s)</p>",
-            "      <p><strong>Daily Hours:</strong> ", input$start_time, " - ", input$end_time, "</p>",
-            "      <p><strong>Generated:</strong> ", format(Sys.time(), '%B %d, %Y at %H:%M'), "</p>",
-            "    </div>",
-            "    <div class='itinerary-content'>",
-            "      <p>", itinerary_html_content, "</p>",
-            "    </div>",
-            "    <div class='map-section'>",
-            "      <h3>📍 Interactive Map</h3>",
-            "      <p>Map visualization showing all attractions and suggested routes.</p>",
-            "      <p style='margin-top: 20px; padding: 20px; background: white; border-radius: 4px;'>[Map will be displayed here - optimized for your preferred map library]</p>",
-            "    </div>",
-            "    <div class='footer'>",
-            "      <p>Generated by AI Travel Itinerary Planner | Print-friendly format</p>",
-            "      <p>Open in any web browser or print to PDF for offline access</p>",
+            "    <div class=\"trip-info\">",
+            paste0("      <p><strong>Trip Duration:</strong> ", input$num_days, " day(s)</p>"),
+            paste0("      <p><strong>Start Date:</strong> ", format(input$trip_start_date, "%A, %B %d, %Y"), "</p>"),
+            paste0("      <p><strong>End Date:</strong> ", format(input$trip_end_date, "%A, %B %d, %Y"), "</p>"),
+            "    </div>"
+          )
+          
+          # Add day sections
+          if (!is.null(rv$itinerary_data) && length(rv$itinerary_data) > 0) {
+            for (day in rv$itinerary_data) {
+              html_content <- c(html_content,
+                paste0("    <div class=\"day-section\">"),
+                paste0("      <div class=\"day-header\">", day$day_label, "</div>")
+              )
+              
+              if (!is.null(day$attractions)) {
+                for (attr in day$attractions) {
+                  html_content <- c(html_content,
+                    "      <div class=\"attraction\">",
+                    paste0("        <div class=\"attraction-name\">", attr$name, "</div>"),
+                    paste0("        <div class=\"attraction-time\">🕐 ", attr$time_start, " - ", attr$time_end, "</div>"),
+                    paste0("        <div class=\"attraction-description\">", attr$description, "</div>"),
+                    paste0("        <div class=\"attraction-coords\">📍 Latitude: ", round(attr$latitude, 4), ", Longitude: ", round(attr$longitude, 4), "</div>"),
+                    "      </div>"
+                  )
+                }
+              }
+              
+              html_content <- c(html_content, "    </div>")
+            }
+          }
+          
+          # Add footer
+          html_content <- c(html_content,
+            "    <div class=\"footer\">",
+            paste0("      <p>Generated on ", format(Sys.time(), "%A, %B %d, %Y at %H:%M %Z"), "</p>"),
+            "      <p>Travel Itinerary Planner - Powered by Claude AI</p>",
             "    </div>",
             "  </div>",
             "</body>",
@@ -386,264 +593,196 @@ travel_itinerary_planner_server <- function(id, api_manager) {
           )
           
           writeLines(html_content, file)
-        }
+          cat("✅ HTML generated\n")
+          
+        }, error = function(e) {
+          cat("HTML error:", e$message, "\n")
+          writeLines("<html><body><p>Error generating HTML</p></body></html>", file)
+        })
       }
     )
     
-    # PDF Export (mobile-friendly)
+    # ==================
+    # DOWNLOADS - HIGH QUALITY PDF
+    # ==================
+    
     output$download_pdf <- downloadHandler(
-      filename = function() {
-        paste0(input$destination, "_itinerary_", input$num_days, "days.pdf")
-      },
+      filename = function() { paste0(input$destination, "_itinerary.pdf") },
       content = function(file) {
-        if (!is.null(rv$generated_itinerary)) {
-          tryCatch({
-            # Create temporary markdown file for conversion
-            temp_md <- tempfile(fileext = ".md")
-            
-            pdf_content <- paste0(
-              "---\n",
-              "title: '", input$destination, " - ", input$num_days, " Day Itinerary'\n",
-              "author: 'AI Travel Planner'\n",
-              "date: '", format(Sys.time(), '%B %d, %Y'), "'\n",
-              "geometry: margin=0.5in\n",
-              "mainfont: 'Arial'\n",
-              "fontsize: 11pt\n",
-              "---\n\n",
-              "# 🌍 ", input$destination, " Itinerary\n\n",
-              "**Duration:** ", input$num_days, " day(s)  \n",
-              "**Daily Hours:** ", input$start_time, " - ", input$end_time, "  \n",
-              "**Generated:** ", format(Sys.time(), '%B %d, %Y at %H:%M'), "\n\n",
-              "---\n\n",
-              rv$generated_itinerary, "\n\n",
-              "---\n\n",
-              "## 📍 Map & Transportation\n\n",
-              "An interactive map showing all attractions and suggested routes will be displayed in the HTML version.\n",
-              "For this PDF version, refer to Google Maps with the listed attractions for detailed directions.\n\n",
-              "---\n\n",
-              "*Generated by AI Travel Itinerary Planner*  \n",
-              "*Mobile-optimized PDF format - readable on all devices*\n"
-            )
-            
-            writeLines(pdf_content, temp_md)
-            
-            # Try using rmarkdown if available
-            if (requireNamespace("rmarkdown", quietly = TRUE)) {
-              rmarkdown::render(
-                temp_md,
-                output_format = rmarkdown::pdf_document(
-                  highlight = "default",
-                  toc = TRUE,
-                  toc_depth = 2
-                ),
-                output_file = file,
-                quiet = TRUE
+        tryCatch({
+          # Create markdown content for PDF
+          md_content <- c(
+            "---",
+            "title: \"Travel Itinerary\"",
+            "author: \"Travel Planner\"",
+            "date: \"" , format(Sys.Date(), "%B %d, %Y"), "\"",
+            "output: pdf_document",
+            "---",
+            "",
+            paste0("# 🌍 ", input$destination, " Itinerary"),
+            "",
+            "## Trip Information",
+            "",
+            paste0("- **Duration:** ", input$num_days, " day(s)"),
+            paste0("- **Start Date:** ", format(input$trip_start_date, "%A, %B %d, %Y")),
+            paste0("- **End Date:** ", format(input$trip_end_date, "%A, %B %d, %Y")),
+            ""
+          )
+          
+          # Add itinerary content
+          if (!is.null(rv$itinerary_data) && length(rv$itinerary_data) > 0) {
+            for (day in rv$itinerary_data) {
+              md_content <- c(md_content,
+                paste0("## ", day$day_label),
+                ""
               )
-            } else {
-              # Fallback: write markdown-formatted text
-              writeLines(pdf_content, file)
-            }
-            
-            unlink(temp_md)
-          }, error = function(e) {
-            # Fallback to text-based PDF content
-            pdf_lines <- c(
-              paste0("ITINERARY: ", input$destination, " - ", input$num_days, " DAYS"),
-              paste0("Daily Hours: ", input$start_time, " - ", input$end_time),
-              paste0("Generated: ", format(Sys.time(), '%B %d, %Y at %H:%M')),
-              "",
-              "---------------------------------------------",
-              "",
-              rv$generated_itinerary,
-              "",
-              "---------------------------------------------",
-              "",
-              "Mobile-friendly PDF format",
-              "Readable on all devices",
-              "",
-              "Generated by AI Travel Itinerary Planner"
-            )
-            writeLines(pdf_lines, file)
-          })
-        }
-      }
-    )
-    
-    # Calendar (.ics) Export for Outlook, Google Calendar, etc.
-    output$download_calendar <- downloadHandler(
-      filename = function() {
-        paste0(input$destination, "_itinerary_", input$num_days, "days.ics")
-      },
-      content = function(file) {
-        if (!is.null(rv$generated_itinerary)) {
-          tryCatch({
-            # Parse itinerary to extract activities with times
-            lines <- strsplit(rv$generated_itinerary, "\n")[[1]]
-            
-            # Create iCalendar format
-            ics_content <- c(
-              "BEGIN:VCALENDAR",
-              "VERSION:2.0",
-              "PRODID:-//AI Travel Planner//Travel Itinerary//EN",
-              "CALSCALE:GREGORIAN",
-              paste0("X-WR-CALNAME:", input$destination, " Itinerary"),
-              paste0("X-WR-TIMEZONE:UTC"),
-              paste0("DESCRIPTION:", input$destination, " - ", input$num_days, " Day Travel Plan"),
-              ""
-            )
-            
-            # Extract date for calendar (assume starting today)
-            start_date <- Sys.Date()
-            
-            # Parse days and create events
-            day_num <- 0
-            current_time <- paste0(gsub(":", "", input$start_time), "00")
-            
-            for (i in seq_along(lines)) {
-              line <- trimws(lines[i])
               
-              # Check if line starts a new day
-              if (grepl("^DAY\\s+\\d+", line, ignore.case = TRUE)) {
-                day_num <- day_num + 1
-                event_date <- format(start_date + (day_num - 1), "%Y%m%d")
-              }
-              
-              # Look for time entries (HH:MM format)
-              if (grepl("^\\d{1,2}:\\d{2}", line) && day_num > 0) {
-                # Extract time and activity
-                time_match <- regexpr("^\\d{1,2}:\\d{2}[AP]M", line)
-                if (time_match != -1) {
-                  time_str <- regmatches(line, time_match)
-                  activity <- trimws(sub("^\\d{1,2}:\\d{2}[AP]M\\s*-?\\s*", "", line))
-                  
-                  if (activity != "" && nchar(activity) > 0) {
-                    # Convert time to 24hr format for iCal
-                    time_24 <- convert_to_24hr(time_str)
-                    
-                    # Create event
-                    event_start <- paste0(event_date, "T", time_24, "00Z")
-                    event_end <- paste0(event_date, "T", 
-                                       add_minutes_to_time(time_24, 120), "00Z")
-                    
-                    ics_content <- c(
-                      ics_content,
-                      "BEGIN:VEVENT",
-                      paste0("UID:travel-", day_num, "-", i, "@travelplanner.local"),
-                      paste0("DTSTAMP:", format(Sys.time(), "%Y%m%dT%H%M%SZ")),
-                      paste0("DTSTART:", event_start),
-                      paste0("DTEND:", event_end),
-                      paste0("SUMMARY:", activity),
-                      paste0("DESCRIPTION:Activity in ", input$destination, " itinerary"),
-                      "STATUS:CONFIRMED",
-                      "SEQUENCE:0",
-                      "END:VEVENT",
-                      ""
-                    )
-                  }
+              if (!is.null(day$attractions)) {
+                for (idx in seq_along(day$attractions)) {
+                  attr <- day$attractions[[idx]]
+                  md_content <- c(md_content,
+                    paste0("### ", idx, ". ", attr$name),
+                    "",
+                    paste0("**Time:** ", attr$time_start, " - ", attr$time_end),
+                    "",
+                    paste0("**Location:** ", round(attr$latitude, 4), ", ", round(attr$longitude, 4)),
+                    "",
+                    paste0(attr$description),
+                    "",
+                    "---",
+                    ""
+                  )
                 }
               }
             }
-            
-            ics_content <- c(ics_content, "END:VCALENDAR")
-            writeLines(ics_content, file)
-            
-          }, error = function(e) {
-            # Fallback: create basic calendar with full itinerary as single event
-            event_date <- format(Sys.Date(), "%Y%m%d")
-            event_start <- paste0(event_date, "T090000Z")
-            event_end <- paste0(event_date, "T170000Z")
-            
-            ics_lines <- c(
-              "BEGIN:VCALENDAR",
-              "VERSION:2.0",
-              "PRODID:-//AI Travel Planner//Travel Itinerary//EN",
-              "CALSCALE:GREGORIAN",
-              paste0("X-WR-CALNAME:", input$destination, " Itinerary"),
-              "BEGIN:VEVENT",
-              paste0("UID:travel-main@travelplanner.local"),
-              paste0("DTSTAMP:", format(Sys.time(), "%Y%m%dT%H%M%SZ")),
-              paste0("DTSTART:", event_start),
-              paste0("DTEND:", event_end),
-              paste0("SUMMARY:", input$destination, " - ", input$num_days, " Day Trip"),
-              paste0("DESCRIPTION:", gsub("\n", "\\n", rv$generated_itinerary)),
-              "STATUS:CONFIRMED",
-              "END:VEVENT",
-              "END:VCALENDAR"
-            )
-            
-            writeLines(ics_lines, file)
+          }
+          
+          md_content <- c(md_content,
+            "## Notes",
+            "",
+            "- Plan transportation between attractions in advance",
+            "- Check opening hours before visiting",
+            "- Make restaurant reservations if needed",
+            "",
+            paste0("*Generated on ", format(Sys.time(), "%A, %B %d, %Y at %H:%M"), "*")
+          )
+          
+          # Write temp markdown file
+          temp_md <- tempfile(fileext = ".md")
+          writeLines(md_content, temp_md)
+          
+          # Render to PDF
+          rmarkdown::render(
+            temp_md,
+            output_file = file,
+            output_format = "pdf_document",
+            quiet = TRUE
+          )
+          
+          cat("✅ PDF generated\n")
+          
+          # Clean up temp file
+          unlink(temp_md)
+          
+        }, error = function(e) {
+          cat("PDF error:", e$message, "\n")
+          # Fallback: create simple text PDF
+          tryCatch({
+            temp_txt <- tempfile(fileext = ".txt")
+            writeLines(c("Travel Itinerary", input$destination, "", 
+                        "PDF generation requires rmarkdown and tinytex packages."), temp_txt)
+            file.copy(temp_txt, file)
+            unlink(temp_txt)
+          }, error = function(e2) {
+            cat("Fallback PDF error:", e2$message, "\n")
           })
-        }
+        })
       }
     )
     
-    # Helper function: Convert 12-hour time to 24-hour format
-    convert_to_24hr <- function(time_str) {
-      time_str <- trimws(time_str)
-      is_pm <- grepl("PM|pm", time_str)
-      time_clean <- gsub("[APap][Mm]", "", time_str)
-      parts <- strsplit(time_clean, ":")[[1]]
-      
-      if (length(parts) == 2) {
-        hour <- as.numeric(parts[1])
-        min <- as.numeric(parts[2])
-        
-        if (is_pm && hour != 12) {
-          hour <- hour + 12
-        } else if (!is_pm && hour == 12) {
-          hour <- 0
-        }
-        
-        return(sprintf("%02d%02d", hour, min))
+    # ==================
+    # DOWNLOADS - ICS CALENDAR
+    # ==================
+    
+    output$download_calendar <- downloadHandler(
+      filename = function() { paste0(input$destination, "_itinerary.ics") },
+      content = function(file) {
+        tryCatch({
+          if (is.null(rv$itinerary_data) || length(rv$itinerary_data) == 0) {
+            writeLines("BEGIN:VCALENDAR\nVERSION:2.0\nEND:VCALENDAR", file)
+            return()
+          }
+          
+          trip_start <- input$trip_start_date
+          events <- c()
+          
+          for (day_idx in seq_along(rv$itinerary_data)) {
+            day <- rv$itinerary_data[[day_idx]]
+            if (is.null(day$attractions)) next
+            
+            current_date <- trip_start + (day$day - 1)
+            
+            for (attr in day$attractions) {
+              if (is.null(attr$name)) next
+              
+              time_parts_start <- strsplit(attr$time_start, ":")[[1]]
+              time_parts_end <- strsplit(attr$time_end, ":")[[1]]
+              
+              dtstart <- paste0(format(current_date, "%Y%m%d"), "T", 
+                              time_parts_start[1], time_parts_start[2], "00")
+              dtend <- paste0(format(current_date, "%Y%m%d"), "T", 
+                            time_parts_end[1], time_parts_end[2], "00")
+              
+              uid <- paste0("trip-", gsub(" ", "-", attr$name), "-", day$day)
+              
+              events <- c(events,
+                "BEGIN:VEVENT",
+                paste0("UID:", uid, "@travelplanner"),
+                paste0("DTSTAMP:", format(Sys.time(), "%Y%m%dT%H%M%SZ")),
+                paste0("DTSTART:", dtstart),
+                paste0("DTEND:", dtend),
+                paste0("SUMMARY:", attr$name),
+                paste0("DESCRIPTION:", gsub("\n", "\\\\n", attr$description %||% "")),
+                "STATUS:CONFIRMED",
+                "END:VEVENT"
+              )
+            }
+          }
+          
+          ics <- c(
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Travel Planner//Travel Itinerary",
+            "CALSCALE:GREGORIAN",
+            events,
+            "END:VCALENDAR"
+          )
+          
+          writeLines(ics, file)
+          cat("✅ ICS generated\n")
+          
+        }, error = function(e) {
+          cat("ICS error:", e$message, "\n")
+          writeLines("BEGIN:VCALENDAR\nVERSION:2.0\nEND:VCALENDAR", file)
+        })
       }
-      return("090000")
-    }
-    
-    # Helper function: Add minutes to time
-    add_minutes_to_time <- function(time_str, minutes) {
-      hour <- as.numeric(substr(time_str, 1, 2))
-      min <- as.numeric(substr(time_str, 3, 4))
-      
-      total_min <- hour * 60 + min + minutes
-      new_hour <- (total_min %/% 60) %% 24
-      new_min <- total_min %% 60
-      
-      sprintf("%02d%02d", new_hour, new_min)
-    }
+    )
     
     # ==================
-    # SHARE & REFINE
+    # RESET
     # ==================
-    observeEvent(input$share_itinerary, {
-      showNotification("Share functionality coming soon! Copy-paste the itinerary or download it.",
-                      type = "info")
-    })
     
-    observeEvent(input$refine_itinerary, {
-      showNotification("Refinement options will allow you to adjust timing, add/remove places, or change constraints.",
-                      type = "info")
-    })
-    
-    # Start over
-    observeEvent(input$start_over, {
+    observeEvent(input$reset_discovery, {
+      cat("\n🔍 [RESET]\n")
       rv$discovered_places <- NULL
-      rv$selected_places <- character(0)
       rv$places_data <- NULL
       rv$generated_itinerary <- NULL
-      output$places_checkboxes <- renderUI(NULL)
-      output$discovery_status <- renderUI(NULL)
-      output$itinerary_html <- renderUI(NULL)
-      output$itinerary_status <- renderUI(NULL)
-      shinyjs::hide("itinerary_content", anim = TRUE)
-      shinyjs::hide("itinerary_loading_spinner", anim = TRUE)
-      shinyjs::show("places_checkboxes", anim = TRUE)
+      rv$itinerary_data <- NULL
+      rv$selected_attraction <- NULL
     })
     
-    # Initialize
     output$discovery_status <- renderUI(NULL)
     output$places_checkboxes <- renderUI(NULL)
-    output$itinerary_status <- renderUI(NULL)
-    shinyjs::hide("loading_spinner", anim = TRUE)
-    shinyjs::hide("itinerary_loading_spinner", anim = TRUE)
+    output$places_counter <- renderUI(NULL)
   })
 }

@@ -2,6 +2,9 @@
 # Travel Itinerary Planner Server Logic with Claude API
 
 travel_itinerary_planner_server <- function(id, api_manager) {
+    # Define %||% operator
+    `%||%` <- function(x, y) if (is.null(x)) y else x
+
   moduleServer(id, function(input, output, session) {
     
     ns <- session$ns

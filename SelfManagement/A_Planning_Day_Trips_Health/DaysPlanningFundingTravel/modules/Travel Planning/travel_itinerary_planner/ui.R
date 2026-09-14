@@ -1,10 +1,29 @@
 # modules/Travel Planning/travel_itinerary_planner/ui.R
 # Travel Itinerary Planner Module - Interactive UI
+# FIXED: Added client-side Plotly map capture
 
 travel_itinerary_planner_ui <- function(id) {
   ns <- NS(id)
 
   tagList(
+    # ==================
+    # JAVASCRIPT: Client-side Plotly map capture
+    # ==================
+    # This runs in the browser to capture the beautiful Plotly map as PNG
+    # without any server-side network access. Uses Plotly.toImage() which 
+    # is built into Plotly.js and runs entirely client-side.
+    tags$script(HTML("
+      // Make sure Plotly is available before we use it
+      if (typeof Plotly === 'undefined') {
+        console.warn('⚠️ Plotly not loaded yet - map capture may not work');
+      } else {
+        console.log('✅ Plotly.js is available for client-side map capture');
+      }
+    ")),
+    
+    # Hidden div to receive the map capture input value
+    tags$div(id = ns("map_capture_container"), style = "display: none;"),
+    
     # ====================
     # TAB 1: DESTINATION & PLACES
     # ====================
@@ -205,11 +224,14 @@ travel_itinerary_planner_ui <- function(id) {
         # Interactive Plotly Map Section
         h4("Interactive Trip Map"),
         p(class = "text-muted",
-          "Click on any numbered marker to see the attraction name, expected visit time, and description."),
+          "Click on any numbered marker to see the attraction name, expected visit time, and description. ",
+          tags$strong("Then click '💾 Save Map Image' to capture this beautiful map for your PDF/HTML exports!")),
         
         fluidRow(
           column(8,
-                 plotly::plotlyOutput(ns("trip_map"), height = "550px")
+                 # NOTE: The Plotly map renders beautifully here with real OSM tiles
+                 plotly::plotlyOutput(ns("trip_map"), height = "550px"),
+                 uiOutput(ns("save_map_button"))
           ),
           column(4,
                  box(title = "Attraction Details", status = "info", solidHeader = TRUE, width = 12,

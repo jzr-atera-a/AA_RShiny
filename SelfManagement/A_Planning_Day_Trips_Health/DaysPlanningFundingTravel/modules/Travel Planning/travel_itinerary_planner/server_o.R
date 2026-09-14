@@ -86,70 +86,6 @@ travel_itinerary_planner_server <- function(id, api_manager) {
       identical(as.integer(header), c(137L, 80L, 78L, 71L, 13L, 10L, 26L, 10L))
     }
     
-    # Guaranteed-offline map: plots the attractions' own lat/lon coordinates
-    # with base R graphics (grDevices::png + graphics). No network call at
-    # all, so this always works even when the server has no outbound
-    # internet access (or the map services above are unreachable/blocked).
-    # It's a schematic layout, not a street map, but it always renders.
-    generate_offline_map_png <- function(coords, itinerary_data, path, width_px = 900, height_px = 400) {
-      tryCatch({
-        grDevices::png(path, width = width_px, height = height_px, res = 100)
-        on.exit(grDevices::dev.off(), add = TRUE)
-        
-        lats <- coords$lats
-        lons <- coords$lons
-        
-        lat_pad <- max(diff(range(lats)) * 0.3, 0.01)
-        lon_pad <- max(diff(range(lons)) * 0.3, 0.01)
-        
-        graphics::par(mar = c(3, 3, 2, 1), bg = "white")
-        graphics::plot(
-          lons, lats, type = "n",
-          xlim = range(lons) + c(-lon_pad, lon_pad),
-          ylim = range(lats) + c(-lat_pad, lat_pad),
-          xlab = "Longitude", ylab = "Latitude",
-          main = "Trip Map (offline layout - no internet access from server)",
-          cex.main = 0.95, font.main = 2, col.main = "#2196F3"
-        )
-        graphics::grid(col = "grey85")
-        
-        day_colors <- c("#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#98D8C8", "#F7DC6F", "#BB8FCE")
-        marker_i <- 1
-        
-        if (!is.null(itinerary_data)) {
-          for (d_idx in seq_along(itinerary_data)) {
-            day <- itinerary_data[[d_idx]]
-            if (is.null(day$attractions)) next
-            day_col <- day_colors[((day$day %||% d_idx) - 1) %% length(day_colors) + 1]
-            
-            day_lats <- c(); day_lons <- c()
-            for (attr in day$attractions) {
-              lat <- suppressWarnings(as.numeric(attr$latitude))
-              lon <- suppressWarnings(as.numeric(attr$longitude))
-              if (length(lat) != 1 || is.na(lat) || length(lon) != 1 || is.na(lon)) next
-              day_lats <- c(day_lats, lat)
-              day_lons <- c(day_lons, lon)
-            }
-            
-            if (length(day_lats) > 1) {
-              graphics::lines(day_lons, day_lats, col = day_col, lty = 2, lwd = 1.2)
-            }
-            if (length(day_lats) > 0) {
-              graphics::points(day_lons, day_lats, pch = 21, bg = day_col, col = "white", cex = 2.3, lwd = 1)
-              graphics::text(day_lons, day_lats, labels = marker_i:(marker_i + length(day_lats) - 1),
-                              cex = 0.65, col = "white", font = 2)
-              marker_i <- marker_i + length(day_lats)
-            }
-          }
-        }
-        
-        TRUE
-      }, error = function(e) {
-        cat("  ❌ Offline map generation failed:", e$message, "\n")
-        FALSE
-      })
-    }
-    
     # ==================
     # DISCOVER PLACES
     # ==================
@@ -587,32 +523,8 @@ travel_itinerary_planner_server <- function(id, api_manager) {
       )
     })
     
-    
-    # ==================
-    # SAVE MAP IMAGE (CLIENT-SIDE CAPTURE)
-    # ==================
-    # FIX: Use Plotly.js's built-in client-side image export instead of trying
-    # to download map tiles from the network (which fails when server has no internet).
-    # This captures the exact beautiful map the user sees in the browser.
-    
-    output$save_map_button <- renderUI({
-      if (is.null(rv$itinerary_data) || length(rv$itinerary_data) == 0) {
-        return(NULL)
-      }
-      
-      tagList(
-        br(),
-        actionButton(ns("save_map_image"), "💾 Save Map Image", icon = icon("camera"),
-                     class = "btn-info", style = "width: 100%;"),
-        if (!is.null(rv$map_image_path)) {
-          tags$p(class = "text-success", style = "margin-top: 8px; font-size: 0.85em;",
-                 icon("check-circle"), " Map image saved. Ready for export.")
-        }
-      )
-    })
-    
     observeEvent(input$save_map_image, {
-      cat("\n📸 MAP CAPTURE: User clicked 'Save Map Image'\n")
+      cat("\n📸 MAP SAVE: User clicked 'Save Map Image'\n")
       
       if (is.null(rv$itinerary_data) || length(rv$itinerary_data) == 0) {
         cat("  ❌ No itinerary available yet\n")
@@ -620,106 +532,57 @@ travel_itinerary_planner_server <- function(id, api_manager) {
         return()
       }
       
-      # Trigger client-side JavaScript to capture the Plotly map
-      # This uses Plotly.toImage() which runs entirely in the browser - no server network access needed
-      plotly_div_id <- ns("trip_map")
-      cat("  📸 Requesting client-side map capture for Plotly div:", plotly_div_id, "\n")
+      coords <- get_all_coords(rv$itinerary_data)
       
-      # Tell JavaScript to capture the map and send back base64 data
-      shinyjs::runjs(sprintf("
-        (function() {
-          var plotDiv = document.getElementById('%s');
-          if (!plotDiv) {
-            console.error('❌ Could not find Plotly div: %s');
-            return;
-          }
-          console.log('📸 Capturing Plotly map via toImage()...');
-          
-          Plotly.toImage(plotDiv, { format: 'png', width: 1200, height: 600 })
-            .then(function(imgData) {
-              console.log('✅ Plotly map captured, sending to Shiny...');
-              // Send the data URL to Shiny
-              Shiny.setInputValue('%s', imgData, { priority: 'event' });
-            })
-            .catch(function(err) {
-              console.error('❌ Map capture failed:', err);
-              alert('❌ Map capture failed: ' + err.message);
-            });
-        })();
-      ", plotly_div_id, plotly_div_id, ns("map_capture_base64")))
-      
-      cat("  ⏳ Waiting for browser to send back map image...\n")
-    }, ignoreInit = TRUE)
-    
-    # Observer: when JavaScript sends back the base64 map image
-    observeEvent(input$map_capture_base64, {
-      cat("\n📸 MAP RECEIVED: Browser sent base64 image\n")
-      
-      base64_data <- input$map_capture_base64
-      
-      if (is.null(base64_data) || nchar(base64_data) < 500) {
-        cat("  ❌ Invalid base64 data received (too short)\n")
-        showNotification("Map capture failed - invalid data from browser", type = "error")
+      if (length(coords$lats) == 0) {
+        cat("  ❌ No GPS coordinates available to save\n")
+        showNotification("No map coordinates available - itinerary has no GPS data.", type = "warning")
         return()
       }
       
-      cat("  📊 Received", nchar(base64_data), "characters of base64 data\n")
+      urls <- build_static_map_urls(coords$lats, coords$lons)
       
-      # Strip the "data:image/png;base64," prefix if present
-      if (grepl("^data:image/png;base64,", base64_data)) {
-        base64_data <- sub("^data:image/png;base64,", "", base64_data)
-        cat("  ✂️ Stripped data URL prefix\n")
-      }
-      
-      # Create temp directory for maps
       map_dir <- file.path(tempdir(), "travel_maps")
       if (!dir.exists(map_dir)) dir.create(map_dir, recursive = TRUE)
       
       timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
       map_path <- file.path(map_dir, paste0("map_", timestamp, ".png"))
       
-      tryCatch({
-        cat("  🔄 Decoding base64 data...\n")
-        # Decode base64 to raw bytes
-        raw_bytes <- jsonlite::base64_dec(base64_data)
+      saved <- FALSE
+      for (source_name in c("primary", "fallback")) {
+        url <- urls[[source_name]]
+        if (is.null(url)) next
         
-        cat("  💾 Writing", length(raw_bytes), "bytes to file...\n")
-        # Write to file
-        writeBin(raw_bytes, map_path)
+        ok <- tryCatch({
+          utils::download.file(url, destfile = map_path, mode = "wb", quiet = TRUE)
+          is_valid_png(map_path)
+        }, error = function(e) {
+          cat("  ⚠️", source_name, "map source failed:", e$message, "\n")
+          FALSE
+        })
         
-        cat("  ✓ File written, verifying...\n")
-        # Verify it's actually a valid PNG (check magic bytes)
-        if (file.exists(map_path) && file.size(map_path) > 100) {
-          header <- readBin(map_path, "raw", 8)
-          # PNG magic: 137 80 78 71 13 10 26 10
-          is_png <- identical(as.integer(header), c(137L, 80L, 78L, 71L, 13L, 10L, 26L, 10L))
-          
-          if (is_png) {
-            rv$map_image_path <- map_path
-            cat("  ✅ Map image saved successfully\n")
-            cat("  📁 Path:", map_path, "\n")
-            cat("  📊 File size:", format(file.size(map_path), big.mark = ","), "bytes\n")
-            cat("  ✅ Ready for HTML, PDF, KML, GPX, Google Maps exports\n")
-            showNotification("✅ Map image captured and saved! Ready for export.", 
-                           type = "message", duration = 5)
-          } else {
-            cat("  ❌ PNG validation failed - invalid magic bytes\n")
-            stop("PNG validation failed - file header does not match PNG format")
-          }
+        if (isTRUE(ok)) {
+          cat("  ✅ Map image downloaded from '", source_name, "' source\n")
+          saved <- TRUE
+          break
         } else {
-          cat("  ❌ File missing or too small:", file.size(map_path), "bytes\n")
-          stop("File too small or doesn't exist - capture may have been incomplete")
+          cat("  ⚠️ '", source_name, "' source did not return a valid image - trying next option\n")
+          if (file.exists(map_path)) unlink(map_path)
         }
-      }, error = function(e) {
-        cat("  ❌ Error saving map:", e$message, "\n")
-        showNotification(paste("❌ Map save error:", e$message), type = "error", duration = 5)
-        if (file.exists(map_path)) {
-          unlink(map_path)
-          cat("  🗑️ Cleaned up incomplete file\n")
-        }
-      })
-    }, ignoreInit = TRUE)
-    
+      }
+      
+      if (saved) {
+        rv$map_image_path <- map_path
+        cat("  ✅ Map stored for export\n")
+        cat("  📁 Path:", map_path, "\n")
+        cat("  ✅ Ready to use in HTML, PDF, KML, GPX, Google Maps exports\n")
+        showNotification("✅ Map image saved! Ready for export.", type = "message")
+      } else {
+        rv$map_image_path <- NULL
+        cat("  ❌ Could not save a valid map image from any source\n")
+        showNotification("⚠️ Couldn't fetch a map image right now (map service unreachable). Try again in a moment.", type = "warning")
+      }
+    })
     
     # ==================
     # DOWNLOADS - HIGH QUALITY HTML

@@ -1,7 +1,7 @@
 module:
   id: "maternal_health_monitor"
   name: "Maternal Health Monitor"
-  description: "Continuity-gap timeline, intelligence layer & interventions, early-detection risk trajectory, statistical-concepts primer, concepts applied to our monitoring, cohort A/B simulation, and a clickable pregnancy-to-24-month intervention timeline"
+  description: "Continuity-gap timeline, intelligence layer & interventions, early-detection risk trajectory, and cohort A/B simulation for postpartum depression monitoring"
   version: "1.0.0"
   enabled: true
   menu:

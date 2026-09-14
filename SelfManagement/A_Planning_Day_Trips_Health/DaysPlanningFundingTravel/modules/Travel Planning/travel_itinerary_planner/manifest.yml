@@ -37,6 +37,5 @@ module:
       - shinyjs
       - DT
       - jsonlite
-      - rmarkdown
-      - tinytex
       - plotly
+      - png   # optional: used to embed the saved map image in PDF exports

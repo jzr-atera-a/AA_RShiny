@@ -26,22 +26,6 @@ module architecture as the DriveSafe Suite reference. Two main modules
      per-mother delta chart, and an interactive recommended-sample-size
      table (power calculation per outcome, with medical/statistical
      justification).
-   - **Statistical Concepts** — four boxes (Correlation, Causality,
-     Statistical Significance, A/B Testing) explaining each idea in plain
-     language with a general mental-health example, each with its own pair
-     of verified references.
-   - **Concepts Applied to Our Monitoring** — the same four ideas, applied
-     directly to this app's own simulated data: a live correlation scatter
-     (signal vs EPDS, with r computed on the fly), a confounding diagram,
-     a live-recomputed significance + effect-size recap of the cohort
-     comparison, and a table of what a real A/B trial would additionally
-     require.
-   - **Intervention Timeline** — a clickable care-pathway chart from 8 weeks
-     before birth to 24 months after, with an illustrative "risk index"
-     curve (support vs no support) and eleven intervention points; clicking
-     a point shows its evidence, timing rationale, and which Intelligence
-     Layer output it feeds. Includes the original pitch-deck matrescence
-     slide for context.
 
 ## References
 Every subtab cites two real, independently verifiable, Harvard-style
@@ -71,25 +55,6 @@ references at its foot (full list also in `R/utils_ppd_risk.R`,
 - Julious, S.A. (2004) 'Tutorial in biostatistics: sample sizes for
   clinical trials with Normal data', *Statistics in Medicine*, 23(12),
   pp. 1921–1986.
-- Kohavi, R., Longbotham, R., Sommerfield, D. and Henne, R.M. (2009)
-  'Controlled experiments on the web: survey and practical guide', *Data
-  Mining and Knowledge Discovery*, 18(1), pp. 140–181.
-- Altman, N. and Krzywinski, M. (2015) 'Points of significance: association,
-  correlation and causation', *Nature Methods*, 12(10), pp. 899–900.
-- Baglioni, C., Battagliese, G., Feige, B., Spiegelhalder, K., Nissen, C.,
-  Voderholzer, U., Lombardo, C. and Riemann, D. (2011) 'Insomnia as a
-  predictor of depression: a meta-analytic evaluation of longitudinal
-  epidemiological studies', *Journal of Affective Disorders*, 135(1-3),
-  pp. 10–19.
-- Hill, A.B. (1965) 'The environment and disease: association or
-  causation?', *Proceedings of the Royal Society of Medicine*, 58(5),
-  pp. 295–300.
-- Wasserstein, R.L. and Lazar, N.A. (2016) 'The ASA statement on p-values:
-  context, process, and purpose', *The American Statistician*, 70(2),
-  pp. 129–133.
-- Sullivan, G.M. and Feinn, R. (2012) 'Using effect size - or why the P
-  value is not enough', *Journal of Graduate Medical Education*, 4(3),
-  pp. 279–282.
 
 ## Colour palette
 Ported directly from a reference "Menu Degustacion" Shiny app's CSS: a deep

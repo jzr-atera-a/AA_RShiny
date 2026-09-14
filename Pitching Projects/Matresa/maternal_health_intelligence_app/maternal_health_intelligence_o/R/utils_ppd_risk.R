@@ -309,30 +309,6 @@ REFERENCES <- list(
   julious2004 = list(
     key = "Julious (2004)",
     text = "Julious, S.A. (2004) 'Tutorial in biostatistics: sample sizes for clinical trials with Normal data', Statistics in Medicine, 23(12), pp. 1921\u20131986."
-  ),
-  altman2015 = list(
-    key = "Altman and Krzywinski (2015)",
-    text = "Altman, N. and Krzywinski, M. (2015) 'Points of significance: association, correlation and causation', Nature Methods, 12(10), pp. 899\u2013900."
-  ),
-  baglioni2011 = list(
-    key = "Baglioni et al. (2011)",
-    text = "Baglioni, C., Battagliese, G., Feige, B., Spiegelhalder, K., Nissen, C., Voderholzer, U., Lombardo, C. and Riemann, D. (2011) 'Insomnia as a predictor of depression: a meta-analytic evaluation of longitudinal epidemiological studies', Journal of Affective Disorders, 135(1-3), pp. 10\u201319."
-  ),
-  hill1965 = list(
-    key = "Hill (1965)",
-    text = "Hill, A.B. (1965) 'The environment and disease: association or causation?', Proceedings of the Royal Society of Medicine, 58(5), pp. 295\u2013300."
-  ),
-  wasserstein2016 = list(
-    key = "Wasserstein and Lazar (2016)",
-    text = "Wasserstein, R.L. and Lazar, N.A. (2016) 'The ASA statement on p-values: context, process, and purpose', The American Statistician, 70(2), pp. 129\u2013133."
-  ),
-  sullivan2012 = list(
-    key = "Sullivan and Feinn (2012)",
-    text = "Sullivan, G.M. and Feinn, R. (2012) 'Using effect size - or why the P value is not enough', Journal of Graduate Medical Education, 4(3), pp. 279\u2013282."
-  ),
-  kohavi2009 = list(
-    key = "Kohavi et al. (2009)",
-    text = "Kohavi, R., Longbotham, R., Sommerfield, D. and Henne, R.M. (2009) 'Controlled experiments on the web: survey and practical guide', Data Mining and Knowledge Discovery, 18(1), pp. 140\u2013181."
   )
 )
 
@@ -342,88 +318,7 @@ concept_note <- function(...) {
   div(class = "concept-note", icon("info-circle"), " ", ...)
 }
 
-# Compact reference note for use *inside* an individual concept box, as
-# opposed to reference_panel_ui() which sits at the foot of a whole subtab.
-box_reference_note <- function(ids) {
-  items <- lapply(ids, function(id) REFERENCES[[id]]$text)
-  div(style = "background:rgba(74,144,226,0.10); border-left:2px solid #4a90e2; border-radius:5px; padding:6px 10px; margin-top:10px; font-size:10.5px; color:#c7d2fe; line-height:1.45;",
-    tags$strong(style = "color:#7ec8e3; font-size:10px; text-transform:uppercase; letter-spacing:0.03em;", "References"),
-    tags$ol(style = "margin:3px 0 0 0; padding-left:14px;",
-      lapply(items, function(t) tags$li(t))
-    )
-  )
-}
-
-# ── Intervention timeline (prenatal -> 24 months postpartum) ────────────────
-# Illustrative only: conceptual touchpoints and a conceptual risk curve to
-# show the LOGIC of layered intervention (each point's evidence is real and
-# cited; the smooth curve connecting them is for illustration, not measured
-# outcome data - the simulated cohort dataset elsewhere in the app only
-# covers 0-24 weeks postpartum, not this full pre-birth-to-24-month window).
-INTERVENTION_TIMELINE <- data.frame(
-  week = c(-8, -4, 0, 2, 7, 12, 26, 39, 52, 78, 104),
-  phase = c("Prenatal", "Prenatal", "Birth", "Early Postnatal", "Early Postnatal",
-            "Established Postnatal", "Established Postnatal", "Return-to-Work Transition",
-            "Return-to-Work Transition", "Extended Monitoring", "Extended Monitoring"),
-  label = c(
-    "Antenatal Psychoeducation & Baseline Capture",
-    "Support Network Mapping",
-    "Birth",
-    "First Continuous Check-in Review",
-    "Clinical Screening Checkpoint (EPDS, RAG-scored)",
-    "Structured Peer Support / Health Visitor Follow-up",
-    "Risk Trajectory Flag Window (predict & prevent)",
-    "Return-to-Work Planning Check-in",
-    "Return-to-Work Transition Support",
-    "Matrescence Review at 18 Months",
-    "Programme Completion & Handoff to Standard Care"
-  ),
-  twin_output = c(
-    "Personalised guidance", "Personalised guidance", NA, "Early detection",
-    "Clinical screening", "Clinical screening", "Early detection",
-    "Anonymised employer insights", "Anonymised employer insights",
-    "Early detection", "Clinical screening"
-  ),
-  description = c(
-    "Onboarding begins before birth: mood, sleep and support-context baselines are captured so every later signal is compared to this mother's own starting point, not a population average.",
-    "The app maps who is around the mother - partner, family, health visitor, employer - so the platform knows who can be looped in later if consent is given and a flag is raised.",
-    "Birth itself is not an intervention - it is the anchor point (week 0) that every other touchpoint on this timeline is measured relative to.",
-    "The first scheduled check-in after birth. Historically this is one of the quietest periods of contact (see the Continuity Gap tab); continuous check-ins close that gap from day one.",
-    "The one contact point that exists in standard NHS care. Here it is carried out using the validated EPDS instrument and scored into a RAG (red/amber/green) triage band for the clinician.",
-    "Where the evidence base for psychosocial and peer-support interventions is strongest - this is the point most directly grounded in randomised-trial evidence.",
-    "The behavioural composite score is now mature enough (12+ weeks of data) to detect divergence from baseline before a clinical threshold is crossed - the same logic shown on the Risk Trajectory tab.",
-    "Anonymised, aggregate signals (never individual mother-level data) are shared with participating employers to prepare a supported return, not to flag or penalise any individual.",
-    "The literature consistently identifies return-to-work as a high-risk transition for renewed symptoms and attrition - this is why the curve below shows a bump here even in the supported cohort.",
-    "A later check for the ongoing identity and physiological transition ('matrescence') that continues well past the postnatal period conventionally considered.",
-    "By 24 months the platform's intensive monitoring window (matching Matresa's own touchpoint design) ends, and the mother's record is handed back to standard long-term care."
-  ),
-  evidence_refs = I(list(
-    c("hurwitz2024"), c("bauer2014"), c("bauer2014"), c("abdalrazaq2023"),
-    c("cox1987"), c("dennis2013"), c("abdalrazaq2023", "hurwitz2024"),
-    c("bauer2014"), c("bauer2014"), c("altman2015"), c("cox1987")
-  )),
-  stringsAsFactors = FALSE
-)
-
-# Smooth illustrative curves through hand-set anchor points. Returns a
-# data frame of week / no_support / supported risk index (0-100) at weekly
-# resolution across the full window.
-intervention_timeline_curves <- function() {
-  weeks_out <- seq(-8, 104, by = 1)
-
-  anchor_week <- c(-8, 0, 2, 7, 12, 26, 39, 52, 65, 78, 104)
-  no_support  <- c(32, 38, 44, 52, 48, 44, 46, 58, 50, 44, 38)
-  supported   <- c(30, 33, 34, 30, 26, 22, 24, 32, 24, 19, 16)
-
-  f_no  <- stats::splinefun(anchor_week, no_support, method = "natural")
-  f_sup <- stats::splinefun(anchor_week, supported, method = "natural")
-
-  data.frame(
-    week = weeks_out,
-    no_support = pmin(100, pmax(0, f_no(weeks_out))),
-    supported  = pmin(100, pmax(0, f_sup(weeks_out)))
-  )
-}
+# Renders a small, consistently-styled reference panel at the foot of a
 # subtab. `ids` is a character vector of REFERENCES names, e.g.
 # reference_panel_ui(c("bauer2014", "cox1987")).
 reference_panel_ui <- function(ids) {

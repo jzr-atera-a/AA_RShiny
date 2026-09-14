@@ -93,7 +93,7 @@ travel_itinerary_planner_ui <- function(id) {
           column(6,
                  dateInput(ns("trip_start_date"),
                           "Trip Start Date:",
-                          value = Sys.Date() + 7,  # Default: one week from now
+                          value = Sys.Date() + 7,
                           min = Sys.Date(),
                           format = "yyyy-mm-dd"),
                  p(class = "text-muted", style = "font-size: 0.85em;",
@@ -102,7 +102,7 @@ travel_itinerary_planner_ui <- function(id) {
           column(6,
                  dateInput(ns("trip_end_date"),
                           "Trip End Date:",
-                          value = Sys.Date() + 10,  # Default: one week + 3 days
+                          value = Sys.Date() + 10,
                           min = Sys.Date(),
                           format = "yyyy-mm-dd"),
                  p(class = "text-muted", style = "font-size: 0.85em;",
@@ -209,7 +209,8 @@ travel_itinerary_planner_ui <- function(id) {
         
         fluidRow(
           column(8,
-                 plotly::plotlyOutput(ns("trip_map"), height = "550px")
+                 plotly::plotlyOutput(ns("trip_map"), height = "550px"),
+                 uiOutput(ns("save_map_button"))
           ),
           column(4,
                  box(title = "Attraction Details", status = "info", solidHeader = TRUE, width = 12,
