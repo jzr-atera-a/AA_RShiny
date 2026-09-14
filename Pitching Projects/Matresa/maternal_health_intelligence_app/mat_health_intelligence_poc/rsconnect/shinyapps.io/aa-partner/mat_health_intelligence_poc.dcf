@@ -1,0 +1,10 @@
+name: mat_health_intelligence_poc
+title:
+username: aa-partner
+account: aa-partner
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17884445
+bundleId: 12540403
+url: https://aa-partner.shinyapps.io/mat_health_intelligence_poc/
+version: 1

@@ -1,0 +1,32 @@
+module:
+  id: "visualize_kg_cytoscape"
+  name: "Visualize Graph (Cytoscape)"
+  description: "Interactive knowledge graph rendered with Cytoscape.js - nodes colored by entity type"
+  version: "1.0.0"
+  author: "Knowledge Graph Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Cytoscape Visualization"
+    icon: "share-nodes"
+    tabname: "visualize_kg_cytoscape"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - jsonlite
+
+    package_versions: {}
+
+  api:
+    required: ["bigquery"]
+    optional: []
+
+  data:
+    required: []
+    optional: []

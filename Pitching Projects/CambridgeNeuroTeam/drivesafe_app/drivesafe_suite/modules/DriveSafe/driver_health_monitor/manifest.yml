@@ -1,0 +1,16 @@
+module:
+  id: "driver_health_monitor"
+  name: "Driver Health Monitor"
+  description: "Real-time dashboard of key driver health and alertness metrics drawn from the DriveSafe framework"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Health Monitor"
+    icon: "heartbeat"
+    tabname: "driver_health_monitor"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, plotly, dplyr, DT]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

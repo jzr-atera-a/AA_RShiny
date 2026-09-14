@@ -1,0 +1,17 @@
+module:
+  id: "gantt_email_send"
+  name: "Email Notifications"
+  description: "Send email notifications to task assignees"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "Email Notifications"
+    icon: "paper-plane"
+    tabname: "gantt_email_send"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, DT, base64enc]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

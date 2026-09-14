@@ -1,0 +1,33 @@
+module:
+  id: "email_configuration"
+  name: "Email Configuration"
+  description: "Configure SMTP email settings for notifications"
+  version: "1.0.0"
+  author: "Gantt Converter Team"
+  
+  enabled: true
+  
+  menu:
+    label: "Email Configuration"
+    icon: "envelope"
+    tabname: "email_config"
+    badge:
+      label: null
+      color: null
+  
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - blastula
+    
+    package_versions:
+      blastula: ">= 0.3.0"
+  
+  api:
+    required: []
+    optional: []
+  
+  data:
+    required: []
+    optional: []

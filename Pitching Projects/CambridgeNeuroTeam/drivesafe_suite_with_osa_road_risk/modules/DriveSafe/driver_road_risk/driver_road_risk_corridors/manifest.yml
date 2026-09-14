@@ -1,0 +1,16 @@
+module:
+  id: "driver_road_risk_corridors"
+  name: "High-Risk Corridors"
+  description: "Ranks UK road corridors by OSA driver risk, shows CPAP treatment effect by road type and time-of-day risk patterns"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "High-Risk Corridors"
+    icon: "ranking-star"
+    tabname: "driver_road_risk_corridors"
+    badge: {}
+  dependencies:
+    packages: [shiny, shinydashboard, plotly, dplyr, DT]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

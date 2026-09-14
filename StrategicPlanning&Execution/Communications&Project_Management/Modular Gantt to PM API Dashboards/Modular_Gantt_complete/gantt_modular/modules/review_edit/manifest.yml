@@ -1,0 +1,10 @@
+module:
+  id: "review_edit"
+  name: "Review & Edit Tasks"
+  enabled: true
+  menu:
+    label: "Review & Edit Tasks"
+    icon: "tasks"
+    tabname: "review"
+  dependencies:
+    packages: [shiny, shinydashboard, DT]

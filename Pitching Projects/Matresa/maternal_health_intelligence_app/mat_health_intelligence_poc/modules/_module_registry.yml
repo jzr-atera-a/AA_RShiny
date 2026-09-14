@@ -1,0 +1,45 @@
+# modules/_module_registry.yml
+# Maternal Health Intelligence App - two main modules (sidebar groups):
+#   1. API Configuration       - generic, reused unchanged from the reference app
+#   2. Maternal Health Monitor - new, one module with four subtabs
+
+groups:
+  - id: api_config
+    label: "API Configuration"
+    icon: "key"
+    expanded: true
+    modules: [bigquery_auth, claude_api_config]
+
+  - id: maternal_health
+    label: "Maternal Health Monitor"
+    icon: "heartbeat"
+    expanded: true
+    modules: [maternal_health_monitor]
+
+modules:
+  bigquery_auth:
+    enabled: true
+    priority: 1
+    description: "BigQuery authentication - connects to maternal_screening_log table"
+
+  claude_api_config:
+    enabled: true
+    priority: 2
+    description: "Claude API credentials management"
+
+  maternal_health_monitor:
+    enabled: true
+    priority: 10
+    description: "Continuity-gap timeline, intelligence layer, early-detection trajectory and cohort A/B simulation"
+
+settings:
+  auto_install: false
+  check_versions: true
+  verbose: true
+  dev_mode: false
+
+app:
+  name: "Maternal Health Intelligence App"
+  version: "1.0.0"
+  description: "Postpartum depression screening and early-warning monitoring prototype"
+  author: "Maternal Health Intelligence Team"

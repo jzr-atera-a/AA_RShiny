@@ -1,0 +1,32 @@
+module:
+  id: "sixsigma_about"
+  name: "About Six Sigma Analysis"
+  description: "Schema documentation for six_sigma_diagrams and the delimiter convention"
+  version: "1.0.0"
+  author: "Six Sigma Analysis Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "About"
+    icon: "info-circle"
+    tabname: "sixsigma_about"
+    group: "Six Sigma Analysis"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: []
+
+  data:
+    required: []
+    optional: []

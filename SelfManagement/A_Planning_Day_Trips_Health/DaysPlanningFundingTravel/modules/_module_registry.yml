@@ -1,0 +1,318 @@
+# modules/_module_registry.yml
+# Central Module Registry - Business Operations Suite
+# Change 'enabled: false' to disable any module. Priority controls ordering
+# WITHIN each sidebar group. Group membership/order/expanded state is
+# controlled by the top-level `groups:` list below.
+
+groups:
+  - id: api_config
+    label: "API Configuration"
+    icon: "key"
+    expanded: true
+    modules: [bigquery_auth, claude_api_config]
+
+  - id: day_planner
+    label: "Day Planner"
+    icon: "route"
+    expanded: false
+    modules: [generate_schedule, schedule_bulk_import, schedule_add_single, schedule_browse, schedule_visualizations, schedule_about]
+
+  - id: diet_planner
+    label: "Diet Planner"
+    icon: "utensils"
+    expanded: false
+    modules: [generate_diet, diet_bulk_import, diet_add_single, diet_browse, diet_visualizations, diet_about]
+
+  - id: exercise_tracker
+    label: "Exercise Tracker"
+    icon: "dumbbell"
+    expanded: false
+    modules: [generate_workout, exercise_bulk_import, exercise_add_single, exercise_browse, exercise_visualizations, exercise_about]
+
+  - id: events_scheduling
+    label: "Events Scheduling"
+    icon: "calendar-alt"
+    expanded: false
+    modules: [scan_events, bulk_import_events, add_single_event, browse_events, visualizations_events, events_about]
+
+  - id: funding_programmes
+    label: "Funding Programmes"
+    icon: "hand-holding-usd"
+    expanded: false
+    modules: [generate_programme, funding_bulk_import, funding_add_single, funding_browse, funding_visualizations, funding_about]
+
+  - id: gantt_tickets
+    label: "Gantt to Tickets"
+    icon: "tasks"
+    expanded: false
+    modules: [gantt_api_config, gantt_email_config, gantt_upload, gantt_review_edit, gantt_submit_boards, gantt_email_send, gantt_manage_contacts, gantt_email_contacts]
+
+  - id: contact_manager
+    label: "Contact Manager"
+    icon: "address-book"
+    expanded: false
+    modules: [contacts_api_config, contacts_smtp_config, contacts_process, contacts_explore, contacts_customise_communication, contacts_send_email]
+
+  - id: travel_planning
+    label: "Travel Planning"
+    icon: "globe"
+    expanded: true
+    modules: [travel_itinerary_planner]
+
+modules:
+  # ---- API Configuration (shared by all three suites) ----
+  bigquery_auth:
+    enabled: true
+    priority: 1
+    description: "BigQuery authentication - one connection, three tables"
+
+  claude_api_config:
+    enabled: true
+    priority: 2
+    description: "Claude API credentials management, shared by all suites"
+
+  # ---- Day Planner ----
+  generate_schedule:
+    enabled: true
+    priority: 3
+    description: "AI-powered day/trip schedule generation"
+
+  schedule_bulk_import:
+    enabled: true
+    priority: 4
+    description: "Parse and upload schedules in bulk"
+
+  schedule_add_single:
+    enabled: true
+    priority: 5
+    description: "Add an individual schedule row entry"
+
+  schedule_browse:
+    enabled: true
+    priority: 6
+    description: "Browse and download all planned schedules"
+
+  schedule_visualizations:
+    enabled: true
+    priority: 7
+    description: "Itinerary timeline visualization with time-allocation chart"
+
+  schedule_about:
+    enabled: true
+    priority: 8
+    description: "Day Planner schema documentation"
+
+  # ---- Diet Planner ----
+  generate_diet:
+    enabled: true
+    priority: 9
+    description: "AI-generated daily meal plan"
+
+  diet_bulk_import:
+    enabled: true
+    priority: 10
+    description: "Parse and upload a day's diet log in bulk"
+
+  diet_add_single:
+    enabled: true
+    priority: 11
+    description: "Log a single meal entry"
+
+  diet_browse:
+    enabled: true
+    priority: 12
+    description: "Browse and download all logged diet days"
+
+  diet_visualizations:
+    enabled: true
+    priority: 13
+    description: "Daily nutrition timeline and macro chart"
+
+  diet_about:
+    enabled: true
+    priority: 14
+    description: "Diet Planner schema documentation"
+
+  # ---- Exercise Tracker ----
+  generate_workout:
+    enabled: true
+    priority: 15
+    description: "AI-generated workout plan"
+
+  exercise_bulk_import:
+    enabled: true
+    priority: 16
+    description: "Parse and upload a workout session in bulk"
+
+  exercise_add_single:
+    enabled: true
+    priority: 17
+    description: "Log a single exercise/activity entry"
+
+  exercise_browse:
+    enabled: true
+    priority: 18
+    description: "Browse and download all logged workouts"
+
+  exercise_visualizations:
+    enabled: true
+    priority: 19
+    description: "Workout timeline and volume/calories chart"
+
+  exercise_about:
+    enabled: true
+    priority: 20
+    description: "Exercise Tracker schema documentation"
+
+  # ---- Events Scheduling ----
+  scan_events:
+    enabled: true
+    priority: 30
+    description: "AI-powered city event scanning via Claude web search"
+
+  bulk_import_events:
+    enabled: true
+    priority: 31
+    description: "Parse and bulk-upload events text"
+
+  add_single_event:
+    enabled: true
+    priority: 32
+    description: "Manually add a single event"
+
+  browse_events:
+    enabled: true
+    priority: 33
+    description: "Browse and download all events"
+
+  visualizations_events:
+    enabled: true
+    priority: 34
+    description: "Event details, calendar, and chart visualizations"
+
+  events_about:
+    enabled: true
+    priority: 35
+    description: "Events Scheduling schema documentation"
+
+  # ---- Funding Programmes ----
+  generate_programme:
+    enabled: true
+    priority: 40
+    description: "AI-assisted grant/incubator/competition discovery"
+
+  funding_bulk_import:
+    enabled: true
+    priority: 41
+    description: "Parse and upload programmes in bulk"
+
+  funding_add_single:
+    enabled: true
+    priority: 42
+    description: "Add a single programme entry manually"
+
+  funding_browse:
+    enabled: true
+    priority: 43
+    description: "Browse and download all saved programmes"
+
+  funding_visualizations:
+    enabled: true
+    priority: 44
+    description: "Filterable programme visualizations with date-range filters"
+
+  funding_about:
+    enabled: true
+    priority: 45
+    description: "Funding Programmes schema documentation"
+
+  # ---- Gantt to Tickets (Trello/Jira/SMTP local to this group) ----
+  gantt_api_config:
+    enabled: true
+    priority: 50
+    description: "Trello and Jira API credentials, local to this suite"
+
+  gantt_email_config:
+    enabled: true
+    priority: 51
+    description: "SMTP email configuration for task notifications, local to this suite"
+
+  gantt_upload:
+    enabled: true
+    priority: 52
+    description: "Upload a Gantt chart Excel file"
+
+  gantt_review_edit:
+    enabled: true
+    priority: 53
+    description: "Review and edit imported tasks"
+
+  gantt_submit_boards:
+    enabled: true
+    priority: 54
+    description: "Submit tasks to Trello boards or Jira projects"
+
+  gantt_email_send:
+    enabled: true
+    priority: 55
+    description: "Send email notifications to task assignees"
+
+  gantt_manage_contacts:
+    enabled: true
+    priority: 56
+    description: "Manage the assignee contact list for this suite"
+
+  gantt_email_contacts:
+    enabled: true
+    priority: 57
+    description: "Bulk email contacts with filtering"
+
+  # ---- Contact Manager (OpenAI + its own SMTP local to this group;
+  #      BigQuery uses the shared connection/pattern) ----
+  contacts_api_config:
+    enabled: true
+    priority: 60
+    description: "OpenAI API credentials, local to this suite"
+
+  contacts_smtp_config:
+    enabled: true
+    priority: 61
+    description: "SMTP email configuration, local to this suite"
+
+  contacts_process:
+    enabled: true
+    priority: 62
+    description: "Extract contact information from documents with an LLM"
+
+  contacts_explore:
+    enabled: true
+    priority: 63
+    description: "Browse, filter, and manage contacts"
+
+  contacts_customise_communication:
+    enabled: true
+    priority: 64
+    description: "Generate personalized outreach messages with an LLM"
+
+  contacts_send_email:
+    enabled: true
+    priority: 65
+    description: "Compose and send emails with attachments"
+
+  # ---- Travel Planning ----
+  travel_itinerary_planner:
+    enabled: true
+    priority: 2
+    description: "AI-powered travel itinerary planner with Claude - discover attractions, select favorites, generate optimized multi-day plans"
+
+settings:
+  auto_install: false
+  check_versions: true
+  verbose: true
+  dev_mode: false
+
+app:
+  name: "Business Operations Suite: Travel + Day Planner + Diet + Exercise + Events + Funding + Gantt + Contacts"
+  version: "2.0.0"
+  description: "Eight AI-powered suites in one app: AI travel itinerary planning, day/trip scheduling, daily diet planning, exercise tracking, city event discovery, funding programme discovery, Gantt-to-tickets conversion, and AI contact management. All schedule-based modules (Travel, Day Planner, Events, Funding deadlines, Diet sessions, Exercise workouts, Project tasks) support calendar (.ics) export for Outlook and Android Calendar integration. Shares one Claude connection and one BigQuery connection, with app-specific APIs (Trello, Jira, OpenAI, SMTP) kept local to their own suites"
+  author: "Your Team"

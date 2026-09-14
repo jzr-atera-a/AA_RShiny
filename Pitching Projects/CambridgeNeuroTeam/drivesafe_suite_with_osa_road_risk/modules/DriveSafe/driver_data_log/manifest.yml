@@ -1,0 +1,16 @@
+module:
+  id: "driver_data_log"
+  name: "Driver Data Log"
+  description: "Generate and log simulated driver condition data to BigQuery, and browse all stored records"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Data Log"
+    icon: "database"
+    tabname: "driver_data_log"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, DT, dplyr, bigrquery]
+    package_versions: {}
+  api: {required: [bigquery], optional: []}
+  data: {required: [], optional: []}

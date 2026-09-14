@@ -1,0 +1,17 @@
+module:
+  id: "generate_workout"
+  name: "Generate Workout"
+  description: "AI-generated workout plan"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "Generate Workout"
+    icon: "dumbbell"
+    tabname: "generate_workout"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, httr, curl, jsonlite, shinyjs, DT]
+    package_versions: {}
+  api: {required: ["claude"], optional: []}
+  data: {required: [], optional: []}

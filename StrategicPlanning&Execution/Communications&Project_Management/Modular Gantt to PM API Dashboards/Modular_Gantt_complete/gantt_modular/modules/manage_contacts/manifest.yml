@@ -1,0 +1,10 @@
+module:
+  id: "manage_contacts"
+  name: "Manage Contacts"
+  enabled: true
+  menu:
+    label: "Manage Contacts"
+    icon: "address-book"
+    tabname: "contacts"
+  dependencies:
+    packages: [shiny, shinydashboard, DT, readxl, writexl]

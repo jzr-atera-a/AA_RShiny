@@ -1,0 +1,10 @@
+name: mat_health_intelligence_poc
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17884986
+bundleId: 12541347
+url: https://atera-analytics.shinyapps.io/mat_health_intelligence_poc/
+version: 1

@@ -1,0 +1,17 @@
+module:
+  id: "generate_diet"
+  name: "Generate Diet"
+  description: "AI-generated daily meal plan"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "Generate Diet"
+    icon: "utensils"
+    tabname: "generate_diet"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, httr, curl, jsonlite, shinyjs, DT]
+    package_versions: {}
+  api: {required: ["claude"], optional: []}
+  data: {required: [], optional: []}

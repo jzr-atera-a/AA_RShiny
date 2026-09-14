@@ -1,0 +1,17 @@
+module:
+  id: "gantt_email_config"
+  name: "Email Config"
+  description: "SMTP email configuration for task notifications, local to this suite"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "Email Config"
+    icon: "envelope-open-text"
+    tabname: "gantt_email_config"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

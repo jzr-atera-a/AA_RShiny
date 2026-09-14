@@ -1,0 +1,16 @@
+module:
+  id: "driver_road_risk_map"
+  name: "OSA Road Risk Map"
+  description: "Interactive UK road network heatmap showing driving risk for drivers with obstructive sleep apnoea (OSA), by corridor, time window and treatment status"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Road Risk Map"
+    icon: "map-marked-alt"
+    tabname: "driver_road_risk_map"
+    badge: {label: "NEW", color: "green"}
+  dependencies:
+    packages: [shiny, shinydashboard, plotly, dplyr]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

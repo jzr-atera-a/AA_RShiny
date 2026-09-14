@@ -1,0 +1,10 @@
+name: trading_analysis_f1_v4_mobility
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17823197
+bundleId: 12505049
+url: https://atera-analytics.shinyapps.io/trading_analysis_f1_v4_mobility/
+version: 1

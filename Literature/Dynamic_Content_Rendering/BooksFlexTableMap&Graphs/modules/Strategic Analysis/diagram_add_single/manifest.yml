@@ -1,0 +1,32 @@
+module:
+  id: "diagram_add_single"
+  name: "Add Single Component"
+  description: "Manually add a single diagram component row, bypassing generation"
+  version: "1.0.0"
+  author: "Strategic Analysis Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Add Single Component"
+    icon: "plus-circle"
+    tabname: "diagram_add_single"
+    group: "Strategic Analysis"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: ["bigquery"]
+
+  data:
+    required: []
+    optional: []

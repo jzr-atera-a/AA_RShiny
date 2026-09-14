@@ -1,0 +1,74 @@
+# modules/_module_registry.yml
+# DriveSafe Suite - two groups only
+
+groups:
+  - id: api_config
+    label: "API Configuration"
+    icon: "key"
+    expanded: true
+    modules: [bigquery_auth, claude_api_config]
+
+  - id: drivesafe
+    label: "DriveSafe - Driver Health"
+    icon: "heartbeat"
+    expanded: true
+    modules: [driver_health_monitor, driver_data_log, driver_ab_test]
+
+  - id: osa_road_risk
+    label: "OSA Road Risk & Interventions"
+    icon: "road"
+    expanded: true
+    modules: [driver_road_risk_map, driver_road_risk_corridors, driver_road_risk_interventions]
+
+modules:
+  bigquery_auth:
+    enabled: true
+    priority: 1
+    description: "BigQuery authentication - connects to driver_health_log table"
+
+  claude_api_config:
+    enabled: true
+    priority: 2
+    description: "Claude API credentials management"
+
+  driver_health_monitor:
+    enabled: true
+    priority: 10
+    description: "Real-time driver health, alertness, fatigue, OSA and cognitive performance dashboard"
+
+  driver_data_log:
+    enabled: true
+    priority: 11
+    description: "Generate and log simulated driver condition data to BigQuery"
+
+  driver_ab_test:
+    enabled: true
+    priority: 12
+    description: "A/B test - OSA CPAP treated vs untreated vs control drivers"
+
+  driver_road_risk_map:
+    enabled: true
+    priority: 20
+    description: "Interactive UK road network heatmap - OSA driver risk by corridor, time window and treatment status"
+
+  driver_road_risk_corridors:
+    enabled: true
+    priority: 21
+    description: "High-risk corridor ranking, treatment effect and time-of-day risk analysis"
+
+  driver_road_risk_interventions:
+    enabled: true
+    priority: 22
+    description: "Scenario builder for CPAP treatment and route interventions, with fleet-level risk projection"
+
+settings:
+  auto_install: false
+  check_versions: true
+  verbose: true
+  dev_mode: false
+
+app:
+  name: "DriveSafe Suite"
+  version: "1.0.0"
+  description: "Driver health monitoring, BigQuery data logging and A/B treatment analysis for the DriveSafe framework"
+  author: "HED + ATERA Analytics"

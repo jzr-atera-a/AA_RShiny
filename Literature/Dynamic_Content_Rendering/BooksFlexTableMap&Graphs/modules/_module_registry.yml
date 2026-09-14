@@ -1,0 +1,268 @@
+# modules/_module_registry.yml
+# Central Module Registry - THE CONTROL CENTER (Unified Suite)
+# Change 'enabled: false' to disable any module. Priority controls
+# ordering WITHIN each sidebar group. Group membership/order/expanded
+# state is controlled by the top-level `groups:` list below, mirroring
+# the proven-working pattern (confirmed via a live screenshot) used by
+# the ML System Design Prep reference app: each group lists its member
+# module ids explicitly, and global.R's create_ui() builds one
+# collapsible menuItem() per group with menuSubItem() children via
+# do.call(), exactly as that reference does.
+
+groups:
+  - id: api_config
+    label: "API Configuration"
+    icon: "key"
+    expanded: true
+    modules: [bigquery_auth, claude_api_config]
+
+  - id: book_summary
+    label: "Book Summary"
+    icon: "book"
+    expanded: false
+    modules: [generate_summary, books_bulk_import, add_single, books_browse, visualizations, books_about]
+
+  - id: flex_table
+    label: "Flex Table"
+    icon: "table"
+    expanded: false
+    modules: [generate_table, bulk_import, add_entry, table_viewer, flex_table_browse, flex_table_about]
+
+  - id: mind_map
+    label: "Mind Map"
+    icon: "share-nodes"
+    expanded: false
+    modules: [generate_mindmap, edit_mindmap, visualize_mindmap, mindmap_browse, mindmap_about]
+
+  - id: knowledge_graph
+    label: "Knowledge Graph"
+    icon: "diagram-project"
+    expanded: false
+    modules: [generate_kg, edit_kg, visualize_kg_d3, visualize_kg_cytoscape, kg_browse, kg_about]
+
+  - id: strategic_analysis
+    label: "Strategic Analysis"
+    icon: "chess"
+    expanded: false
+    modules: [diagram_tool_guide, generate_diagram, diagram_bulk_import, diagram_add_single, diagram_browse, diagram_visualizations, diagram_about]
+
+  - id: six_sigma_analysis
+    label: "Six Sigma Analysis"
+    icon: "microscope"
+    expanded: false
+    modules: [sixsigma_tool_guide, generate_sixsigma, sixsigma_bulk_import, sixsigma_add_single, sixsigma_browse, sixsigma_visualizations, sixsigma_about]
+
+modules:
+  # ---- API Configuration (shared by all three suites) ----
+  bigquery_auth:
+    enabled: true
+    priority: 1
+    description: "BigQuery authentication - one connection, three tables"
+
+  claude_api_config:
+    enabled: true
+    priority: 2
+    description: "Claude API credentials management"
+
+  # ---- Book Summary ----
+  generate_summary:
+    enabled: true
+    priority: 3
+    description: "AI-powered book summary generation"
+
+  books_bulk_import:
+    enabled: true
+    priority: 4
+    description: "Parse and upload book summaries in bulk"
+
+  add_single:
+    enabled: true
+    priority: 5
+    description: "Add an individual book summary entry"
+
+  books_browse:
+    enabled: true
+    priority: 6
+    description: "Browse and download all stored book summaries"
+
+  visualizations:
+    enabled: true
+    priority: 7
+    description: "Rich data visualizations with charts for book summaries"
+
+  books_about:
+    enabled: true
+    priority: 8
+    description: "Book Summary schema and query-writing guide"
+
+  # ---- Flex Table ----
+  generate_table:
+    enabled: true
+    priority: 10
+    description: "AI-powered flexible comparison table generation"
+
+  bulk_import:
+    enabled: true
+    priority: 11
+    description: "Parse and upload generated tables in bulk"
+
+  add_entry:
+    enabled: true
+    priority: 12
+    description: "Manually add a single row with custom columns"
+
+  table_viewer:
+    enabled: true
+    priority: 13
+    description: "Render stored tables as a scrollable comparison grid"
+
+  flex_table_browse:
+    enabled: true
+    priority: 14
+    description: "Browse and download all stored table rows"
+
+  flex_table_about:
+    enabled: true
+    priority: 15
+    description: "Flex Table schema and query-writing guide"
+
+  # ---- Mind Map ----
+  generate_mindmap:
+    enabled: true
+    priority: 20
+    description: "AI-powered generation of a new mind map"
+
+  edit_mindmap:
+    enabled: true
+    priority: 21
+    description: "Delta editing of an existing mind map, with cascade delete"
+
+  visualize_mindmap:
+    enabled: true
+    priority: 22
+    description: "Interactive collapsible mind map via D3.js"
+
+  mindmap_browse:
+    enabled: true
+    priority: 23
+    description: "Browse and download all stored node version rows"
+
+  mindmap_about:
+    enabled: true
+    priority: 24
+    description: "Mind Map schema and delta-editing model documentation"
+
+  # ---- Knowledge Graph ----
+  generate_kg:
+    enabled: true
+    priority: 30
+    description: "AI-powered generation of a new knowledge graph"
+
+  edit_kg:
+    enabled: true
+    priority: 31
+    description: "Delta editing with app-computed relationship cascade delete"
+
+  visualize_kg_d3:
+    enabled: true
+    priority: 32
+    description: "Force-directed graph visualization via D3.js"
+
+  visualize_kg_cytoscape:
+    enabled: true
+    priority: 33
+    description: "Graph visualization via Cytoscape.js"
+
+  kg_browse:
+    enabled: true
+    priority: 34
+    description: "Browse and download all stored entity/relationship version rows"
+
+  kg_about:
+    enabled: true
+    priority: 35
+    description: "Knowledge Graph schema documentation"
+
+  # ---- Strategic Analysis ----
+  diagram_tool_guide:
+    enabled: true
+    priority: 39
+    description: "Reference guide to all Strategic Analysis diagram types - what each is for and when to ask Claude for it"
+
+  generate_diagram:
+    enabled: true
+    priority: 40
+    description: "AI-powered strategy diagram generation (SWOT, PESTEL, Five Forces, etc.) via Claude"
+
+  diagram_bulk_import:
+    enabled: true
+    priority: 41
+    description: "Paste or receive-from-Generate diagram component text, parse, preview, upload"
+
+  diagram_add_single:
+    enabled: true
+    priority: 42
+    description: "Manually add a single diagram component row, bypassing generation"
+
+  diagram_browse:
+    enabled: true
+    priority: 43
+    description: "Browse saved diagrams and download the raw component rows"
+
+  diagram_visualizations:
+    enabled: true
+    priority: 44
+    description: "Render a selected diagram using the type-appropriate generic renderer"
+
+  diagram_about:
+    enabled: true
+    priority: 45
+    description: "Schema documentation for strategy_diagrams and the delimiter convention"
+
+  # ---- Six Sigma Analysis ----
+  sixsigma_tool_guide:
+    enabled: true
+    priority: 49
+    description: "Reference guide to all Six Sigma diagram types organized by DMAIC phase - what each is for and when to ask Claude for it"
+
+  generate_sixsigma:
+    enabled: true
+    priority: 50
+    description: "AI-powered Six Sigma diagram generation (Fishbone, Pareto, Control Chart, CTQ Tree, FMEA, etc.) via Claude"
+
+  sixsigma_bulk_import:
+    enabled: true
+    priority: 51
+    description: "Paste or receive-from-Generate Six Sigma diagram component text, parse, preview, upload"
+
+  sixsigma_add_single:
+    enabled: true
+    priority: 52
+    description: "Manually add a single Six Sigma diagram component row, bypassing generation"
+
+  sixsigma_browse:
+    enabled: true
+    priority: 53
+    description: "Browse saved Six Sigma diagrams and download the raw component rows"
+
+  sixsigma_visualizations:
+    enabled: true
+    priority: 54
+    description: "Render a selected Six Sigma diagram using the type-appropriate professional renderer"
+
+  sixsigma_about:
+    enabled: true
+    priority: 55
+    description: "Schema documentation for six_sigma_diagrams and the delimiter convention"
+
+settings:
+  auto_install: false
+  check_versions: true
+  verbose: true
+  dev_mode: false
+
+app:
+  name: "Unified Suite: Book Summary + Flex Table + Mind Map + Knowledge Graph + Strategic Analysis + Six Sigma Analysis"
+  version: "1.2.0"
+  description: "Six AI-powered BigQuery-backed data suites in one app: book summaries, flexible comparison tables, mind maps, knowledge graphs, AI-generated strategy diagrams, and AI-generated Six Sigma diagrams (Fishbone/Pareto/Control Chart/CTQ Tree/FMEA/etc.) - sharing one Claude API connection and one BigQuery connection across six tables in the same project/dataset"
+  author: "Your Team"

@@ -1,0 +1,10 @@
+module:
+  id: "submit_boards"
+  name: "Submit to Boards"
+  enabled: true
+  menu:
+    label: "Submit to Boards"
+    icon: "paper-plane"
+    tabname: "submit"
+  dependencies:
+    packages: [shiny, shinydashboard, httr, jsonlite]

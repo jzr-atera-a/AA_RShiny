@@ -1,0 +1,17 @@
+module:
+  id: "gantt_email_contacts"
+  name: "Bulk Email Contacts"
+  description: "Bulk email contacts with filtering"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "Bulk Email Contacts"
+    icon: "mail-bulk"
+    tabname: "gantt_email_contacts"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, DT]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

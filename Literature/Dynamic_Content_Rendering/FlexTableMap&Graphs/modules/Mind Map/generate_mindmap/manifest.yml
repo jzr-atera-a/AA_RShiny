@@ -1,0 +1,33 @@
+module:
+  id: "generate_mindmap"
+  name: "Generate Mind Map"
+  description: "AI-powered generation of a new mind map (full hierarchical tree with optional cross-links)"
+  version: "1.0.0"
+  author: "Mind Map Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Generate Mind Map"
+    icon: "sitemap"
+    tabname: "generate_mindmap"
+    group: "Mind Map"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinyjs
+
+    package_versions: {}
+
+  api:
+    required: ["claude"]
+    optional: ["bigquery"]
+
+  data:
+    required: []
+    optional: []

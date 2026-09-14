@@ -1,0 +1,17 @@
+module:
+  id: "gantt_review_edit"
+  name: "Review & Edit"
+  description: "Review and edit imported tasks"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "Review & Edit"
+    icon: "edit"
+    tabname: "gantt_review_edit"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, DT]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

@@ -1,0 +1,33 @@
+module:
+  id: "sixsigma_visualizations"
+  name: "Six Sigma Visualizations"
+  description: "Render a selected Six Sigma diagram using the type-appropriate professional renderer"
+  version: "1.0.0"
+  author: "Six Sigma Analysis Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Visualizations"
+    icon: "chart-network"
+    tabname: "sixsigma_visualizations"
+    group: "Six Sigma Analysis"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - plotly
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: ["bigquery"]
+
+  data:
+    required: []
+    optional: []

@@ -4,6 +4,7 @@
 
 library(rsconnect)
 
+rsconnect::removeAccount("0gcm42-0-atera") #admin ater
 rsconnect::removeAccount("oy68gf-frank-zr") #jfz22@cam 3 apps for banking and LAT trading
 rsconnect::removeAccount("haaf4j-theone-andonly") #jfz.003a 4 apps include priv credit
 rsconnect::removeAccount("aa-partner") #neofranz_leblanc, 4 apps including investors, 5am, currency
@@ -11,6 +12,11 @@ rsconnect::removeAccount("atera-analytics") #joseph.zr 0 apps at the moment
 rsconnect::removeAccount("neofranz")  #3 apps (jfancisco.zr) while learning while ago 2014
 rsconnect::removeAccount("cloud-science") #4 apps, jfz.001a
 rsconnect::removeAccount("gorgeous-little-pear") #0 apps, sarai.m@atera-
+
+rsconnect::setAccountInfo(name='0gcm42-0-atera',
+                          token='F784D6CDF77EB5C2F3960F4F9E81D754',
+                          secret='c71dZ+nAgGh3Zksx5UO9mQqPqu7BsbHXBPwNyDU4')
+#Apps	profile_jfz_ai_leadership -	ccaf_w4a_schain   -	forex_trading_strategies     #
 
 rsconnect::setAccountInfo(name='oy68gf-frank-zr',
                           token='73D1775008C36CE26E46BE2BDB273602',
@@ -85,15 +91,21 @@ rsconnect::deployApp(
   forceUpdate = TRUE
 )
 
-#Atera Analytics Confirmed
-rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Literature/Dynamic_Content_Rendering/FlexTableApp 3/FlexTableApp/')
+#Atera Analytics Confirmed 
+rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Pitching Projects/Matresa/maternal_health_intelligence_app/mat_health_intelligence_poc/')
+rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Pitching Projects/CambridgeNeuroTeam/drivesafe_suite_with_osa_road_risk/')
+rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Skills/Social/Serendipity_CompComm_App/david_cleevely_serendipity/')
+rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Skills/Communication/CompComm_v9/Simon_Hall_CC/')
+rsconnect::deployApp('C:/101_Code/R/AA_RShiny/LAT_Trading/2026/LAT_full_app/trading_analysis_f1_v4_mobility/')
+rsconnect::deployApp('C:/101_Code/R/AA_RShiny/SelfManagement/A_Planning_Day_Trips_Health/DaysPlanningFundingTravel/')
+rsconnect::deployApp('C:/101_Code/R/AA_RShiny/StrategicPlanning&Execution/A_BooksNetworksStrategySixS/BooksNetworksStrategySixS/')
 rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Finance/JBS_CME_Forex_Symp_2026/trading_analysis_f1/')
-rsconnect::deployApp('C:/101_Code/R/SelfManagement/daily_scheduler/')
 rsconnect::deployApp('C:/101_Code/R/Finance/crypto_&_equities_analysis/')
 rsconnect::deployApp('C:/101_Code/R/Entrepreneurship&Pitching/VentureAnalysis_Main/VentureAnalysis/')
 rsconnect::deployApp('C:/101_Code/R/Literature/DB_Material_Compilation/DB_Books_LLM_modular/Modular_db_books_llm/')
 #rsconnect::deployApp('C:/101_Code/R/Entrepreneurship&Pitching/VentureDeals_DeepTech_Suite/VentureDeals/')
 rsconnect::deployApp('C:/101_Code/R/StrategicPlanning&Execution/Events_Schedulling/events_app/')
+rsconnect::deployApp('C:/101_Code/R/SelfManagement/daily_scheduler/')#Archived it is included in larger suite app
 
 ##
 rsconnect::deployApp('C:/101_Code/R/Research/RTCMA/Besancon France/')
@@ -104,7 +116,6 @@ rsconnect::deployApp('C:/101_Code/R/Research/Academic_Research/ICRA/')
 rsconnect::deployApp('C:/101_Code/R/Skills/Coding/ML Interview Preparation/MTSFrontierAIPrep/')
 rsconnect::deployApp('C:/101_Code/R/Skills/Coding/ML Design & Architecture/RecommenderSystemsKB/')
 rsconnect::deployApp('C:/101_Code/R/Skills/Coding/ML Design & Architecture/MLDesignPrep_ChipHuyen_v1_0/')
-rsconnect::deployApp('C:/101_Code/R/Skills/Communication/CompComm_v7/Simon_Hall_CC/')
 
 #Pear stuff:
 rsconnect::deployApp('C:/101_Code/R/Atera A Shiny Apps Site/energy_planning_geo_a/')
