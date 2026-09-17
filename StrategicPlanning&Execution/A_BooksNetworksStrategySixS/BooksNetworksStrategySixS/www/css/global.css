@@ -672,3 +672,17 @@ table.flex-comparison-table tbody tr:hover th.row-index-cell {
   display: flex; align-items: center; justify-content: center; writing-mode: vertical-rl;
   font-weight: bold; text-align: center;
 }
+
+/* =============================================================================
+   Sankey Graph - D3 tooltip styling. The SVG/layout itself is entirely
+   computed in the render_sankey() JS (see R/utils_common.R); this just
+   covers the floating tooltip div that JS creates inside the widget
+   container on hover.
+   ============================================================================= */
+.sankey-widget-container { position: relative; }
+.sankey-tooltip {
+  position: absolute; pointer-events: none; z-index: 10;
+  background: rgba(44, 62, 80, 0.95); color: #fff; padding: 8px 12px;
+  border-radius: 6px; font-size: 12.5px; line-height: 1.4; max-width: 260px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25); transition: opacity 0.15s ease;
+}

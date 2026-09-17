@@ -1,0 +1,10 @@
+name: businessoperationssuite
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17925217
+bundleId: 12562585
+url: https://atera-analytics.shinyapps.io/businessoperationssuite/
+version: 1

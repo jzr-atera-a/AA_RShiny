@@ -137,6 +137,9 @@ create_ui <- function(module_loader) {
 
         # D3.js - Mind Map's tidy-tree visualizer + Knowledge Graph's force-directed visualizer
         tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"),
+        # d3-sankey - Sankey Graph's flow-diagram layout plugin (computes node y-positions/
+        # heights and link curve widths from link values; does not ship with core d3)
+        tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/d3-sankey/0.12.3/d3-sankey.min.js"),
         # Cytoscape.js - Knowledge Graph's second visualization tab
         tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"),
         # MathJax - LaTeX rendering shared by all three suites

@@ -1,0 +1,34 @@
+module:
+  id: "generate_sankey"
+  name: "Generate Sankey Graph"
+  description: "AI-powered Sankey flow diagram generation via Claude, rendered with D3's d3-sankey layout"
+  version: "1.0.0"
+  author: "Sankey Graph Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Generate Sankey"
+    icon: "magic"
+    tabname: "generate_sankey"
+    group: "Sankey Graph"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinyjs
+      - DT
+
+    package_versions: {}
+
+  api:
+    required: ["claude"]
+    optional: ["bigquery"]
+
+  data:
+    required: []
+    optional: []

@@ -44,12 +44,14 @@ APIManager <- R6::R6Class(
     bq_table_flex = "flex_comparison_tables",
     bq_table_mindmap = "mindmap_nodes",
     bq_table_kg = "knowledge_graph",
+    bq_table_sankey = "sankey_graphs",
     bq_table_diagram = "strategy_diagrams",
     bq_table_sixsigma = "six_sigma_diagrams",
     bq_full_table_books = NULL,
     bq_full_table_flex = NULL,
     bq_full_table_mindmap = NULL,
     bq_full_table_kg = NULL,
+    bq_full_table_sankey = NULL,
     bq_full_table_diagram = NULL,
     bq_full_table_sixsigma = NULL,
     bq_authenticated = FALSE,
@@ -64,6 +66,7 @@ APIManager <- R6::R6Class(
     state_trigger_flex = NULL,
     state_trigger_mindmap = NULL,
     state_trigger_kg = NULL,
+    state_trigger_sankey = NULL,
     state_trigger_diagram = NULL,
     state_trigger_sixsigma = NULL,
 
@@ -83,6 +86,16 @@ APIManager <- R6::R6Class(
     flex_taxonomy_cache = NULL,
     mindmap_taxonomy_cache = NULL,
     kg_taxonomy_cache = NULL,
+    # Small per-(category,domain,topic) caches for the "which map/graph IDs
+    # exist under this exact topic" follow-on lookups, separate from the
+    # taxonomy caches above - without this, two independent reactive
+    # contexts asking for the same topic (e.g. Knowledge Graph's D3 and
+    # Cytoscape visualize tabs, both alive simultaneously) each hit
+    # BigQuery separately for an identical result. Cleared alongside the
+    # matching taxonomy cache whenever that suite's trigger fires.
+    mindmap_ids_for_topic_cache = NULL,
+    kg_ids_for_topic_cache = NULL,
+    sankey_taxonomy_cache = NULL,
     diagram_taxonomy_cache = NULL,
     sixsigma_taxonomy_cache = NULL,
 
@@ -92,6 +105,7 @@ APIManager <- R6::R6Class(
     # suite's generated content leak into the other's Bulk Import box.
     pending_bulk_text_books = NULL,
     pending_bulk_text_flex = NULL,
+    pending_bulk_text_sankey = NULL,
     pending_bulk_text_diagram = NULL,
     pending_bulk_text_sixsigma = NULL,
 
@@ -100,14 +114,16 @@ APIManager <- R6::R6Class(
       self$state_trigger_flex <- shiny::reactiveVal(0)
       self$state_trigger_mindmap <- shiny::reactiveVal(0)
       self$state_trigger_kg <- shiny::reactiveVal(0)
+      self$state_trigger_sankey <- shiny::reactiveVal(0)
       self$state_trigger_diagram <- shiny::reactiveVal(0)
       self$state_trigger_sixsigma <- shiny::reactiveVal(0)
       self$pending_bulk_text_books <- shiny::reactiveVal("")
       self$pending_bulk_text_flex <- shiny::reactiveVal("")
+      self$pending_bulk_text_sankey <- shiny::reactiveVal("")
       self$pending_bulk_text_diagram <- shiny::reactiveVal("")
       self$pending_bulk_text_sixsigma <- shiny::reactiveVal("")
       private$recompute_full_table_ids()
-      cat("🔌 API Manager initialized (Book Summary + Flex Table + Mind Map + Knowledge Graph + Strategic Analysis + Six Sigma Analysis)\n")
+      cat("🔌 API Manager initialized (Book Summary + Flex Table + Mind Map + Knowledge Graph + Sankey Graph + Strategic Analysis + Six Sigma Analysis)\n")
     },
 
     trigger_state_update_books = function() {
@@ -126,13 +142,21 @@ APIManager <- R6::R6Class(
       current <- self$state_trigger_mindmap()
       self$state_trigger_mindmap(current + 1)
       self$mindmap_taxonomy_cache <- NULL
+      self$mindmap_ids_for_topic_cache <- NULL
       cat("🔔 [Mind Map] State trigger fired:", current + 1, "\n")
     },
     trigger_state_update_kg = function() {
       current <- self$state_trigger_kg()
       self$state_trigger_kg(current + 1)
       self$kg_taxonomy_cache <- NULL
+      self$kg_ids_for_topic_cache <- NULL
       cat("🔔 [Knowledge Graph] State trigger fired:", current + 1, "\n")
+    },
+    trigger_state_update_sankey = function() {
+      current <- self$state_trigger_sankey()
+      self$state_trigger_sankey(current + 1)
+      self$sankey_taxonomy_cache <- NULL
+      cat("🔔 [Sankey Graph] State trigger fired:", current + 1, "\n")
     },
     trigger_state_update_diagram = function() {
       current <- self$state_trigger_diagram()
@@ -152,6 +176,9 @@ APIManager <- R6::R6Class(
     },
     set_pending_bulk_text_flex = function(text) {
       self$pending_bulk_text_flex(text)
+    },
+    set_pending_bulk_text_sankey = function(text) {
+      self$pending_bulk_text_sankey(text)
     },
     set_pending_bulk_text_diagram = function(text) {
       self$pending_bulk_text_diagram(text)
@@ -180,6 +207,12 @@ APIManager <- R6::R6Class(
     empty_kg_taxonomy = function() {
       data.frame(category = character(), domain = character(), topic = character(),
                  graph_id = character(), graph_title = character(), stringsAsFactors = FALSE)
+    },
+    empty_sankey_taxonomy = function() {
+      data.frame(sankey_id = character(), title = character(),
+                 category = character(), domain = character(), topic = character(),
+                 num_columns = integer(), num_initial_rows = integer(),
+                 is_template = logical(), created_at = character(), stringsAsFactors = FALSE)
     },
     empty_diagram_taxonomy = function() {
       data.frame(diagram_id = character(), diagram_name = character(), diagram_type = character(),
@@ -226,12 +259,18 @@ APIManager <- R6::R6Class(
 
         if (status_code(response) == 200) {
           self$claude_authenticated <- TRUE
-          self$trigger_state_update_books()
-          self$trigger_state_update_flex()
-          self$trigger_state_update_mindmap()
-          self$trigger_state_update_kg()
-          self$trigger_state_update_diagram()
-          self$trigger_state_update_sixsigma()
+          # NOTE: deliberately NOT firing any trigger_state_update_*() calls
+          # here. Those triggers exist to tell each suite's Generate/
+          # Visualize dropdowns "BigQuery data may have changed, requery" -
+          # Claude authenticating successfully has no bearing on that
+          # whatsoever, and firing all 7 of them here used to cause a
+          # second, completely redundant multi-minute BigQuery requery
+          # cascade across every suite every time someone connected Claude
+          # AFTER already connecting BigQuery (the common order), on top of
+          # the one authenticate_bigquery() already correctly triggers.
+          # Whether Claude itself is ready to generate is checked directly
+          # via api_manager$claude_authenticated inside each Generate tab's
+          # own button handler - it was never gated behind these triggers.
           return(TRUE)
         } else {
           status <- status_code(response)
@@ -565,6 +604,38 @@ APIManager <- R6::R6Class(
             relationship_description STRING, sort_order INTEGER
           )", self$bq_full_table_kg)
 
+        # ---- Sankey Graph: sankey_graphs. One row = either a NODE (a
+        #     labeled box at a specific left-right column) or a LINK (a
+        #     weighted flow between two nodes, source_ref -> target_ref,
+        #     any two columns as long as target's column > source's column -
+        #     skip-ahead links are explicitly allowed, matching how real
+        #     Sankeys work, e.g. an energy source flowing straight to
+        #     "Losses" while bypassing intermediate conversion stages).
+        #     row_kind distinguishes the two ("node"/"link"), exactly the
+        #     same denormalization pattern Knowledge Graph uses for
+        #     entity/relationship rows. num_columns/num_initial_rows are
+        #     the slider values used to generate this specific sankey_id,
+        #     repeated on every row for that id (no separate lookup table
+        #     needed - matches the KG/Strategic Analysis convention of one
+        #     flat, self-describing table per suite).
+        #     Node sizing/vertical position is NEVER computed by Claude or
+        #     R - the d3-sankey layout algorithm derives every node's
+        #     height and every link's curve width directly from the raw
+        #     value_numeric figures at render time, the same "let the
+        #     library do the real math" principle used throughout this app.
+        sankey_create <- sprintf("
+          CREATE TABLE IF NOT EXISTS `%s` (
+            id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+            sankey_id STRING, title STRING, category STRING, domain STRING, topic STRING,
+            is_template BOOL, source_sankey_id STRING,
+            num_columns INTEGER, num_initial_rows INTEGER,
+            row_kind STRING,
+            component_ref STRING, column_index INTEGER, sequence_order INTEGER,
+            label_text STRING, sub_text STRING, items_packed STRING,
+            source_ref STRING, target_ref STRING, value_numeric FLOAT64, unit_label STRING,
+            color_hint STRING, created_by STRING
+          )", self$bq_full_table_sankey)
+
         # ---- Strategic Analysis: strategy_diagrams. One row = one visual
         #     component (a grid cell, a quadrant, an axis, a chart series),
         #     denormalized (diagram_name/diagram_type/category/domain/topic
@@ -659,7 +730,7 @@ APIManager <- R6::R6Class(
             created_by STRING
           )", self$bq_full_table_sixsigma)
 
-        for (q in list(books_create, flex_create, mindmap_create, kg_create, diagram_create, diagram_alter_add_domain, diagram_alter_add_group, sixsigma_create)) {
+        for (q in list(books_create, flex_create, mindmap_create, kg_create, sankey_create, diagram_create, diagram_alter_add_domain, diagram_alter_add_group, sixsigma_create)) {
           tryCatch({ bq_project_query(self$bq_project_id, q) }, error = function(e) {})
         }
 
@@ -668,6 +739,7 @@ APIManager <- R6::R6Class(
         self$trigger_state_update_flex()
         self$trigger_state_update_mindmap()
         self$trigger_state_update_kg()
+        self$trigger_state_update_sankey()
         self$trigger_state_update_diagram()
         self$trigger_state_update_sixsigma()
         return(TRUE)
@@ -813,6 +885,12 @@ APIManager <- R6::R6Class(
 
     bq_get_map_ids_for_topic = function(category, domain, topic) {
       if (!self$bq_authenticated) return(character(0))
+
+      cache_key <- paste(category, domain, topic, sep = "|||")
+      if (!is.null(self$mindmap_ids_for_topic_cache[[cache_key]])) {
+        return(self$mindmap_ids_for_topic_cache[[cache_key]])
+      }
+
       safe_category <- gsub("'", "''", category); safe_domain <- gsub("'", "''", domain); safe_topic <- gsub("'", "''", topic)
       query <- sprintf(
         "SELECT map_id, MAX(created_at) as last_touched, ANY_VALUE(map_title) as map_title
@@ -820,10 +898,14 @@ APIManager <- R6::R6Class(
          GROUP BY map_id ORDER BY last_touched DESC",
         self$bq_full_table_mindmap, safe_category, safe_domain, safe_topic
       )
-      tryCatch(self$bq_query(query), error = function(e) {
+      result <- tryCatch(self$bq_query(query), error = function(e) {
         cat("⚠️  [bq_get_map_ids_for_topic] Query failed:", e$message, "\n")
         data.frame(map_id = character(), last_touched = character(), map_title = character())
       })
+
+      if (is.null(self$mindmap_ids_for_topic_cache)) self$mindmap_ids_for_topic_cache <- list()
+      self$mindmap_ids_for_topic_cache[[cache_key]] <- result
+      result
     },
 
     get_current_tree_state = function(map_id) {
@@ -894,6 +976,12 @@ APIManager <- R6::R6Class(
 
     bq_get_graph_ids_for_topic = function(category, domain, topic) {
       if (!self$bq_authenticated) return(character(0))
+
+      cache_key <- paste(category, domain, topic, sep = "|||")
+      if (!is.null(self$kg_ids_for_topic_cache[[cache_key]])) {
+        return(self$kg_ids_for_topic_cache[[cache_key]])
+      }
+
       safe_category <- gsub("'", "''", category); safe_domain <- gsub("'", "''", domain); safe_topic <- gsub("'", "''", topic)
       query <- sprintf(
         "SELECT graph_id, MAX(created_at) as last_touched, ANY_VALUE(graph_title) as graph_title
@@ -901,10 +989,14 @@ APIManager <- R6::R6Class(
          GROUP BY graph_id ORDER BY last_touched DESC",
         self$bq_full_table_kg, safe_category, safe_domain, safe_topic
       )
-      tryCatch(self$bq_query(query), error = function(e) {
+      result <- tryCatch(self$bq_query(query), error = function(e) {
         cat("⚠️  [bq_get_graph_ids_for_topic] Query failed:", e$message, "\n")
         data.frame(graph_id = character(), last_touched = character(), graph_title = character())
       })
+
+      if (is.null(self$kg_ids_for_topic_cache)) self$kg_ids_for_topic_cache <- list()
+      self$kg_ids_for_topic_cache[[cache_key]] <- result
+      result
     },
 
     get_current_graph_state = function(graph_id) {
@@ -1188,6 +1280,107 @@ APIManager <- R6::R6Class(
       cat("✅ [BigQuery] Inserted", nrow(data_frame), "row(s) ->", self$bq_full_table_sixsigma, "\n")
       self$trigger_state_update_sixsigma()
       return(nrow(data_frame))
+    },
+
+    # ============================================================
+    # SANKEY GRAPH (AI-generated Sankey flow diagrams)
+    # ============================================================
+    bq_get_sankey_taxonomy = function() {
+      if (!is.null(self$sankey_taxonomy_cache)) return(self$sankey_taxonomy_cache)
+      if (!self$bq_authenticated) return(self$empty_sankey_taxonomy())
+
+      result <- tryCatch({
+        self$bq_query(sprintf("
+          SELECT sankey_id, ANY_VALUE(title) AS title,
+                 ANY_VALUE(category) AS category, ANY_VALUE(domain) AS domain, ANY_VALUE(topic) AS topic,
+                 ANY_VALUE(num_columns) AS num_columns, ANY_VALUE(num_initial_rows) AS num_initial_rows,
+                 ANY_VALUE(is_template) AS is_template, MIN(created_at) AS created_at
+          FROM `%s`
+          GROUP BY sankey_id
+          ORDER BY topic, title, created_at DESC
+        ", self$bq_full_table_sankey))
+      }, error = function(e) {
+        cat("⚠️  [bq_get_sankey_taxonomy] Query failed:", e$message, "\n")
+        self$empty_sankey_taxonomy()
+      })
+
+      self$sankey_taxonomy_cache <- result
+      result
+    },
+
+    # Every node/link row for one sankey_id, in a sensible render order -
+    # the single query the Visualizations tab needs to draw a Sankey.
+    bq_get_sankey_components = function(sankey_id) {
+      if (!self$bq_authenticated) return(data.frame())
+      cat(sprintf("🔎 [Sankey Graph][DEBUG] Pulling components for sankey_id=%s from %s\n",
+                  sankey_id, self$bq_full_table_sankey))
+
+      result <- tryCatch({
+        self$bq_query(sprintf("
+          SELECT * FROM `%s`
+          WHERE sankey_id = '%s'
+          ORDER BY row_kind DESC, column_index, sequence_order
+        ", self$bq_full_table_sankey, safe_sql_escape(sankey_id)))
+      }, error = function(e) {
+        cat("⚠️  [bq_get_sankey_components] Query failed:", e$message, "\n")
+        data.frame()
+      })
+
+      cat(sprintf(
+        "🔎 [Sankey Graph][DEBUG] Pulled %d row(s) | nodes=%d | links=%d\n",
+        nrow(result),
+        if (nrow(result) > 0) sum(result$row_kind == "node") else 0,
+        if (nrow(result) > 0) sum(result$row_kind == "link") else 0
+      ))
+
+      result
+    },
+
+    bq_insert_sankey = function(data_frame) {
+      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+
+      required_cols <- c("id", "created_at", "sankey_id", "title", "category", "domain", "topic",
+                        "is_template", "source_sankey_id", "num_columns", "num_initial_rows",
+                        "row_kind", "component_ref", "column_index", "sequence_order",
+                        "label_text", "sub_text", "items_packed",
+                        "source_ref", "target_ref", "value_numeric", "unit_label",
+                        "color_hint", "created_by")
+
+      max_id_query <- sprintf("SELECT COALESCE(MAX(id), 0) as max_id FROM `%s`", self$bq_full_table_sankey)
+      start_id <- tryCatch({
+        result <- bq_project_query(self$bq_project_id, max_id_query)
+        as.integer(bq_table_download(result)$max_id) + 1
+      }, error = function(e) 1L)
+
+      data_frame$id <- seq(start_id, start_id + nrow(data_frame) - 1L)
+      data_frame$created_at <- Sys.time()
+      for (col in required_cols) if (!col %in% names(data_frame)) data_frame[[col]] <- NA
+      data_frame <- data_frame[, required_cols]
+
+      # ---- DEBUG: full detail on exactly what is about to be written ----
+      node_rows <- sum(data_frame$row_kind == "node")
+      link_rows <- sum(data_frame$row_kind == "link")
+      cat("========================================================\n")
+      cat(sprintf("🧩 [Sankey Graph][DEBUG] Inserting sankey rows -> %s\n", self$bq_full_table_sankey))
+      cat(sprintf("    sankey_id       : %s\n", data_frame$sankey_id[1]))
+      cat(sprintf("    title           : %s\n", data_frame$title[1]))
+      cat(sprintf("    category/domain/topic  : %s / %s / %s\n", data_frame$category[1], data_frame$domain[1], data_frame$topic[1]))
+      cat(sprintf("    num_columns / num_initial_rows : %s / %s\n", data_frame$num_columns[1], data_frame$num_initial_rows[1]))
+      cat(sprintf("    node rows       : %d\n", node_rows))
+      cat(sprintf("    link rows       : %d\n", link_rows))
+      if (link_rows > 0) {
+        total_flow <- sum(data_frame$value_numeric[data_frame$row_kind == "link"], na.rm = TRUE)
+        cat(sprintf("    total flow value across all links : %.2f (informational only - not validated for conservation)\n", total_flow))
+      }
+      cat(sprintf("    id range        : %d - %d\n", min(data_frame$id), max(data_frame$id)))
+      cat("========================================================\n")
+
+      table_ref <- bq_table(self$bq_project_id, self$bq_dataset_id, self$bq_table_sankey)
+      bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
+
+      cat("✅ [BigQuery] Inserted", nrow(data_frame), "row(s) ->", self$bq_full_table_sankey, "\n")
+      self$trigger_state_update_sankey()
+      return(nrow(data_frame))
     }
   ),
 
@@ -1197,6 +1390,7 @@ APIManager <- R6::R6Class(
       self$bq_full_table_flex <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_flex)
       self$bq_full_table_mindmap <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_mindmap)
       self$bq_full_table_kg <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_kg)
+      self$bq_full_table_sankey <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_sankey)
       self$bq_full_table_diagram <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_diagram)
       self$bq_full_table_sixsigma <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_sixsigma)
     }

@@ -40,6 +40,12 @@ groups:
     expanded: false
     modules: [generate_kg, edit_kg, visualize_kg_d3, visualize_kg_cytoscape, kg_browse, kg_about]
 
+  - id: sankey_graph
+    label: "Sankey Graph"
+    icon: "water"
+    expanded: false
+    modules: [generate_sankey, sankey_bulk_import, sankey_visualizations, sankey_browse, sankey_about]
+
   - id: strategic_analysis
     label: "Strategic Analysis"
     icon: "chess"
@@ -183,6 +189,32 @@ modules:
     priority: 35
     description: "Knowledge Graph schema documentation"
 
+  # ---- Sankey Graph ----
+  generate_sankey:
+    enabled: true
+    priority: 36
+    description: "AI-powered Sankey flow diagram generation via Claude, rendered with D3's d3-sankey layout"
+
+  sankey_bulk_import:
+    enabled: true
+    priority: 37
+    description: "Paste or receive-from-Generate Sankey node/link text, parse, preview, upload"
+
+  sankey_visualizations:
+    enabled: true
+    priority: 38
+    description: "Render a selected Sankey graph with D3's d3-sankey (explicit column alignment, skip-ahead links supported)"
+
+  sankey_browse:
+    enabled: true
+    priority: 38.5
+    description: "Browse saved Sankey graphs and download the raw node/link rows"
+
+  sankey_about:
+    enabled: true
+    priority: 38.8
+    description: "Schema documentation for sankey_graphs and the delimiter convention"
+
   # ---- Strategic Analysis ----
   diagram_tool_guide:
     enabled: true
@@ -262,7 +294,7 @@ settings:
   dev_mode: false
 
 app:
-  name: "Unified Suite: Book Summary + Flex Table + Mind Map + Knowledge Graph + Strategic Analysis + Six Sigma Analysis"
-  version: "1.2.0"
-  description: "Six AI-powered BigQuery-backed data suites in one app: book summaries, flexible comparison tables, mind maps, knowledge graphs, AI-generated strategy diagrams, and AI-generated Six Sigma diagrams (Fishbone/Pareto/Control Chart/CTQ Tree/FMEA/etc.) - sharing one Claude API connection and one BigQuery connection across six tables in the same project/dataset"
+  name: "Unified Suite: Book Summary + Flex Table + Mind Map + Knowledge Graph + Sankey Graph + Strategic Analysis + Six Sigma Analysis"
+  version: "1.3.0"
+  description: "Seven AI-powered BigQuery-backed data suites in one app: book summaries, flexible comparison tables, mind maps, knowledge graphs, AI-generated Sankey flow diagrams, AI-generated strategy diagrams, and AI-generated Six Sigma diagrams - sharing one Claude API connection and one BigQuery connection across seven tables in the same project/dataset"
   author: "Your Team"

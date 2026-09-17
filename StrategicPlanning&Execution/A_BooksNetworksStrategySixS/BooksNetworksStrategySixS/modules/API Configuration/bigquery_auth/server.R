@@ -3,7 +3,27 @@
 bigquery_auth_server <- function(id, api_manager) {
   moduleServer(id, function(input, output, session) {
 
+    # ⭐ Re-entry guard: connecting fires triggers for all 7 suites at once
+    # (see authenticate_bigquery()'s success branch), which - because
+    # shinydashboard keeps every suite's reactive code alive regardless of
+    # which tab is visible - cascades into dozens of sequential BigQuery
+    # round trips that can take well over a minute on a single-threaded
+    # Shiny session. During that time the UI genuinely can't show whether
+    # the click registered, so a second, impatient click is an entirely
+    # reasonable thing for a person to do - but without this guard, Shiny
+    # queues that second click and re-runs the WHOLE connect-and-fire-
+    # every-trigger cascade again once the first one finishes, doubling
+    # an already-long wait for no benefit (the connection was already
+    # succeeding). This guard makes a click during an in-flight connection
+    # a no-op instead.
+    authenticating <- reactiveVal(FALSE)
+
     observeEvent(input$authenticate, {
+
+      if (isTRUE(authenticating())) {
+        showNotification("Already connecting - please wait for it to finish before clicking again.", type = "warning")
+        return()
+      }
 
       if (trimws(input$project_id) == "" || trimws(input$dataset_id) == "") {
         output$auth_status <- renderUI({
@@ -12,6 +32,14 @@ bigquery_auth_server <- function(id, api_manager) {
         })
         return()
       }
+
+      authenticating(TRUE)
+      shinyjs::disable("authenticate")
+      output$auth_status <- renderUI({
+        tags$div(class = "status-info", tags$i(class = "fa fa-spinner fa-spin"),
+                 " Connecting and preparing all seven tables - this can take up to a minute the first time, ",
+                 "since every suite's dropdowns refresh at once. Please wait; clicking again won't speed it up.")
+      })
 
       tryCatch({
         api_manager$set_bigquery_credentials(
@@ -30,7 +58,7 @@ bigquery_auth_server <- function(id, api_manager) {
         output$auth_status <- renderUI({
           tags$div(class = "status-success",
                    tags$i(class = "fa fa-check-circle"),
-                   " ✓ Successfully authenticated! All six tables are ready:",
+                   " ✓ Successfully authenticated! All seven tables are ready:",
                    tags$br(),
                    tags$small("Book Summary: ", api_manager$bq_full_table_books),
                    tags$br(),
@@ -40,12 +68,14 @@ bigquery_auth_server <- function(id, api_manager) {
                    tags$br(),
                    tags$small("Knowledge Graph: ", api_manager$bq_full_table_kg),
                    tags$br(),
+                   tags$small("Sankey Graph: ", api_manager$bq_full_table_sankey),
+                   tags$br(),
                    tags$small("Strategic Analysis: ", api_manager$bq_full_table_diagram),
                    tags$br(),
                    tags$small("Six Sigma Analysis: ", api_manager$bq_full_table_sixsigma))
         })
 
-        showNotification("✓ BigQuery connected - all six suites ready!", type = "message")
+        showNotification("✓ BigQuery connected - all seven suites ready!", type = "message")
 
       }, error = function(e) {
         output$auth_status <- renderUI({
@@ -54,6 +84,9 @@ bigquery_auth_server <- function(id, api_manager) {
         })
         showNotification(paste("Error:", e$message), type = "error")
       })
+
+      authenticating(FALSE)
+      shinyjs::enable("authenticate")
     })
 
     observeEvent(input$test_query, {
@@ -71,6 +104,7 @@ bigquery_auth_server <- function(id, api_manager) {
         flex = api_manager$bq_full_table_flex,
         mindmap = api_manager$bq_full_table_mindmap,
         kg = api_manager$bq_full_table_kg,
+        sankey = api_manager$bq_full_table_sankey,
         diagram = api_manager$bq_full_table_diagram,
         sixsigma = api_manager$bq_full_table_sixsigma
       )

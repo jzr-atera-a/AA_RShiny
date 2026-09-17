@@ -5120,3 +5120,557 @@ render_sixsigma_plotly <- function(components_df, diagram_type) {
     p
   )
 }
+
+# ============================================================
+# SANKEY GRAPH (AI-generated Sankey flow diagrams)
+# ============================================================
+# A Sankey is fundamentally NODES (labeled boxes at a specific left-right
+# column) plus WEIGHTED LINKS between them (source -> target, a flow
+# magnitude) - genuinely different from Mind Map's tree or Knowledge
+# Graph's general graph, so this suite gets its own table
+# (sankey_graphs) with a row_kind = "node"/"link" split, mirroring
+# Knowledge Graph's entity/relationship denormalization pattern but
+# WITHOUT KG's versioning complexity (append-only, same simple pattern
+# as Strategic Analysis/Six Sigma - this suite's Generate -> Bulk Import
+# -> upload flow has no in-place editing).
+#
+# CRITICAL DESIGN PRINCIPLE, same one used throughout this app: node
+# height and link curve width are NEVER computed by Claude or by R -
+# the d3-sankey JS layout algorithm derives both directly from the raw
+# value_numeric figures on each link, at render time, in the browser.
+# Claude supplies only which nodes exist, which column each sits in,
+# and the raw flow value of each link.
+#
+# Links may SKIP AHEAD any number of columns (e.g. column 1 straight to
+# column 5) - only the constraint that a link's target column must be
+# strictly greater than its source column is enforced (never backward,
+# never same-column, matching how real Sankeys, e.g. energy-flow or
+# budget diagrams, actually behave when a flow bypasses intermediate
+# stages).
+
+SANKEY_ITEM_SEP <- "|||SKYITEM|||"
+
+SANKEY_FIELDS <- c(
+  "row_kind", "component_ref", "column_index", "sequence_order",
+  "label_text", "sub_text", "items_packed",
+  "source_ref", "target_ref", "value_numeric", "unit_label",
+  "color_hint"
+)
+
+generate_new_sankey_id <- function(topic) {
+  slug <- tolower(gsub("[^a-zA-Z0-9]+", "-", trimws(topic)))
+  slug <- gsub("^-+|-+$", "", slug)
+  if (nchar(slug) == 0) slug <- "sankey"
+  if (nchar(slug) > 40) slug <- substr(slug, 1, 40)
+  paste0(slug, "-", format(Sys.time(), "%Y%m%d%H%M%S"))
+}
+
+# ---- Prompt construction ---------------------------------------------
+# num_columns and num_initial_rows come from the Generate tab's sliders
+# (2-12 and 2-20 respectively) - they are FIXED inputs to the prompt, not
+# something Claude chooses, and are force-echoed into the metadata block
+# by overwrite_sankey_header() afterwards exactly like every other fixed
+# field in this app.
+generate_sankey_prompt <- function(category, domain, topic, title_hint, num_columns, num_initial_rows, user_request) {
+  sep <- SANKEY_ITEM_SEP
+
+  title_line <- if (nchar(trimws(title_hint %||% "")) > 0) {
+    paste0('[', trimws(title_hint), ']')
+  } else {
+    '[<invent a concise, specific title for this Sankey diagram based on the user request>]'
+  }
+
+  paste0(
+    'You are a data visualization consultant building a professional Sankey flow diagram. A Sankey shows how ',
+    'a quantity (money, energy, people, material, time - whatever fits the topic) flows and redistributes from ',
+    'left to right through a sequence of stages, with the WIDTH of each flow proportional to its magnitude.\n\n',
+
+    'Category: ', category, '. Domain: ', domain, '. Topic: ', topic, '.\n\n',
+    'The user\'s specific request: "', user_request, '"\n\n',
+
+    'Populate the diagram with content genuinely specific to this request (real node names, real plausible ',
+    'magnitudes) - reason about the actual flow being described before inventing labels and values. Do not use ',
+    'generic placeholders like "Node 1" or "Category A".\n\n',
+
+    '=== STRUCTURE (mandatory) ===\n',
+    'Exactly ', num_columns, ' columns, numbered 1 (leftmost) to ', num_columns, ' (rightmost).\n',
+    'Column 1 must contain EXACTLY ', num_initial_rows, ' nodes - these are the starting streams the whole ',
+    'diagram flows from.\n',
+    'Columns 2 through ', num_columns, ' may each contain a DIFFERENT number of nodes than the column before ',
+    'them, however many are needed as flows genuinely merge (several sources into one target) or split (one ',
+    'source into several targets) on their way across the diagram - do not force every column to have the same ',
+    'node count.\n\n',
+
+    '=== LINKS (mandatory) ===\n',
+    'Every link goes from a node in an EARLIER column to a node in a LATER column - a link\'s target column ',
+    'number must always be strictly greater than its source column number. Links are allowed to SKIP AHEAD ',
+    'past intermediate columns (e.g. a column-1 node linking directly to a column-4 node, bypassing columns 2 ',
+    'and 3) whenever that reflects the real flow - use this deliberately where it makes sense (e.g. a source ',
+    'that bypasses processing stages, a direct pass-through, a leak or loss straight to a final "Other/Unused" ',
+    'node), not on every link.\n',
+    'Every node in column 1 must have at least one OUTGOING link (it is a pure source). Every node in the ',
+    'final column must have at least one INCOMING link (it is a pure sink) and no outgoing links. Every node ',
+    'in between should have at least one incoming AND at least one outgoing link - a node with no connections ',
+    'at all should not exist.\n',
+    'Where a node has both incoming and outgoing links, its total outgoing flow should roughly match (not ',
+    'necessarily exactly) its total incoming flow, the way a real conserved quantity would - do not calculate ',
+    'this precisely, just keep the numbers plausible and in the right ballpark; the renderer does not validate ',
+    'exact conservation.\n',
+    'Give links genuinely varied values (not all equal) so the diagram\'s flow widths look meaningfully ',
+    'different from each other - a professional Sankey has a visible mix of thick and thin flows.\n\n',
+
+    '=== OUTPUT FORMAT ===\n',
+    'Output ONLY the metadata block below followed by bracket-tag row blocks in the exact format specified - ',
+    'no markdown, no prose commentary, no code fences.\n\n',
+
+    '1. Start with EXACTLY 6 metadata lines, each on its own line, each containing ONLY the actual value ',
+    'wrapped in single square brackets - no field name, no colon. Lines 1-5 are fixed by the user\'s selection ',
+    '(do not change them); line 6 is the title as instructed below. The first 6 lines of your entire response ',
+    'must be EXACTLY:\n',
+    '[', num_columns, ']\n[', num_initial_rows, ']\n[', category, ']\n[', domain, ']\n[', topic, ']\n', title_line, '\n\n',
+
+    '2. Leave exactly ONE blank line after the metadata block. Then output one block per row (a node OR a ',
+    'link), separated by a single blank line from the next block. Do not skip a field - write "N/A" if genuinely ',
+    'not applicable.\n\n',
+
+    'CRITICAL: within [items_packed], separate multiple items with the EXACT literal token "', sep, '". ',
+    'NEVER use "', sep, '" anywhere else.\n\n',
+
+    'CRITICAL: every [component_ref] must be unique within this diagram. Use the naming convention c<column>n<index>, ',
+    'e.g. c1n1, c1n2, c2n1, c3n1, c3n2, c3n3 - this makes it obvious which column a node belongs to and keeps ',
+    'refs unambiguous when links reference them.\n\n',
+
+    'For EACH node:\n',
+    '[row_kind]: node\n[component_ref]: <e.g. c2n1 - unique, encodes its column>\n',
+    '[column_index]: <1..', num_columns, ', matching the number in its component_ref>\n',
+    '[sequence_order]: <top-to-bottom position within its column, 1 = topmost>\n',
+    '[label_text]: <the node name - specific and real, not generic>\n',
+    '[sub_text]: <a short one-line description of what this node represents for this specific topic, else N/A>\n',
+    '[items_packed]: <an optional extra detail 1>', sep, '<optional extra detail 2> (N/A if none)\n',
+    '[color_hint]: <accent_blue|accent_orange|accent_green|accent_purple|accent_teal|neutral_dark - vary these across columns/categories of node, not every node the same color>\n\n',
+
+    'For EACH link:\n',
+    '[row_kind]: link\n[source_ref]: <the component_ref of the source node>\n',
+    '[target_ref]: <the component_ref of the target node, in a STRICTLY LATER column than the source>\n',
+    '[value_numeric]: <the flow magnitude, a plain positive number, genuinely varied across links>\n',
+    '[unit_label]: <the unit this value is measured in, specific to the topic, e.g. "$M", "MWh", "customers", "%">\n\n',
+
+    'Title block: this is line 6 of the metadata above, not a separate row block - do not repeat it as a row.\n\n',
+
+    'Now generate the Sankey diagram, beginning with the 6 metadata lines.'
+  )
+}
+
+# Force-overwrite the metadata block's first 5 positional bare-bracket
+# lines (num_columns/num_initial_rows/category/domain/topic - fixed by
+# the user's slider/dropdown selections, never Claude's to change) back
+# to the authoritative values. The 6th line (title) is only forced when
+# the user supplied an explicit title_hint.
+overwrite_sankey_header <- function(text, num_columns, num_initial_rows, category, domain, topic, title_override = NULL) {
+  lines <- strsplit(text, "\n")[[1]]
+  metadata_line_idx <- which(grepl("^\\[.+\\]$", trimws(lines)))
+  metadata_line_idx <- head(metadata_line_idx, 6)
+
+  values <- list(num_columns, num_initial_rows, category, domain, topic, title_override)
+  for (i in seq_along(metadata_line_idx)) {
+    v <- values[[i]]
+    if (!is.null(v) && !is.na(v) && nchar(trimws(as.character(v))) > 0) {
+      lines[metadata_line_idx[i]] <- paste0("[", trimws(as.character(v)), "]")
+    }
+  }
+  paste(lines, collapse = "\n")
+}
+
+# Parser: mirrors parse_diagram_text()/parse_sixsigma_text()'s proven
+# two-part structure exactly (same "for loop uses plain <-, only
+# flush_block()'s own closure body uses <<-" scoping discipline that
+# fixed the original "object 'current' not found" bug in this app).
+#
+# Part 1 - METADATA: 6 bare "[value]" lines give num_columns/
+# num_initial_rows/category/domain/topic/title.
+# Part 2 - ROWS: "[field]: value" tagged blocks (nodes and links mixed
+# together, distinguished by their row_kind field), blank-line separated.
+parse_sankey_text <- function(text, sankey_id, is_template = FALSE, source_sankey_id = NA, created_by = "claude_agent") {
+  lines <- strsplit(text, "\n")[[1]]
+
+  # ---- Part 1: metadata block ----
+  num_columns <- NULL; num_initial_rows <- NULL; category <- NULL; domain <- NULL; topic <- NULL; title <- NULL
+  metadata_count <- 0
+  for (i in seq_len(min(20, length(lines)))) {
+    line <- trimws(lines[i])
+    if (grepl("^\\[.+\\]$", line)) {
+      metadata_count <- metadata_count + 1
+      value <- gsub("^\\[|\\]$", "", line)
+      if (metadata_count == 1) num_columns <- value
+      else if (metadata_count == 2) num_initial_rows <- value
+      else if (metadata_count == 3) category <- value
+      else if (metadata_count == 4) domain <- value
+      else if (metadata_count == 5) topic <- value
+      else if (metadata_count == 6) title <- value
+      else break
+    }
+  }
+  num_columns <- suppressWarnings(as.integer(num_columns))
+  num_initial_rows <- suppressWarnings(as.integer(num_initial_rows))
+  if (is.na(num_columns) || is.na(num_initial_rows)) {
+    stop("Could not find valid numeric column/row counts in the first two metadata lines of the generated text")
+  }
+  if (is.null(category) || is.null(domain) || is.null(topic)) {
+    stop("Could not find Category, Domain, and Topic metadata in the generated Sankey text")
+  }
+  if (is.null(title) || nchar(trimws(title)) == 0) title <- topic
+
+  # ---- Part 2: row blocks ("[field]: value" tags) ----
+  blocks <- list()
+  current <- list()
+  last_field <- NULL
+
+  flush_block <- function() {
+    if (length(current) > 0 && !is.null(current$row_kind)) {
+      blocks[[length(blocks) + 1]] <<- current
+    }
+  }
+
+  for (line in lines) {
+    line <- trimws(line)
+
+    if (line == "" || grepl("^\\[.+\\]$", line)) {
+      flush_block()
+      current <- list()
+      last_field <- NULL
+      next
+    }
+
+    matched <- FALSE
+    for (field in SANKEY_FIELDS) {
+      pat <- paste0("^\\[", field, "\\]:\\s*(.*)$")
+      if (grepl(pat, line, ignore.case = TRUE)) {
+        value <- trimws(sub(pat, "\\1", line, ignore.case = TRUE))
+        if (field == "row_kind" && !is.null(current$row_kind)) {
+          flush_block()
+          current <- list()
+        }
+        current[[field]] <- value
+        last_field <- field
+        matched <- TRUE
+        break
+      }
+    }
+    if (!matched && length(current) > 0 && !is.null(last_field)) {
+      current[[last_field]] <- paste(current[[last_field]], line)
+    }
+  }
+  flush_block()
+
+  if (length(blocks) == 0) stop("No valid node/link blocks found in the generated Sankey text")
+
+  df <- data.frame(
+    sankey_id = character(), title = character(), category = character(), domain = character(), topic = character(),
+    is_template = logical(), source_sankey_id = character(),
+    num_columns = integer(), num_initial_rows = integer(),
+    row_kind = character(), component_ref = character(), column_index = integer(), sequence_order = integer(),
+    label_text = character(), sub_text = character(), items_packed = character(),
+    source_ref = character(), target_ref = character(), value_numeric = numeric(), unit_label = character(),
+    color_hint = character(), created_by = character(),
+    stringsAsFactors = FALSE
+  )
+
+  na_int <- function(x) suppressWarnings(as.integer(x %||% NA))
+  na_num <- function(x) suppressWarnings(as.numeric(x %||% NA))
+
+  for (b in blocks) {
+    df <- rbind(df, data.frame(
+      sankey_id = sankey_id, title = title, category = category, domain = domain, topic = topic,
+      is_template = is_template, source_sankey_id = as.character(source_sankey_id %||% NA),
+      num_columns = num_columns, num_initial_rows = num_initial_rows,
+      row_kind = b$row_kind %||% "", component_ref = b$component_ref %||% NA_character_,
+      column_index = na_int(b$column_index), sequence_order = na_int(b$sequence_order),
+      label_text = b$label_text %||% "", sub_text = b$sub_text %||% "", items_packed = b$items_packed %||% "",
+      source_ref = b$source_ref %||% NA_character_, target_ref = b$target_ref %||% NA_character_,
+      value_numeric = na_num(b$value_numeric), unit_label = b$unit_label %||% NA_character_,
+      color_hint = b$color_hint %||% NA_character_, created_by = created_by,
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  # ---- Sanity checks (warnings only, never block upload - Claude's
+  #     creative content isn't rejected for imperfections, but these are
+  #     printed to the console so problems are visible during review) ----
+  node_rows <- df[df$row_kind == "node", ]
+  link_rows <- df[df$row_kind == "link", ]
+  if (nrow(node_rows) > 0) {
+    node_refs <- node_rows$component_ref
+    if (any(duplicated(node_refs))) {
+      cat("⚠️  [Sankey Graph][DEBUG] Duplicate component_ref values found among nodes:",
+          paste(unique(node_refs[duplicated(node_refs)]), collapse = ", "), "\n")
+    }
+    col1_count <- sum(node_rows$column_index == 1, na.rm = TRUE)
+    if (col1_count != num_initial_rows) {
+      cat(sprintf("⚠️  [Sankey Graph][DEBUG] Column 1 has %d node(s) but num_initial_rows was %d\n", col1_count, num_initial_rows))
+    }
+  }
+  if (nrow(link_rows) > 0) {
+    bad_links <- link_rows[!(link_rows$source_ref %in% node_rows$component_ref) |
+                            !(link_rows$target_ref %in% node_rows$component_ref), ]
+    if (nrow(bad_links) > 0) {
+      cat(sprintf("⚠️  [Sankey Graph][DEBUG] %d link(s) reference a component_ref that doesn't match any parsed node\n", nrow(bad_links)))
+    }
+  }
+
+  df
+}
+
+sankey_unpack_items <- function(items_packed) {
+  if (!has_real_value(items_packed)) return(character(0))
+  trimws(strsplit(items_packed, SANKEY_ITEM_SEP, fixed = TRUE)[[1]])
+}
+
+# ---- D3 Sankey renderer ------------------------------------------------
+# Same raw-D3-in-HTML technique used by Knowledge Graph's D3 tab (a
+# container div + a <script> block built from an r"---( ... )---" raw
+# string template with __TOKEN__ placeholders substituted via gsub,
+# rather than an R htmlwidgets wrapper package) - kept consistent with
+# the rest of this app's D3 usage.
+#
+# Uses the d3-sankey plugin's nodeAlign() hook to force each node into
+# its EXPLICIT column_index from the data, rather than letting d3-sankey
+# auto-assign columns from graph topology (its default behavior, which
+# would place a node as early as possible and break skip-ahead links'
+# intended positioning). d3-sankey then computes every node's vertical
+# extent and every link's curve width purely from the supplied
+# value_numeric figures - the actual "hard math" of a Sankey layout is
+# never done by Claude or by R.
+render_sankey <- function(components_df) {
+  cat(sprintf("🎨 [Sankey Graph][DEBUG] Rendering with %d row(s) (%d nodes, %d links)\n",
+              nrow(components_df),
+              sum(components_df$row_kind == "node"), sum(components_df$row_kind == "link")))
+
+  if (nrow(components_df) == 0) {
+    return(tags$div(class = "status-warning", "No components found for this Sankey diagram."))
+  }
+
+  title_text <- if (has_real_value(components_df$title[1])) components_df$title[1] else "Sankey Diagram"
+  node_rows <- components_df[components_df$row_kind == "node", , drop = FALSE]
+  link_rows <- components_df[components_df$row_kind == "link", , drop = FALSE]
+  num_columns <- suppressWarnings(as.integer(components_df$num_columns[1]))
+  if (is.na(num_columns) || num_columns < 1) num_columns <- max(node_rows$column_index, 1, na.rm = TRUE)
+
+  if (nrow(node_rows) == 0) {
+    return(tags$div(class = "status-error", "This Sankey diagram has no node rows to render."))
+  }
+
+  color_map <- c(
+    accent_blue = "#2C8C99", accent_orange = "#E08E45", accent_green = "#4CAF50",
+    accent_purple = "#8E44AD", accent_teal = "#008A82", neutral_dark = "#37474F"
+  )
+  resolve_color <- function(hint) {
+    if (!has_real_value(hint)) return(unname(color_map["accent_blue"]))
+    if (hint %in% names(color_map)) return(unname(color_map[hint]))
+    if (grepl("^#[0-9A-Fa-f]{3,8}$", hint)) return(hint)
+    unname(color_map["accent_blue"])
+  }
+
+  nodes_list <- lapply(seq_len(nrow(node_rows)), function(i) {
+    r <- node_rows[i, ]
+    items <- sankey_unpack_items(r$items_packed)
+    list(
+      id = r$component_ref,
+      name = r$label_text %||% r$component_ref,
+      sub_text = if (has_real_value(r$sub_text)) r$sub_text else "",
+      items = if (length(items) > 0) paste(items, collapse = " \u2022 ") else "",
+      column = (suppressWarnings(as.integer(r$column_index)) %||% 1L) - 1L,  # 0-indexed for D3
+      color = resolve_color(r$color_hint)
+    )
+  })
+
+  links_list <- lapply(seq_len(nrow(link_rows)), function(i) {
+    r <- link_rows[i, ]
+    list(
+      source = r$source_ref,
+      target = r$target_ref,
+      value = suppressWarnings(as.numeric(r$value_numeric)) %||% 1,
+      unit = if (has_real_value(r$unit_label)) r$unit_label else ""
+    )
+  })
+
+  nodes_json <- as.character(jsonlite::toJSON(nodes_list, auto_unbox = TRUE, null = "null"))
+  links_json <- as.character(jsonlite::toJSON(links_list, auto_unbox = TRUE, null = "null"))
+  nodes_json <- gsub("</script", "<\\/script", nodes_json, fixed = TRUE)
+  links_json <- gsub("</script", "<\\/script", links_json, fixed = TRUE)
+
+  widget_id <- paste0("sankey_", as.integer(Sys.time()), "_", sample(1000:9999, 1))
+
+  js <- r"---(
+(function() {
+  var nodesData = __NODES_JSON__;
+  var linksData = __LINKS_JSON__;
+  var numColumns = __NUM_COLUMNS__;
+  var containerId = "__CONTAINER_ID__";
+
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = "";
+
+  if (typeof d3.sankey !== "function") {
+    container.innerHTML = '<div class="status-error">d3-sankey plugin failed to load.</div>';
+    return;
+  }
+
+  var nodeCountInWidestColumn = 1;
+  var perColumn = {};
+  nodesData.forEach(function(n) {
+    perColumn[n.column] = (perColumn[n.column] || 0) + 1;
+    nodeCountInWidestColumn = Math.max(nodeCountInWidestColumn, perColumn[n.column]);
+  });
+
+  var margin = { top: 50, right: 200, bottom: 20, left: 200 };
+  var width = Math.max(container.clientWidth || 1000, numColumns * 220);
+  var height = Math.max(560, nodeCountInWidestColumn * 68);
+  var innerWidth = width - margin.left - margin.right;
+  var innerHeight = height - margin.top - margin.bottom;
+
+  var svg = d3.select(container).append("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("viewBox", [0, 0, width, height])
+      .style("font-family", "inherit")
+      .style("max-width", "100%")
+      .style("height", "auto");
+
+  svg.call(d3.zoom().scaleExtent([0.5, 3]).on("zoom", function(event) {
+    g.attr("transform", event.transform);
+  }));
+
+  var g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  var sankeyGen = d3.sankey()
+      .nodeId(function(d) { return d.id; })
+      .nodeAlign(function(d) { return d.column; })
+      .nodeWidth(22)
+      .nodePadding(22)
+      .extent([[0, 0], [innerWidth, innerHeight]]);
+
+  var graph;
+  try {
+    graph = sankeyGen({
+      nodes: nodesData.map(function(d) { return Object.assign({}, d); }),
+      links: linksData.map(function(d) { return Object.assign({}, d); })
+    });
+  } catch (e) {
+    container.innerHTML = '<div class="status-error">Could not lay out this Sankey - check that every link\'s source_ref/target_ref matches a real node, and that no link points backward or to its own column. (' + e.message + ')</div>';
+    return;
+  }
+
+  var tooltip = d3.select(container).append("div")
+      .attr("class", "sankey-tooltip")
+      .style("opacity", 0);
+
+  // ---- Links: gradient-filled flowing paths, thickness computed by
+  //     d3-sankey itself from each link's raw value - never Claude/R math
+  var defs = svg.append("defs");
+  graph.links.forEach(function(l, i) {
+    var gradId = "__CONTAINER_ID__-grad-" + i;
+    var grad = defs.append("linearGradient")
+        .attr("id", gradId)
+        .attr("gradientUnits", "userSpaceOnUse")
+        .attr("x1", l.source.x1).attr("x2", l.target.x0);
+    grad.append("stop").attr("offset", "0%").attr("stop-color", l.source.color);
+    grad.append("stop").attr("offset", "100%").attr("stop-color", l.target.color);
+    l.gradId = gradId;
+  });
+
+  var linkGroup = g.append("g").attr("fill", "none");
+  var linkPaths = linkGroup.selectAll("path")
+    .data(graph.links)
+    .join("path")
+      .attr("d", d3.sankeyLinkHorizontal())
+      .attr("stroke", function(d) { return "url(#" + d.gradId + ")"; })
+      .attr("stroke-width", function(d) { return Math.max(1, d.width); })
+      .attr("stroke-opacity", 0.42)
+      .style("cursor", "pointer")
+      .on("mouseover", function(event, d) {
+        d3.select(this).attr("stroke-opacity", 0.75);
+        tooltip.style("opacity", 1).html(
+          "<strong>" + d.source.name + " \u2192 " + d.target.name + "</strong><br/>" +
+          d.value.toLocaleString() + (d.unit ? (" " + d.unit) : "")
+        );
+      })
+      .on("mousemove", function(event) {
+        tooltip.style("left", (event.offsetX + 16) + "px").style("top", (event.offsetY + 8) + "px");
+      })
+      .on("mouseout", function() {
+        d3.select(this).attr("stroke-opacity", 0.42);
+        tooltip.style("opacity", 0);
+      });
+
+  // ---- Nodes: rounded rects, colored per node ----
+  var nodeGroup = g.append("g");
+  var nodeSel = nodeGroup.selectAll("rect")
+    .data(graph.nodes)
+    .join("rect")
+      .attr("x", function(d) { return d.x0; })
+      .attr("y", function(d) { return d.y0; })
+      .attr("width", function(d) { return d.x1 - d.x0; })
+      .attr("height", function(d) { return Math.max(1, d.y1 - d.y0); })
+      .attr("rx", 4)
+      .attr("fill", function(d) { return d.color; })
+      .attr("stroke", "#fff")
+      .attr("stroke-width", 1)
+      .style("cursor", "pointer")
+      .on("mouseover", function(event, d) {
+        var totalIn = d3.sum(d.targetLinks, function(l) { return l.value; });
+        var totalOut = d3.sum(d.sourceLinks, function(l) { return l.value; });
+        var unit = (d.targetLinks[0] && d.targetLinks[0].unit) || (d.sourceLinks[0] && d.sourceLinks[0].unit) || "";
+        var flowLine = "";
+        if (totalIn > 0) flowLine += "In: " + totalIn.toLocaleString() + " " + unit + "<br/>";
+        if (totalOut > 0) flowLine += "Out: " + totalOut.toLocaleString() + " " + unit;
+        tooltip.style("opacity", 1).html(
+          "<strong>" + d.name + "</strong>" +
+          (d.sub_text ? ("<br/><span style='opacity:0.85'>" + d.sub_text + "</span>") : "") +
+          "<br/>" + flowLine +
+          (d.items ? ("<br/><span style='opacity:0.75;font-size:0.9em'>" + d.items + "</span>") : "")
+        );
+      })
+      .on("mousemove", function(event) {
+        tooltip.style("left", (event.offsetX + 16) + "px").style("top", (event.offsetY + 8) + "px");
+      })
+      .on("mouseout", function() { tooltip.style("opacity", 0); });
+
+  // ---- Node labels: placed left of node if it's in the right half of
+  //     the diagram (else its text would run off the edge), right
+  //     otherwise - the standard Sankey labeling convention.
+  nodeGroup.selectAll("text")
+    .data(graph.nodes)
+    .join("text")
+      .attr("x", function(d) { return d.x0 < innerWidth / 2 ? d.x1 + 8 : d.x0 - 8; })
+      .attr("y", function(d) { return (d.y0 + d.y1) / 2; })
+      .attr("dy", "0.35em")
+      .attr("text-anchor", function(d) { return d.x0 < innerWidth / 2 ? "start" : "end"; })
+      .style("font-size", "12px")
+      .style("font-weight", "600")
+      .style("fill", "#2c3e50")
+      .style("pointer-events", "none")
+      .text(function(d) { return d.name; });
+
+  // ---- Title ----
+  svg.append("text")
+      .attr("x", width / 2).attr("y", 26)
+      .attr("text-anchor", "middle")
+      .style("font-size", "16px").style("font-weight", "bold").style("fill", "#2c3e50")
+      .text("__TITLE_TEXT__");
+})();
+)---"
+
+  js <- gsub("__NODES_JSON__", nodes_json, js, fixed = TRUE)
+  js <- gsub("__LINKS_JSON__", links_json, js, fixed = TRUE)
+  js <- gsub("__NUM_COLUMNS__", as.character(num_columns), js, fixed = TRUE)
+  js <- gsub("__CONTAINER_ID__", widget_id, js, fixed = TRUE)
+  js <- gsub("__TITLE_TEXT__", gsub('"', '\\\\"', title_text), js, fixed = TRUE)
+
+  tagList(
+    tags$div(class = "chapter-title", tags$i(class = "fa fa-water"), " ", title_text),
+    tags$div(id = widget_id, class = "sankey-widget-container",
+             style = "width: 100%; overflow-x: auto; border: 1px solid #e6ecec; border-radius: 8px; background: #fff;"),
+    tags$script(HTML(js))
+  )
+}

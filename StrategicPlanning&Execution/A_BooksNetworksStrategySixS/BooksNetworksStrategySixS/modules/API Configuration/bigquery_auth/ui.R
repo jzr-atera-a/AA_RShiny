@@ -11,10 +11,10 @@ bigquery_auth_ui <- function(id) {
         solidHeader = TRUE,
         width = 12,
 
-        h4("BigQuery Configuration - shared by all six suites"),
+        h4("BigQuery Configuration - shared by all seven suites"),
         p("Connect ONCE here. This authenticates Book Summary, Flex Table, Mind Map, Knowledge Graph, ",
-          "Strategic Analysis, AND Six Sigma Analysis together - they share the same project/dataset, but ",
-          "each has its own table, all auto-created below."),
+          "Sankey Graph, Strategic Analysis, AND Six Sigma Analysis together - they share the same ",
+          "project/dataset, but each has its own table, all auto-created below."),
 
         div(class = "alert alert-info",
             tags$strong("Note:"),
@@ -26,6 +26,7 @@ bigquery_auth_ui <- function(id) {
               tags$li(tags$strong("Flex Table:"), " flex_comparison_tables"),
               tags$li(tags$strong("Mind Map:"), " mindmap_nodes"),
               tags$li(tags$strong("Knowledge Graph:"), " knowledge_graph"),
+              tags$li(tags$strong("Sankey Graph:"), " sankey_graphs"),
               tags$li(tags$strong("Strategic Analysis:"), " strategy_diagrams"),
               tags$li(tags$strong("Six Sigma Analysis:"), " six_sigma_diagrams")
             )),
@@ -45,7 +46,7 @@ bigquery_auth_ui <- function(id) {
                  textInput(ns("dataset_id"), "Dataset ID:", value = "Wonderfulp_March", width = "100%"),
 
                  p(style = "color: #7f8c8d; font-size: 12px;",
-                   "All six tables live in this one project/dataset. Table names are fixed (shown above) ",
+                   "All seven tables live in this one project/dataset. Table names are fixed (shown above) ",
                    "since each suite's code targets its table by name directly.")
           )
         ),
@@ -53,14 +54,14 @@ bigquery_auth_ui <- function(id) {
         br(),
         fluidRow(
           column(6,
-                 actionButton(ns("authenticate"), "Connect to BigQuery (all 6 tables)",
+                 actionButton(ns("authenticate"), "Connect to BigQuery (all 7 tables)",
                               class = "btn-primary btn-lg", icon = icon("plug"), style = "width: 100%;")
           ),
           column(6,
                  selectInput(ns("test_table_choice"), "Table to test-query:",
                             choices = c("Book Summary" = "books", "Flex Table" = "flex", "Mind Map" = "mindmap",
-                                        "Knowledge Graph" = "kg", "Strategic Analysis" = "diagram",
-                                        "Six Sigma Analysis" = "sixsigma"))
+                                        "Knowledge Graph" = "kg", "Sankey Graph" = "sankey",
+                                        "Strategic Analysis" = "diagram", "Six Sigma Analysis" = "sixsigma"))
           )
         ),
         actionButton(ns("test_query"), "Test Query (Top 5 Rows of selected table)",

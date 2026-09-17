@@ -92,6 +92,7 @@ rsconnect::deployApp(
 )
 
 #Atera Analytics Confirmed 
+rsconnect::deployApp('C:/101_Code/R/AA_RShiny/StrategicPlanning&Execution/A_BusinessOperationsSuite/BusinessOperationsSuite/')
 rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Pitching Projects/Matresa/maternal_health_intelligence_app/mat_health_intelligence_poc/')
 rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Pitching Projects/CambridgeNeuroTeam/drivesafe_suite_with_osa_road_risk/')
 rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Skills/Social/Serendipity_CompComm_App/david_cleevely_serendipity/')
