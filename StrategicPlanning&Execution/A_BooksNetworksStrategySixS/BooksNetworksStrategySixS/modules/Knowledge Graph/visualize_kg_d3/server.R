@@ -300,10 +300,10 @@ visualize_kg_d3_server <- function(id, api_manager) {
       js <- gsub("__SHOW_LABELS__", show_labels_js, js, fixed = TRUE)
 
       output$network <- renderUI({
-        tags$div(
+        export_capture_wrapper(session$ns, tags$div(
           tags$div(id = widget_id, style = "width:100%; border-radius:8px; background:#fafcfc;"),
           tags$script(HTML(js))
-        )
+        ), entities_df$graph_title[1] %||% "knowledge_graph")
       })
     }
 

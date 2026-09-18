@@ -180,7 +180,8 @@ sankey_visualizations_server <- function(id, api_manager) {
         render_elapsed <- round(as.numeric(difftime(Sys.time(), render_t0, units = "secs")), 3)
         cat(sprintf("🎨 [Sankey Graph][DEBUG] render_sankey() completed in %ss\n", render_elapsed))
 
-        output$sankey_output <- renderUI({ rendered })
+        export_title <- if (has_real_value(components$title[1])) components$title[1] else "sankey_diagram"
+        output$sankey_output <- renderUI({ export_capture_wrapper(session$ns, rendered, export_title) })
         output$status <- renderUI({
           tags$div(class = "status-success", tags$i(class = "fa fa-check-circle"),
                    sprintf(" Rendered %d node(s) and %d link(s)", node_count, link_count))

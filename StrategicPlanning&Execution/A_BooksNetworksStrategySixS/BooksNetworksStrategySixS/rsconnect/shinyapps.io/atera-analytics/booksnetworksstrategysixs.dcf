@@ -5,6 +5,6 @@ account: atera-analytics
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 17897463
-bundleId: 12565038
+bundleId: 12570423
 url: https://atera-analytics.shinyapps.io/booksnetworksstrategysixs/
 version: 1

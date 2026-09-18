@@ -57,6 +57,7 @@ visualizations_ui <- function(id) {
         solidHeader = TRUE,
         width = 12,
         collapsible = TRUE,
+        export_controls_ui(ns, ns("export_target"), "book_summary"),
         htmlOutput(ns("chapters_html"))
       )
     ),

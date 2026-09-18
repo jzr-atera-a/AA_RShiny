@@ -26,6 +26,7 @@ diagram_visualizations_ui <- function(id) {
     fluidRow(
       box(title = "Rendered Diagram", status = "success", solidHeader = TRUE, width = 12,
           htmlOutput(ns("status")),
+          export_controls_ui(ns, ns("export_target"), "strategy_diagram"),
           uiOutput(ns("diagram_output"))
       )
     )

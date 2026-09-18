@@ -144,6 +144,20 @@ create_ui <- function(module_loader) {
         tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"),
         # MathJax - LaTeX rendering shared by all three suites
         tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-AMS-MML_HTMLorMML"),
+
+        # Diagram/table export (Strategic Analysis, Six Sigma, and Flex
+        # Table's Visualizations tabs) - captures whatever is actually
+        # rendered in the browser (HTML/CSS grid, hand-built SVG, or
+        # Plotly charts alike) rather than redrawing it, so the exported
+        # file matches what's on screen regardless of which of this app's
+        # several rendering technologies produced it.
+        tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"),
+        tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"),
+        # pptxgenjs isn't distributed via cdnjs; jsDelivr (pointed at its
+        # GitHub releases) is its own official CDN distribution channel.
+        tags$script(src = "https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"),
+        tags$script(src = "js/diagram_export.js"),
+
         tags$script(HTML("
           if (typeof MathJax !== 'undefined') {
             MathJax.Hub.Config({

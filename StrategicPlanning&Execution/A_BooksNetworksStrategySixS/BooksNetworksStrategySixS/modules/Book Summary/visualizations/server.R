@@ -367,7 +367,7 @@ visualizations_server <- function(id, api_manager) {
           html_parts <- c(html_parts, '<script>if (typeof MathJax !== "undefined") { MathJax.Hub.Queue(["Typeset", MathJax.Hub]); }</script>')
           
           # Combine all parts and return as HTML
-          HTML(paste(html_parts, collapse = ""))
+          export_capture_wrapper(session$ns, HTML(paste(html_parts, collapse = "")), data$book_name[1])
         })
         
         # Numeric chart

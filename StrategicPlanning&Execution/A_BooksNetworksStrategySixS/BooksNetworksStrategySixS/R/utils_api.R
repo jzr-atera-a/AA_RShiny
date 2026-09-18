@@ -109,6 +109,19 @@ APIManager <- R6::R6Class(
     pending_bulk_text_diagram = NULL,
     pending_bulk_text_sixsigma = NULL,
 
+    # Tool Recommender -> Generate Diagram handoff (Strategic Analysis
+    # only). Clicking a recommended framework's name stores its
+    # diagram_type id here; Generate Diagram's server watches this and
+    # auto-selects the matching Diagram Group + Framework dropdowns, same
+    # "store it, watch it, switch tabs" handoff shape as the pending_bulk_
+    # text_* fields above, just carrying a single id instead of a block
+    # of text.
+    pending_diagram_selection = NULL,
+
+    # Tool Recommender -> Generate Six Sigma Diagram handoff (Six Sigma
+    # Analysis only). Same shape as pending_diagram_selection above.
+    pending_sixsigma_selection = NULL,
+
     initialize = function() {
       self$state_trigger_books <- shiny::reactiveVal(0)
       self$state_trigger_flex <- shiny::reactiveVal(0)
@@ -122,6 +135,8 @@ APIManager <- R6::R6Class(
       self$pending_bulk_text_sankey <- shiny::reactiveVal("")
       self$pending_bulk_text_diagram <- shiny::reactiveVal("")
       self$pending_bulk_text_sixsigma <- shiny::reactiveVal("")
+      self$pending_diagram_selection <- shiny::reactiveVal(NULL)
+      self$pending_sixsigma_selection <- shiny::reactiveVal(NULL)
       private$recompute_full_table_ids()
       cat("🔌 API Manager initialized (Book Summary + Flex Table + Mind Map + Knowledge Graph + Sankey Graph + Strategic Analysis + Six Sigma Analysis)\n")
     },
@@ -185,6 +200,12 @@ APIManager <- R6::R6Class(
     },
     set_pending_bulk_text_sixsigma = function(text) {
       self$pending_bulk_text_sixsigma(text)
+    },
+    set_pending_diagram_selection = function(diagram_type) {
+      self$pending_diagram_selection(diagram_type)
+    },
+    set_pending_sixsigma_selection = function(diagram_type) {
+      self$pending_sixsigma_selection(diagram_type)
     },
 
     log_debug = function(msg, tag = "APIManager") {

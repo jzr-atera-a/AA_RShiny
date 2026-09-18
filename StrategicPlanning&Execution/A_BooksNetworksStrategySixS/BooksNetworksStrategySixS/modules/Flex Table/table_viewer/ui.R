@@ -61,6 +61,7 @@ table_viewer_ui <- function(id) {
 
         downloadButton(ns("download_wide_csv"), "Download as Wide CSV", class = "btn-warning"),
         br(), br(),
+        export_controls_ui(ns, ns("export_target"), "comparison_table"),
 
         sliderInput(ns("column_width_chars"), "Column Width (characters):",
                     min = 30, max = 110, value = 70, step = 20, width = "100%"),

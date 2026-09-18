@@ -46,6 +46,7 @@ visualize_mindmap_ui <- function(id) {
           "right. Scroll/pinch to zoom, drag the background to pan. Solid colored lines = primary ",
           "hierarchy (color = branch). Dashed orange lines = cross-links."),
 
+        export_controls_ui(ns, ns("export_target"), "mind_map"),
         uiOutput(ns("network"))
       ),
       box(

@@ -686,3 +686,41 @@ table.flex-comparison-table tbody tr:hover th.row-index-cell {
   border-radius: 6px; font-size: 12.5px; line-height: 1.4; max-width: 260px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.25); transition: opacity 0.15s ease;
 }
+
+/* =============================================================================
+   Strategy Tool Recommender - rank badges and clickable tool-name links in
+   the recommendations DT table.
+   ============================================================================= */
+.recommender-rank-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--diagram-accent-teal, #008A82); color: white; font-weight: bold; margin: 0 auto;
+}
+.recommender-tool-link {
+  font-weight: 600; color: var(--diagram-accent-dark, #002C3C); text-decoration: none;
+  border-bottom: 2px solid var(--diagram-accent-teal, #008A82);
+}
+.recommender-tool-link:hover { color: var(--diagram-accent-teal, #008A82); text-decoration: none; }
+.recommender-table td { vertical-align: top; padding-top: 12px; padding-bottom: 12px; }
+
+/* =============================================================================
+   Visualization export (Strategic Analysis, Six Sigma, Flex Table's
+   Visualizations tabs) - the format dropdown + Download button bar, and
+   the brief "preparing export..." overlay shown while html2canvas works.
+   ============================================================================= */
+.export-controls-bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin: 12px 0; padding: 10px 14px; background: #f8fafa;
+  border: 1px solid #e6ecec; border-radius: 8px;
+}
+.export-controls-label { margin: 0; font-weight: 600; color: #37474F; white-space: nowrap; }
+.export-format-select { width: auto; min-width: 160px; display: inline-block; }
+.export-download-btn { white-space: nowrap; }
+.export-capture-target { background: #ffffff; }
+
+.export-preparing-indicator {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 99999;
+  background: rgba(44, 62, 80, 0.95); color: #fff; padding: 12px 22px;
+  border-radius: 8px; font-size: 14px; font-weight: 600;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+}

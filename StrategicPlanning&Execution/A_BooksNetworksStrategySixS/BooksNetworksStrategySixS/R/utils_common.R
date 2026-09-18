@@ -5674,3 +5674,397 @@ render_sankey <- function(components_df) {
     tags$script(HTML(js))
   )
 }
+
+# ============================================================
+# STRATEGY TOOL RECOMMENDER (Strategic Analysis only)
+# ============================================================
+# Given a free-text problem description, Claude picks the top N
+# frameworks from the FULL 29-framework catalog that best fit the
+# problem, with reasoning and drawbacks per pick. The critical design
+# constraint: Claude must echo back the exact internal diagram_type id
+# (e.g. "bcg_matrix"), never a free-text name it invents - this is what
+# lets a click on a recommended tool deterministically auto-select the
+# right Group + Framework dropdown on the Generate Diagram tab (see
+# generate_diagram/server.R's observer on
+# api_manager$pending_diagram_selection()). Any id Claude returns that
+# isn't a real, current diagram_type is dropped by
+# parse_diagram_recommendations() rather than trusted - the same
+# "validate, don't assume Claude's output is well-formed" discipline
+# used by every parser in this app.
+
+# One-sentence description per framework, used to build the catalog
+# index Claude reasons over - condensed from diagram_tool_guide's own
+# "when to use" text so the two stay in sync in spirit if not verbatim.
+DIAGRAM_TYPE_SHORT_DESC <- c(
+  swot = "Broad first-pass assessment of internal strengths/weaknesses and external opportunities/threats.",
+  pestel = "Macro-environment scan across political, economic, social, technological, environmental, legal factors.",
+  five_forces = "Assesses competitive intensity and attractiveness of an industry.",
+  vrio = "Assesses whether a specific resource/capability is a genuine source of sustained competitive advantage.",
+  value_chain = "Maps where value is created or lost across a firm's primary and support activities.",
+  bcg_matrix = "Prioritizes investment across a product/business-unit portfolio by market growth and relative share.",
+  ge_mckinsey_matrix = "Nuanced portfolio view weighing industry attractiveness against business unit strength.",
+  ansoff_matrix = "Chooses a growth strategy along the products/markets dimensions.",
+  porters_generic_strategies = "Chooses the basis of competitive advantage: cost or differentiation, broad or narrow scope.",
+  tows_matrix = "Turns a SWOT's raw analysis into concrete SO/WO/ST/WT action strategies.",
+  blue_ocean_errc = "Rethinks which factors of competition to eliminate, reduce, raise, or create to escape head-to-head competition.",
+  value_curve = "Visually compares a strategic profile against competitors across the industry's key competitive factors.",
+  business_model_canvas = "Complete one-page view of how a business creates, delivers, and captures value.",
+  lean_canvas = "Validates an early-stage startup idea, focused on problem/solution fit over infrastructure.",
+  frame_diagnose_choose_act = "Structures a specific strategic decision step by step.",
+  pdca_cycle = "Runs a continuous-improvement loop (Plan-Do-Check-Act).",
+  weighted_decision_matrix = "Compares options against multiple weighted criteria with raw scores laid out clearly.",
+  mckinsey_7s = "Assesses whether an organization's structure, systems, and culture align with its strategy.",
+  raci_matrix = "Clarifies who is Responsible, Accountable, Consulted, and Informed across a set of tasks.",
+  disruptive_innovation = "Shows how a disruptor's performance trajectory could overtake an incumbent's.",
+  product_lifecycle = "Shows where a product sits in its Introduction/Growth/Maturity/Decline journey.",
+  technology_adoption_lifecycle = "Segments a market by adoption behavior, Innovators through Laggards.",
+  trend_to_commoditization = "Shows how price or margin erodes across successive product generations.",
+  active_waiting = "Weighs the opportunity of waiting against the threat of delaying a strategic commitment.",
+  economic_profit_mobility = "Shows how few companies sustain top-tier economic performance over time.",
+  kano_model = "Classifies features by how they drive customer satisfaction: basic, performance, or delighter.",
+  purpose_of_strategy = "Shows how a company's fundamental purpose cascades down into concrete initiatives.",
+  strategic_planning_wheel = "Shows the phases of a recurring strategic planning cycle.",
+  strategy_diamond = "Complete five-element view of a strategy: where to play, how to get there, how to win, sequencing, returns."
+)
+
+build_diagram_catalog_index <- function() {
+  lines <- character(0)
+  for (g in DIAGRAM_GROUPS) {
+    lines <- c(lines, paste0("\n", DIAGRAM_GROUP_LABELS[[g]], ":"))
+    for (t in DIAGRAM_TYPES_BY_GROUP[[g]]) {
+      lines <- c(lines, sprintf("  - id=\"%s\" | %s | %s", t, DIAGRAM_TYPE_LABELS[[t]], DIAGRAM_TYPE_SHORT_DESC[[t]]))
+    }
+  }
+  paste(lines, collapse = "\n")
+}
+
+generate_diagram_recommendation_prompt <- function(problem_description, num_recommendations) {
+  catalog <- build_diagram_catalog_index()
+
+  paste0(
+    'You are a strategy consultant. A client has described a strategic problem below. From the FULL catalog of ',
+    'available diagram/framework tools listed after it, recommend the top ', num_recommendations, ' tools that ',
+    'would best help solve or frame this SPECIFIC problem - ranked from most to least aligned. Reason about the ',
+    'actual problem, not generic popularity: a well-known framework that doesn\'t fit this problem should rank ',
+    'below a less common one that does.\n\n',
+
+    'THE PROBLEM:\n"', problem_description, '"\n\n',
+
+    'THE FULL CATALOG (id | name | description) - you may ONLY recommend tools from this exact list, and you ',
+    'MUST echo back the id EXACTLY as written (e.g. "bcg_matrix"), never the name or a paraphrase, since the id ',
+    'is used to programmatically select the tool afterward:\n',
+    catalog, '\n\n',
+
+    'Output ONLY bracket-tag blocks in the exact format below - no markdown, no prose commentary, no code ',
+    'fences, no numbering outside the bracket fields. One block per recommendation, most-aligned first, ',
+    'separated by a single blank line. Output EXACTLY ', num_recommendations, ' blocks.\n\n',
+
+    'For EACH recommendation:\n',
+    '[rank]: <1..', num_recommendations, ', most aligned = 1>\n',
+    '[diagram_type]: <the EXACT id from the catalog above, e.g. bcg_matrix - copy it character-for-character>\n',
+    '[reasoning]: <2-3 sentences on specifically why this tool suits THIS problem - concrete, tied to the ',
+    'problem\'s actual details, not a generic definition of what the tool does>\n',
+    '[drawbacks]: <1-2 sentences on this tool\'s real limitations or blind spots FOR THIS SPECIFIC PROBLEM - ',
+    'even the #1 recommendation should have an honest limitation noted, not "none">\n\n',
+
+    'Now generate exactly ', num_recommendations, ' recommendations, beginning with rank 1.'
+  )
+}
+
+# Parser: validates every diagram_type id against the CURRENT catalog
+# (DIAGRAM_TYPES) before trusting it - an id Claude got wrong, invented,
+# or that has since been removed from the catalog is dropped rather than
+# passed through, since a broken id would silently fail to auto-select
+# anything when a recommendation is clicked.
+parse_diagram_recommendations <- function(text, num_recommendations) {
+  lines <- strsplit(text, "\n")[[1]]
+  blocks <- list()
+  current <- list()
+  last_field <- NULL
+  fields <- c("rank", "diagram_type", "reasoning", "drawbacks")
+
+  flush_block <- function() {
+    if (length(current) > 0 && !is.null(current$diagram_type)) {
+      blocks[[length(blocks) + 1]] <<- current
+    }
+  }
+
+  for (line in lines) {
+    line <- trimws(line)
+    if (line == "") { flush_block(); current <- list(); last_field <- NULL; next }
+
+    matched <- FALSE
+    for (field in fields) {
+      pat <- paste0("^\\[", field, "\\]:\\s*(.*)$")
+      if (grepl(pat, line, ignore.case = TRUE)) {
+        value <- trimws(sub(pat, "\\1", line, ignore.case = TRUE))
+        if (field == "rank" && !is.null(current$rank)) { flush_block(); current <- list() }
+        current[[field]] <- value
+        last_field <- field
+        matched <- TRUE
+        break
+      }
+    }
+    if (!matched && length(current) > 0 && !is.null(last_field)) {
+      current[[last_field]] <- paste(current[[last_field]], line)
+    }
+  }
+  flush_block()
+
+  if (length(blocks) == 0) stop("No valid recommendation blocks found in Claude's response")
+
+  df <- data.frame(
+    rank = integer(), diagram_type = character(), diagram_label = character(), diagram_group = character(),
+    diagram_group_label = character(), reasoning = character(), drawbacks = character(),
+    stringsAsFactors = FALSE
+  )
+
+  dropped <- 0
+  for (b in blocks) {
+    dt <- b$diagram_type %||% ""
+    if (!dt %in% DIAGRAM_TYPES) {
+      cat(sprintf("⚠️  [Strategy Recommender][DEBUG] Dropping recommendation with unrecognized diagram_type '%s' (rank %s) - not in the current catalog\n", dt, b$rank %||% "?"))
+      dropped <- dropped + 1
+      next
+    }
+    grp <- names(which(sapply(DIAGRAM_TYPES_BY_GROUP, function(x) dt %in% x)))[1]
+    df <- rbind(df, data.frame(
+      rank = suppressWarnings(as.integer(b$rank %||% NA)),
+      diagram_type = dt,
+      diagram_label = DIAGRAM_TYPE_LABELS[[dt]],
+      diagram_group = grp,
+      diagram_group_label = DIAGRAM_GROUP_LABELS[[grp]],
+      reasoning = b$reasoning %||% "",
+      drawbacks = b$drawbacks %||% "",
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  if (nrow(df) == 0) stop("Claude's response contained no recommendations with a valid, recognized diagram_type")
+  df <- df[order(df$rank), ]
+
+  if (dropped > 0) {
+    cat(sprintf("⚠️  [Strategy Recommender][DEBUG] %d recommendation(s) dropped for invalid diagram_type; %d valid recommendation(s) remain (requested %d)\n",
+                dropped, nrow(df), num_recommendations))
+  }
+
+  df
+}
+
+# ============================================================
+# SIX SIGMA TOOL RECOMMENDER (Six Sigma Analysis only)
+# ============================================================
+# Identical design to the Strategic Analysis recommender above: given a
+# free-text problem description, Claude picks the top N tools from the
+# FULL 33-tool catalog, echoing back the exact internal diagram_type id
+# (never a free-text name) so a click can deterministically auto-select
+# the right Group + Type dropdown on the Generate Six Sigma Diagram tab.
+
+# One-sentence description per tool, condensed from sixsigma_tool_guide's
+# own "definition" text.
+SIXSIGMA_TYPE_SHORT_DESC <- c(
+  dmaic_process = "The core 5-phase methodology (Define-Measure-Analyse-Improve-Control) for improving an existing process.",
+  dmadv_process = "Design for Six Sigma counterpart to DMAIC, used when designing a brand-new product or process.",
+  six_sigma_roles_hierarchy = "The belt-based organizational structure of a Six Sigma program, Champions down to Yellow Belts.",
+  sipoc = "High-level, single-page map of a process's boundaries: Suppliers, Inputs, Process, Outputs, Customers.",
+  ctq_tree = "Translates a broad customer need into specific, measurable Critical-to-Quality requirements.",
+  stakeholder_analysis = "Power/Interest grid for deciding how much engagement each stakeholder deserves.",
+  voice_of_customer = "Captures raw customer statements and maps each to a specific translated requirement.",
+  cost_of_quality = "Categorizes quality-related spending into Prevention, Appraisal, Internal Failure, External Failure.",
+  process_map = "Documents the actual step-by-step flow of a process today, including decision points.",
+  gage_rr = "Measurement System Analysis checking whether the measuring equipment itself is trustworthy.",
+  house_of_quality = "QFD matrix correlating customer requirements against technical/engineering characteristics.",
+  check_sheet = "Structured tally table for collecting raw frequency data by category over time.",
+  histogram = "Shows the shape of a data distribution - central tendency, spread, and skew.",
+  scatter_plot = "Tests and quantifies whether two variables are actually correlated.",
+  fishbone = "Structured brainstorming tool organizing potential root causes into standard categories.",
+  five_whys = "Fast root-cause technique, asking 'why' repeatedly to move past a symptom to its cause.",
+  pareto = "Prioritizes which causes to fix first, based on frequency/cost/impact (the 80/20 rule).",
+  fmea_table = "Proactively assesses and prioritizes the risk of potential failure modes before they occur.",
+  current_reality_tree = "Theory of Constraints logic tool tracing layered intermediate causes back to one root cause.",
+  spaghetti_diagram = "Tracks and quantifies the actual movement of people/materials/information through a space.",
+  pugh_matrix = "Objectively compares several candidate solutions against a baseline across multiple criteria.",
+  doe_table = "Plans an experiment testing multiple process factors simultaneously, rather than one at a time.",
+  five_s = "5-stage workplace discipline (Sort, Set in Order, Shine, Standardise, Sustain) removing clutter.",
+  seven_wastes = "Classic Lean taxonomy of non-value-added activity (Transport, Inventory, Motion, Waiting, etc.).",
+  five_lean_principles = "Core Lean philosophy in sequence: Value, Value Stream, Flow, Pull, Perfection.",
+  poka_yoke_devices = "Inventories concrete error-proofing mechanisms - prevention devices and detection devices.",
+  smed_analysis = "Systematic method for reducing equipment changeover time by converting internal steps to external.",
+  chaku_chaku_flow = "One-operator, multi-station continuous flow line design (load-load).",
+  control_chart = "Monitors whether a process is statistically stable over time, detecting special-cause variation.",
+  balanced_scorecard = "Tracks organizational performance across Financial, Customer, Process, Learning & Growth at once.",
+  andon_board = "Visual management signal board showing real-time status across multiple stations/lines.",
+  normal_distribution = "Illustrates the Central Limit Theorem and the bell-curve shape underlying most Six Sigma stats.",
+  process_capability = "Formally assesses whether a process can reliably meet specification limits (Cp/Cpk)."
+)
+
+build_sixsigma_catalog_index <- function() {
+  lines <- character(0)
+  for (g in SIXSIGMA_GROUPS) {
+    lines <- c(lines, paste0("\n", SIXSIGMA_GROUP_LABELS[[g]], ":"))
+    for (t in SIXSIGMA_TYPES_BY_GROUP[[g]]) {
+      lines <- c(lines, sprintf("  - id=\"%s\" | %s | %s", t, SIXSIGMA_TYPE_LABELS[[t]], SIXSIGMA_TYPE_SHORT_DESC[[t]]))
+    }
+  }
+  paste(lines, collapse = "\n")
+}
+
+generate_sixsigma_recommendation_prompt <- function(problem_description, num_recommendations) {
+  catalog <- build_sixsigma_catalog_index()
+
+  paste0(
+    'You are a Lean Six Sigma Master Black Belt. A client has described a problem below. From the FULL catalog ',
+    'of available Six Sigma tools listed after it, recommend the top ', num_recommendations, ' tools that would ',
+    'best help solve or frame this SPECIFIC problem - ranked from most to least aligned. Reason about the actual ',
+    'problem, not generic popularity or which DMAIC phase "should" come first: a well-known tool that doesn\'t ',
+    'fit this problem should rank below a less common one that does.\n\n',
+
+    'THE PROBLEM:\n"', problem_description, '"\n\n',
+
+    'THE FULL CATALOG (id | name | description) - you may ONLY recommend tools from this exact list, and you ',
+    'MUST echo back the id EXACTLY as written (e.g. "fishbone"), never the name or a paraphrase, since the id ',
+    'is used to programmatically select the tool afterward:\n',
+    catalog, '\n\n',
+
+    'Output ONLY bracket-tag blocks in the exact format below - no markdown, no prose commentary, no code ',
+    'fences, no numbering outside the bracket fields. One block per recommendation, most-aligned first, ',
+    'separated by a single blank line. Output EXACTLY ', num_recommendations, ' blocks.\n\n',
+
+    'For EACH recommendation:\n',
+    '[rank]: <1..', num_recommendations, ', most aligned = 1>\n',
+    '[diagram_type]: <the EXACT id from the catalog above, e.g. fishbone - copy it character-for-character>\n',
+    '[reasoning]: <2-3 sentences on specifically why this tool suits THIS problem - concrete, tied to the ',
+    'problem\'s actual details, not a generic definition of what the tool does>\n',
+    '[drawbacks]: <1-2 sentences on this tool\'s real limitations or blind spots FOR THIS SPECIFIC PROBLEM - ',
+    'even the #1 recommendation should have an honest limitation noted, not "none">\n\n',
+
+    'Now generate exactly ', num_recommendations, ' recommendations, beginning with rank 1.'
+  )
+}
+
+# Parser: validates every diagram_type id against the CURRENT Six Sigma
+# catalog (SIXSIGMA_ALL_TYPES) before trusting it, exactly mirroring
+# parse_diagram_recommendations()'s discipline.
+parse_sixsigma_recommendations <- function(text, num_recommendations) {
+  lines <- strsplit(text, "\n")[[1]]
+  blocks <- list()
+  current <- list()
+  last_field <- NULL
+  fields <- c("rank", "diagram_type", "reasoning", "drawbacks")
+
+  flush_block <- function() {
+    if (length(current) > 0 && !is.null(current$diagram_type)) {
+      blocks[[length(blocks) + 1]] <<- current
+    }
+  }
+
+  for (line in lines) {
+    line <- trimws(line)
+    if (line == "") { flush_block(); current <- list(); last_field <- NULL; next }
+
+    matched <- FALSE
+    for (field in fields) {
+      pat <- paste0("^\\[", field, "\\]:\\s*(.*)$")
+      if (grepl(pat, line, ignore.case = TRUE)) {
+        value <- trimws(sub(pat, "\\1", line, ignore.case = TRUE))
+        if (field == "rank" && !is.null(current$rank)) { flush_block(); current <- list() }
+        current[[field]] <- value
+        last_field <- field
+        matched <- TRUE
+        break
+      }
+    }
+    if (!matched && length(current) > 0 && !is.null(last_field)) {
+      current[[last_field]] <- paste(current[[last_field]], line)
+    }
+  }
+  flush_block()
+
+  if (length(blocks) == 0) stop("No valid recommendation blocks found in Claude's response")
+
+  df <- data.frame(
+    rank = integer(), diagram_type = character(), diagram_label = character(), diagram_group = character(),
+    diagram_group_label = character(), reasoning = character(), drawbacks = character(),
+    stringsAsFactors = FALSE
+  )
+
+  dropped <- 0
+  for (b in blocks) {
+    dt <- b$diagram_type %||% ""
+    if (!dt %in% SIXSIGMA_ALL_TYPES) {
+      cat(sprintf("⚠️  [Six Sigma Recommender][DEBUG] Dropping recommendation with unrecognized diagram_type '%s' (rank %s) - not in the current catalog\n", dt, b$rank %||% "?"))
+      dropped <- dropped + 1
+      next
+    }
+    grp <- names(which(sapply(SIXSIGMA_TYPES_BY_GROUP, function(x) dt %in% x)))[1]
+    df <- rbind(df, data.frame(
+      rank = suppressWarnings(as.integer(b$rank %||% NA)),
+      diagram_type = dt,
+      diagram_label = SIXSIGMA_TYPE_LABELS[[dt]],
+      diagram_group = grp,
+      diagram_group_label = SIXSIGMA_GROUP_LABELS[[grp]],
+      reasoning = b$reasoning %||% "",
+      drawbacks = b$drawbacks %||% "",
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  if (nrow(df) == 0) stop("Claude's response contained no recommendations with a valid, recognized diagram_type")
+  df <- df[order(df$rank), ]
+
+  if (dropped > 0) {
+    cat(sprintf("⚠️  [Six Sigma Recommender][DEBUG] %d recommendation(s) dropped for invalid diagram_type; %d valid recommendation(s) remain (requested %d)\n",
+                dropped, nrow(df), num_recommendations))
+  }
+
+  df
+}
+
+# ============================================================
+# VISUALIZATION EXPORT (Strategic Analysis, Six Sigma, Flex Table)
+# ============================================================
+# Shared "download this rendered visualization" UI, used identically by
+# diagram_visualizations, sixsigma_visualizations, and table_viewer. The
+# actual export work happens entirely client-side (see
+# www/js/diagram_export.js) - this just renders the format dropdown and
+# download button and wires them to that JS, matching this app's existing
+# pattern of loading shared client-side libraries (D3, Cytoscape) once
+# globally and having individual modules use them.
+#
+# format_select_id and target_id are real DOM ids (already namespaced via
+# ns()), not Shiny input/output names on their own - the dropdown is a
+# plain HTML <select>, not selectInput(), since its value is only ever
+# read by client-side JS and never needs to be a reactive Shiny input.
+export_controls_ui <- function(ns, target_id, default_filename = "diagram") {
+  format_select_id <- ns("export_format")
+  tags$div(class = "export-controls-bar",
+    tags$label("Download visualization as:", `for` = format_select_id, class = "export-controls-label"),
+    tags$select(id = format_select_id, class = "form-control export-format-select",
+      tags$option(value = "pdf", "PDF"),
+      tags$option(value = "pptx", "PowerPoint (PPTX)"),
+      tags$option(value = "html", "HTML"),
+      tags$option(value = "jpeg", "JPEG Image")
+    ),
+    tags$button(
+      type = "button", class = "btn btn-success export-download-btn",
+      onclick = sprintf("window.exportVisualization('%s', '%s', '%s')", target_id, format_select_id, default_filename),
+      tags$i(class = "fa fa-download"), " Download"
+    )
+  )
+}
+
+# Wraps already-rendered content (a tagList/HTML from render_diagram(),
+# render_sixsigma(), or a plain HTML table) in the container html2canvas
+# captures - carrying the export target's DOM id and a data-export-title
+# attribute the JS reads for the downloaded file's name. Deliberately a
+# SEPARATE wrapper (not baked into render_diagram()/render_sixsigma()
+# themselves) so the export mechanism stays a concern of the
+# Visualizations tab that's showing the content, not of the generic
+# renderer functions, which have no reason to know about DOM export ids.
+export_capture_wrapper <- function(ns, content, export_title) {
+  tags$div(
+    id = ns("export_target"), class = "export-capture-target",
+    `data-export-title` = export_title %||% "diagram",
+    content
+  )
+}

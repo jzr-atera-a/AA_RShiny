@@ -26,6 +26,7 @@ sankey_visualizations_ui <- function(id) {
     fluidRow(
       box(title = "Rendered Sankey", status = "success", solidHeader = TRUE, width = 12,
           htmlOutput(ns("status")),
+          export_controls_ui(ns, ns("export_target"), "sankey_diagram"),
           uiOutput(ns("sankey_output"))
       )
     )

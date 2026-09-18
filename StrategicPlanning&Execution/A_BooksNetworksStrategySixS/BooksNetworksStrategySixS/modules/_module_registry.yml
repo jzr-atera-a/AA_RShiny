@@ -50,13 +50,13 @@ groups:
     label: "Strategic Analysis"
     icon: "chess"
     expanded: false
-    modules: [diagram_tool_guide, generate_diagram, diagram_bulk_import, diagram_add_single, diagram_browse, diagram_visualizations, diagram_about]
+    modules: [diagram_tool_guide, diagram_recommender, generate_diagram, diagram_bulk_import, diagram_add_single, diagram_browse, diagram_visualizations, diagram_about]
 
   - id: six_sigma_analysis
     label: "Six Sigma Analysis"
     icon: "microscope"
     expanded: false
-    modules: [sixsigma_tool_guide, generate_sixsigma, sixsigma_bulk_import, sixsigma_add_single, sixsigma_browse, sixsigma_visualizations, sixsigma_about]
+    modules: [sixsigma_tool_guide, sixsigma_recommender, generate_sixsigma, sixsigma_bulk_import, sixsigma_add_single, sixsigma_browse, sixsigma_visualizations, sixsigma_about]
 
 modules:
   # ---- API Configuration (shared by all three suites) ----
@@ -221,6 +221,11 @@ modules:
     priority: 39
     description: "Reference guide to all Strategic Analysis diagram types - what each is for and when to ask Claude for it"
 
+  diagram_recommender:
+    enabled: true
+    priority: 39.5
+    description: "AI-powered framework recommender - describe a strategic problem, get the top N best-fit frameworks ranked with reasoning and drawbacks"
+
   generate_diagram:
     enabled: true
     priority: 40
@@ -256,6 +261,11 @@ modules:
     enabled: true
     priority: 49
     description: "Reference guide to all Six Sigma diagram types organized by DMAIC phase - what each is for and when to ask Claude for it"
+
+  sixsigma_recommender:
+    enabled: true
+    priority: 49.5
+    description: "AI-powered tool recommender - describe a Six Sigma problem, get the top N best-fit tools ranked with reasoning and drawbacks"
 
   generate_sixsigma:
     enabled: true

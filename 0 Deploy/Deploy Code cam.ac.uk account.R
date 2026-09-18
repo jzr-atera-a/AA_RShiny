@@ -97,7 +97,7 @@ rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Pitching Projects/Matresa/maternal
 rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Pitching Projects/CambridgeNeuroTeam/drivesafe_suite_with_osa_road_risk/')
 rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Skills/Social/Serendipity_CompComm_App/david_cleevely_serendipity/')
 rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Skills/Communication/CompComm_v9/Simon_Hall_CC/')
-rsconnect::deployApp('C:/101_Code/R/AA_RShiny/LAT_Trading/2026/LAT_full_app/trading_analysis_f1_v4_mobility/')
+rsconnect::deployApp('C:/101_Code/R/AA_RShiny/LAT_Trading/2026/LAT_full_app/trading_analysis_lat_2026_u3/')
 rsconnect::deployApp('C:/101_Code/R/AA_RShiny/SelfManagement/A_Planning_Day_Trips_Health/DaysPlanningFundingTravel/')
 rsconnect::deployApp('C:/101_Code/R/AA_RShiny/StrategicPlanning&Execution/A_BooksNetworksStrategySixS/BooksNetworksStrategySixS/')
 rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Finance/JBS_CME_Forex_Symp_2026/trading_analysis_f1/')

@@ -17,8 +17,44 @@ generate_diagram_server <- function(id, api_manager) {
     )
 
     # Independent Diagram Group -> Framework cascade (which strategic lens,
-    # then which of the ~27 specific named frameworks within it).
+    # then which of the ~29 specific named frameworks within it).
     setup_diagram_group_type_cascade(input, output, session)
+
+    # Tool Recommender -> Generate Diagram handoff: when a recommended
+    # framework's name is clicked on the Tool Recommender tab, its
+    # diagram_type id is stored on api_manager and the user is switched
+    # to this tab. This observer picks that up and auto-selects both the
+    # Group and Framework dropdowns to match. Both dropdowns are set
+    # explicitly here (not left to setup_diagram_group_type_cascade's own
+    # group-change observer to fill in the Framework choices) because
+    # that observer's re-fire happens on a LATER reactive flush, after
+    # the browser round-trips the Group change back - setting Framework's
+    # choices AND selection directly here, in the same pass as Group,
+    # avoids relying on timing between the two. (It's still safe for that
+    # other observer to also fire afterward: it never passes `selected=`,
+    # so per Shiny's update*Input semantics it preserves whatever is
+    # already selected - the value this observer set - rather than
+    # clearing it.)
+    observeEvent(api_manager$pending_diagram_selection(), {
+      dtype <- api_manager$pending_diagram_selection()
+      if (is.null(dtype) || !dtype %in% DIAGRAM_TYPES) return()
+
+      grp <- names(which(sapply(DIAGRAM_TYPES_BY_GROUP, function(x) dtype %in% x)))[1]
+      if (is.null(grp) || is.na(grp)) return()
+
+      cat(sprintf("🎯 [Strategic Analysis][DEBUG] Auto-selecting recommended framework: %s (group: %s)\n", dtype, grp))
+
+      updateSelectInput(session, "diagram_group_select",
+                        choices = setNames(DIAGRAM_GROUPS, DIAGRAM_GROUP_LABELS[DIAGRAM_GROUPS]), selected = grp)
+      types <- DIAGRAM_TYPES_BY_GROUP[[grp]]
+      updateSelectInput(session, "diagram_type_select",
+                        choices = setNames(types, DIAGRAM_TYPE_LABELS[types]), selected = dtype)
+
+      # Consume it so revisiting this tab later (without a fresh click)
+      # doesn't keep re-forcing the same selection over the user's own
+      # subsequent manual changes.
+      api_manager$set_pending_diagram_selection(NULL)
+    }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
     run_parse_preview <- function(text, quiet = FALSE) {
       if (trimws(text) == "") {

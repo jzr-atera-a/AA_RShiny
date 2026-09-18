@@ -296,7 +296,7 @@ table_viewer_server <- function(id, api_manager) {
           html <- c(html, '</tbody></table></div></div>')
           html <- c(html, '<script>if (typeof MathJax !== "undefined") { MathJax.Hub.Queue(["Typeset", MathJax.Hub]); }</script>')
 
-          HTML(paste(html, collapse = ""))
+          export_capture_wrapper(session$ns, HTML(paste(html, collapse = "")), data$table_title[1])
         })
 
         output$status <- renderUI({

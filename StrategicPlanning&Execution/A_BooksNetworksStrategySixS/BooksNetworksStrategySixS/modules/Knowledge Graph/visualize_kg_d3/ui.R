@@ -46,6 +46,7 @@ visualize_kg_d3_ui <- function(id) {
           "background to pan, scroll/pinch to zoom. Node color = entity type, node size = number of ",
           "connections."),
 
+        export_controls_ui(ns, ns("export_target"), "knowledge_graph_d3"),
         uiOutput(ns("network"))
       ),
       box(

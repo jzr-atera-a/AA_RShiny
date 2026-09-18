@@ -14,6 +14,36 @@ generate_sixsigma_server <- function(id, api_manager) {
     )
     setup_sixsigma_group_type_cascade(input, output, session)
 
+    # Tool Recommender -> Generate Six Sigma Diagram handoff: when a
+    # recommended tool's name is clicked on the Tool Recommender tab, its
+    # diagram_type id is stored on api_manager and the user is switched
+    # to this tab. This observer picks that up and auto-selects both the
+    # Group and Type dropdowns to match, setting both explicitly in one
+    # pass rather than relying on setup_sixsigma_group_type_cascade's own
+    # group-change observer to fill in Type's choices on a later reactive
+    # flush (that observer never passes `selected=`, so it's still safe
+    # for it to also fire afterward - it preserves whatever this observer
+    # already selected rather than clearing it).
+    observeEvent(api_manager$pending_sixsigma_selection(), {
+      dtype <- api_manager$pending_sixsigma_selection()
+      if (is.null(dtype) || !dtype %in% SIXSIGMA_ALL_TYPES) return()
+
+      grp <- names(which(sapply(SIXSIGMA_TYPES_BY_GROUP, function(x) dtype %in% x)))[1]
+      if (is.null(grp) || is.na(grp)) return()
+
+      cat(sprintf("🎯 [Six Sigma Analysis][DEBUG] Auto-selecting recommended tool: %s (group: %s)\n", dtype, grp))
+
+      updateSelectInput(session, "diagram_group_select",
+                        choices = setNames(SIXSIGMA_GROUPS, SIXSIGMA_GROUP_LABELS[SIXSIGMA_GROUPS]), selected = grp)
+      types <- SIXSIGMA_TYPES_BY_GROUP[[grp]]
+      updateSelectInput(session, "diagram_type_select",
+                        choices = setNames(types, SIXSIGMA_TYPE_LABELS[types]), selected = dtype)
+
+      # Consume it so revisiting this tab later doesn't keep re-forcing
+      # the same selection over the user's own subsequent manual changes.
+      api_manager$set_pending_sixsigma_selection(NULL)
+    }, ignoreNULL = TRUE, ignoreInit = TRUE)
+
     run_parse_preview <- function(text, quiet = FALSE) {
       if (trimws(text) == "") {
         parsed_preview(NULL)

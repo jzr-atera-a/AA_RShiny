@@ -339,10 +339,10 @@ visualize_mindmap_server <- function(id, api_manager) {
       js <- gsub("__SHINY_INPUT_ID__", shiny_input_id, js, fixed = TRUE)
 
       output$network <- renderUI({
-        tags$div(
+        export_capture_wrapper(session$ns, tags$div(
           tags$div(id = widget_id, style = "width:100%; overflow:auto; border-radius:8px; background:#fafcfc; min-height:200px;"),
           tags$script(HTML(js))
-        )
+        ), nodes_df$map_title[1] %||% "mind_map")
       })
     }
 
