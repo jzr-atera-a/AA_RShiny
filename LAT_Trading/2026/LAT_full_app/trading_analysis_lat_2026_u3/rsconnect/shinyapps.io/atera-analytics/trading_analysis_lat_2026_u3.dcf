@@ -5,6 +5,6 @@ account: atera-analytics
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 17936835
-bundleId: 12567095
+bundleId: 12578587
 url: https://atera-analytics.shinyapps.io/trading_analysis_lat_2026_u3/
 version: 1

@@ -5,6 +5,6 @@ account: atera-analytics
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 17894843
-bundleId: 12554027
+bundleId: 12575195
 url: https://atera-analytics.shinyapps.io/daysplanningfundingtravel/
 version: 1

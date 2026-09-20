@@ -38,7 +38,7 @@ bigquery_auth_ui <- function(id) {
 
                  tags$table(class = "table table-condensed", style = "margin-top: 10px;",
                    tags$tbody(
-                     tags$tr(tags$td(tags$strong("Day Planner:")), tags$td(tags$code("day_scheduler"))),
+                     tags$tr(tags$td(tags$strong("Day Planner:")), tags$td(tags$code("day_scheduler, day_prep_steps, monthly_commitments"))),
                      tags$tr(tags$td(tags$strong("Diet Planner:")), tags$td(tags$code("diet_log"))),
                      tags$tr(tags$td(tags$strong("Exercise Tracker:")), tags$td(tags$code("exercise_log"))),
                      tags$tr(tags$td(tags$strong("Events Scheduling:")), tags$td(tags$code("city_events"))),
@@ -61,7 +61,9 @@ bigquery_auth_ui <- function(id) {
           ),
           column(4,
                  selectInput(ns("test_table_choice"), "Table to test:",
-                             choices = c("Day Planner" = "schedule", "Diet Planner" = "diet",
+                             choices = c("Day Planner" = "schedule", "Day Planner Prep Steps" = "prep",
+                                         "Day Planner Commitments" = "commitments",
+                                         "Diet Planner" = "diet",
                                          "Exercise Tracker" = "exercise", "Events Scheduling" = "events",
                                          "Funding Programmes" = "funding", "Gantt Tasks" = "gantt_tasks",
                                          "Gantt Contacts" = "gantt_contacts", "Business Contacts" = "contacts",

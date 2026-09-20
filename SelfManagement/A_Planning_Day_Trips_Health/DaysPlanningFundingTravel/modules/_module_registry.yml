@@ -15,7 +15,7 @@ groups:
     label: "Day Planner"
     icon: "route"
     expanded: false
-    modules: [generate_schedule, schedule_bulk_import, schedule_add_single, schedule_browse, schedule_visualizations, schedule_about]
+    modules: [generate_schedule, schedule_generate_prep, schedule_prep_checklist, schedule_bulk_import, schedule_add_single, schedule_browse, schedule_visualizations, schedule_commitment_config, schedule_add_commitment, schedule_commitments_browse, schedule_about]
 
   - id: diet_planner
     label: "Diet Planner"
@@ -77,6 +77,16 @@ modules:
     priority: 3
     description: "AI-powered day/trip schedule generation"
 
+  schedule_generate_prep:
+    enabled: true
+    priority: 70
+    description: "AI-generated night-before preparation checklist for a planned day"
+
+  schedule_prep_checklist:
+    enabled: true
+    priority: 71
+    description: "Interactive checklist to track completion of a day's preparation steps"
+
   schedule_bulk_import:
     enabled: true
     priority: 4
@@ -96,6 +106,21 @@ modules:
     enabled: true
     priority: 7
     description: "Itinerary timeline visualization with time-allocation chart"
+
+  schedule_commitment_config:
+    enabled: true
+    priority: 72
+    description: "Trello API credentials for pushing commitments to a board, local to this feature"
+
+  schedule_add_commitment:
+    enabled: true
+    priority: 73
+    description: "Log a new monthly commitment, with optional push to Trello"
+
+  schedule_commitments_browse:
+    enabled: true
+    priority: 74
+    description: "Browse, filter, and update the status of monthly commitments; load one into Generate Schedule"
 
   schedule_about:
     enabled: true
@@ -302,7 +327,7 @@ modules:
   # ---- Travel Planning ----
   travel_itinerary_planner:
     enabled: true
-    priority: 2
+    priority: 80
     description: "AI-powered travel itinerary planner with Claude - discover attractions, select favorites, generate optimized multi-day plans"
 
 settings:
@@ -314,5 +339,5 @@ settings:
 app:
   name: "Business Operations Suite: Travel + Day Planner + Diet + Exercise + Events + Funding + Gantt + Contacts"
   version: "2.0.0"
-  description: "Eight AI-powered suites in one app: AI travel itinerary planning, day/trip scheduling, daily diet planning, exercise tracking, city event discovery, funding programme discovery, Gantt-to-tickets conversion, and AI contact management. All schedule-based modules (Travel, Day Planner, Events, Funding deadlines, Diet sessions, Exercise workouts, Project tasks) support calendar (.ics) export for Outlook and Android Calendar integration. Shares one Claude connection and one BigQuery connection, with app-specific APIs (Trello, Jira, OpenAI, SMTP) kept local to their own suites"
+  description: "Eight AI-powered suites in one app: AI travel itinerary planning (with HTML/PDF/calendar export), day/trip scheduling with prep checklists and monthly commitments, daily diet planning, exercise tracking, city event discovery, funding programme discovery, Gantt-to-tickets conversion, and AI contact management. Diet, Exercise, Events, Funding, and Gantt task browsing support calendar (.ics) export for Outlook and Android Calendar. Shares one Claude connection and one BigQuery connection, with app-specific APIs (Trello x2 separate connections, Jira, OpenAI, SMTP x2 separate connections) kept local to their own suites."
   author: "Your Team"

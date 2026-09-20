@@ -14,9 +14,8 @@ library(zoo)
 library(httr)        # direct Yahoo Finance intraday chart API calls
 library(jsonlite)    # parsing Yahoo intraday JSON responses
 library(igfetchr)    # IG Trading REST API wrapper (CRAN) — install.packages("igfetchr")
-library(officer)     # populates the real Morning Sheet / Trade Sheet .docx templates —
-                      # install.packages("officer"); also copy the two template files into
-                      # a "templates" folder next to this app.R (see Unit 3 tab for details)
+library(bigrquery)   # Economic Calendars: BigQuery storage
+library(curl)        # Economic Calendars: streaming Claude API calls
 
 source("global.R", local = TRUE)
 for (f in list.files("modules", pattern = "\\.R$", full.names = TRUE)) source(f, local = TRUE)
@@ -24,16 +23,6 @@ for (f in list.files("modules", pattern = "\\.R$", full.names = TRUE)) source(f,
 ui <- dashboardPage(
   dashboardHeader(
     title = "Trading Analysis F1",
-    tags$li(
-      class = "dropdown",
-      tags$a(
-        href = "#", id = "fullscreen_toggle_btn",
-        icon("expand", `class` = "fullscreen-icon-expand"),
-        icon("compress", `class` = "fullscreen-icon-compress", style = "display:none;"),
-        tags$span("Full Screen", class = "fullscreen-btn-label"),
-        onclick = "u3ToggleFullscreen(); return false;"
-      )
-    ),
     tags$li(
       class = "dropdown",
       tags$a(
@@ -147,62 +136,17 @@ ui <- dashboardPage(
     ),
     
     # Sidebar organised into topic groups (click a group to expand its tabs), matching
-    # shinydashboard's native menuItem()/menuSubItem() nesting. Unit 3 (Live Plan Signals)
-    # is the default landing tab.
+    # shinydashboard's native menuItem()/menuSubItem() nesting. Price Analysis (in Intro
+    # Tabs) is the default landing tab.
     sidebarMenu(
       id = "sidebar_menu",
-      
-      menuItem("Intro Tabs", icon = icon("house"),
-        menuSubItem("Price Analysis",       tabName = "price_analysis",       icon = icon("chart-simple")),
-        menuSubItem("Market Overview",      tabName = "market_overview",      icon = icon("chart-line")),
-        menuSubItem("Technical Indicators", tabName = "technical_indicators", icon = icon("chart-bar")),
-        menuSubItem("IG Login",             tabName = "ig_login",             icon = icon("key"))
+
+      menuItem("API Configuration", icon = icon("key"),
+        menuSubItem("BigQuery",      tabName = "econ_bigquery_auth", icon = icon("database")),
+        menuSubItem("Claude API",    tabName = "econ_claude_config", icon = icon("robot")),
+        menuSubItem("Trello & Jira", tabName = "trello_jira_config", icon = icon("trello"))
       ),
-      
-      menuItem("Futures, Options & FX", icon = icon("right-left"),
-        menuSubItem("Futures Mechanics",     tabName = "futures_mechanics",    icon = icon("scale-balanced")),
-        menuSubItem("Pricing, Basis & Carry",tabName = "pricing_basis_carry",  icon = icon("coins")),
-        menuSubItem("Yield Curves",          tabName = "yield_curves",         icon = icon("chart-line")),
-        menuSubItem("Options P&L Profiles",  tabName = "options_pnl",          icon = icon("chart-area")),
-        menuSubItem("FX Fundamentals",       tabName = "fx_fundamentals",      icon = icon("money-bill-transfer"))
-      ),
-      
-      menuItem("Hedging Strategies", icon = icon("shield-halved"),
-        menuSubItem("Hedge Ratio Calculator", tabName = "hedge_ratio_calculator", icon = icon("calculator")),
-        menuSubItem("Basis Risk Simulator",   tabName = "basis_risk_simulator",   icon = icon("wheat-awn")),
-        menuSubItem("Long Hedge Concept",     tabName = "long_hedge_concept",     icon = icon("book-open"))
-      ),
-      
-      menuItem("Extended Indicators", icon = icon("chart-area"),
-        menuSubItem("Moving Averages",    tabName = "moving_averages",    icon = icon("chart-line")),
-        menuSubItem("Momentum & ROC",     tabName = "momentum_roc",       icon = icon("gauge-high")),
-        menuSubItem("Volume Indicators",  tabName = "volume_indicators",  icon = icon("chart-column")),
-        menuSubItem("Parabolic SAR",      tabName = "parabolic_sar",      icon = icon("arrows-turn-to-dots")),
-        menuSubItem("Pivot Points",       tabName = "pivot_points",       icon = icon("map-pin"))
-      ),
-      
-      menuItem("Psychology & Macro", icon = icon("brain"),
-        menuSubItem("Ten Steps to Successful Trading", tabName = "ten_steps",                icon = icon("list-ol")),
-        menuSubItem("US Macro Calendar",                tabName = "macro_calendar_reference", icon = icon("calendar-check"))
-      ),
-      
-      menuItem("Economic Calendars", icon = icon("calendar-days"),
-        menuSubItem("Trading Economics",       tabName = "economic_calendar_te",  icon = icon("calendar-days")),
-        menuSubItem("Financial Modeling Prep", tabName = "economic_calendar_fmp", icon = icon("calendar-week"))
-      ),
-      
-      menuItem("Risk & Portfolio Analytics", icon = icon("triangle-exclamation"),
-        menuSubItem("Volatility Analysis",   tabName = "volatility_analysis", icon = icon("wave-square")),
-        menuSubItem("Risk Metrics",          tabName = "risk_metrics",        icon = icon("triangle-exclamation")),
-        menuSubItem("Advanced Metrics",      tabName = "advanced_metrics",    icon = icon("star")),
-        menuSubItem("Composite Analysis",    tabName = "composite_analysis",  icon = icon("layer-group"))
-      ),
-      
-      menuItem("About & Feedback", icon = icon("circle-info"),
-        menuSubItem("About & Overview", tabName = "about_overview", icon = icon("circle-info")),
-        menuSubItem("Feedback",         tabName = "feedback_tab",   icon = icon("comment-dots"))
-      ),
-      
+
       menuItem("Step-by-Step Practice", icon = icon("chalkboard-user"),
         menuSubItem("Step 1", tabName = "weekly_activity_week1", icon = icon("1")),
         menuSubItem("Step 2", tabName = "weekly_activity_week2", icon = icon("2")),
@@ -212,15 +156,65 @@ ui <- dashboardPage(
         menuSubItem("Step 6", tabName = "weekly_activity_week6", icon = icon("6"))
       ),
 
-      menuItem("Trade Journal", icon = icon("file-invoice"),
-        menuSubItem("Individual Trade Sheet", tabName = "trade_sheet", icon = icon("clipboard-list"))
+      menuItem("Economic Calendars", icon = icon("calendar-days"),
+        menuSubItem("Trading Economics",             tabName = "economic_calendar_te",   icon = icon("calendar-days")),
+        menuSubItem("Financial Modeling Prep",       tabName = "economic_calendar_fmp",  icon = icon("calendar-week")),
+        menuSubItem("Daily/Weekly Trend Summary",    tabName = "econ_trend_summary",     icon = icon("bolt")),
+        menuSubItem("Parse & Export to BigQuery",    tabName = "econ_calendar_export",   icon = icon("cloud-arrow-up")),
+        menuSubItem("Visualisation",                 tabName = "econ_calendar_viz",      icon = icon("chart-line")),
+        menuSubItem("Link to Live Trading",          tabName = "econ_calendar_live_link", icon = icon("link"))
       ),
 
       menuItem("Unit Assignments", icon = icon("graduation-cap"), startExpanded = TRUE,
         menuSubItem("Unit 1", tabName = "unit1_assignment", icon = icon("1")),
         menuSubItem("Unit 2", tabName = "unit2_assignment", icon = icon("2")),
-        menuSubItem("Unit 3", tabName = "unit3_assignment", icon = icon("3")),
-        menuSubItem("Unit 3 \u00b7 Live Plan Signals", tabName = "unit3_live_signals", icon = icon("bolt"), selected = TRUE)
+        menuSubItem("Unit 3", tabName = "unit3_assignment", icon = icon("3"), selected = TRUE),
+        menuSubItem("Unit 3 \u2013 Live Signals", tabName = "unit3_live_signals", icon = icon("bolt"))
+      ),
+
+      menuItem("Trade Journal", icon = icon("file-invoice"),
+        menuSubItem("Individual Trade Sheet", tabName = "trade_sheet", icon = icon("clipboard-list"))
+      ),
+
+      menuItem("Intro Tabs", icon = icon("house"),
+        menuSubItem("Price Analysis",       tabName = "price_analysis",       icon = icon("chart-simple")),
+        menuSubItem("Market Overview",      tabName = "market_overview",      icon = icon("chart-line")),
+        menuSubItem("Technical Indicators", tabName = "technical_indicators", icon = icon("chart-bar")),
+        menuSubItem("IG Login",             tabName = "ig_login",             icon = icon("key"))
+      ),
+
+      menuItem("Futures, Options & FX", icon = icon("right-left"),
+        menuSubItem("Futures Mechanics",     tabName = "futures_mechanics",    icon = icon("scale-balanced")),
+        menuSubItem("Pricing, Basis & Carry",tabName = "pricing_basis_carry",  icon = icon("coins")),
+        menuSubItem("Yield Curves",          tabName = "yield_curves",         icon = icon("chart-line")),
+        menuSubItem("Options P&L Profiles",  tabName = "options_pnl",          icon = icon("chart-area")),
+        menuSubItem("FX Fundamentals",       tabName = "fx_fundamentals",      icon = icon("money-bill-transfer"))
+      ),
+
+      menuItem("Hedging Strategies", icon = icon("shield-halved"),
+        menuSubItem("Hedge Ratio Calculator", tabName = "hedge_ratio_calculator", icon = icon("calculator")),
+        menuSubItem("Basis Risk Simulator",   tabName = "basis_risk_simulator",   icon = icon("wheat-awn")),
+        menuSubItem("Long Hedge Concept",     tabName = "long_hedge_concept",     icon = icon("book-open"))
+      ),
+
+      menuItem("Extended Indicators", icon = icon("chart-area"),
+        menuSubItem("Moving Averages",    tabName = "moving_averages",    icon = icon("chart-line")),
+        menuSubItem("Momentum & ROC",     tabName = "momentum_roc",       icon = icon("gauge-high")),
+        menuSubItem("Volume Indicators",  tabName = "volume_indicators",  icon = icon("chart-column")),
+        menuSubItem("Parabolic SAR",      tabName = "parabolic_sar",      icon = icon("arrows-turn-to-dots")),
+        menuSubItem("Pivot Points",       tabName = "pivot_points",       icon = icon("map-pin"))
+      ),
+
+      menuItem("Psychology & Macro", icon = icon("brain"),
+        menuSubItem("Ten Steps to Successful Trading", tabName = "ten_steps",                icon = icon("list-ol")),
+        menuSubItem("US Macro Calendar",                tabName = "macro_calendar_reference", icon = icon("calendar-check"))
+      ),
+
+      menuItem("Risk & Portfolio Analytics", icon = icon("triangle-exclamation"),
+        menuSubItem("Volatility Analysis",   tabName = "volatility_analysis", icon = icon("wave-square")),
+        menuSubItem("Risk Metrics",          tabName = "risk_metrics",        icon = icon("triangle-exclamation")),
+        menuSubItem("Advanced Metrics",      tabName = "advanced_metrics",    icon = icon("star")),
+        menuSubItem("Composite Analysis",    tabName = "composite_analysis",  icon = icon("layer-group"))
       ),
 
       menuItem("Commodities for Mobility", icon = icon("car-battery"),
@@ -228,6 +222,11 @@ ui <- dashboardPage(
         menuSubItem("Lithium Hydroxide",              tabName = "mobility_lithium", icon = icon("car-battery")),
         menuSubItem("Brent Crude Oil",                tabName = "mobility_oil",     icon = icon("oil-can")),
         menuSubItem("Approaching the Unit 1 Questions", tabName = "mobility_approach", icon = icon("route"))
+      ),
+
+      menuItem("About & Feedback", icon = icon("circle-info"),
+        menuSubItem("About & Overview", tabName = "about_overview", icon = icon("circle-info")),
+        menuSubItem("Feedback",         tabName = "feedback_tab",   icon = icon("comment-dots"))
       )
     )
   ),
@@ -236,41 +235,7 @@ ui <- dashboardPage(
     tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "css/global.css"),
       tags$meta(charset = "UTF-8"),
-      tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0"),
-      # Fullscreen toggle: browsers only allow entering fullscreen from a real user
-      # gesture (a click), so this can't fire automatically on page load - but one
-      # click on the header button below takes the whole browser tab fullscreen
-      # (hides the address bar/tabs, like pressing F11), no window resize needed.
-      tags$script(HTML("
-        function u3RequestFullscreen(el) {
-          if (el.requestFullscreen) return el.requestFullscreen();
-          if (el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
-          if (el.msRequestFullscreen) return el.msRequestFullscreen();
-        }
-        function u3ExitFullscreen() {
-          if (document.exitFullscreen) return document.exitFullscreen();
-          if (document.webkitExitFullscreen) return document.webkitExitFullscreen();
-          if (document.msExitFullscreen) return document.msExitFullscreen();
-        }
-        function u3IsFullscreen() {
-          return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
-        }
-        function u3ToggleFullscreen() {
-          if (u3IsFullscreen()) { u3ExitFullscreen(); } else { u3RequestFullscreen(document.documentElement); }
-        }
-        function u3UpdateFullscreenIcon() {
-          var isFs = u3IsFullscreen();
-          var exp = document.querySelector('.fullscreen-icon-expand');
-          var comp = document.querySelector('.fullscreen-icon-compress');
-          var label = document.querySelector('.fullscreen-btn-label');
-          if (exp)  exp.style.display  = isFs ? 'none' : 'inline-block';
-          if (comp) comp.style.display = isFs ? 'inline-block' : 'none';
-          if (label) label.textContent = isFs ? 'Exit Full Screen' : 'Full Screen';
-        }
-        document.addEventListener('fullscreenchange', u3UpdateFullscreenIcon);
-        document.addEventListener('webkitfullscreenchange', u3UpdateFullscreenIcon);
-        document.addEventListener('msfullscreenchange', u3UpdateFullscreenIcon);
-      "))
+      tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0")
     ),
     
     tabItems(
@@ -306,6 +271,13 @@ ui <- dashboardPage(
       # -- Economic Calendars --
       tabItem(tabName = "economic_calendar_te",  economic_calendar_te_ui("economic_calendar_te")),
       tabItem(tabName = "economic_calendar_fmp", economic_calendar_fmp_ui("economic_calendar_fmp")),
+      tabItem(tabName = "econ_trend_summary",     econ_trend_summary_ui("econ_trend_summary")),
+      tabItem(tabName = "econ_calendar_export",   econ_calendar_export_ui("econ_calendar_export")),
+      tabItem(tabName = "econ_calendar_viz",      econ_calendar_viz_ui("econ_calendar_viz")),
+      tabItem(tabName = "econ_calendar_live_link", econ_calendar_live_link_ui("econ_calendar_live_link")),
+      tabItem(tabName = "econ_bigquery_auth", econ_bigquery_auth_ui("econ_bigquery_auth")),
+      tabItem(tabName = "econ_claude_config", econ_claude_config_ui("econ_claude_config")),
+      tabItem(tabName = "trello_jira_config", trello_jira_config_ui("trello_jira_config")),
       
       # -- Risk & Portfolio Analytics --
       tabItem(tabName = "volatility_analysis", volatility_analysis_ui("volatility_analysis")),
@@ -344,7 +316,15 @@ ui <- dashboardPage(
 )
 
 server <- function(input, output, session) {
-  
+
+  # Shared cross-tab transfer state: Economic Calendars -> Visualisation
+  # writes here on "Send to Live Signals" click; Unit 3 -> Live Signals reads
+  # it reactively (transfer_ts increments on every send, so Live Signals'
+  # observer fires even if the same asset class is sent twice in a row).
+  shared_econ_state <- reactiveValues(
+    transfer_df = NULL, transfer_asset_class = NULL, transfer_ts = 0
+  )
+
   # Global asset selection observer — resolves the active symbol/EPIC across all
   # 5 asset classes (including the custom-EPIC override for IG) and pushes it,
   # along with the resolution, into the shared DataManager.
@@ -414,6 +394,17 @@ server <- function(input, output, session) {
   # -- Economic Calendars --
   economic_calendar_te_server("economic_calendar_te", data_manager)
   economic_calendar_fmp_server("economic_calendar_fmp", data_manager)
+
+  # -- Economic Calendars: Trend Summary / Export / Visualisation / Live Link --
+  econ_trend_summary_server("econ_trend_summary", api_manager)
+  econ_calendar_export_server("econ_calendar_export", api_manager)
+  econ_calendar_viz_server("econ_calendar_viz", api_manager, shared_econ_state)
+  econ_calendar_live_link_server("econ_calendar_live_link", api_manager)
+
+  # -- API Configuration --
+  econ_bigquery_auth_server("econ_bigquery_auth", api_manager)
+  econ_claude_config_server("econ_claude_config", api_manager)
+  trello_jira_config_server("trello_jira_config", api_manager)
   
   # -- Risk & Portfolio Analytics --
   volatility_analysis_server("volatility_analysis", data_manager)
@@ -440,7 +431,7 @@ server <- function(input, output, session) {
   unit1_assignment_server("unit1_assignment", data_manager)
   unit2_assignment_server("unit2_assignment", data_manager)
   unit3_assignment_server("unit3_assignment", data_manager)
-  unit3_live_signals_server("unit3_live_signals", data_manager)
+  unit3_live_signals_server("unit3_live_signals", data_manager, api_manager, shared_econ_state)
 
   # -- Commodities for Mobility --
   mobility_commodities_server("mobility_commodities", data_manager)

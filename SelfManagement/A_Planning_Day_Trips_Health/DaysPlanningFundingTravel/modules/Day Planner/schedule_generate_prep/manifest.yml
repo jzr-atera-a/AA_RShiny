@@ -1,0 +1,17 @@
+module:
+  id: "schedule_generate_prep"
+  name: "Generate Prep Steps"
+  description: "AI-generated night-before preparation checklist for a planned day"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "Generate Prep Steps"
+    icon: "lightbulb"
+    tabname: "schedule_generate_prep"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, httr, curl, jsonlite, shinyjs, DT]
+    package_versions: {}
+  api: {required: ["claude"], optional: []}
+  data: {required: [], optional: []}

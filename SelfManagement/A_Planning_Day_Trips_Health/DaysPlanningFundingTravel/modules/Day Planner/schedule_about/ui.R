@@ -25,6 +25,36 @@ schedule_about_ui <- function(id) {
                   "planning for a Work/Conference/Research day; leave blank to skip weather research entirely.")),
 
         hr(),
+        h4("Night-Before Prep Checklist"),
+        p("Generate Prep Steps reads a date you've already planned above and asks Claude for a short, ",
+          "motivational checklist of things to do beforehand to be ready for it - a different concept from ",
+          "the itinerary itself, which plans what happens ", tags$em("during"), " the day."),
+        h5("Table: atera-2.business_strategy.day_prep_steps"),
+        tags$pre("Fields:\n  - id (INTEGER)\n  - created_at (TIMESTAMP)\n  - schedule_date (STRING) - links back to a day_scheduler date\n  - category (STRING) - e.g. Work, Fitness, Health, Travel, General\n  - location (STRING) - e.g. Office, Home, Gym\n  - additional_context (STRING)\n  - step_sequence (INTEGER)\n  - step_text (STRING)\n  - is_completed (BOOL)"),
+        p(tags$strong("Note:"), " unlike every other table in Day Planner, ", tags$code("is_completed"),
+          " is genuinely mutable - toggling a checkbox in Prep Checklist issues a real ",
+          tags$code("UPDATE"), ", and saving a regenerated checklist for a date issues a real ",
+          tags$code("DELETE"), " of that date's previous steps first. This is a deliberate exception to the ",
+          "append-only pattern used everywhere else in this suite (the only other exception in the whole app ",
+          "is Contact Manager's mutable contact records)."),
+
+        hr(),
+        h4("Monthly Commitments"),
+        p("Log commitments - Category/Sector/Topic, day of commitment, deadline, description, stakeholders, ",
+          "the value of delivering, and the consequences of not delivering - track their status over the ",
+          "month, optionally push them as Trello cards, and pull any commitment's full context straight into ",
+          "Generate Schedule's Additional Details field so Claude plans the day with real time allocated ",
+          "toward delivering it."),
+        h5("Table: atera-2.business_strategy.monthly_commitments"),
+        tags$pre("Fields:\n  - id (INTEGER)\n  - created_at (TIMESTAMP)\n  - category (STRING) - e.g. Strategic, Operational, Financial, Regulatory, Partnership\n  - sector (STRING) - e.g. Technology, Healthcare, Finance, Retail\n  - topic (STRING) - free text, no defaults\n  - commitment_date (STRING) - the day the commitment was made\n  - deadline (STRING)\n  - status (STRING) - Not Started | In Progress | Delivered | Missed | At Risk\n  - description (STRING)\n  - stakeholders (STRING)\n  - value_of_delivery (STRING)\n  - consequences_of_failure (STRING)\n  - trello_card_id (STRING) - \"N/A\" until pushed to Trello\n  - trello_card_url (STRING) - \"N/A\" until pushed to Trello"),
+        p(tags$strong("Note:"), " genuinely mutable, like ", tags$code("day_prep_steps"), " above - ",
+          tags$code("status"), " and the Trello linkage fields are updated in place via a real ", tags$code("UPDATE"),
+          " as a commitment progresses, rather than logged as a new row each time."),
+        p(tags$strong("Trello connection:"), " Commitment Trello Config is a ", tags$em("separate"), " Trello ",
+          "connection from the one Gantt to Tickets uses - point it at whichever board you track commitments ",
+          "on, which may differ from your project-tasks board."),
+
+        hr(),
         h4("Row Structure"),
         tags$ul(
           tags$li(tags$strong("Location"), " row - one per place visited"),
@@ -32,34 +62,6 @@ schedule_about_ui <- function(id) {
           tags$li(tags$strong("Summary"), " row - one per day, at the end")
         ),
         p(tags$em("recommended_time and observations are reused across all three row types - see Generate Schedule for details.")),
-
-        hr(),
-        h4("📅 Calendar Export (All Modules)"),
-        div(style = "background: #f0f7ff; border-left: 4px solid #2196F3; padding: 20px; border-radius: 4px; margin: 15px 0;",
-          h5(style = "color: #1976D2; margin-top: 0;", "How to Import Calendar Files"),
-          
-          h5(style = "color: #1565C0;", "For Outlook (Windows/Web/Mobile):"),
-          tags$ol(
-            tags$li("Download the .ics file"),
-            tags$li(tags$strong("Windows Outlook:"), " File → Open & Export → Import a file → Select the .ics file → Choose calendar → Import"),
-            tags$li(tags$strong("Outlook Web:"), " Settings → Import calendar → Select the .ics file → Import"),
-            tags$li(tags$strong("Outlook Mobile:"), " Double-tap the .ics file → Select calendar → Import")
-          ),
-          
-          h5(style = "color: #1565C0;", "For Android Calendar:"),
-          tags$ol(
-            tags$li("Download the .ics file to your device"),
-            tags$li("Open file manager and find the file"),
-            tags$li("Tap the .ics file → Select Calendar app"),
-            tags$li("Choose which calendar to import to"),
-            tags$li("Tap Import/Add"),
-            tags$li(tags$strong("Alternative:"), " Open Google Calendar app → + button → Import events → Select file → Import")
-          ),
-          
-          div(style = "margin-top: 15px; padding: 10px; background: #fff3cd; border-left: 3px solid #ffc107; border-radius: 3px;",
-            tags$strong("💡 Tip:"), " Events will appear on their scheduled dates in your calendar. Set reminders within your calendar app as needed."
-          )
-        ),
 
         hr(),
         p("Part of the Business Operations Suite: Day Planner + Events Scheduling + Funding Programmes",

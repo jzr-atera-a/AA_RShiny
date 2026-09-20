@@ -7,6 +7,20 @@ generate_schedule_server <- function(id, api_manager) {
     day_type_react <- setup_schedule_daytype_cascade(input, output, session, api_manager)
     country_city_react <- setup_schedule_country_city_cascade(input, output, session, api_manager)
 
+    # Receives a commitment's full context from Browse Commitments'
+    # "Send to Generate Schedule" button - appended (not replacing) onto
+    # whatever the person has already typed, since they may already have
+    # their own trip details in progress.
+    observeEvent(api_manager$pending_commitment_context(), {
+      incoming <- api_manager$pending_commitment_context()
+      if (nchar(trimws(incoming)) > 0) {
+        current <- input$trip_details %||% ""
+        combined <- if (nchar(trimws(current)) > 0) paste0(current, "\n\n", incoming) else incoming
+        updateTextAreaInput(session, "trip_details", value = combined)
+        api_manager$set_pending_commitment_context("")
+      }
+    }, ignoreInit = TRUE)
+
     run_parse_preview <- function(text, quiet = FALSE) {
       if (trimws(text) == "") {
         parsed_preview(NULL)

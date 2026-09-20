@@ -172,7 +172,13 @@ travel_itinerary_planner_server <- function(id, api_manager) {
         )
         
         cat("  Calling api_manager$call_claude()...\n")
-        response <- api_manager$call_claude(prompt)
+        claude_result <- api_manager$call_claude(prompt)
+        # call_claude() returns list(text=, stop_reason=, truncated=) in this
+        # app, not a plain string - extract the text explicitly rather than
+        # relying on list-to-character coercion (which happened to work here
+        # only by accident of field ordering, and actively breaks the second
+        # call site below).
+        response <- if (is.list(claude_result)) claude_result$text else claude_result
         
         if (!is.character(response)) {
           response <- as.character(response)
@@ -302,7 +308,8 @@ travel_itinerary_planner_server <- function(id, api_manager) {
         )
         
         cat("  Calling api_manager$call_claude()...\n")
-        itinerary_response <- api_manager$call_claude(prompt)
+        claude_result_2 <- api_manager$call_claude(prompt)
+        itinerary_response <- if (is.list(claude_result_2)) claude_result_2$text else claude_result_2
         
         if (!is.character(itinerary_response)) {
           itinerary_response <- paste(as.character(itinerary_response), collapse = " ")

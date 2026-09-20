@@ -2,9 +2,6 @@
 
 schedule_browse_server <- function(id, api_manager) {
   moduleServer(id, function(input, output, session) {
-    source("R/utils_calendar_export.R", local = TRUE)
-
-    # Source calendar utility
 
     browse_data <- reactiveVal(NULL)
 
@@ -36,41 +33,6 @@ schedule_browse_server <- function(id, api_manager) {
     output$download <- downloadHandler(
       filename = function() paste0("day_scheduler_", format(Sys.Date(), "%Y%m%d"), ".csv"),
       content = function(file) if (!is.null(browse_data())) write.csv(browse_data(), file, row.names = FALSE)
-    )
-
-    output$download_calendar <- downloadHandler(
-      filename = function() paste0("schedule_", format(Sys.Date(), "%Y%m%d"), ".ics"),
-      content = function(file) {
-        tryCatch({
-          data <- browse_data()
-          if (is.null(data) || nrow(data) == 0) {
-            showNotification("No data to export", type = "warning")
-            return()
-          }
-
-          # Rename columns for calendar export
-          cal_data <- data
-          if ("schedule_date" %in% names(cal_data)) names(cal_data)[names(cal_data) == "schedule_date"] <- "date"
-          if ("time" %in% names(cal_data)) names(cal_data)[names(cal_data) == "time"] <- "time"
-          if ("activity" %in% names(cal_data)) names(cal_data)[names(cal_data) == "activity"] <- "name"
-
-          ics_lines <- generate_calendar_ics(
-            title = "Day Planner Schedule",
-            items = cal_data,
-            date_col = "date",
-            time_col = if ("time" %in% names(cal_data)) "time" else NULL,
-            duration_minutes = 60,
-            description = "Daily schedule - Exported from Business Operations Suite",
-            item_col = if ("name" %in% names(cal_data)) "name" else "activity"
-          )
-
-          export_calendar_file(ics_lines, file)
-          showNotification("✓ Calendar exported successfully", type = "message")
-
-        }, error = function(e) {
-          showNotification(paste("Error exporting calendar:", e$message), type = "error")
-        })
-      }
     )
 
     output$status <- renderUI({ tags$div() })

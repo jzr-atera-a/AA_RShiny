@@ -362,6 +362,276 @@ setup_schedule_country_city_cascade <- function(input, output, session, api_mana
   })
 }
 
+# ── Prep Checklist: a "night-before" motivational preparation checklist for
+# a day already planned in day_scheduler. This is a genuinely different
+# concept from the itinerary generation above (which plans WHAT happens
+# that day) - this generates a short list of things to DO BEFOREHAND to be
+# ready for it. Content shape is a flat numbered list of short strings
+# (unlike the rest of this suite's multi-field bracket-tag rows), so it
+# uses a lighter "N. text" format rather than the [field]: value convention
+# - forcing a single-field list into that heavier convention would add
+# nothing.
+
+parse_prep_steps_text <- function(text) {
+  lines <- strsplit(text, "\n")[[1]]
+  steps <- c()
+
+  for (line in lines) {
+    line <- trimws(line)
+    m <- regmatches(line, regexpr("^\\d+\\.\\s*(.+)$", line))
+    if (length(m) > 0) {
+      step_text <- trimws(sub("^\\d+\\.\\s*", "", m))
+      if (nchar(step_text) > 0) steps <- c(steps, step_text)
+    }
+  }
+
+  if (length(steps) == 0) stop("No numbered preparation steps found in the response")
+
+  data.frame(step_sequence = seq_along(steps), step_text = steps, stringsAsFactors = FALSE)
+}
+
+generate_prep_steps_prompt <- function(schedule_date, plan_summary, schedule_text, category = "", location = "", additional_context = "") {
+  context_line <- if (nchar(trimws(category)) > 0 && nchar(trimws(location)) > 0) {
+    paste0("Category: ", category, ". Location: ", location, ".")
+  } else if (nchar(trimws(category)) > 0) {
+    paste0("Category: ", category, ".")
+  } else if (nchar(trimws(location)) > 0) {
+    paste0("Location: ", location, ".")
+  } else ""
+
+  details_line <- if (nchar(trimws(additional_context)) > 0) paste0("Additional details: ", additional_context, "\n") else ""
+
+  paste0(
+    'You are an enthusiastic and motivational preparation coach. Help me prepare for ', schedule_date, '.\n\n',
+    'MY PLAN FOR THAT DAY:\n', plan_summary, '\n\n',
+    if (nchar(trimws(schedule_text)) > 0) paste0('SCHEDULE FOR THAT DAY:\n', schedule_text, '\n\n') else '',
+    context_line, if (nchar(context_line) > 0) '\n' else '',
+    details_line, '\n',
+    'Generate EXACTLY 4 to 8 numbered preparation steps to help me be fully ready for this day. Each step must be:\n',
+    '- Specific and actionable\n',
+    '- Optimistic and energizing in tone, with an emoji\n',
+    '- One to two sentences, time-efficient to actually do\n',
+    '- Ordered logically (e.g. the night before, then the morning of)\n\n',
+    'Use power words like "powerful", "ready", "dominate", "excel", "accomplish". Make me WANT to follow these steps.\n\n',
+    'Output ONLY a numbered list, nothing else, in exactly this format:\n',
+    '1. [emoji] [Step text]\n',
+    '2. [emoji] [Step text]\n',
+    '... and so on for 4 to 8 steps total.'
+  )
+}
+
+# ── Category (single-level "Add New", mirrors Diet Type / Session Type) ────
+PREP_CATEGORY_ADD_NEW_VALUE <- "__ADD_NEW_PREPCATEGORY__"
+PREP_DEFAULT_CATEGORIES <- c("Work", "Fitness", "Health", "Travel", "General")
+
+prep_category_dropdown_ui <- function(ns) {
+  tagList(
+    selectInput(ns("prep_category_select"), "Category:",
+                choices = c("None" = "", setNames(PREP_DEFAULT_CATEGORIES, PREP_DEFAULT_CATEGORIES),
+                            "+ Add New Category" = PREP_CATEGORY_ADD_NEW_VALUE)),
+    conditionalPanel(
+      condition = sprintf("input['%s'] == '%s'", ns("prep_category_select"), PREP_CATEGORY_ADD_NEW_VALUE),
+      textInput(ns("new_prep_category_text"), "New Category Name:", placeholder = "e.g., Family, Social")
+    )
+  )
+}
+
+setup_prep_category_cascade <- function(input, output, session, api_manager) {
+  taxonomy <- reactive({
+    api_manager$state_trigger_schedule()
+    if (!api_manager$bq_authenticated) return(data.frame(category = character(), stringsAsFactors = FALSE))
+    tryCatch(api_manager$bq_get_prep_taxonomy(), error = function(e) data.frame(category = character(), stringsAsFactors = FALSE))
+  })
+
+  observeEvent(taxonomy(), {
+    tax <- taxonomy()
+    stored <- sort(unique(tax$category[nchar(trimws(tax$category)) > 0]))
+    all_cats <- sort(unique(c(PREP_DEFAULT_CATEGORIES, stored)))
+    choices <- c("None" = "", setNames(all_cats, all_cats), "+ Add New Category" = PREP_CATEGORY_ADD_NEW_VALUE)
+    current <- isolate(input$prep_category_select)
+    selected <- if (!is.null(current) && current %in% choices) current else ""
+    updateSelectInput(session, "prep_category_select", choices = choices, selected = selected)
+  }, ignoreNULL = FALSE)
+
+  reactive({
+    if (identical(input$prep_category_select, PREP_CATEGORY_ADD_NEW_VALUE)) trimws(input$new_prep_category_text %||% "")
+    else input$prep_category_select %||% ""
+  })
+}
+
+# ── Location (single-level "Add New") ───────────────────────────────────────
+PREP_LOCATION_ADD_NEW_VALUE <- "__ADD_NEW_PREPLOCATION__"
+PREP_DEFAULT_LOCATIONS <- c("Office", "Home", "Gym", "Client Site", "Travel")
+
+prep_location_dropdown_ui <- function(ns) {
+  tagList(
+    selectInput(ns("prep_location_select"), "Location:",
+                choices = c("None" = "", setNames(PREP_DEFAULT_LOCATIONS, PREP_DEFAULT_LOCATIONS),
+                            "+ Add New Location" = PREP_LOCATION_ADD_NEW_VALUE)),
+    conditionalPanel(
+      condition = sprintf("input['%s'] == '%s'", ns("prep_location_select"), PREP_LOCATION_ADD_NEW_VALUE),
+      textInput(ns("new_prep_location_text"), "New Location Name:", placeholder = "e.g., Conference Center")
+    )
+  )
+}
+
+setup_prep_location_cascade <- function(input, output, session, api_manager) {
+  taxonomy <- reactive({
+    api_manager$state_trigger_schedule()
+    if (!api_manager$bq_authenticated) return(data.frame(location = character(), stringsAsFactors = FALSE))
+    tryCatch(api_manager$bq_get_prep_taxonomy(), error = function(e) data.frame(location = character(), stringsAsFactors = FALSE))
+  })
+
+  observeEvent(taxonomy(), {
+    tax <- taxonomy()
+    stored <- sort(unique(tax$location[nchar(trimws(tax$location)) > 0]))
+    all_locs <- sort(unique(c(PREP_DEFAULT_LOCATIONS, stored)))
+    choices <- c("None" = "", setNames(all_locs, all_locs), "+ Add New Location" = PREP_LOCATION_ADD_NEW_VALUE)
+    current <- isolate(input$prep_location_select)
+    selected <- if (!is.null(current) && current %in% choices) current else ""
+    updateSelectInput(session, "prep_location_select", choices = choices, selected = selected)
+  }, ignoreNULL = FALSE)
+
+  reactive({
+    if (identical(input$prep_location_select, PREP_LOCATION_ADD_NEW_VALUE)) trimws(input$new_prep_location_text %||% "")
+    else input$prep_location_select %||% ""
+  })
+}
+
+# ── Monthly Commitments: three independent single-level "Add New" cascades
+# (Category, Sector, Topic - no hierarchy between them, each stands alone).
+
+COMMITMENT_CATEGORY_ADD_NEW_VALUE <- "__ADD_NEW_COMMITCATEGORY__"
+COMMITMENT_DEFAULT_CATEGORIES <- c("Strategic", "Operational", "Financial", "Regulatory", "Partnership")
+
+commitment_category_dropdown_ui <- function(ns) {
+  tagList(
+    selectInput(ns("commitment_category_select"), "Category: *",
+                choices = c(setNames(COMMITMENT_DEFAULT_CATEGORIES, COMMITMENT_DEFAULT_CATEGORIES),
+                            "+ Add New Category" = COMMITMENT_CATEGORY_ADD_NEW_VALUE)),
+    conditionalPanel(
+      condition = sprintf("input['%s'] == '%s'", ns("commitment_category_select"), COMMITMENT_CATEGORY_ADD_NEW_VALUE),
+      textInput(ns("new_commitment_category_text"), "New Category Name:")
+    )
+  )
+}
+
+setup_commitment_category_cascade <- function(input, output, session, api_manager) {
+  taxonomy <- reactive({
+    api_manager$state_trigger_schedule()
+    if (!api_manager$bq_authenticated) return(data.frame(category = character(), stringsAsFactors = FALSE))
+    tryCatch(api_manager$bq_get_commitments_taxonomy(), error = function(e) data.frame(category = character(), stringsAsFactors = FALSE))
+  })
+
+  observeEvent(taxonomy(), {
+    tax <- taxonomy()
+    stored <- sort(unique(tax$category[nchar(trimws(tax$category)) > 0]))
+    all_cats <- sort(unique(c(COMMITMENT_DEFAULT_CATEGORIES, stored)))
+    choices <- c(setNames(all_cats, all_cats), "+ Add New Category" = COMMITMENT_CATEGORY_ADD_NEW_VALUE)
+    current <- isolate(input$commitment_category_select)
+    selected <- if (!is.null(current) && current %in% choices) current else all_cats[1]
+    updateSelectInput(session, "commitment_category_select", choices = choices, selected = selected)
+  }, ignoreNULL = FALSE)
+
+  reactive({
+    if (identical(input$commitment_category_select, COMMITMENT_CATEGORY_ADD_NEW_VALUE)) trimws(input$new_commitment_category_text %||% "")
+    else input$commitment_category_select %||% ""
+  })
+}
+
+COMMITMENT_SECTOR_ADD_NEW_VALUE <- "__ADD_NEW_COMMITSECTOR__"
+COMMITMENT_DEFAULT_SECTORS <- c("Technology", "Healthcare", "Finance", "Retail", "Manufacturing", "Public Sector")
+
+commitment_sector_dropdown_ui <- function(ns) {
+  tagList(
+    selectInput(ns("commitment_sector_select"), "Sector: *",
+                choices = c(setNames(COMMITMENT_DEFAULT_SECTORS, COMMITMENT_DEFAULT_SECTORS),
+                            "+ Add New Sector" = COMMITMENT_SECTOR_ADD_NEW_VALUE)),
+    conditionalPanel(
+      condition = sprintf("input['%s'] == '%s'", ns("commitment_sector_select"), COMMITMENT_SECTOR_ADD_NEW_VALUE),
+      textInput(ns("new_commitment_sector_text"), "New Sector Name:")
+    )
+  )
+}
+
+setup_commitment_sector_cascade <- function(input, output, session, api_manager) {
+  taxonomy <- reactive({
+    api_manager$state_trigger_schedule()
+    if (!api_manager$bq_authenticated) return(data.frame(sector = character(), stringsAsFactors = FALSE))
+    tryCatch(api_manager$bq_get_commitments_taxonomy(), error = function(e) data.frame(sector = character(), stringsAsFactors = FALSE))
+  })
+
+  observeEvent(taxonomy(), {
+    tax <- taxonomy()
+    stored <- sort(unique(tax$sector[nchar(trimws(tax$sector)) > 0]))
+    all_sectors <- sort(unique(c(COMMITMENT_DEFAULT_SECTORS, stored)))
+    choices <- c(setNames(all_sectors, all_sectors), "+ Add New Sector" = COMMITMENT_SECTOR_ADD_NEW_VALUE)
+    current <- isolate(input$commitment_sector_select)
+    selected <- if (!is.null(current) && current %in% choices) current else all_sectors[1]
+    updateSelectInput(session, "commitment_sector_select", choices = choices, selected = selected)
+  }, ignoreNULL = FALSE)
+
+  reactive({
+    if (identical(input$commitment_sector_select, COMMITMENT_SECTOR_ADD_NEW_VALUE)) trimws(input$new_commitment_sector_text %||% "")
+    else input$commitment_sector_select %||% ""
+  })
+}
+
+# Topic has no sensible defaults (too open-ended) - "+ Add New" only, plus
+# whatever's already been used, same mechanism as the other two.
+COMMITMENT_TOPIC_ADD_NEW_VALUE <- "__ADD_NEW_COMMITTOPIC__"
+
+commitment_topic_dropdown_ui <- function(ns) {
+  tagList(
+    selectInput(ns("commitment_topic_select"), "Topic: *",
+                choices = c("+ Add New Topic" = COMMITMENT_TOPIC_ADD_NEW_VALUE)),
+    conditionalPanel(
+      condition = sprintf("input['%s'] == '%s'", ns("commitment_topic_select"), COMMITMENT_TOPIC_ADD_NEW_VALUE),
+      textInput(ns("new_commitment_topic_text"), "New Topic Name:")
+    )
+  )
+}
+
+setup_commitment_topic_cascade <- function(input, output, session, api_manager) {
+  taxonomy <- reactive({
+    api_manager$state_trigger_schedule()
+    if (!api_manager$bq_authenticated) return(data.frame(topic = character(), stringsAsFactors = FALSE))
+    tryCatch(api_manager$bq_get_commitments_taxonomy(), error = function(e) data.frame(topic = character(), stringsAsFactors = FALSE))
+  })
+
+  observeEvent(taxonomy(), {
+    tax <- taxonomy()
+    stored <- sort(unique(tax$topic[nchar(trimws(tax$topic)) > 0]))
+    choices <- c(setNames(stored, stored), "+ Add New Topic" = COMMITMENT_TOPIC_ADD_NEW_VALUE)
+    current <- isolate(input$commitment_topic_select)
+    selected <- if (!is.null(current) && current %in% choices) current else COMMITMENT_TOPIC_ADD_NEW_VALUE
+    updateSelectInput(session, "commitment_topic_select", choices = choices, selected = selected)
+  }, ignoreNULL = FALSE)
+
+  reactive({
+    if (identical(input$commitment_topic_select, COMMITMENT_TOPIC_ADD_NEW_VALUE)) trimws(input$new_commitment_topic_text %||% "")
+    else input$commitment_topic_select %||% ""
+  })
+}
+
+# Formats one commitment row into a readable text block, used to inject a
+# commitment's context into Generate Schedule's trip_details field so
+# Claude can plan the day around delivering it - no day_scheduler schema
+# change needed, same "reuse an existing field" pattern as the weather
+# feature.
+format_commitment_for_schedule_context <- function(commitment_row) {
+  r <- commitment_row
+  paste0(
+    "COMMITMENT TO DELIVER: ", r$description, "\n",
+    "- Category/Sector/Topic: ", r$category, " / ", r$sector, " / ", r$topic, "\n",
+    "- Deadline: ", r$deadline, "\n",
+    "- Stakeholders: ", r$stakeholders, "\n",
+    "- Value of delivering: ", r$value_of_delivery, "\n",
+    "- Consequences of NOT delivering: ", r$consequences_of_failure, "\n",
+    "Please plan this day with concrete time allocated toward making progress on this commitment."
+  )
+}
+
 
 # =============================================================================
 # ========================  EVENTS SCHEDULING  ===============================

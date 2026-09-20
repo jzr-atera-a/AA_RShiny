@@ -78,6 +78,8 @@ bigquery_auth_server <- function(id, api_manager) {
 
       full_table <- switch(input$test_table_choice,
         schedule = api_manager$bq_full_table_schedule,
+        prep     = api_manager$bq_full_table_prep,
+        commitments = api_manager$bq_full_table_commitments,
         diet     = api_manager$bq_full_table_diet,
         exercise = api_manager$bq_full_table_exercise,
         events   = api_manager$bq_full_table_events,

@@ -30,6 +30,8 @@ APIManager <- R6::R6Class(
     bq_project_id      = "atera-2",
     bq_dataset_id      = "business_strategy",
     bq_table_schedule  = "day_scheduler",
+    bq_table_prep      = "day_prep_steps",
+    bq_table_commitments = "monthly_commitments",
     bq_table_diet      = "diet_log",
     bq_table_exercise  = "exercise_log",
     bq_table_events    = "city_events",
@@ -39,6 +41,8 @@ APIManager <- R6::R6Class(
     bq_table_contacts       = "business_contacts",
     bq_table_communications = "contact_communications",
     bq_full_table_schedule = NULL,
+    bq_full_table_prep     = NULL,
+    bq_full_table_commitments = NULL,
     bq_full_table_diet     = NULL,
     bq_full_table_exercise = NULL,
     bq_full_table_events   = NULL,
@@ -67,6 +71,8 @@ APIManager <- R6::R6Class(
     #    when multiple modules in the same suite ask for the same dropdown
     #    data right after a connect/upload) ─────────────────────────────────
     schedule_taxonomy_cache = NULL,
+    prep_taxonomy_cache      = NULL,
+    commitments_taxonomy_cache = NULL,
     diet_taxonomy_cache      = NULL,
     exercise_taxonomy_cache  = NULL,
     events_taxonomy_cache   = NULL,
@@ -74,6 +80,7 @@ APIManager <- R6::R6Class(
 
     # ── Suite-scoped generate -> bulk-import handoff buffers ────────────────
     pending_bulk_text_schedule = NULL,
+    pending_commitment_context = NULL,
     pending_bulk_text_diet      = NULL,
     pending_bulk_text_exercise  = NULL,
     pending_bulk_text_events   = NULL,
@@ -92,6 +99,15 @@ APIManager <- R6::R6Class(
     #    API Configuration group) ────────────────────────────────────────
     trello_key = NULL, trello_token = NULL, trello_board_id = NULL,
     trello_authenticated = FALSE,
+
+    # ── Day Planner Commitments: a SEPARATE Trello connection, local to
+    #    this feature only - deliberately NOT shared with Gantt to Tickets'
+    #    own Trello credentials above, since a commitments board and a
+    #    project-tasks board are commonly different boards/accounts. If you
+    #    actually want one shared Trello connection across both suites,
+    #    consolidate these two credential sets into one. ─────────────────
+    commitment_trello_key = NULL, commitment_trello_token = NULL, commitment_trello_board_id = NULL,
+    commitment_trello_authenticated = FALSE,
     jira_url = NULL, jira_email = NULL, jira_token = NULL, jira_project_key = NULL,
     jira_authenticated = FALSE,
     gantt_smtp_host = NULL, gantt_smtp_port = NULL,
@@ -125,6 +141,7 @@ APIManager <- R6::R6Class(
       self$state_trigger_contacts <- shiny::reactiveVal(0)
 
       self$pending_bulk_text_schedule <- shiny::reactiveVal("")
+      self$pending_commitment_context <- shiny::reactiveVal("")
       self$pending_bulk_text_diet     <- shiny::reactiveVal("")
       self$pending_bulk_text_exercise <- shiny::reactiveVal("")
       self$pending_bulk_text_events   <- shiny::reactiveVal("")
@@ -138,6 +155,8 @@ APIManager <- R6::R6Class(
 
     recompute_full_table_ids = function() {
       self$bq_full_table_schedule <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_schedule)
+      self$bq_full_table_prep     <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_prep)
+      self$bq_full_table_commitments <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_commitments)
       self$bq_full_table_diet     <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_diet)
       self$bq_full_table_exercise <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_exercise)
       self$bq_full_table_events   <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_events)
@@ -154,6 +173,8 @@ APIManager <- R6::R6Class(
     trigger_state_update_schedule = function() {
       self$state_trigger_schedule(self$state_trigger_schedule() + 1)
       self$schedule_taxonomy_cache <- NULL
+      self$prep_taxonomy_cache <- NULL
+      self$commitments_taxonomy_cache <- NULL
       cat("🔔 [Day Planner] state trigger fired\n")
     },
     trigger_state_update_diet = function() {
@@ -186,6 +207,7 @@ APIManager <- R6::R6Class(
     },
 
     set_pending_bulk_text_schedule = function(text) { self$pending_bulk_text_schedule(text) },
+    set_pending_commitment_context = function(text) { self$pending_commitment_context(text) },
     set_pending_bulk_text_diet     = function(text) { self$pending_bulk_text_diet(text) },
     set_pending_bulk_text_exercise = function(text) { self$pending_bulk_text_exercise(text) },
     set_pending_bulk_text_events   = function(text) { self$pending_bulk_text_events(text) },
@@ -549,6 +571,43 @@ APIManager <- R6::R6Class(
           cat("✓ [BigQuery] day_scheduler table ready\n")
         }, error = function(e) { cat("⚠️  [BigQuery] day_scheduler CREATE TABLE check failed:", e$message, "\n") })
 
+        # ── Day Planner: prep-steps checklist, tied to a day_scheduler date.
+        #    Unlike day_scheduler, is_completed is genuinely mutable (a
+        #    checkbox toggled live in Prep Checklist) - this is the second
+        #    deliberate exception to the app's append-only pattern (the
+        #    first being Contact Manager's business_contacts). See
+        #    bq_update_prep_completion()/bq_delete_prep_steps_for_date()
+        #    below for the real UPDATE/DELETE DML this requires. ──────────
+        tryCatch({
+          bq_project_query(self$bq_project_id, sprintf("
+            CREATE TABLE IF NOT EXISTS `%s` (
+              id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+              schedule_date STRING, category STRING, location STRING,
+              additional_context STRING, step_sequence INTEGER, step_text STRING,
+              is_completed BOOL
+            )", self$bq_full_table_prep))
+          cat("✓ [BigQuery] day_prep_steps table ready\n")
+        }, error = function(e) { cat("⚠️  [BigQuery] day_prep_steps CREATE TABLE check failed:", e$message, "\n") })
+
+        # ── Day Planner: monthly_commitments. Like day_prep_steps, this is
+        #    genuinely mutable - status changes over the month, and
+        #    trello_card_id/trello_card_url get filled in after a push to
+        #    Trello - so it gets real UPDATE support (see
+        #    bq_update_commitment() below), a deliberate exception to the
+        #    append-only pattern used elsewhere. ───────────────────────────
+        tryCatch({
+          bq_project_query(self$bq_project_id, sprintf("
+            CREATE TABLE IF NOT EXISTS `%s` (
+              id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+              category STRING, sector STRING, topic STRING,
+              commitment_date STRING, deadline STRING, status STRING,
+              description STRING, stakeholders STRING,
+              value_of_delivery STRING, consequences_of_failure STRING,
+              trello_card_id STRING, trello_card_url STRING
+            )", self$bq_full_table_commitments))
+          cat("✓ [BigQuery] monthly_commitments table ready\n")
+        }, error = function(e) { cat("⚠️  [BigQuery] monthly_commitments CREATE TABLE check failed:", e$message, "\n") })
+
         # ── Diet Planner: CREATE TABLE IF NOT EXISTS — same safe pattern,
         #    same architecture as day_scheduler (day-level metadata + rows). ─
         tryCatch({
@@ -791,6 +850,228 @@ APIManager <- R6::R6Class(
 
       cat("✅ [BigQuery] Inserted", nrow(data_frame), "row(s) →", self$bq_full_table_schedule, "\n")
       return(nrow(data_frame))
+    },
+
+    # ── Day Planner: prep-steps checklist methods ───────────────────────
+    empty_prep_taxonomy = function() {
+      data.frame(category = character(), location = character(), stringsAsFactors = FALSE)
+    },
+
+    bq_get_prep_taxonomy = function() {
+      if (!is.null(self$prep_taxonomy_cache)) return(self$prep_taxonomy_cache)
+      if (!self$bq_authenticated) return(self$empty_prep_taxonomy())
+
+      result <- tryCatch({
+        self$bq_query(sprintf(
+          "SELECT DISTINCT category, location FROM `%s` ORDER BY category, location",
+          self$bq_full_table_prep
+        ))
+      }, error = function(e) {
+        cat("⚠️  [bq_get_prep_taxonomy] Query failed:", e$message, "\n")
+        self$empty_prep_taxonomy()
+      })
+
+      self$prep_taxonomy_cache <- result
+      result
+    },
+
+    # Bulk-inserts one full generated batch of steps (WRITE_APPEND, like
+    # every other suite). Regenerating for the same date does NOT overwrite
+    # in place - call bq_delete_prep_steps_for_date() first if you want the
+    # "replace this day's steps" behavior the source app used.
+    bq_insert_prep_steps = function(data_frame) {
+      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+
+      required_cols <- c("id", "created_at", "schedule_date", "category", "location",
+                        "additional_context", "step_sequence", "step_text", "is_completed")
+
+      start_id <- tryCatch({
+        res <- bq_table_download(bq_project_query(self$bq_project_id,
+          sprintf("SELECT COALESCE(MAX(id), 0) as max_id FROM `%s`", self$bq_full_table_prep)))
+        as.integer(res$max_id) + 1L
+      }, error = function(e) 1L)
+
+      data_frame$id <- seq(start_id, start_id + nrow(data_frame) - 1L)
+      data_frame$created_at <- Sys.time()
+      if (!"is_completed" %in% names(data_frame)) data_frame$is_completed <- FALSE
+      for (col in required_cols) if (!col %in% names(data_frame)) data_frame[[col]] <- ""
+      data_frame <- data_frame[, required_cols]
+
+      table_ref <- bq_table(self$bq_project_id, self$bq_dataset_id, self$bq_table_prep)
+      bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
+
+      cat("✅ [BigQuery] Inserted", nrow(data_frame), "row(s) →", self$bq_full_table_prep, "\n")
+      self$trigger_state_update_schedule()
+      return(nrow(data_frame))
+    },
+
+    bq_get_prep_steps_for_date = function(schedule_date) {
+      if (!self$bq_authenticated) return(data.frame())
+      tryCatch({
+        self$bq_query(sprintf(
+          "SELECT * FROM `%s` WHERE schedule_date = '%s' ORDER BY step_sequence",
+          self$bq_full_table_prep, safe_sql_escape(schedule_date)
+        ))
+      }, error = function(e) { cat("⚠️  [bq_get_prep_steps_for_date] Query failed:", e$message, "\n"); data.frame() })
+    },
+
+    # Genuine UPDATE - is_completed is toggled live from a checkbox, the
+    # same deliberate exception class as Contact Manager's bq_update_contact.
+    bq_update_prep_completion = function(step_id, is_completed) {
+      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      query <- sprintf("UPDATE `%s` SET is_completed = %s WHERE id = %d",
+                       self$bq_full_table_prep, if (isTRUE(is_completed)) "TRUE" else "FALSE", as.integer(step_id))
+      bq_project_query(self$bq_project_id, query)
+      cat("✅ [BigQuery] Updated prep step", step_id, "-> is_completed =", is_completed, "\n")
+      TRUE
+    },
+
+    # Genuine DELETE, used only when the person explicitly regenerates
+    # steps for a date they've already saved (mirrors the source app's
+    # "delete existing steps for this day before saving new ones").
+    bq_delete_prep_steps_for_date = function(schedule_date) {
+      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      query <- sprintf("DELETE FROM `%s` WHERE schedule_date = '%s'",
+                       self$bq_full_table_prep, safe_sql_escape(schedule_date))
+      bq_project_query(self$bq_project_id, query)
+      cat("✅ [BigQuery] Deleted existing prep steps for", schedule_date, "\n")
+      self$trigger_state_update_schedule()
+      TRUE
+    },
+
+    # ── Day Planner Commitments: Trello (local to this feature - see the
+    #    field-declaration comment above for why it's separate from Gantt's
+    #    own Trello connection). Mirrors Gantt's Trello methods exactly. ──
+    set_commitment_trello_credentials = function(key, token, board_id = NULL) {
+      self$commitment_trello_key <- key
+      self$commitment_trello_token <- token
+      self$commitment_trello_board_id <- board_id
+    },
+
+    test_commitment_trello_connection = function() {
+      if (is.null(self$commitment_trello_key) || is.null(self$commitment_trello_token)) stop("Trello API key/token not set")
+      tryCatch({
+        response <- GET(
+          url = "https://api.trello.com/1/members/me",
+          query = list(key = self$commitment_trello_key, token = self$commitment_trello_token)
+        )
+        if (status_code(response) == 200) {
+          self$commitment_trello_authenticated <- TRUE
+          return(TRUE)
+        } else {
+          stop(sprintf("Trello returned status %d", status_code(response)))
+        }
+      }, error = function(e) {
+        self$commitment_trello_authenticated <- FALSE
+        stop(paste("Trello connection failed:", e$message))
+      })
+    },
+
+    get_commitment_trello_lists = function() {
+      if (!self$commitment_trello_authenticated) stop("Not authenticated to Trello")
+      if (is.null(self$commitment_trello_board_id) || nchar(self$commitment_trello_board_id) == 0) stop("Board ID not set")
+      response <- GET(
+        url = sprintf("https://api.trello.com/1/boards/%s/lists", self$commitment_trello_board_id),
+        query = list(key = self$commitment_trello_key, token = self$commitment_trello_token)
+      )
+      if (status_code(response) != 200) stop(sprintf("Failed to fetch lists (status %d)", status_code(response)))
+      content(response, "parsed")
+    },
+
+    create_commitment_trello_card = function(list_id, name, description) {
+      if (!self$commitment_trello_authenticated) stop("Not authenticated to Trello")
+      response <- POST(
+        url = "https://api.trello.com/1/cards",
+        query = list(key = self$commitment_trello_key, token = self$commitment_trello_token,
+                    idList = list_id, name = name, desc = description)
+      )
+      if (status_code(response) == 200) {
+        card <- content(response, "parsed")
+        return(list(success = TRUE, id = card$id, url = card$shortUrl))
+      }
+      list(success = FALSE, error = sprintf("Status %d", status_code(response)))
+    },
+
+    # ── Day Planner Commitments: BigQuery CRUD ──────────────────────────
+    empty_commitments_taxonomy = function() {
+      data.frame(category = character(), sector = character(), topic = character(), stringsAsFactors = FALSE)
+    },
+
+    bq_get_commitments_taxonomy = function() {
+      if (!is.null(self$commitments_taxonomy_cache)) return(self$commitments_taxonomy_cache)
+      if (!self$bq_authenticated) return(self$empty_commitments_taxonomy())
+
+      result <- tryCatch({
+        self$bq_query(sprintf(
+          "SELECT DISTINCT category, sector, topic FROM `%s` ORDER BY category, sector, topic",
+          self$bq_full_table_commitments
+        ))
+      }, error = function(e) {
+        cat("⚠️  [bq_get_commitments_taxonomy] Query failed:", e$message, "\n")
+        self$empty_commitments_taxonomy()
+      })
+
+      self$commitments_taxonomy_cache <- result
+      result
+    },
+
+    bq_insert_commitment = function(data_frame) {
+      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+
+      required_cols <- c("id", "created_at", "category", "sector", "topic",
+                        "commitment_date", "deadline", "status", "description", "stakeholders",
+                        "value_of_delivery", "consequences_of_failure", "trello_card_id", "trello_card_url")
+
+      start_id <- tryCatch({
+        res <- bq_table_download(bq_project_query(self$bq_project_id,
+          sprintf("SELECT COALESCE(MAX(id), 0) as max_id FROM `%s`", self$bq_full_table_commitments)))
+        as.integer(res$max_id) + 1L
+      }, error = function(e) 1L)
+
+      data_frame$id <- start_id
+      data_frame$created_at <- Sys.time()
+      for (col in required_cols) if (!col %in% names(data_frame)) data_frame[[col]] <- ""
+      data_frame <- data_frame[, required_cols]
+
+      table_ref <- bq_table(self$bq_project_id, self$bq_dataset_id, self$bq_table_commitments)
+      bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
+
+      cat("✅ [BigQuery] Inserted commitment id", start_id, "→", self$bq_full_table_commitments, "\n")
+      self$trigger_state_update_schedule()
+      return(start_id)
+    },
+
+    bq_get_commitments = function(limit = 500) {
+      if (!self$bq_authenticated) return(data.frame())
+      tryCatch({
+        self$bq_query(sprintf("SELECT * FROM `%s` ORDER BY deadline ASC LIMIT %d", self$bq_full_table_commitments, limit))
+      }, error = function(e) { cat("⚠️  [bq_get_commitments] Query failed:", e$message, "\n"); data.frame() })
+    },
+
+    bq_get_commitment_by_id = function(commitment_id) {
+      if (!self$bq_authenticated) return(data.frame())
+      tryCatch({
+        self$bq_query(sprintf("SELECT * FROM `%s` WHERE id = %d", self$bq_full_table_commitments, as.integer(commitment_id)))
+      }, error = function(e) { cat("⚠️  [bq_get_commitment_by_id] Query failed:", e$message, "\n"); data.frame() })
+    },
+
+    # Genuine UPDATE - status and Trello linkage change after creation (see
+    # CREATE TABLE comment above). `updates` is a named list of columns to
+    # set; only those columns are touched.
+    bq_update_commitment = function(commitment_id, updates) {
+      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      if (length(updates) == 0) stop("No fields to update")
+
+      set_clauses <- sapply(names(updates), function(col) {
+        sprintf("%s = '%s'", col, safe_sql_escape(as.character(updates[[col]])))
+      })
+
+      query <- sprintf("UPDATE `%s` SET %s WHERE id = %d",
+                       self$bq_full_table_commitments, paste(set_clauses, collapse = ", "), as.integer(commitment_id))
+      bq_project_query(self$bq_project_id, query)
+      cat("✅ [BigQuery] Updated commitment", commitment_id, "\n")
+      self$trigger_state_update_schedule()
+      TRUE
     },
 
     # ============================================================
