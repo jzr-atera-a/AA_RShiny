@@ -281,3 +281,14 @@ input[type='date']::-webkit-calendar-picker-indicator { filter: invert(1); }
 .formula-box { background: rgba(46, 204, 113, 0.15); border-left: 4px solid #2ecc71; border-radius: 0 8px 8px 0; padding: 12px; margin-top: 12px; }
 .formula-box h5 { color: #2ecc71 !important; margin: 0; }
 .formula-box a { color: #7ec8e3; }
+
+/* Funding Programmes > Bulk Import preview (from DaysPlanningFundingTravel) */
+.preview-section {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 10px 0;
+  border-left: 4px solid #008A82;
+  max-height: 400px;
+  overflow-y: auto;
+}

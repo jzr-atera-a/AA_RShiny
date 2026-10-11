@@ -25,6 +25,7 @@ funding_bulk_import_ui <- function(id) {
             )
         ),
 
+        bos_tz_dropdown_ui(ns, label = "Time zone of the pasted times:", help = "Used only when the text has no [time_zone] line (text from the generator tabs already carries one)."),
         textAreaInput(ns("programme_text"), "Paste Programme Data Here:", height = "500px",
                       placeholder = "[programme_name]: Horizon Europe SME Instrument\n[category]: Grant\n[country]: European Union\n[city_region]: All\n..."),
 

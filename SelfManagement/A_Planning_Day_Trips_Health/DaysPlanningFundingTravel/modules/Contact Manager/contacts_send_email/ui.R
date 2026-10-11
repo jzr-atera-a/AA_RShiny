@@ -7,6 +7,7 @@ contacts_send_email_ui <- function(id) {
     fluidRow(
       box(title = "Compose Email", status = "primary", solidHeader = TRUE, width = 12,
           p("Pre-populated automatically when you click 'Send Email' from Customise Communication."),
+          htmlOutput(ns("sender_info")),
           textInput(ns("email_to"), "To:", value = "", width = "100%"),
           textInput(ns("email_cc"), "CC (comma-separated, optional):", value = "", width = "100%"),
           textInput(ns("email_subject"), "Subject:", value = "", width = "100%"),

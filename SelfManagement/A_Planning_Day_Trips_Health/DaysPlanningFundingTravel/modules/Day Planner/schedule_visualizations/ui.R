@@ -39,6 +39,9 @@ schedule_visualizations_ui <- function(id) {
     fluidRow(
       box(title = "Time Allocation Trends", status = "warning", solidHeader = TRUE, width = 12, collapsible = TRUE,
           plotlyOutput(ns("time_chart"), height = "500px"))
-    )
+    ),
+
+    generic_export_box_ui(ns, title = "Save This Day's Itinerary", ics = TRUE,
+                          ics_extra_ui = checkboxInput(ns("ics_include_transport"), "Include transport legs", value = TRUE))
   )
 }

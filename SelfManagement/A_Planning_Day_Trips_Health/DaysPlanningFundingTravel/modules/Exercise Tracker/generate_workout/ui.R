@@ -15,6 +15,7 @@ generate_workout_ui <- function(id) {
           column(6,
                  dateInput(ns("workout_date"), "Date:", value = Sys.Date()),
                  session_type_dropdown_ui(ns),
+                 bos_tz_dropdown_ui(ns),
                  selectInput(ns("fitness_level"), "Fitness Level:",
                              choices = c("Beginner", "Intermediate", "Advanced"), selected = "Intermediate"),
                  numericInput(ns("duration_minutes"), "Target Duration (minutes, optional):",

@@ -9,7 +9,7 @@ groups:
     label: "API Configuration"
     icon: "key"
     expanded: true
-    modules: [bigquery_auth, claude_api_config]
+    modules: [bigquery_auth, claude_api_config, titan_auth, debug_console]
 
   - id: day_planner
     label: "Day Planner"
@@ -33,7 +33,7 @@ groups:
     label: "Events Scheduling"
     icon: "calendar-alt"
     expanded: false
-    modules: [scan_events, bulk_import_events, add_single_event, browse_events, visualizations_events, events_about]
+    modules: [scan_events, bulk_import_events, add_single_event, browse_events, visualizations_events, events_to_calendar, events_about]
 
   - id: funding_programmes
     label: "Funding Programmes"
@@ -51,13 +51,19 @@ groups:
     label: "Contact Manager"
     icon: "address-book"
     expanded: false
-    modules: [contacts_api_config, contacts_smtp_config, contacts_process, contacts_explore, contacts_customise_communication, contacts_send_email]
+    modules: [contacts_api_config, contacts_process, contacts_explore, contacts_customise_communication, contacts_send_email]
 
   - id: travel_planning
     label: "Travel Planning"
     icon: "globe"
     expanded: true
     modules: [travel_itinerary_planner]
+
+  - id: online_collaboration
+    label: "Online Collaboration"
+    icon: "comments"
+    expanded: false
+    modules: [slack_connection, slack_channels]
 
 modules:
   # ---- API Configuration (shared by all three suites) ----
@@ -70,6 +76,11 @@ modules:
     enabled: true
     priority: 2
     description: "Claude API credentials management, shared by all suites"
+
+  debug_console:
+    enabled: true
+    priority: 90
+    description: "Live mirror of the R console, copy-friendly for mobile browsers"
 
   # ---- Day Planner ----
   generate_schedule:
@@ -220,6 +231,16 @@ modules:
     priority: 35
     description: "Events Scheduling schema documentation"
 
+  titan_auth:
+    enabled: true
+    priority: 3
+    description: "Sign in to the Titan calendar from an authenticateT.R file"
+
+  events_to_calendar:
+    enabled: true
+    priority: 37
+    description: "Create events, import .ics files and save them to the Titan calendar"
+
   # ---- Funding Programmes ----
   generate_programme:
     enabled: true
@@ -300,7 +321,7 @@ modules:
     description: "OpenAI API credentials, local to this suite"
 
   contacts_smtp_config:
-    enabled: true
+    enabled: false
     priority: 61
     description: "SMTP email configuration, local to this suite"
 
@@ -325,6 +346,17 @@ modules:
     description: "Compose and send emails with attachments"
 
   # ---- Travel Planning ----
+  # ---- Online Collaboration (Slack) ----
+  slack_connection:
+    enabled: true
+    priority: 80
+    description: "Connect to the company's internal Slack app with a bot token"
+
+  slack_channels:
+    enabled: true
+    priority: 81
+    description: "Browse Slack channels, read messages and threads, post updates"
+
   travel_itinerary_planner:
     enabled: true
     priority: 80

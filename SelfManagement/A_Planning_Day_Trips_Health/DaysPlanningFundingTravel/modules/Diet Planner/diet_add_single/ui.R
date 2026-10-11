@@ -12,6 +12,7 @@ diet_add_single_ui <- function(id) {
         width = 12,
 
         dateInput(ns("log_date"), "Date:", value = Sys.Date()),
+        bos_tz_dropdown_ui(ns, help = "Saved with the entry, so calendar exports use the right zone."),
         diet_type_dropdown_ui(ns),
         textInput(ns("dietary_restrictions"), "Dietary Restrictions (optional):", placeholder = "e.g., Gluten-free"),
 

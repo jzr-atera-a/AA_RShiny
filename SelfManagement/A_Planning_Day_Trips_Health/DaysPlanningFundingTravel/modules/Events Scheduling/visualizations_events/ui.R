@@ -103,6 +103,8 @@ visualizations_events_ui <- function(id) {
 
         )
       )
-    )
+    ),
+
+    generic_export_box_ui(ns, title = "Save These Events", ics = TRUE)
   )
 }

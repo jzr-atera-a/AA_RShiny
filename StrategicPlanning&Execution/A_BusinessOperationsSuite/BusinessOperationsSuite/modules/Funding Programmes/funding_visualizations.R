@@ -1,35 +1,53 @@
 # modules/Funding Programmes/funding_visualizations.R
-# Subtab: Visualizations
+# Updated from DaysPlanningFundingTravel (modules/Funding Programmes/funding_visualizations/ui.R + server.R)
 
 funding_visualizations_ui <- function(id) {
   ns <- NS(id)
 
   tagList(
     fluidRow(
-      box(title = "Filter Funding Programmes", status = "primary", solidHeader = TRUE, width = 12,
-          p("Filter by location and/or date range, then load results. Leave a filter at its default to ignore it."),
-          fluidRow(
-            column(3, selectInput(ns("viz_category"), "Category:", choices = c("All" = "all"))),
-            column(3, selectInput(ns("viz_country"), "Country:", choices = c("All" = "all"))),
-            column(3, selectInput(ns("viz_cityregion"), "City / Region:", choices = c("All" = "all"))),
-            column(3, br(), actionButton(ns("load_viz"), "Load Programmes", class = "btn-success btn-lg", icon = icon("chart-bar"), style = "width: 100%;"))
+      box(
+        title = "Filter Funding Programmes",
+        status = "primary",
+        solidHeader = TRUE,
+        width = 12,
+
+        p("Filter by location and/or date range, then load results. Leave a filter at its default to ignore it."),
+
+        fluidRow(
+          column(3, selectInput(ns("viz_category"), "Category:", choices = c("All" = "all"))),
+          column(3, selectInput(ns("viz_country"), "Country:", choices = c("All" = "all"))),
+          column(3, selectInput(ns("viz_cityregion"), "City / Region:", choices = c("All" = "all"))),
+          column(3, br(), actionButton(ns("load_viz"), "Load Programmes",
+                                       class = "btn-success btn-lg", icon = icon("chart-bar"), style = "width: 100%;"))
+        ),
+
+        fluidRow(
+          column(6,
+                 checkboxInput(ns("filter_start_date"), "Filter by Start Date for Applying", value = FALSE),
+                 conditionalPanel(
+                   condition = sprintf("input['%s']", ns("filter_start_date")),
+                   dateRangeInput(ns("start_date_range"), "Start Date Range:", start = Sys.Date(), end = Sys.Date() + 365)
+                 )
           ),
-          fluidRow(
-            column(6,
-                   checkboxInput(ns("filter_start_date"), "Filter by Start Date for Applying", value = FALSE),
-                   conditionalPanel(condition = sprintf("input['%s']", ns("filter_start_date")),
-                     dateRangeInput(ns("start_date_range"), "Start Date Range:", start = Sys.Date(), end = Sys.Date() + 365))),
-            column(6,
-                   checkboxInput(ns("filter_deadline"), "Filter by Deadline", value = FALSE),
-                   conditionalPanel(condition = sprintf("input['%s']", ns("filter_deadline")),
-                     dateRangeInput(ns("deadline_range"), "Deadline Range:", start = Sys.Date(), end = Sys.Date() + 365)))
-          ),
-          div(class = "alert alert-info", style = "font-size: 0.9em;",
-              tags$strong("Note:"), " Date filters only match programmes with a specific YYYY-MM-DD date in ",
-              "that field. Programmes marked \"Rolling basis\" or \"Not confirmed\" won't match a date range ",
-              "filter but will still appear when no date filter is applied."),
-          hr(), htmlOutput(ns("status")))
+          column(6,
+                 checkboxInput(ns("filter_deadline"), "Filter by Deadline", value = FALSE),
+                 conditionalPanel(
+                   condition = sprintf("input['%s']", ns("filter_deadline")),
+                   dateRangeInput(ns("deadline_range"), "Deadline Range:", start = Sys.Date(), end = Sys.Date() + 365)
+                 )
+          )
+        ),
+
+        div(class = "alert alert-info", style = "font-size: 0.9em;",
+            tags$strong("Note:"), " Date filters only match programmes with a specific YYYY-MM-DD date in ",
+            "that field. Programmes marked \"Rolling basis\" or \"Not confirmed\" won't match a date range ",
+            "filter but will still appear when no date filter is applied."),
+
+        hr(), htmlOutput(ns("status"))
+      )
     ),
+
     fluidRow(
       box(title = "Overview", status = "info", solidHeader = TRUE, width = 12, collapsible = TRUE,
           fluidRow(
@@ -37,16 +55,21 @@ funding_visualizations_ui <- function(id) {
             column(3, valueBoxOutput(ns("total_categories"), width = 12)),
             column(3, valueBoxOutput(ns("total_countries"), width = 12)),
             column(3, valueBoxOutput(ns("upcoming_deadlines"), width = 12))
-          ))
+          )
+      )
     ),
+
     fluidRow(
       box(title = "Programmes by Category", status = "warning", solidHeader = TRUE, width = 12, collapsible = TRUE,
           plotlyOutput(ns("category_chart"), height = "400px"))
     ),
+
     fluidRow(
       box(title = "Programme Details", status = "success", solidHeader = TRUE, width = 12, collapsible = TRUE,
           htmlOutput(ns("programme_cards")))
-    )
+    ),
+
+    generic_export_box_ui(ns, title = "Save These Programmes")
   )
 }
 
@@ -199,5 +222,48 @@ funding_visualizations_server <- function(id, api_manager) {
     output$total_categories <- renderValueBox({ valueBox(0, "Categories", icon = icon("layer-group"), color = "blue") })
     output$total_countries <- renderValueBox({ valueBox(0, "Countries", icon = icon("globe"), color = "green") })
     output$upcoming_deadlines <- renderValueBox({ valueBox(0, "Upcoming Deadlines", icon = icon("clock"), color = "yellow") })
+
+    # ── Save as HTML/PDF (shared generic exporter, see R/utils_export.R) ──
+    output$export_download <- downloadHandler(
+      filename = function() {
+        paste0("funding_programmes_", format(Sys.Date(), "%Y%m%d"), if (identical(input$export_format, "pdf")) ".pdf" else ".html")
+      },
+      content = function(file) {
+        # Wrapped defensively end-to-end: downloadHandler's content() runs
+        # outside the normal reactive context, so an uncaught error here
+        # previously surfaced as Shiny's generic "An error has occurred!"
+        # page instead of any usable file. Any failure now writes a plain,
+        # readable HTML explanation to `file` instead, and logs the real
+        # cause via cat() (visible in Debug Console, API Configuration group).
+        tryCatch({
+          d <- viz_data()
+          if (is.null(d) || nrow(d) == 0) {
+            writeLines("<html><body><p>No data loaded - load some programmes first.</p></body></html>", file)
+            return()
+          }
+
+          cols <- c("programme_name", "category", "country", "city_region", "amount_of_money", "deadline", "verified_urls")
+          labels <- c("Programme", "Category", "Country", "City/Region", "Amount", "Deadline", "URLs")
+          subtitle <- sprintf("%d programme(s)", nrow(d))
+
+          if (identical(input$export_format, "pdf")) {
+            ok <- generate_generic_pdf(file, "Funding Programmes", subtitle, d, cols, labels)
+            if (!isTRUE(ok)) stop("PDF generation failed internally - see console log above for the real cause")
+          } else {
+            result <- generate_generic_html("Funding Programmes", subtitle, d, cols, labels)
+            writeLines(result$content, file)
+          }
+        }, error = function(e) {
+          cat("\u274c [funding_visualizations export] Error:", e$message, "\n")
+          writeLines(c("<html><body>", "<h2>Export failed</h2>",
+                       paste0("<p>", htmltools::htmlEscape(e$message), "</p>"),
+                       "<p>Check the Debug Console (API Configuration group) for full detail.</p>",
+                       "</body></html>"), file)
+        })
+      }
+    )
+    output$export_status <- renderUI({ tags$div() })
+
+    session$onSessionEnded(function() {})
   })
 }

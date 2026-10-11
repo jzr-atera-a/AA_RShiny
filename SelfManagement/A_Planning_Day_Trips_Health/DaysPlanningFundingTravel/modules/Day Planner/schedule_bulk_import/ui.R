@@ -25,6 +25,7 @@ schedule_bulk_import_ui <- function(id) {
             )
         ),
 
+        bos_tz_dropdown_ui(ns, label = "Time zone of the pasted times:", help = "Used only when the text has no [time_zone] line (text from the generator tabs already carries one)."),
         textAreaInput(ns("schedule_text"), "Paste Day Schedule Here:", height = "500px",
                       placeholder = "[2026-07-10]\n[Travel]\n[France]\n[Paris]\n[Museum day]\n\n[row_type]: Location\n..."),
 

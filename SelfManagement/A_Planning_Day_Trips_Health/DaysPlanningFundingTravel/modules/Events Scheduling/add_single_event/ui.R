@@ -21,6 +21,7 @@ add_single_event_ui <- function(id) {
           ),
           column(6,
                  dateInput(ns("event_date"), "Event Date: *", value = Sys.Date(), format = "yyyy-mm-dd"),
+        bos_tz_dropdown_ui(ns, help = "Saved with the entry, so calendar exports use the right zone."),
                  textInput(ns("event_time"), "Event Time:",   placeholder = "e.g., 19:30 or All Day"),
                  textInput(ns("venue_name"), "Venue Name:",   placeholder = "e.g., Barbican Centre"),
                  textAreaInput(ns("address"), "Address:", rows = 2,

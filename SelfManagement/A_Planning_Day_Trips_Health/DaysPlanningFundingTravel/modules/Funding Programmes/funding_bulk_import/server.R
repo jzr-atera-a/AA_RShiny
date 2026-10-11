@@ -18,7 +18,7 @@ funding_bulk_import_server <- function(id, api_manager) {
       output$status <- renderUI({ tags$div(class = "status-info", tags$i(class = "fa fa-spinner fa-spin"), " Parsing...") })
 
       tryCatch({
-        parsed_df <- parse_programme_text(input$programme_text)
+        parsed_df <- parse_programme_text(input$programme_text, default_tz = input$time_zone)
         parsed_data(parsed_df)
 
         output$parse_info <- renderUI({

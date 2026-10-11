@@ -1,7 +1,7 @@
 # modules/API Settings/bq_config.R
-# Subtab: BigQuery Config (under the "API Settings" main tab)
-# Configures the ONE project/dataset shared by all three suites, and the
-# three table names (contacts, communications, funding programmes).
+# Subtab: BigQuery Config (API Settings group)
+# Ported from DaysPlanningFundingTravel modules/API Configuration/bigquery_auth
+# (same JSON upload/paste, Connect, and Test Query flow), with this suite's tables.
 
 bq_config_ui <- function(id) {
   ns <- NS(id)
@@ -9,78 +9,78 @@ bq_config_ui <- function(id) {
   tagList(
     fluidRow(
       box(
-        title = "Google Cloud BigQuery Configuration",
-        status = "primary", solidHeader = TRUE, width = 12,
+        title = "Google Cloud Platform Authentication",
+        status = "primary",
+        solidHeader = TRUE,
+        width = 12,
 
-        p("Configure the Google Cloud BigQuery connection shared by Communications and Funding Programmes."),
-        br(),
+        h4("BigQuery Configuration"),
+        p("Connect once to enable every BigQuery-backed tab: Communications, Funding Programmes and Strategy Canvases."),
+
+        div(class = "alert alert-info",
+            tags$strong("Note:"),
+            " This app requires a valid Google Cloud service account with BigQuery permissions.",
+            tags$br(),
+            tags$strong("Default Configuration:"),
+            " Project: atera-2, Dataset: business_strategy"),
 
         fluidRow(
-          column(6, textInput(ns("bq_project"), "Project ID:", value = "atera-2", width = "100%")),
-          column(6, textInput(ns("bq_dataset"), "Dataset Name:", value = "business_strategy", width = "100%"))
+          column(6,
+                 h5("Upload Service Account JSON File:"),
+                 fileInput(ns("json_file"), "Select JSON File:", accept = ".json", width = "100%"),
+
+                 h5("Or paste JSON content:"),
+                 textAreaInput(ns("json_text"), "JSON Content:", height = "150px", width = "100%",
+                               placeholder = "Paste your service account JSON here...")
+          ),
+          column(6,
+                 h5("BigQuery Project Configuration"),
+                 textInput(ns("project_id"), "Project ID:", value = "atera-2", width = "100%"),
+                 textInput(ns("dataset_id"), "Dataset ID:", value = "business_strategy", width = "100%"),
+
+                 tags$table(class = "table table-condensed", style = "margin-top: 10px;",
+                   tags$tbody(
+                     tags$tr(tags$td(tags$strong("Funding Programmes:")), tags$td(tags$code("funding_programmes"))),
+                     tags$tr(tags$td(tags$strong("Communications:")), tags$td(tags$code("business_contacts, contact_communications"))),
+                     tags$tr(tags$td(tags$strong("Strategy Canvases:")), tags$td(tags$code("business_model_canvas, disciplined_entrepreneurship_canvas, disciplined_entrepreneurship_roadmap")))
+                   )
+                 ),
+                 p(style = "color: #7f8c8d; font-size: 12px;",
+                   "Table names are fixed per suite. Connecting creates any that don't exist yet",
+                   " (CREATE TABLE IF NOT EXISTS - never alters or drops an existing table).")
+          )
         ),
 
-        h4("Table Names:"),
+        br(),
         fluidRow(
-          column(4, textInput(ns("bq_table_contacts"), "Contacts Table:", value = "business_contacts", width = "100%")),
-          column(4, textInput(ns("bq_table_comm"), "Communications Table:", value = "contact_communications", width = "100%")),
-          column(4, textInput(ns("bq_table_funding"), "Funding Programmes Table:", value = "funding_programmes", width = "100%"))
-        ),
-        fluidRow(
-          column(4, textInput(ns("bq_table_bm_canvas"), "BM Canvas Table:", value = "business_model_canvas", width = "100%")),
-          column(4, textInput(ns("bq_table_de_canvas"), "DE Canvas Table:", value = "disciplined_entrepreneurship_canvas", width = "100%")),
-          column(4, textInput(ns("bq_table_de_roadmap"), "DE Roadmap Table:", value = "disciplined_entrepreneurship_roadmap", width = "100%"))
-        ),
-
-        br(),
-        h4("Authentication Method:"),
-        radioButtons(ns("bq_auth_method"), NULL,
-                     choices = c("Service Account JSON Key File" = "json_key",
-                                 "Application Default Credentials" = "adc"),
-                     selected = "json_key", inline = TRUE),
-
-        conditionalPanel(
-          condition = sprintf("input['%s'] == 'json_key'", ns("bq_auth_method")),
-          fileInput(ns("bq_key_file"), "Upload Service Account JSON Key:", accept = ".json", width = "100%")
-        ),
-        conditionalPanel(
-          condition = sprintf("input['%s'] == 'adc'", ns("bq_auth_method")),
-          p(tags$small("Using Application Default Credentials. Make sure you have run:"),
-            tags$br(), tags$code("gcloud auth application-default login"))
+          column(5,
+                 actionButton(ns("authenticate"), "Connect to BigQuery",
+                              class = "btn-primary btn-lg", icon = icon("plug"), style = "width: 100%;")
+          ),
+          column(4,
+                 selectInput(ns("test_table_choice"), "Table to test:",
+                             choices = c("Funding Programmes" = "funding",
+                                         "Business Contacts" = "contacts",
+                                         "Contact Communications" = "communications",
+                                         "Business Model Canvas" = "bm_canvas",
+                                         "DE Canvas" = "de_canvas",
+                                         "DE Roadmap" = "de_roadmap"))
+          ),
+          column(3,
+                 br(),
+                 actionButton(ns("test_query"), "Test Query (top 5 rows)",
+                              class = "btn-info btn-lg", icon = icon("table"), style = "width: 100%;")
+          )
         ),
 
-        br(),
-        actionButton(ns("save_bq"), "Save BigQuery Settings", class = "btn-success", icon = icon("save")),
-        actionButton(ns("test_bq"), "Test Connection & Load Data", class = "btn-info", icon = icon("database")),
-        actionButton(ns("create_table_bq"), "Create Empty Tables", class = "btn-warning", icon = icon("plus")),
-        br(), br(),
-        uiOutput(ns("bq_status_ui")),
+        hr(),
+        h4("Connection Status"),
+        htmlOutput(ns("auth_status")),
 
-        br(),
-        div(class = "schema-info",
-            h5("business_contacts"),
-            p("contact_id, full_name, industry, company, job_title, location, country, email, phone, ",
-              "linkedin, areas_of_interest, university, academic_background, user_notes, ",
-              "last_interaction_date, created_at, updated_at"),
-            h5("contact_communications"),
-            p("message_id, contact_id, channel_type, communication_purpose, language, message_length, ",
-              "message_content, created_at"),
-            h5("funding_programmes"),
-            p("id, created_at, category, country, city_region, programme_name, amount_of_money, conditions, ",
-              "key_sponsors, key_organiser_profiles, areas_of_application, start_date_for_applying, deadline, ",
-              "recommendations_for_applying, verified_urls"),
-            h5("business_model_canvas"),
-            p("canvas_id, created_at, updated_at, business_area, project, business_focus, key_partners, ",
-              "key_activities, key_resources, value_propositions, customer_relationships, channels, ",
-              "customer_segments, cost_structure, revenue_streams"),
-            h5("disciplined_entrepreneurship_canvas"),
-            p("canvas_id, created_at, updated_at, business_area, project, business_focus, raison_detre, ",
-              "initial_market, value_creation, competitive_advantage, customer_acquisition, ",
-              "product_unit_economics, sales, overall_economics, design_build, scaling"),
-            h5("disciplined_entrepreneurship_roadmap"),
-            p("roadmap_id, created_at, updated_at, business_area, project, business_focus, and 24 ",
-              "step_NN_<name> STRING columns (one per Disciplined Entrepreneurship roadmap step)")
-        )
+        hr(),
+        h4("Test Query Results"),
+        htmlOutput(ns("test_status")),
+        DT::dataTableOutput(ns("test_table"))
       )
     )
   )
@@ -89,77 +89,117 @@ bq_config_ui <- function(id) {
 bq_config_server <- function(id, api_manager) {
   moduleServer(id, function(input, output, session) {
 
-    output$bq_status_ui <- renderUI({ tags$div() })
+    observeEvent(input$authenticate, {
 
-    observeEvent(input$save_bq, {
-      api_manager$bq_project_id <- trimws(input$bq_project)
-      api_manager$bq_dataset_id <- trimws(input$bq_dataset)
-      api_manager$bq_table_contacts <- trimws(input$bq_table_contacts)
-      api_manager$bq_table_communications <- trimws(input$bq_table_comm)
-      api_manager$bq_table_funding <- trimws(input$bq_table_funding)
-      api_manager$bq_table_bm_canvas <- trimws(input$bq_table_bm_canvas)
-      api_manager$bq_table_de_canvas <- trimws(input$bq_table_de_canvas)
-      api_manager$bq_table_de_roadmap <- trimws(input$bq_table_de_roadmap)
-      api_manager$recompute_full_table_ids()
-
-      if (input$bq_auth_method == "json_key" && !is.null(input$bq_key_file)) {
-        api_manager$bq_credentials_path <- input$bq_key_file$datapath
-      }
-
-      output$bq_status_ui <- renderUI({
-        div(class = "api-status-success", icon("check-circle"), " BigQuery settings saved!",
-            tags$br(), tags$small("Project: ", api_manager$bq_project_id, " | Dataset: ", api_manager$bq_dataset_id),
-            tags$br(), tags$small("Contacts: ", api_manager$bq_table_contacts,
-                                   " | Communications: ", api_manager$bq_table_communications,
-                                   " | Funding: ", api_manager$bq_table_funding),
-            tags$br(), tags$small("BM Canvas: ", api_manager$bq_table_bm_canvas,
-                                   " | DE Canvas: ", api_manager$bq_table_de_canvas,
-                                   " | DE Roadmap: ", api_manager$bq_table_de_roadmap))
-      })
-      showNotification("BigQuery settings saved!", type = "message", duration = 3)
-    })
-
-    observeEvent(input$test_bq, {
-      showNotification("Testing BigQuery connection and loading data...", type = "message", duration = NULL, id = "test_bq")
-
-      tryCatch({
-        api_manager$authenticate_bigquery(
-          credentials_path = if (input$bq_auth_method == "json_key") api_manager$bq_credentials_path else NULL
-        )
-        contacts <- api_manager$bq_load_contacts()
-
-        removeNotification(id = "test_bq")
-        output$bq_status_ui <- renderUI({
-          div(class = "api-status-success", icon("check-circle"), " BigQuery connection successful!",
-              tags$br(), tags$small(nrow(contacts), " contacts loaded from ", api_manager$bq_full_table_contacts))
+      if (trimws(input$project_id) == "" || trimws(input$dataset_id) == "") {
+        output$auth_status <- renderUI({
+          tags$div(class = "status-error", tags$i(class = "fa fa-exclamation-triangle"),
+                   " Please fill in Project ID and Dataset ID")
         })
-        showNotification(paste("BigQuery connected!", nrow(contacts), "contacts loaded."), type = "message", duration = 5)
-
-      }, error = function(e) {
-        removeNotification(id = "test_bq")
-        output$bq_status_ui <- renderUI({
-          div(class = "api-status-error", icon("exclamation-circle"), " Connection failed: ", e$message)
-        })
-        showNotification(paste("BigQuery Error:", e$message), type = "error", duration = 10)
-      })
-    })
-
-    observeEvent(input$create_table_bq, {
-      if (!api_manager$bq_authenticated) {
-        showNotification("Please test/authenticate the connection first!", type = "error", duration = 3)
         return()
       }
 
-      showNotification("Creating BigQuery tables...", type = "message", duration = NULL, id = "create_bq")
+      tryCatch({
+        api_manager$set_bigquery_credentials(
+          project_id = trimws(input$project_id),
+          dataset_id = trimws(input$dataset_id)
+        )
 
-      results <- api_manager$create_all_tables()
-      removeNotification(id = "create_bq")
+        if (!is.null(input$json_file) && !is.null(input$json_file$datapath)) {
+          api_manager$authenticate_bigquery(json_path = input$json_file$datapath)
+        } else if (!is.null(input$json_text) && trimws(input$json_text) != "") {
+          api_manager$authenticate_bigquery(json_text = input$json_text)
+        } else {
+          stop("Please provide credentials via file upload or text paste")
+        }
 
-      output$bq_status_ui <- renderUI({
-        div(class = "api-status-success", icon("check-circle"), " Table check complete:",
-            tags$br(), lapply(results, function(r) tagList(tags$small(r), tags$br())))
+        output$auth_status <- renderUI({
+          tags$div(class = "status-success",
+                   tags$i(class = "fa fa-check-circle"),
+                   " ✓ Successfully authenticated! Tables are ready:",
+                   tags$br(),
+                   tags$small("Funding Programmes: ", api_manager$bq_full_table_funding),
+                   tags$br(),
+                   tags$small("Communications: ", api_manager$bq_full_table_contacts, ", ", api_manager$bq_full_table_communications),
+                   tags$br(),
+                   tags$small("Strategy Canvases: ", api_manager$bq_full_table_bm_canvas, ", ",
+                              api_manager$bq_full_table_de_canvas, ", ", api_manager$bq_full_table_de_roadmap))
+        })
+
+        tryCatch(api_manager$bq_load_contacts(), error = function(e) NULL)
+        showNotification("✓ BigQuery connected - all tabs ready!", type = "message")
+
+      }, error = function(e) {
+        output$auth_status <- renderUI({
+          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"),
+                   " Authentication failed: ", tags$br(), tags$small(e$message))
+        })
+        showNotification(paste("Error:", e$message), type = "error")
       })
-      showNotification("BigQuery tables ready!", type = "message", duration = 5)
     })
+
+    observeEvent(input$test_query, {
+
+      if (!api_manager$bq_authenticated) {
+        showNotification("Please authenticate first!", type = "error")
+        output$test_status <- renderUI({
+          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Please authenticate before testing")
+        })
+        return()
+      }
+
+      full_table <- switch(input$test_table_choice,
+        funding        = api_manager$bq_full_table_funding,
+        contacts       = api_manager$bq_full_table_contacts,
+        communications = api_manager$bq_full_table_communications,
+        bm_canvas      = api_manager$bq_full_table_bm_canvas,
+        de_canvas      = api_manager$bq_full_table_de_canvas,
+        de_roadmap     = api_manager$bq_full_table_de_roadmap
+      )
+
+      output$test_status <- renderUI({
+        tags$div(class = "status-info", tags$i(class = "fa fa-spinner fa-spin"), " Running test query...")
+      })
+
+      tryCatch({
+        test_query <- sprintf("SELECT * FROM `%s` LIMIT 5", full_table)
+        test_data <- api_manager$bq_query(test_query)
+
+        if (nrow(test_data) == 0) {
+          output$test_status <- renderUI({
+            tags$div(class = "status-warning", tags$i(class = "fa fa-exclamation-triangle"),
+                     " Query successful but table is empty (0 rows)")
+          })
+          output$test_table <- DT::renderDataTable({
+            DT::datatable(data.frame(Message = "Table is empty - no data to display"), options = list(dom = 't'), rownames = FALSE)
+          })
+        } else {
+          output$test_status <- renderUI({
+            tags$div(class = "status-success", tags$i(class = "fa fa-check-circle"),
+                     sprintf(" Successfully retrieved %d rows from %s", nrow(test_data), full_table))
+          })
+          output$test_table <- DT::renderDataTable({
+            DT::datatable(test_data, options = list(pageLength = 5, scrollX = TRUE, dom = 'Bfrtip'), rownames = FALSE)
+          })
+        }
+
+        showNotification(sprintf("✓ Retrieved %d rows", nrow(test_data)), type = "message")
+
+      }, error = function(e) {
+        output$test_status <- renderUI({
+          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"),
+                   " Test query failed: ", tags$br(), tags$small(e$message))
+        })
+        showNotification(paste("Error:", e$message), type = "error")
+      })
+    })
+
+    output$auth_status <- renderUI({ tags$div() })
+    output$test_status <- renderUI({ tags$div() })
+    output$test_table <- DT::renderDataTable({
+      DT::datatable(data.frame(), options = list(dom = 't'), rownames = FALSE)
+    })
+
+    session$onSessionEnded(function() {})
   })
 }

@@ -38,6 +38,8 @@ diet_visualizations_ui <- function(id) {
     fluidRow(
       box(title = "Macro Breakdown per Meal", status = "warning", solidHeader = TRUE, width = 12, collapsible = TRUE,
           plotlyOutput(ns("macro_chart"), height = "500px"))
-    )
+    ),
+
+    generic_export_box_ui(ns, title = "Save This Day's Diet Log", ics = TRUE)
   )
 }

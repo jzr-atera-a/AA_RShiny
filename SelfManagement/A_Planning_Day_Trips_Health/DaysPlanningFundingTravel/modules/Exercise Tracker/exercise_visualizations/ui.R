@@ -38,6 +38,11 @@ exercise_visualizations_ui <- function(id) {
     fluidRow(
       box(title = "Calories Burned per Entry", status = "warning", solidHeader = TRUE, width = 12, collapsible = TRUE,
           plotlyOutput(ns("calories_chart"), height = "500px"))
-    )
+    ),
+
+    generic_export_box_ui(ns, title = "Save This Workout Session", ics = TRUE,
+                          ics_extra_ui = selectInput(ns("ics_start_time"), "Workout start time (exercise rows have no clock time):",
+                                                     choices = sprintf("%02d:%02d", rep(5:22, each = 2), rep(c(0, 30), 18)),
+                                                     selected = "18:00"))
   )
 }

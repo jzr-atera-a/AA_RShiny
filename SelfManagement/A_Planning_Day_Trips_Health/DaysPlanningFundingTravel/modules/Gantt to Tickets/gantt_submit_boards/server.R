@@ -137,6 +137,42 @@ gantt_submit_boards_server <- function(id, api_manager) {
 
     output$trello_result <- renderText({ "" })
     output$jira_result <- renderText({ "" })
+
+    # ── Save as HTML/PDF (shared generic exporter, see R/utils_export.R) ──
+    output$export_download <- downloadHandler(
+      filename = function() {
+        paste0("gantt_submission_history_", format(Sys.Date(), "%Y%m%d"), if (identical(input$export_format, "pdf")) ".pdf" else ".html")
+      },
+      content = function(file) {
+        tryCatch({
+          d <- tryCatch(api_manager$bq_get_gantt_tasks(), error = function(e) data.frame())
+          if (is.null(d) || nrow(d) == 0) {
+            writeLines("<html><body><p>No submission history yet.</p></body></html>", file)
+            return()
+          }
+
+          cols <- c("log_stage", "task_name", "assignee", "status", "submission_result", "created_at")
+          labels <- c("Stage", "Task", "Assignee", "Status", "Result", "Logged At")
+          subtitle <- sprintf("%d logged entr%s", nrow(d), if (nrow(d) == 1) "y" else "ies")
+
+          if (identical(input$export_format, "pdf")) {
+            ok <- generate_generic_pdf(file, "Gantt Submission History", subtitle, d, cols, labels)
+            if (!isTRUE(ok)) stop("PDF generation failed internally - see console log above for the real cause")
+          } else {
+            result <- generate_generic_html("Gantt Submission History", subtitle, d, cols, labels)
+            writeLines(result$content, file)
+          }
+        }, error = function(e) {
+          cat("\u274c [gantt_submit_boards export] Error:", e$message, "\n")
+          writeLines(c("<html><body>", "<h2>Export failed</h2>",
+                       paste0("<p>", htmltools::htmlEscape(e$message), "</p>"),
+                       "<p>Check the Debug Console (API Configuration group) for full detail.</p>",
+                       "</body></html>"), file)
+        })
+      }
+    )
+    output$export_status <- renderUI({ tags$div() })
+
     session$onSessionEnded(function() {})
   })
 }

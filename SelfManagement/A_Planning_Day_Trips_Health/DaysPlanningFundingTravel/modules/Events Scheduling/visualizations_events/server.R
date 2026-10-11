@@ -468,6 +468,55 @@ visualizations_events_server <- function(id, api_manager) {
     output$total_categories<- renderValueBox({ valueBox(0, "Categories",      icon = icon("tags"),      color = "green")  })
     output$upcoming_events <- renderValueBox({ valueBox(0, "Upcoming",        icon = icon("clock"),     color = "yellow") })
 
+    # ── Save as HTML/PDF (shared generic exporter, see R/utils_export.R) ──
+    output$export_download <- downloadHandler(
+      filename = function() {
+        paste0("events_export_", format(Sys.Date(), "%Y%m%d"), if (identical(input$export_format, "pdf")) ".pdf" else ".html")
+      },
+      content = function(file) {
+        tryCatch({
+          d <- viz_data()
+          if (is.null(d) || nrow(d) == 0) {
+            writeLines("<html><body><p>No data loaded - load some events first.</p></body></html>", file)
+            return()
+          }
+
+          cols <- c("event_name", "event_date", "event_time", "venue_name", "category", "description", "ticket_url")
+          labels <- c("Event", "Date", "Time", "Venue", "Category", "Description", "Tickets")
+          subtitle <- sprintf("%d event(s)", nrow(d))
+
+          if (identical(input$export_format, "pdf")) {
+            ok <- generate_generic_pdf(file, "Events", subtitle, d, cols, labels)
+            if (!isTRUE(ok)) stop("PDF generation failed internally - see console log above for the real cause")
+          } else {
+            result <- generate_generic_html("Events", subtitle, d, cols, labels)
+            writeLines(result$content, file)
+          }
+        }, error = function(e) {
+          cat("\u274c [visualizations_events export] Error:", e$message, "\n")
+          writeLines(c("<html><body>", "<h2>Export failed</h2>",
+                       paste0("<p>", htmltools::htmlEscape(e$message), "</p>"),
+                       "<p>Check the Debug Console (API Configuration group) for full detail.</p>",
+                       "</body></html>"), file)
+        })
+      }
+    )
+    output$export_status <- renderUI({ tags$div() })
+
+    # ── Add to Calendar (.ics) - engine in R/utils_ics.R ──
+    ics_result <- reactive({
+      ics_safe_build(ics_events_events, viz_data(), alarms = isTRUE(input$ics_alarms))
+    })
+    output$export_ics_status <- renderUI({ ics_status_html(ics_result(), loaded = !is.null(viz_data())) })
+    output$export_ics <- downloadHandler(
+      filename = function() ics_filename("events"),
+      content = function(file) ics_write_safe(function() ics_result()$events, "Events", file),
+      contentType = "text/calendar"
+    )
+
+    # Titan calendar buttons (".ics load to calendar" / "Load events into calendar")
+    titan_viz_hook(input, output, session, api_manager, ics_result, "Events")
+
     session$onSessionEnded(function() {})
   })
 }

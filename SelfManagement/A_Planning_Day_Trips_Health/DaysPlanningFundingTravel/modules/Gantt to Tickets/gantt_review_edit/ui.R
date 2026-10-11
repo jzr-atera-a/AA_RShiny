@@ -28,6 +28,8 @@ gantt_review_edit_ui <- function(id) {
           p("Save the current state of all tasks as a reviewed batch - this is what Browse Data and ",
             "Submit to Boards' history will show. You can save again after further edits; each save ",
             "adds a new snapshot rather than overwriting the last one."),
+          bos_tz_dropdown_ui(ns, label = "Time zone of these task dates:",
+                             help = "Saved with every task row (and kept for the Submit to Boards history). Task dates are whole days, so calendar exports stay all-day entries."),
           actionButton(ns("save_to_bq"), "Save Tasks to BigQuery", class = "btn-success btn-lg", icon = icon("cloud-upload-alt")),
           br(), br(),
           htmlOutput(ns("save_status"))

@@ -42,7 +42,7 @@ schedule_visualizations_server <- function(id, api_manager) {
         return()
       }
       subset_rows <- tax[tax$day_type == input$viz_day_type & tax$country == input$viz_country, ]
-      dates <- sort(unique(subset_rows$schedule_date %||% character()), decreasing = TRUE)
+      dates <- sort(unique(if ("schedule_date" %in% names(subset_rows)) subset_rows[["schedule_date"]] else character()), decreasing = TRUE)
       if (length(dates) == 0) {
         # Fallback: taxonomy doesn't carry schedule_date in this suite's
         # 3-column taxonomy (day_type, country, city), so pull dates
@@ -189,6 +189,63 @@ schedule_visualizations_server <- function(id, api_manager) {
     output$total_transport <- renderValueBox({ valueBox(0, "Transport Legs", icon = icon("route"), color = "blue") })
     output$total_time <- renderValueBox({ valueBox("—", "Total Day Time", icon = icon("clock"), color = "yellow") })
     output$total_entries <- renderValueBox({ valueBox(0, "Total Entries", icon = icon("database"), color = "green") })
+
+    # ── Save as HTML/PDF (shared generic exporter, see R/utils_export.R) ──
+    output$export_download <- downloadHandler(
+      filename = function() {
+        d <- viz_data()
+        base_name <- if (!is.null(d) && nrow(d) > 0) paste0("day_planner_", d$schedule_date[1]) else "day_planner_export"
+        paste0(base_name, if (identical(input$export_format, "pdf")) ".pdf" else ".html")
+      },
+      content = function(file) {
+        tryCatch({
+          d <- viz_data()
+          if (is.null(d) || nrow(d) == 0) {
+            writeLines("<html><body><p>No data loaded - load a day's itinerary first.</p></body></html>", file)
+            return()
+          }
+
+          cols <- c("row_type", "location_name", "location_details", "recommended_time", "observations")
+          labels <- c("Type", "Location", "Details", "Time", "Observations")
+          subtitle <- sprintf("%s - %s | %d entries", d$schedule_date[1], d$day_type[1], nrow(d))
+
+          if (identical(input$export_format, "pdf")) {
+            ok <- generate_generic_pdf(file, paste0("Day Planner - ", d$schedule_date[1]), subtitle, d, cols, labels)
+            if (!isTRUE(ok)) stop("PDF generation failed internally - see console log above for the real cause")
+          } else {
+            result <- generate_generic_html(paste0("Day Planner - ", d$schedule_date[1]), subtitle, d, cols, labels)
+            writeLines(result$content, file)
+          }
+        }, error = function(e) {
+          cat("\u274c [schedule_visualizations export] Error:", e$message, "\n")
+          writeLines(c("<html><body>", "<h2>Export failed</h2>",
+                       paste0("<p>", htmltools::htmlEscape(e$message), "</p>"),
+                       "<p>Check the Debug Console (API Configuration group) for full detail.</p>",
+                       "</body></html>"), file)
+        })
+      }
+    )
+    output$export_status <- renderUI({ tags$div() })
+
+    # ── Add to Calendar (.ics) - engine in R/utils_ics.R ──
+    ics_result <- reactive({
+      ics_safe_build(ics_events_day_planner, viz_data(),
+                     include_transport = isTRUE(input$ics_include_transport),
+                     alarms = isTRUE(input$ics_alarms))
+    })
+    output$export_ics_status <- renderUI({ ics_status_html(ics_result(), loaded = !is.null(viz_data())) })
+    output$export_ics <- downloadHandler(
+      filename = function() { d <- viz_data(); ics_filename("day_planner", if (!is.null(d) && nrow(d) > 0) d$schedule_date[1]) },
+      content = function(file) {
+        d <- viz_data()
+        ics_write_safe(function() ics_result()$events,
+                       paste("Day Planner", if (!is.null(d) && nrow(d) > 0) as.character(d$schedule_date[1]) else ""), file)
+      },
+      contentType = "text/calendar"
+    )
+
+    # Titan calendar buttons (".ics load to calendar" / "Load events into calendar")
+    titan_viz_hook(input, output, session, api_manager, ics_result, "Day Planner")
 
     session$onSessionEnded(function() {})
   })

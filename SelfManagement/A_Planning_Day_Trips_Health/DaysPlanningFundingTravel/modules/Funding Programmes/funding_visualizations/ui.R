@@ -66,6 +66,9 @@ funding_visualizations_ui <- function(id) {
     fluidRow(
       box(title = "Programme Details", status = "success", solidHeader = TRUE, width = 12, collapsible = TRUE,
           htmlOutput(ns("programme_cards")))
-    )
+    ),
+
+    generic_export_box_ui(ns, title = "Save These Programmes", ics = TRUE,
+                          ics_extra_ui = checkboxInput(ns("ics_include_opens"), "Also add application-open dates", value = TRUE))
   )
 }

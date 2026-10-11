@@ -24,7 +24,8 @@ scan_events_ui <- function(id) {
                  dateInput(ns("date_from"), "From Date:",
                            value = Sys.Date(), format = "yyyy-mm-dd"),
                  dateInput(ns("date_to"),   "To Date:",
-                           value = Sys.Date() + 30, format = "yyyy-mm-dd")
+                           value = Sys.Date() + 30, format = "yyyy-mm-dd"),
+                 bos_tz_dropdown_ui(ns, label = "Time zone for event times:")
           ),
           column(4,
                  selectInput(ns("top_n"), "Number of Events (Top N):",

@@ -40,6 +40,7 @@ diet_add_single_server <- function(id, api_manager) {
           stringsAsFactors = FALSE
         )
 
+        df$time_zone <- bos_tz_value(input$time_zone)
         api_manager$bq_insert_diet(df)
         api_manager$trigger_state_update_diet()
 

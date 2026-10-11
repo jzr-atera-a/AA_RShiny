@@ -1,5 +1,10 @@
 # modules/Audio Transcription/summary.R
 # Subtab: Transcription Summary
+#
+# The ChatGPT request runs in a separate step from the button click (see
+# R/live_log.R), so the Generation Status box and the RStudio console show
+# "sending / waiting" BEFORE the request starts, and the button is disabled
+# until the summary comes back.
 
 summary_ui <- function(id) {
   ns <- NS(id)
@@ -17,13 +22,13 @@ summary_ui <- function(id) {
                         height = "200px"),
           checkboxInput(ns("useTimeout"), "Enable timeout", value = FALSE),
           conditionalPanel(condition = sprintf("input['%s']", ns("useTimeout")),
-                            numericInput(ns("timeout"), "Timeout (seconds):", value = 180, min = 30, max = 600)),
+                           numericInput(ns("timeout"), "Timeout (seconds):", value = 300, min = 30, max = 1800)),
           br(),
           actionButton(ns("generateBtn"), "Generate Summary", class = "btn-success btn-lg", style = "width: 100%;"))
     ),
     fluidRow(
       box(title = "Generation Status", status = "info", solidHeader = TRUE, width = 12,
-          verbatimTextOutput(ns("status")))
+          live_log_output(ns("status"), height = "260px"))
     ),
     fluidRow(
       box(title = "Generated Summary", status = "success", solidHeader = TRUE, width = 12,
@@ -43,6 +48,8 @@ summary_server <- function(id, api_manager) {
     shinyDirChoose(input, "browseDir", roots = volumes, session = session)
 
     values <- reactiveValues(save_dir = getwd(), transcript = NULL, summary = "")
+    status <- create_live_log(session, "status", "[Summary]")
+    job <- create_step_job(session)
 
     observeEvent(input$browseDir, {
       if (!is.integer(input$browseDir)) {
@@ -66,81 +73,101 @@ summary_server <- function(id, api_manager) {
         values$transcript <- text
         word_count <- length(strsplit(text, "\\s+")[[1]])
         output$loadedInfo <- renderText(paste("✓ Loaded\nWords:", word_count, "\nChars:", nchar(text)))
+        status$add(sprintf("📄 Loaded %s (%s words)", input$transcriptFile$name, format(word_count, big.mark = ",")))
         showNotification("Transcription loaded!", type = "message")
       }, error = function(e) {
-        output$loadedInfo <- renderText(paste("❌ Error:", e$message))
-        showNotification(paste("Error:", e$message), type = "error")
+        output$loadedInfo <- renderText(paste("❌ Error:", conditionMessage(e)))
+        showNotification(paste("Error:", conditionMessage(e)), type = "error")
       })
     })
 
     observeEvent(input$generateBtn, {
-      req(values$transcript)
-
-      if (nchar(trimws(api_manager$chatgpt_api_key)) == 0) {
-        output$status <- renderText("❌ ChatGPT API key not set\n\nPlease configure it in 'ChatGPT API Settings' tab")
-        showNotification("Please set ChatGPT API key first", type = "error", duration = 10)
+      if (job$is_running()) {
+        showNotification("Summary generation already in progress - please wait.", type = "warning", duration = 5)
+        return()
+      }
+      if (is.null(values$transcript)) {
+        showNotification("Load a transcription first (Step 1).", type = "warning")
         return()
       }
 
-      use_timeout <- isTRUE(input$useTimeout)
-      timeout_val <- if (use_timeout && !is.null(input$timeout) && is.numeric(input$timeout) && input$timeout > 0) input$timeout else NULL
+      status$clear()
 
-      word_count <- length(strsplit(values$transcript, "\\s+")[[1]])
+      if (nchar(trimws(api_manager$chatgpt_api_key)) == 0) {
+        status$add("❌ ChatGPT API key not set")
+        status$add("   Go to API Settings > OpenAI API (Whisper + ChatGPT), enter the key and click 'Save API Key'.")
+        showNotification("Please set the OpenAI API key first", type = "error", duration = 10)
+        return()
+      }
 
-      output$status <- renderText(paste0(
-        "🔄 INITIALIZING\n\n✓ Model: ", api_manager$chatgpt_model, "\n",
-        "✓ Words: ", format(word_count, big.mark = ","), "\n",
-        "✓ Timeout: ", if (!is.null(timeout_val)) paste(timeout_val, "sec") else "UNLIMITED", "\n\n",
-        "Status: Preparing request...\n"
-      ))
+      s <- new.env()
+      s$transcript <- values$transcript
+      s$instructions <- input$instructions
+      s$timeout <- if (isTRUE(input$useTimeout) && is.numeric(input$timeout) && !is.na(input$timeout) && input$timeout > 0) input$timeout else 900
+      s$words <- length(strsplit(s$transcript, "\\s+")[[1]])
+      s$t0 <- Sys.time()
 
-      tryCatch({
-        start_time <- Sys.time()
-        output$status <- renderText(paste0(
-          "📤 SENDING TO CHATGPT\n\n✓ Model: ", api_manager$chatgpt_model, "\n\n⏳ WAITING FOR RESPONSE...\n"
-        ))
+      shinyjs::disable("generateBtn")
+      status$add("🔄 STARTING SUMMARY GENERATION")
+      status$add(sprintf("✓ Model: %s | Max tokens: %s | Temperature: %s",
+                         api_manager$chatgpt_model, api_manager$chatgpt_max_tokens %||% "default",
+                         api_manager$chatgpt_temperature %||% "default"))
+      status$add(sprintf("✓ Transcript: %s words", format(s$words, big.mark = ",")))
+      status$add(sprintf("✓ Timeout: %d sec", as.integer(s$timeout)))
+      status$add("📤 Sending request to ChatGPT - waiting for response...")
 
-        full_prompt <- paste0(input$instructions, "\n\nTRANSCRIPTION TO SUMMARIZE:\n\n", values$transcript)
-        summary_text <- api_manager$analyze_text(text = full_prompt, max_words = 2000, custom_prompt = NULL, timeout_seconds = timeout_val)
+      step <- function() {
+        full_prompt <- paste0(s$instructions, "\n\nTRANSCRIPTION TO SUMMARIZE:\n\n", s$transcript)
+        txt <- api_manager$analyze_text(text = full_prompt, max_words = 2000, custom_prompt = NULL,
+                                        timeout_seconds = s$timeout, max_tokens = api_manager$chatgpt_max_tokens)
+        if (is.null(txt) || !nzchar(trimws(txt))) stop("ChatGPT returned an empty response")
+        s$summary <- txt
+        TRUE
+      }
 
-        summary_words <- length(strsplit(summary_text, "\\s+")[[1]])
-        updateTextAreaInput(session, "summary", value = summary_text)
-        values$summary <- summary_text
-
-        total_time <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
-
-        output$status <- renderText(paste0(
-          "✅ ✅ ✅ SUCCESS! ✅ ✅ ✅\n\n",
-          "Input words: ", format(word_count, big.mark = ","), "\n",
-          "Summary words: ", format(summary_words, big.mark = ","), "\n",
-          "Total time: ", round(total_time, 2), " seconds\n\n",
-          "✓ Summary displayed below\n✓ Ready to save\n"
-        ))
-
-        showNotification(paste("✅ Summary complete:", summary_words, "words in", round(total_time, 1), "sec"), type = "message", duration = 5)
-
-      }, error = function(e) {
-        output$status <- renderText(paste0(
-          "❌ ERROR OCCURRED\n\nError: ", e$message, "\n\n",
-          "TROUBLESHOOTING:\n1. Verify ChatGPT API key in settings\n2. Test API connection in settings tab\n",
-          "3. Check OpenAI account has credits\n4. Try with shorter transcript\n5. Try enabling timeout (180 seconds)\n"
-        ))
-        showNotification(paste("❌ Error:", substr(e$message, 1, 100)), type = "error", duration = 15)
-      })
+      job$start(
+        step_fn = step,
+        on_error = function(e) {
+          s$failed <- TRUE
+          status$add("")
+          status$add("❌ ERROR: ", conditionMessage(e))
+          status$add("   Check the API key / credit, or tick 'Enable timeout' and allow more time.")
+          showNotification(paste("❌ Error:", substr(conditionMessage(e), 1, 120)), type = "error", duration = 12)
+        },
+        on_done = function() {
+          if (!isTRUE(s$failed)) {
+            secs <- as.numeric(difftime(Sys.time(), s$t0, units = "secs"))
+            sw <- length(strsplit(s$summary, "\\s+")[[1]])
+            values$summary <- s$summary
+            updateTextAreaInput(session, "summary", value = s$summary)
+            status$add(sprintf("📥 Response received in %.1f sec", secs))
+            status$add("═══════════════════════════════════════════")
+            status$add(sprintf("✅ SUMMARY READY - %s words (from %s)", format(sw, big.mark = ","), format(s$words, big.mark = ",")))
+            status$add("═══════════════════════════════════════════")
+            showNotification(sprintf("✅ Summary complete: %d words in %.0f sec", sw, secs), type = "message", duration = 5)
+          }
+          shinyjs::enable("generateBtn")
+        }
+      )
     })
 
     observeEvent(input$saveBtn, {
-      req(values$summary)
-      filename <- paste0("summary_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".txt")
-      save_path <- file.path(values$save_dir, filename)
+      text <- input$summary %||% values$summary
+      if (!nzchar(text)) {
+        showNotification("Nothing to save yet.", type = "warning")
+        return()
+      }
+      typed <- trimws(input$savePath %||% "")
+      save_dir <- if (nzchar(typed)) typed else values$save_dir
+      if (!dir.exists(save_dir)) dir.create(save_dir, recursive = TRUE, showWarnings = FALSE)
+      save_path <- file.path(save_dir, paste0("summary_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".txt"))
       tryCatch({
-        writeLines(values$summary, save_path)
+        writeLines(text, save_path, useBytes = TRUE)
+        status$add("💾 Saved: ", save_path)
         showNotification(paste("Saved to:", save_path), type = "message")
       }, error = function(e) {
-        showNotification(paste("Error saving:", e$message), type = "error")
+        showNotification(paste("Error saving:", conditionMessage(e)), type = "error")
       })
     })
-
-    output$status <- renderText("")
   })
 }

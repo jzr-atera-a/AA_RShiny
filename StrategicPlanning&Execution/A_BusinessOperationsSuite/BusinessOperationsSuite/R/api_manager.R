@@ -18,7 +18,8 @@
 
 `%||%` <- function(x, y) if (is.null(x) || (length(x) == 1 && (x == "" || is.na(x)))) y else x
 
-safe_sql_escape <- function(x) gsub("'", "''", x)
+# BigQuery (GoogleSQL) string literals escape with a backslash, not ''
+safe_sql_escape <- function(x) gsub("'", "\\'", gsub("\\", "\\\\", x, fixed = TRUE), fixed = TRUE)
 
 # ---- Gantt to Tickets suite helpers ----
 
@@ -275,6 +276,8 @@ APIManager <- R6::R6Class("APIManager",
     whisper_language = "",
     chatgpt_api_key = "",
     chatgpt_model = "gpt-4o-mini",
+    chatgpt_temperature = 0.7,
+    chatgpt_max_tokens = 1800,
     transcriptions = NULL,                 # data.frame log: timestamp/filename/word_count/processing_time/file_size
     state_trigger_audio = NULL,            # reactiveVal(0) - Analytics Dashboard depends on this
 
@@ -360,7 +363,7 @@ APIManager <- R6::R6Class("APIManager",
 
     # Returns list(text=, stop_reason=, truncated=). Modules pass an optional
     # progress_callback(msg) for a live status line during long calls.
-    call_claude = function(prompt, progress_callback = NULL, max_tokens = 3000, system = NULL) {
+    call_claude = function(prompt, progress_callback = NULL, max_tokens = 3000, system = NULL, timeout = 120) {
       if (is.null(self$claude_api_key) || nchar(self$claude_api_key) == 0) {
         stop("Claude API key not configured - set it in API Settings > Claude API Config")
       }
@@ -382,7 +385,7 @@ APIManager <- R6::R6Class("APIManager",
         ),
         body = jsonlite::toJSON(body_list, auto_unbox = TRUE),
         encode = "json",
-        httr::timeout(120)
+        httr::timeout(timeout)
       )
 
       status <- httr::status_code(response)
@@ -463,40 +466,102 @@ APIManager <- R6::R6Class("APIManager",
     # BIGQUERY - generic plumbing
     # =====================================================================
 
-    authenticate_bigquery = function(credentials_path = NULL) {
-      if (!is.null(credentials_path)) {
-        self$bq_credentials_path <- credentials_path
-        bigrquery::bq_auth(path = credentials_path)
-      }
-      con <- DBI::dbConnect(bigrquery::bigquery(),
-                             project = self$bq_project_id,
-                             dataset = self$bq_dataset_id,
-                             billing = self$bq_project_id)
-      DBI::dbDisconnect(con)
-      self$bq_authenticated <- TRUE
-      invisible(TRUE)
+    # Ported from DaysPlanningFundingTravel (R/utils_api.R authenticate_bigquery):
+    # clear any previous login + stray env credentials, log in with the
+    # service-account JSON (file or pasted text, cache = FALSE), make a real
+    # call to BigQuery, CREATE TABLE IF NOT EXISTS for this suite's tables
+    # (never alters or drops anything), then tell every tab to reload.
+    set_bigquery_credentials = function(project_id, dataset_id) {
+      self$bq_project_id <- project_id
+      self$bq_dataset_id <- dataset_id
+      self$recompute_full_table_ids()
     },
 
+    log_debug = function(msg, tag = "APIManager") {
+      cat(sprintf("[%s] %s\n", tag, msg))
+    },
+
+    authenticate_bigquery = function(json_path = NULL, json_text = NULL) {
+      tryCatch({
+        tryCatch({ bigrquery::bq_deauth() }, error = function(e) {})
+        Sys.unsetenv("GOOGLE_APPLICATION_CREDENTIALS")
+        Sys.unsetenv("GCE_METADATA_HOST")
+
+        if (!is.null(json_path)) {
+          json_content <- jsonlite::fromJSON(json_path)
+          required_fields <- c("type", "project_id", "private_key", "client_email")
+          missing <- setdiff(required_fields, names(json_content))
+          if (length(missing) > 0) stop("Missing JSON fields: ", paste(missing, collapse = ", "))
+          bigrquery::bq_auth(path = json_path, cache = FALSE)
+          self$bq_credentials_path <- json_path
+
+        } else if (!is.null(json_text)) {
+          json_content <- jsonlite::fromJSON(json_text)
+          required_fields <- c("type", "project_id", "private_key", "client_email")
+          missing <- setdiff(required_fields, names(json_content))
+          if (length(missing) > 0) stop("Missing JSON fields: ", paste(missing, collapse = ", "))
+          temp_file <- tempfile(fileext = ".json")
+          writeLines(json_text, temp_file)
+          self$bq_credentials_path <- temp_file
+          bigrquery::bq_auth(path = temp_file, cache = FALSE)
+
+        } else {
+          stop("Provide JSON file path or text")
+        }
+        cat("🔐 [BigQuery] Authenticated as", json_content$client_email, "\n")
+
+        # Quick connection check
+        bigrquery::bq_project_datasets(self$bq_project_id)
+
+        self$bq_authenticated <- TRUE
+
+        # CREATE TABLE IF NOT EXISTS for every table this suite uses
+        for (r in self$create_all_tables()) cat("   [BigQuery]", r, "\n")
+
+        self$funding_taxonomy_cache <- NULL
+        self$canvas_taxonomy_cache <- NULL
+        for (trig in c("state_trigger_contacts", "state_trigger_funding", "state_trigger_canvas", "state_trigger_gantt")) {
+          rv <- self[[trig]]
+          if (is.function(rv)) tryCatch(rv(shiny::isolate(rv()) + 1), error = function(e) NULL)
+        }
+        cat("✅ [BigQuery] Connected | project:", self$bq_project_id, "| funding table:", self$bq_full_table_funding, "\n")
+        return(TRUE)
+      }, error = function(e) {
+        self$bq_authenticated <- FALSE
+        cat("❌ [BigQuery] Authentication failed:", conditionMessage(e), "\n")
+        stop(paste("BigQuery authentication failed:", conditionMessage(e)))
+      })
+    },
+
+    # DBI connection (still used by a few Communications helpers). The login
+    # token from authenticate_bigquery() is reused - no re-login per query.
     bq_connect = function() {
-      if (!is.null(self$bq_credentials_path)) bigrquery::bq_auth(path = self$bq_credentials_path)
       DBI::dbConnect(bigrquery::bigquery(),
                       project = self$bq_project_id,
                       dataset = self$bq_dataset_id,
                       billing = self$bq_project_id)
     },
 
+    # Same as the working app: run the query as a BigQuery job and download it.
     bq_query = function(query) {
-      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
-      con <- self$bq_connect()
-      on.exit(DBI::dbDisconnect(con), add = TRUE)
-      DBI::dbGetQuery(con, query)
+      if (!self$bq_authenticated) stop("Not authenticated to BigQuery - go to API Settings > BigQuery Config and click 'Test Connection & Load Data'")
+      t0 <- Sys.time()
+      short <- substr(gsub("\\s+", " ", trimws(query)), 1, 160)
+      res <- tryCatch({
+        job <- bigrquery::bq_project_query(self$bq_project_id, query)
+        as.data.frame(bigrquery::bq_table_download(job))
+      }, error = function(e) {
+        cat(sprintf("❌ [BigQuery] Query failed (%s): %s\n", short, conditionMessage(e)))
+        stop(e)
+      })
+      cat(sprintf("[BigQuery] %d row(s) in %.1fs <- %s\n", nrow(res), as.numeric(difftime(Sys.time(), t0, units = "secs")), short))
+      res
     },
 
     bq_execute = function(query) {
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
-      con <- self$bq_connect()
-      on.exit(DBI::dbDisconnect(con), add = TRUE)
-      DBI::dbExecute(con, query)
+      bigrquery::bq_project_query(self$bq_project_id, query)
+      invisible(TRUE)
     },
 
     create_all_tables = function() {
@@ -749,9 +814,10 @@ APIManager <- R6::R6Class("APIManager",
         ))
       }, error = function(e) {
         cat("⚠️  [bq_get_funding_taxonomy] Query failed:", e$message, "\n")
-        self$empty_funding_taxonomy()
+        NULL
       })
 
+      if (is.null(result)) return(self$empty_funding_taxonomy())   # not cached, so it is retried next time
       self$funding_taxonomy_cache <- result
       result
     },
@@ -1047,9 +1113,11 @@ APIManager <- R6::R6Class("APIManager",
       invisible(self)
     },
 
-    set_chatgpt_credentials = function(api_key, model = "gpt-4o-mini") {
+    set_chatgpt_credentials = function(api_key, model = "gpt-4o-mini", temperature = NULL, max_tokens = NULL) {
       self$chatgpt_api_key <- api_key
       self$chatgpt_model <- model
+      if (!is.null(temperature) && !is.na(temperature)) self$chatgpt_temperature <- as.numeric(temperature)
+      if (!is.null(max_tokens) && !is.na(max_tokens)) self$chatgpt_max_tokens <- as.integer(max_tokens)
       invisible(self)
     },
 
@@ -1075,71 +1143,78 @@ APIManager <- R6::R6Class("APIManager",
       }, error = function(e) list(success = FALSE, message = paste("✗ Connection failed:", e$message)))
     },
 
-    # Retry logic with exponential backoff on network errors and 429s,
-    # auto-sized timeout based on file size when the caller doesn't set one.
-    transcribe_audio = function(file_path, use_timeout = FALSE, timeout_seconds = NULL) {
+    # Sends ONE file to Whisper. It is only re-sent when OpenAI explicitly
+    # refused it without processing (HTTP 429 rate limit / 5xx) or the
+    # connection could not be opened at all. Timeouts and dropped connections
+    # are NOT retried: the old behaviour re-uploaded the same file up to 3
+    # times, which is why the same audio was transcribed (and billed) 3-4 times.
+    # `log` is an optional function(msg) used for live progress messages.
+    transcribe_audio = function(file_path, use_timeout = FALSE, timeout_seconds = NULL, log = NULL) {
+      say <- function(msg) if (is.function(log)) log(msg) else cat("[Whisper]", msg, "\n")
       if (nchar(trimws(self$whisper_api_key)) == 0) stop("Whisper API key not set")
 
       file_size_mb <- file.size(file_path) / (1024^2)
       if (file_size_mb > 25) {
-        stop("File too large. OpenAI Whisper API limit is 25MB. Current file: ", round(file_size_mb, 2), "MB")
+        stop("File too large. OpenAI Whisper API limit is 25MB. Current file: ", round(file_size_mb, 2),
+             "MB - split it first in 'Audio Converter & Splitter'")
+      }
+
+      actual_timeout <- if (isTRUE(use_timeout) && !is.null(timeout_seconds) && timeout_seconds > 0) {
+        timeout_seconds
+      } else {
+        max(180, min(1800, ceiling(file_size_mb * 60)))
       }
 
       url <- "https://api.openai.com/v1/audio/transcriptions"
-      body <- list(file = httr::upload_file(file_path), model = "whisper-1")
-      if (nchar(self$whisper_language) > 0) body$language <- self$whisper_language
+      body <- list(file = httr::upload_file(file_path), model = self$whisper_model %||% "whisper-1")
+      if (nchar(self$whisper_language %||% "") > 0) body$language <- self$whisper_language
 
-      max_retries <- 3
-      retry_count <- 0
-      last_error <- NULL
+      max_attempts <- 3
+      for (attempt in seq_len(max_attempts)) {
+        if (attempt > 1) say(sprintf("   ↻ Retry %d of %d", attempt - 1, max_attempts - 1))
 
-      while (retry_count < max_retries) {
-        result <- tryCatch({
-          actual_timeout <- if (use_timeout && !is.null(timeout_seconds) && timeout_seconds > 0) {
-            timeout_seconds
-          } else {
-            max(60, min(600, ceiling(file_size_mb * 30)))
-          }
-
-          response <- httr::POST(
+        response <- tryCatch(
+          httr::POST(
             url, httr::add_headers(Authorization = paste("Bearer", self$whisper_api_key)),
             body = body, encode = "multipart", httr::timeout(actual_timeout),
-            httr::config(connecttimeout = 60, ssl_verifypeer = TRUE, http_version = 2)
-          )
+            httr::config(connecttimeout = 60)
+          ),
+          error = function(e) e
+        )
 
-          status <- httr::status_code(response)
-          if (status == 200) {
-            return(httr::content(response, "parsed")$text)
-          } else if (status == 401) {
-            stop("❌ Authentication failed. Check your API key.")
-          } else if (status == 413) {
-            stop("❌ File too large for API (max 25MB)")
-          } else if (status == 429) {
-            list(retry = TRUE, error = paste("HTTP 429:", httr::content(response, "text", encoding = "UTF-8")))
-          } else {
-            stop(paste("HTTP", status, ":", httr::content(response, "text", encoding = "UTF-8")))
+        if (inherits(response, "error")) {
+          msg <- conditionMessage(response)
+          never_sent <- grepl("resolve host|Failed to connect|Couldn't connect|Could not connect", msg, ignore.case = TRUE)
+          if (never_sent && attempt < max_attempts) {
+            say(sprintf("   ⚠️ Could not reach OpenAI (%s) - waiting %d sec", msg, 2^attempt))
+            Sys.sleep(2^attempt)
+            next
           }
-        }, error = function(e) {
-          if (grepl("Connection was reset|Timeout|timed out|peer|SSL", e$message, ignore.case = TRUE)) {
-            list(retry = TRUE, error = e$message)
-          } else {
-            stop(e$message)
+          if (grepl("timed out|timeout", msg, ignore.case = TRUE)) {
+            stop(sprintf("No response from Whisper within %d sec. Not re-sending (to avoid duplicate transcriptions). Tick 'Use custom timeout' and set a higher value.", actual_timeout))
           }
-        })
-
-        if (is.list(result) && isTRUE(result$retry)) {
-          Sys.sleep(2^retry_count)
-          retry_count <- retry_count + 1
-          last_error <- result$error
-        } else if (is.character(result)) {
-          return(result)
+          stop("Network error: ", msg)
         }
-      }
 
-      stop("❌ Transcription failed after ", max_retries, " attempts. Last error: ", last_error)
+        status <- httr::status_code(response)
+        if (status == 200) {
+          return(httr::content(response, "parsed")$text)
+        }
+        detail <- substr(httr::content(response, "text", encoding = "UTF-8"), 1, 300)
+        if (status == 401) stop("Authentication failed (HTTP 401). Check your API key.")
+        if (status == 413) stop("File too large for API (max 25MB).")
+        if ((status == 429 || status >= 500) && attempt < max_attempts) {
+          wait <- if (status == 429) 5 * attempt else 2^attempt
+          say(sprintf("   ⚠️ OpenAI returned HTTP %d (request not processed) - waiting %d sec", status, wait))
+          Sys.sleep(wait)
+          next
+        }
+        stop(sprintf("HTTP %d: %s", status, detail))
+      }
+      stop("Transcription failed after ", max_attempts, " attempts")
     },
 
-    analyze_text = function(text, max_words = 500, custom_prompt = NULL, timeout_seconds = NULL) {
+    analyze_text = function(text, max_words = 500, custom_prompt = NULL, timeout_seconds = NULL, max_tokens = NULL) {
       if (nchar(trimws(self$chatgpt_api_key)) == 0) stop("ChatGPT API key not set")
 
       system_prompt <- if (!is.null(custom_prompt) && nchar(trimws(custom_prompt)) > 0) {
@@ -1151,7 +1226,8 @@ APIManager <- R6::R6Class("APIManager",
       body <- list(
         model = self$chatgpt_model,
         messages = list(list(role = "system", content = system_prompt), list(role = "user", content = text)),
-        max_tokens = max_words * 2
+        max_tokens = if (!is.null(max_tokens)) as.integer(max_tokens) else max_words * 2,
+        temperature = if (!is.null(self$chatgpt_temperature)) self$chatgpt_temperature else 0.7
       )
 
       response <- httr::POST(

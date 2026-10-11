@@ -16,7 +16,7 @@ scan_events_server <- function(id, api_manager) {
         return(invisible(NULL))
       }
       tryCatch({
-        df <- parse_events_text(text)
+        df <- parse_events_text(text, default_tz = input$time_zone)
         parsed_preview(df)
         output$preview_table <- DT::renderDataTable({
           DT::datatable(df, options = list(pageLength = 10, scrollX = TRUE), rownames = FALSE)
@@ -65,7 +65,7 @@ scan_events_server <- function(id, api_manager) {
 
       top_n <- as.integer(input$top_n %||% 10)
 
-      prompt <- generate_scan_prompt(
+      prompt <- bos_tz_wrap_prompt(generate_scan_prompt(
         city            = trimws(input$city    %||% ""),
         country         = trimws(input$country %||% ""),
         date_from       = if (!is.null(input$date_from)) as.character(input$date_from) else NULL,
@@ -75,7 +75,7 @@ scan_events_server <- function(id, api_manager) {
         top_n           = top_n,
         extra_info      = trimws(input$extra_info %||% ""),
         optional_fields = input$optional_fields %||% "core"
-      )
+      ), input$time_zone, if (!is.null(input$date_from)) input$date_from else Sys.Date())
 
       cat("✓ [scan_events] Prompt built (", nchar(prompt), "chars) | top_n =", top_n,
           "| city =", trimws(input$city %||% "(blank)"), "| category =", cs$category, "/", cs$subcategory, "\n")
@@ -94,7 +94,7 @@ scan_events_server <- function(id, api_manager) {
         city_val    <- trimws(input$city    %||% "")
         country_val <- trimws(input$country %||% "")
 
-        events_text <- overwrite_events_header(api_result$text, city = city_val, country = country_val, scan_date = as.character(Sys.Date()))
+        events_text <- bos_tz_set_header(overwrite_events_header(api_result$text, city = city_val, country = country_val, scan_date = as.character(Sys.Date())), input$time_zone)
 
         updateTextAreaInput(session, "scan_text_edit", value = events_text)
         shinyjs::hide("loading_spinner")
@@ -159,7 +159,7 @@ scan_events_server <- function(id, api_manager) {
       output$status <- renderUI({ tags$div(class = "status-info", tags$i(class = "fa fa-spinner fa-spin"), " Parsing and uploading...") })
 
       tryCatch({
-        parsed_df     <- parse_events_text(current_text)
+        parsed_df     <- parse_events_text(current_text, default_tz = input$time_zone)
         rows_uploaded <- api_manager$bq_insert_events(parsed_df)
         api_manager$trigger_state_update_events()
 

@@ -40,7 +40,7 @@ has_real_value <- function(x) {
 PROGRAMME_SCHEDULE_FIELDS <- c("row_type", "location_name", "location_details",
                                "opening_hours", "recommended_time", "observations")
 
-parse_schedule_text <- function(text) {
+parse_schedule_text <- function(text, default_tz = BOS_DEFAULT_TZ) {
   lines <- strsplit(text, "\n")[[1]]
 
   schedule_date <- NULL; day_type <- NULL; country <- NULL; city <- NULL; trip_details <- NULL
@@ -121,6 +121,8 @@ parse_schedule_text <- function(text) {
       stringsAsFactors = FALSE
     ))
   }
+  # zone recorded in the text ("[time_zone]: ..."), else the one chosen on the tab
+  parsed_df$time_zone <- bos_tz_from_text(text, bos_tz_value(default_tz))
   parsed_df
 }
 
@@ -643,7 +645,7 @@ format_commitment_for_schedule_context <- function(commitment_row) {
 #   [longitude], [description], [ticket_url], [price_range], [source_url],
 #   [extra_info]
 
-parse_events_text <- function(text) {
+parse_events_text <- function(text, default_tz = BOS_DEFAULT_TZ) {
   lines <- strsplit(text, "\n")[[1]]
 
   city      <- extract_event_field(lines, "city")
@@ -696,6 +698,8 @@ parse_events_text <- function(text) {
       stringsAsFactors = FALSE
     )
   }))
+  # zone recorded in the text ("[time_zone]: ..."), else the one chosen on the tab
+  df$time_zone <- bos_tz_from_text(text, bos_tz_value(default_tz))
   df
 }
 
@@ -880,7 +884,7 @@ PROGRAMME_FIELDS <- c(
   "recommendations_for_applying", "verified_urls"
 )
 
-parse_programme_text <- function(text) {
+parse_programme_text <- function(text, default_tz = BOS_DEFAULT_TZ) {
   lines <- strsplit(text, "\n")[[1]]
   entries <- list()
   current_entry <- list()
@@ -944,6 +948,8 @@ parse_programme_text <- function(text) {
       stringsAsFactors = FALSE
     ))
   }
+  # zone recorded in the text ("[time_zone]: ..."), else the one chosen on the tab
+  parsed_df$time_zone <- bos_tz_from_text(text, bos_tz_value(default_tz))
   parsed_df
 }
 
@@ -1107,7 +1113,7 @@ setup_funding_country_cityregion_cascade <- function(input, output, session, api
 # with a shorter (3-line) header since diet has fewer day-level dimensions
 # than a trip (no country/city equivalent).
 
-parse_diet_text <- function(text) {
+parse_diet_text <- function(text, default_tz = BOS_DEFAULT_TZ) {
   lines <- strsplit(text, "\n")[[1]]
 
   log_date <- NULL; diet_type <- NULL; dietary_restrictions <- NULL
@@ -1184,6 +1190,8 @@ parse_diet_text <- function(text) {
       stringsAsFactors = FALSE
     ))
   }
+  # zone recorded in the text ("[time_zone]: ..."), else the one chosen on the tab
+  parsed_df$time_zone <- bos_tz_from_text(text, bos_tz_value(default_tz))
   parsed_df
 }
 
@@ -1314,7 +1322,7 @@ setup_diet_type_cascade <- function(input, output, session, api_manager) {
 # session_notes), then repeating exercise/activity entries + one Summary row.
 # Same architecture as Day Planner / Diet Planner.
 
-parse_exercise_text <- function(text) {
+parse_exercise_text <- function(text, default_tz = BOS_DEFAULT_TZ) {
   lines <- strsplit(text, "\n")[[1]]
 
   workout_date <- NULL; session_type <- NULL; session_notes <- NULL
@@ -1398,6 +1406,8 @@ parse_exercise_text <- function(text) {
       stringsAsFactors = FALSE
     ))
   }
+  # zone recorded in the text ("[time_zone]: ..."), else the one chosen on the tab
+  parsed_df$time_zone <- bos_tz_from_text(text, bos_tz_value(default_tz))
   parsed_df
 }
 
@@ -1642,4 +1652,48 @@ exercise_parse_calories <- function(text) {
   cal_match <- regmatches(t, regexpr("([0-9]+)\\s*kcal", t, ignore.case = TRUE))
   if (length(cal_match) == 0) return(NA_real_)
   as.numeric(regmatches(cal_match, regexpr("[0-9]+", cal_match)))
+}
+
+# ── Shared "Save as HTML/PDF" export box, used by every suite's
+# Visualizations tab (and the closest equivalent in Gantt/Contacts). One
+# format selector + one download button, calling back into whichever
+# module placed it via ns(). Location of the saved file is governed by the
+# user's own browser download settings, not something a web app can control
+# - if their browser is set to "Ask where to save each file," that prompt
+# appears automatically on download; there is no in-browser equivalent of a
+# native OS folder picker.
+generic_export_box_ui <- function(ns, title = "Save This View", ics = FALSE, ics_extra_ui = NULL) {
+  # ics = TRUE adds an "Add to Calendar (.ics)" section to the same box
+  # (Day Planner, Diet, Exercise, Events and Funding Visualisation tabs).
+  # ics_extra_ui holds suite-specific controls (e.g. workout start time).
+  tagList(
+    fluidRow(
+      box(title = title, status = "primary", solidHeader = TRUE, width = 12, collapsible = TRUE,
+          p("Export the currently loaded view below as a file. Where it's saved depends on your ",
+            "browser's own download settings (e.g. Chrome: Settings > Downloads > \"Ask where to save each file\")."),
+          fluidRow(
+            column(4, selectInput(ns("export_format"), "File Format:",
+                                 choices = c("HTML (styled, opens in any browser)" = "html",
+                                            "PDF (print-ready)" = "pdf"))),
+            column(4, br(), downloadButton(ns("export_download"), "Save File", class = "btn-success", style = "width: 100%;")),
+            column(4, br(), htmlOutput(ns("export_status")))
+          ),
+          if (isTRUE(ics)) tagList(
+            hr(),
+            h4(icon("calendar-alt"), " Add to Calendar (.ics)"),
+            p("Opens in Outlook, Google Calendar, Apple Calendar and Android Calendar. Clock times are written as ",
+              "local times, so a 9:00 AM entry shows as 9:00 AM wherever your calendar is set. Re-importing the same ",
+              "plan updates its entries instead of duplicating them."),
+            fluidRow(
+              column(4, downloadButton(ns("export_ics"), "Download Calendar (.ics)", class = "btn-info", style = "width: 100%;")),
+              column(8, checkboxInput(ns("ics_alarms"), "Include reminders", value = TRUE), ics_extra_ui)
+            ),
+            htmlOutput(ns("export_ics_status")),
+            # Titan buttons (".ics load to calendar" / "Load events into calendar"):
+            # rendered by titan_viz_hook() in the module's server, only once signed in.
+            uiOutput(ns("titan_buttons"))
+          )
+      )
+    )
+  )
 }

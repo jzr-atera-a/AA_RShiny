@@ -1,0 +1,17 @@
+module:
+  id: "debug_console"
+  name: "Debug Console"
+  description: "Live mirror of the R console, copy-friendly for mobile browsers"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "Debug Console"
+    icon: "terminal"
+    tabname: "debug_console"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

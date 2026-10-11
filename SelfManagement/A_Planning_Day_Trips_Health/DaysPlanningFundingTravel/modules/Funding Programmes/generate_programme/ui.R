@@ -20,7 +20,8 @@ generate_programme_ui <- function(id) {
         fluidRow(
           column(6,
                  funding_category_dropdown_ui(ns),
-                 funding_country_cityregion_dropdown_ui(ns)
+                 funding_country_cityregion_dropdown_ui(ns),
+                 bos_tz_dropdown_ui(ns, label = "Time zone for deadlines and dates:")
           ),
           column(6,
                  textAreaInput(ns("search_focus"), "Additional Focus (optional):", height = "140px",

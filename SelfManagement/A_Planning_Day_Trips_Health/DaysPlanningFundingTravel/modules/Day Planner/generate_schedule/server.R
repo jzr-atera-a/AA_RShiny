@@ -28,7 +28,7 @@ generate_schedule_server <- function(id, api_manager) {
         return(invisible(NULL))
       }
       tryCatch({
-        df <- parse_schedule_text(text)
+        df <- parse_schedule_text(text, default_tz = input$time_zone)
         parsed_preview(df)
         output$preview_table <- DT::renderDataTable({
           DT::datatable(df, options = list(pageLength = 10, scrollX = TRUE), rownames = FALSE)
@@ -99,7 +99,9 @@ generate_schedule_server <- function(id, api_manager) {
       })
 
       prompt <- tryCatch({
-        generate_schedule_prompt(as.character(input$schedule_date), dt, country, city, input$trip_details)
+        bos_tz_wrap_prompt(
+          generate_schedule_prompt(as.character(input$schedule_date), dt, country, city, input$trip_details),
+          input$time_zone, input$schedule_date)
       }, error = function(e) {
         shinyjs::hide("loading_spinner")
         output$status <- renderUI({
@@ -119,9 +121,9 @@ generate_schedule_server <- function(id, api_manager) {
           enable_web_search = TRUE
         )
 
-        schedule_text <- overwrite_schedule_header(
+        schedule_text <- bos_tz_set_header(overwrite_schedule_header(
           result$text, as.character(input$schedule_date), dt, country, city, input$trip_details
-        )
+        ), input$time_zone)
 
         updateTextAreaInput(session, "schedule_text_edit", value = schedule_text)
         shinyjs::hide("loading_spinner")
@@ -176,7 +178,7 @@ generate_schedule_server <- function(id, api_manager) {
       })
 
       tryCatch({
-        parsed_df <- parse_schedule_text(current_text)
+        parsed_df <- parse_schedule_text(current_text, default_tz = input$time_zone)
         rows_uploaded <- api_manager$bq_insert_schedule(parsed_df)
         api_manager$trigger_state_update_schedule()
 

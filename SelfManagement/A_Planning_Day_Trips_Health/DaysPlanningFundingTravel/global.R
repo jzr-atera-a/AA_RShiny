@@ -1,13 +1,74 @@
+# ── Debug console capture ───────────────────────────────────────────────
+# Mirrors stdout (every cat()/print() call) into an in-memory buffer, while
+# still printing to the real console (split = TRUE). Backs the Debug
+# Console tab (API Configuration group) so long log output can be
+# copied from a mobile browser. Must run before any other code in this
+# file so it captures startup logging too (module discovery, package
+# loading messages, etc).
+#
+# IMPORTANT: textConnection()'s `local` argument must be TRUE/FALSE, never
+# an environment - some R installations' implementation does
+# `if (local) parent.frame() else .GlobalEnv` internally, which throws on
+# an environment value. Using local = FALSE and .GlobalEnv explicitly
+# avoids this across R versions.
+#
+# Reentrancy: app.R runs rm(list = ls(all.names = TRUE)) on every restart,
+# but deliberately preserves .debug_log_conn / debug_log_buffer /
+# .debug_log_max_lines from that wipe (see app.R) - rm()-ing the R-level
+# binding would not close the underlying connection or un-sink() it, so
+# without that exclusion this guard would stack a new sink on the still-open
+# old one every time runApp() re-runs in the same R session. Verified with
+# a 3-run simulation before wiring this in: sink.number() stayed at 1 across
+# all three, with no duplicated or lost output.
+.debug_log_max_lines <- 5000
+
+if (!exists(".debug_log_conn", envir = .GlobalEnv) ||
+    !isTRUE(tryCatch(isOpen(get(".debug_log_conn", envir = .GlobalEnv)), error = function(e) FALSE))) {
+
+  assign("debug_log_buffer", character(0), envir = .GlobalEnv)
+  .debug_log_conn <- textConnection("debug_log_buffer", open = "w", local = FALSE)
+  sink(.debug_log_conn, type = "output", split = TRUE)
+  assign(".debug_log_conn", .debug_log_conn, envir = .GlobalEnv)
+  cat("\u2713 [Debug Console] Log capture initialized\n")
+} else {
+  cat("\u2713 [Debug Console] Reusing existing log capture (already active this R session)\n")
+}
+
+get_debug_log_lines <- function() {
+  raw <- tryCatch(get("debug_log_buffer", envir = .GlobalEnv), error = function(e) character(0))
+  if (length(raw) > .debug_log_max_lines) raw <- tail(raw, .debug_log_max_lines)
+  raw
+}
+
+clear_debug_log <- function() {
+  # The bound variable can't be reset in place without closing and
+  # reopening the connection, so swap in a fresh one.
+  sink(type = "output")
+  close(get(".debug_log_conn", envir = .GlobalEnv))
+  assign("debug_log_buffer", character(0), envir = .GlobalEnv)
+  new_conn <- textConnection("debug_log_buffer", open = "w", local = FALSE)
+  sink(new_conn, type = "output", split = TRUE)
+  assign(".debug_log_conn", new_conn, envir = .GlobalEnv)
+  invisible(TRUE)
+}
+
+# Note on scope: only type = "output" (stdout) is captured - i.e.
+# cat()/print(). R's message()/warning()/errors go through a separate
+# stream (type = "message") whose sink does not reliably support
+# split = TRUE across R versions; sinking it risks silently hiding real
+# errors from the normal console, so it's deliberately left alone.
+
+
 # global.R - Global Configuration
-# BUSINESS OPERATIONS SUITE: Day Planner + Events Scheduling + Funding Programmes
+# BUSINESS OPERATIONS SUITE: Travel Planning + Day Planner + Diet + Exercise +
+# Events Scheduling + Funding Programmes + Gantt to Tickets + Contact Manager
 # =================================================================================
 # One app, one shared BigQuery connection and one shared Claude API connection
-# (grouped under "API Configuration" in the sidebar), with each of the three
-# original standalone apps' tabs grouped under their own named section
-# ("Day Planner", "Events Scheduling", "Funding Programmes"). See
-# R/utils_api.R for how one shared APIManager class serves three separate
-# BigQuery tables, and R/module_loader.R for the recursive module-discovery
-# that lets modules live inside these grouped subfolders
+# (grouped under "API Configuration" in the sidebar), with each suite's tabs
+# grouped under their own named section. See R/utils_api.R for how one
+# shared APIManager class serves every suite's BigQuery table(s), and
+# R/module_loader.R for the recursive module-discovery that lets modules
+# live inside these grouped subfolders
 # (modules/"Day Planner"/generate_schedule/manifest.yml etc) instead of a
 # flat modules/<id>/ layout.
 #
@@ -17,7 +78,8 @@
 
 cat("\n╔══════════════════════════════════════════════╗\n")
 cat("║  BUSINESS OPERATIONS SUITE - INIT             ║\n")
-cat("║  Day Planner + Events + Funding Programmes    ║\n")
+cat("║  Travel + Day Planner + Diet + Exercise +     ║\n")
+cat("║  Events + Funding + Gantt + Contacts          ║\n")
 cat("╚══════════════════════════════════════════════╝\n\n")
 
 suppressPackageStartupMessages({
@@ -47,11 +109,19 @@ suppressPackageStartupMessages({
   library(dplyr)
   library(stringr)
   library(tidyr)
+  library(httr2)    # Titan calendar (CalDAV) - Events Scheduling
+  library(xml2)
+  library(uuid)
 })
 
 source("R/module_loader.R")
+source("R/utils_timezone.R")
 source("R/utils_common.R")
 source("R/utils_api.R")
+source("R/utils_export.R")
+source("R/utils_ics.R")
+source("R/utils_titan.R")
+source("R/utils_slack.R")
 
 api_manager <- APIManager$new()
 

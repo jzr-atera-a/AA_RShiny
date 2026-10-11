@@ -107,9 +107,11 @@ gantt_review_edit_server <- function(id, api_manager) {
           labels = if ("Labels" %in% names(d)) as.character(d$Labels) else "",
           additional_notes = if ("Additional_Notes" %in% names(d)) as.character(d$Additional_Notes) else "",
           submission_result = "N/A",
+          time_zone = bos_tz_value(input$time_zone),
           stringsAsFactors = FALSE
         )
 
+        api_manager$gantt_time_zone <- bos_tz_value(input$time_zone)   # reused by Submit to Boards history rows
         batch_label <- paste0("Reviewed_", format(Sys.time(), "%Y-%m-%d_%H%M%S"))
         rows_uploaded <- api_manager$bq_insert_gantt_tasks(df, log_stage = "Saved", upload_batch = batch_label)
 

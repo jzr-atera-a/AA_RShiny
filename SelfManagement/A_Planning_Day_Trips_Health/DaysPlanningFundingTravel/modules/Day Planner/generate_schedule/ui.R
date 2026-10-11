@@ -14,7 +14,8 @@ generate_schedule_ui <- function(id) {
         fluidRow(
           column(6,
                  dateInput(ns("schedule_date"), "Date:", value = Sys.Date()),
-                 schedule_daytype_dropdown_ui(ns)
+                 schedule_daytype_dropdown_ui(ns),
+                 bos_tz_dropdown_ui(ns)
           ),
           column(6,
                  schedule_country_city_dropdown_ui(ns),

@@ -122,6 +122,41 @@ contacts_explore_server <- function(id, api_manager) {
     output$table_status <- renderUI({ tags$div("Click Refresh Data to load contacts.") })
     output$update_status <- renderUI({ tags$div() })
 
+    # ── Save as HTML/PDF (shared generic exporter, see R/utils_export.R) ──
+    output$export_download <- downloadHandler(
+      filename = function() {
+        paste0("contacts_export_", format(Sys.Date(), "%Y%m%d"), if (identical(input$export_format, "pdf")) ".pdf" else ".html")
+      },
+      content = function(file) {
+        tryCatch({
+          d <- filtered()
+          if (is.null(d) || nrow(d) == 0) {
+            writeLines("<html><body><p>No contacts loaded - click Refresh Data first.</p></body></html>", file)
+            return()
+          }
+
+          cols <- c("full_name", "company", "job_title", "industry", "email", "phone", "location")
+          labels <- c("Name", "Company", "Title", "Industry", "Email", "Phone", "Location")
+          subtitle <- sprintf("%d contact(s)", nrow(d))
+
+          if (identical(input$export_format, "pdf")) {
+            ok <- generate_generic_pdf(file, "Contacts", subtitle, d, cols, labels)
+            if (!isTRUE(ok)) stop("PDF generation failed internally - see console log above for the real cause")
+          } else {
+            result <- generate_generic_html("Contacts", subtitle, d, cols, labels)
+            writeLines(result$content, file)
+          }
+        }, error = function(e) {
+          cat("\u274c [contacts_explore export] Error:", e$message, "\n")
+          writeLines(c("<html><body>", "<h2>Export failed</h2>",
+                       paste0("<p>", htmltools::htmlEscape(e$message), "</p>"),
+                       "<p>Check the Debug Console (API Configuration group) for full detail.</p>",
+                       "</body></html>"), file)
+        })
+      }
+    )
+    output$export_status <- renderUI({ tags$div() })
+
     session$onSessionEnded(function() {})
   })
 }

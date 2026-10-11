@@ -30,7 +30,15 @@ events_about_ui <- function(id) {
           tags$li(tags$strong("Browse Events:"),
                   " Search and filter your event database by city and category, then download as CSV."),
           tags$li(tags$strong("Visualizations:"),
-                  " Explore events on an interactive Leaflet map, month-view calendar, or timeline/category charts.")
+                  " Explore events on an interactive Leaflet map, month-view calendar, or timeline/category charts."),
+          tags$li(tags$strong("Titan Authentication (now in API Configuration):"),
+                  " Load an authenticateT.R file (line 1 ", tags$code("e:email"), ", line 2 ", tags$code("p:password"),
+                  ") to sign in to your Titan calendar over CalDAV. The same sign-in is used to send email from Contact Manager."),
+          tags$li(tags$strong("Events to Calendar:"),
+                  " New events, Import .ics file, Upcoming events and Log, as horizontal tabs. Once signed in, every ",
+                  "Visualisation tab with an .ics export (Day Planner, Diet, Exercise, Events, Funding) also shows ",
+                  tags$em(".ics load to calendar"), " (sends the .ics to the Import tab) and ",
+                  tags$em("Load events into calendar"), " (puts the events into the Events to save list).")
         ),
 
         hr(),

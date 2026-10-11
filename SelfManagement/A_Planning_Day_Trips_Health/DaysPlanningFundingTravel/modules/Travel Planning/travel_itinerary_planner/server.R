@@ -16,8 +16,35 @@ travel_itinerary_planner_server <- function(id, api_manager) {
       itinerary_data = NULL,
       places_data = NULL,
       selected_attraction = NULL,
-      map_image_path = NULL    # local PNG path once "Save Map Image" succeeds
+      map_image_path = NULL,   # local PNG path once "Save Map Image" succeeds
+      checklist_mismatch = NULL  # list(missing=, extra=) after comparing generated itinerary to the checklist
     )
+    
+    # ==================
+    # DATE RANGE <-> DAYS SLIDER SYNC (fixes: slider never updated from the
+    # date picker, and output$duration_display was never rendered at all -
+    # the actual day count sent to Claude previously came ONLY from the
+    # slider's own value, silently disconnected from the date range).
+    # ==================
+    observeEvent(list(input$trip_start_date, input$trip_end_date), {
+      req(input$trip_start_date, input$trip_end_date)
+      if (input$trip_end_date < input$trip_start_date) return()  # ignore transient invalid state while typing
+      
+      computed_days <- as.integer(input$trip_end_date - input$trip_start_date) + 1L
+      computed_days <- max(1L, min(7L, computed_days))  # keep within the slider's own 1-7 range
+      
+      if (!identical(input$num_days, computed_days)) {
+        updateSliderInput(session, "num_days", value = computed_days)
+      }
+    }, ignoreInit = FALSE)
+    
+    output$duration_display <- renderText({
+      req(input$trip_start_date, input$trip_end_date)
+      if (input$trip_end_date < input$trip_start_date) return("(end date is before start date)")
+      actual_days <- as.integer(input$trip_end_date - input$trip_start_date) + 1L
+      paste0(actual_days, " day(s)",
+             if (actual_days > 7) " - note: itinerary generation is capped at 7 days, only the first 7 will be planned" else "")
+    })
     
     # ==================
     # MAP HELPERS (shared by save button + HTML export + PDF export)
@@ -219,8 +246,14 @@ travel_itinerary_planner_server <- function(id, api_manager) {
           )
         })
         
+        # Genuinely reactive count - the previous version hardcoded "0 of N
+        # selected" once at discovery time and never recalculated it,
+        # regardless of what the user actually checked.
         output$places_counter <- renderUI({
-          HTML(sprintf("<strong>%d of %d selected</strong>", 0, length(parsed_places)))
+          req(rv$places_data)
+          n_total <- nrow(rv$places_data)
+          n_selected <- sum(sapply(seq_len(n_total), function(i) isTRUE(input[[paste0("place_", i)]])))
+          HTML(sprintf("<strong>%d of %d selected</strong>", n_selected, n_total))
         })
         
         output$discovery_status <- renderUI({
@@ -238,6 +271,70 @@ travel_itinerary_planner_server <- function(id, api_manager) {
                   tags$strong("❌ Error: "), e$message)
         })
       })
+    })
+    
+    # ==================
+    # SELECT ALL / DESELECT ALL
+    # ==================
+    # These buttons existed in the UI with no server-side handler at all -
+    # clicking them previously did nothing.
+    observeEvent(input$select_all_places, {
+      req(rv$places_data)
+      for (i in seq_len(nrow(rv$places_data))) {
+        updateCheckboxInput(session, paste0("place_", i), value = TRUE)
+      }
+    })
+    
+    observeEvent(input$deselect_all_places, {
+      req(rv$places_data)
+      for (i in seq_len(nrow(rv$places_data))) {
+        updateCheckboxInput(session, paste0("place_", i), value = FALSE)
+      }
+    })
+    
+    # ==================
+    # CAPACITY PRE-CHECK - warns BEFORE generation if the number of selected
+    # places is unrealistic for the chosen day count and daily time window,
+    # instead of letting Claude silently drop selected places to cope (the
+    # actual root cause behind a real case: a 3-day/9am-4pm window can only
+    # realistically fit roughly 9-12 stops; 11 places selected for exactly
+    # that window produced a "complete" itinerary that nonetheless couldn't
+    # include everything if the true intended selection was larger and the
+    # day count hadn't been corrected yet - see the date/day-sync fix above).
+    # ==================
+    output$capacity_warning <- renderUI({
+      req(rv$places_data, input$num_days, input$start_time, input$end_time)
+      
+      n_selected <- sum(sapply(seq_len(nrow(rv$places_data)), function(i) isTRUE(input[[paste0("place_", i)]])))
+      if (n_selected == 0) return(NULL)
+      
+      to_minutes <- function(hhmm) {
+        parts <- as.integer(strsplit(hhmm, ":")[[1]])
+        parts[1] * 60 + parts[2]
+      }
+      daily_minutes <- to_minutes(input$end_time) - to_minutes(input$start_time)
+      if (daily_minutes <= 0) return(NULL)
+      
+      # ~90 min average time at a stop + ~20 min average travel between
+      # stops - a deliberately conservative, rough estimate, not a precise
+      # per-destination calculation.
+      capacity_per_day <- max(1, daily_minutes %/% 110)
+      max_reasonable <- capacity_per_day * as.integer(input$num_days)
+      
+      if (n_selected > max_reasonable) {
+        tags$div(class = "alert alert-warning",
+          tags$strong("⚠️ You've selected ", n_selected, " place(s), but ", input$num_days,
+                     " day(s) with your ", names(which(c("07:00"="7:00 AM","08:00"="8:00 AM","09:00"="9:00 AM","10:00"="10:00 AM","11:00"="11:00 AM")==input$start_time)),
+                     "-", names(which(c("15:00"="3:00 PM","16:00"="4:00 PM","17:00"="5:00 PM","18:00"="6:00 PM","19:00"="7:00 PM")==input$end_time)),
+                     " window realistically fits about ", max_reasonable, " place(s) (~", capacity_per_day, "/day)."),
+          tags$br(),
+          "Claude will prioritise fitting your daily time window over including every place, so some selections may be dropped. ",
+          "Consider: selecting fewer places, adding more days, or widening the daily time window - or generate anyway and check ",
+          "the summary afterward for exactly what was and wasn't included."
+        )
+      } else {
+        NULL
+      }
     })
     
     # ==================
@@ -264,6 +361,7 @@ travel_itinerary_planner_server <- function(id, api_manager) {
       }
       
       selected_places_list <- rv$places_data$name[selected_indices]
+      rv$checklist_mismatch <- NULL
       
       cat("  Selected", length(selected_places_list), "places\n")
       
@@ -276,15 +374,55 @@ travel_itinerary_planner_server <- function(id, api_manager) {
       
       tryCatch({
         selected_places_text <- paste(sprintf("- %s", selected_places_list), collapse = "\n")
+        n_selected <- length(selected_places_list)
+        
+        start_time_label <- names(which(c("7:00 AM"="07:00","8:00 AM"="08:00","9:00 AM"="09:00","10:00 AM"="10:00","11:00 AM"="11:00") == input$start_time))
+        end_time_label   <- names(which(c("3:00 PM"="15:00","4:00 PM"="16:00","5:00 PM"="17:00","6:00 PM"="18:00","7:00 PM"="19:00") == input$end_time))
+        start_time_label <- if (length(start_time_label) > 0) start_time_label[1] else input$start_time
+        end_time_label   <- if (length(end_time_label) > 0) end_time_label[1] else input$end_time
         
         prompt <- paste0(
-          "Create ", input$num_days, "-day itinerary for ", input$destination, "\n\n",
-          "Must visit these attractions:\n", selected_places_text, "\n\n",
+          "Create a ", input$num_days, "-day itinerary for ", input$destination, ".\n\n",
+          
+          "HARD DAILY TIME WINDOW (do not violate this):\n",
+          "- Every single day must start no earlier than ", input$start_time, " (", start_time_label, ") ",
+          "and every attraction's time_end must be no later than ", input$end_time, " (", end_time_label, "). ",
+          "This is a strict constraint, not a suggestion - if you cannot fit every attraction within this ",
+          "window across the ", input$num_days, " day(s), distribute attractions across days so each day's ",
+          "schedule stays fully within the window rather than exceeding it.\n\n",
+          
+          "ATTRACTION LIST - USE ONLY THESE (critical - read carefully):\n", selected_places_text, "\n\n",
+          "There are exactly ", n_selected, " attractions listed above. You MUST:\n",
+          "- Include EVERY one of these ", n_selected, " attractions somewhere across the ", input$num_days, " day(s) - none may be dropped.\n",
+          "- Do NOT add, substitute, or invent any attraction that is not in this exact list. ",
+          "No meals, no \"free time\", no extra sightseeing stops beyond what is listed - only the ",
+          n_selected, " named attractions above.\n\n",
+          
+          "ROUTE OPTIMIZATION (required):\n",
+          "- Sequence the attractions WITHIN each day to minimise total backtracking and travel distance - ",
+          "group geographically close attractions together rather than zig-zagging across the destination.\n",
+          "- Respect each attraction's realistic opening hours when you sequence them.\n\n",
+          
+          "TRANSPORT (required for every attraction after the first one each day):\n",
+          "- For every attraction except the first one of each day, include a \"travel_from_previous\" object ",
+          "describing how to get there from the previous attraction: a realistic transit mode (walk, taxi, ",
+          "public transit, subway, bus, etc. - whichever is genuinely most sensible for that specific distance ",
+          "in ", input$destination, "), an estimated duration in minutes, an estimated distance in km, and one ",
+          "short practical note (e.g. which line, which direction, or why that mode).\n",
+          "- Make sure each attraction's time_start accounts for the travel time from the previous stop - ",
+          "i.e. time_start should be at or after (previous attraction's time_end + travel duration).\n\n",
+          
+          if (nchar(trimws(input$constraints %||% "")) > 0) {
+            paste0("ADDITIONAL USER CONSTRAINTS (respect these too):\n", input$constraints, "\n\n")
+          } else "",
+          
           "For EACH attraction, provide:\n",
-          "- Time (HH:MM-HH:MM format, e.g., 09:00-11:30)\n",
+          "- time_start / time_end (HH:MM 24-hour format, e.g., 09:00 and 11:30), both within the daily time window above\n",
           "- 1-2 sentence description\n",
-          "- GPS coordinates (latitude as number, longitude as number)\n\n",
-          "End with JSON block EXACTLY like this (no markdown, just raw JSON):\n\n",
+          "- GPS coordinates (latitude as number, longitude as number)\n",
+          "- travel_from_previous (omit only for the very first attraction of each day - see TRANSPORT above)\n\n",
+          
+          "End with a JSON block EXACTLY like this (no markdown, just raw JSON):\n\n",
           "```json\n",
           "{\n",
           "  \"itinerary\": [\n",
@@ -298,7 +436,22 @@ travel_itinerary_planner_server <- function(id, api_manager) {
           "          \"longitude\": 2.2945,\n",
           "          \"time_start\": \"09:00\",\n",
           "          \"time_end\": \"11:30\",\n",
-          "          \"description\": \"Iconic iron tower with 3 floors and restaurant.\"\n",
+          "          \"description\": \"Iconic iron tower with 3 floors and restaurant.\",\n",
+          "          \"travel_from_previous\": null\n",
+          "        },\n",
+          "        {\n",
+          "          \"name\": \"Louvre Museum\",\n",
+          "          \"latitude\": 48.8606,\n",
+          "          \"longitude\": 2.3376,\n",
+          "          \"time_start\": \"12:15\",\n",
+          "          \"time_end\": \"14:30\",\n",
+          "          \"description\": \"World's largest art museum, home to the Mona Lisa.\",\n",
+          "          \"travel_from_previous\": {\n",
+          "            \"mode\": \"Subway (Metro Line 1)\",\n",
+          "            \"duration_minutes\": 25,\n",
+          "            \"distance_km\": 3.8,\n",
+          "            \"notes\": \"Take Line 1 eastbound from Trocadero to Palais Royal - Musee du Louvre\"\n",
+          "          }\n",
           "        }\n",
           "      ]\n",
           "    }\n",
@@ -307,15 +460,28 @@ travel_itinerary_planner_server <- function(id, api_manager) {
           "```"
         )
         
-        cat("  Calling api_manager$call_claude()...\n")
-        claude_result_2 <- api_manager$call_claude(prompt)
+        # Every time in the itinerary is written in the zone chosen on this tab
+        prompt <- bos_tz_wrap_prompt(prompt, input$time_zone, input$trip_start_date)
+
+        # Scale max_tokens with trip size - the shared 8000-token default can
+        # truncate a large request (many places x many days, each attraction
+        # now also carrying a travel_from_previous object), which previously
+        # failed completely silently (the `truncated` flag was never
+        # checked). ~260 tokens/attraction is a conservative estimate given
+        # the added transport fields; floor at the shared default, cap at 16000.
+        itinerary_max_tokens <- min(16000, max(8000, n_selected * 260))
+        
+        cat("  Calling api_manager$call_claude()... (max_tokens =", itinerary_max_tokens, ")\n")
+        claude_result_2 <- api_manager$call_claude(prompt, max_tokens = itinerary_max_tokens)
         itinerary_response <- if (is.list(claude_result_2)) claude_result_2$text else claude_result_2
+        was_truncated <- is.list(claude_result_2) && isTRUE(claude_result_2$truncated)
         
         if (!is.character(itinerary_response)) {
           itinerary_response <- paste(as.character(itinerary_response), collapse = " ")
         }
         
-        cat("  Response received:", nchar(itinerary_response), "chars\n")
+        cat("  Response received:", nchar(itinerary_response), "chars", if (was_truncated) " (TRUNCATED)" else "", "\n")
+
         
         # EXTRACT JSON
         json_text <- NULL
@@ -346,13 +512,22 @@ travel_itinerary_planner_server <- function(id, api_manager) {
                   day = as.numeric(day$day) %||% 1,
                   day_label = as.character(day$day_label) %||% paste0("Day ", day$day),
                   attractions = lapply(day$attractions, function(attr) {
+                    travel <- attr$travel_from_previous
                     list(
                       name = as.character(attr$name),
                       latitude = as.numeric(attr$latitude),
                       longitude = as.numeric(attr$longitude),
                       time_start = as.character(attr$time_start),
                       time_end = as.character(attr$time_end),
-                      description = as.character(attr$description) %||% ""
+                      description = as.character(attr$description) %||% "",
+                      travel_from_previous = if (!is.null(travel) && is.list(travel)) {
+                        list(
+                          mode = as.character(travel$mode) %||% "N/A",
+                          duration_minutes = suppressWarnings(as.numeric(travel$duration_minutes)),
+                          distance_km = suppressWarnings(as.numeric(travel$distance_km)),
+                          notes = as.character(travel$notes) %||% ""
+                        )
+                      } else NULL
                     )
                   })
                 )
@@ -362,6 +537,42 @@ travel_itinerary_planner_server <- function(id, api_manager) {
               # New itinerary = new coordinates, so any previously saved map image is stale
               rv$map_image_path <- NULL
               cat("  ✅ Parsed", length(itinerary_list), "days with GPS\n")
+              
+              # Cross-check the returned itinerary against what was actually
+              # selected in the checklist - previously nothing did this, so
+              # dropped or hallucinated-extra attractions were never
+              # detected or surfaced to the user at all.
+              #
+              # IMPORTANT: rv$places_data$name (and therefore
+              # selected_places_list) stores the full discovery-list label
+              # including the type suffix, e.g. "CN Tower (Landmark)" - but
+              # Claude's JSON "name" field naturally returns just "CN Tower"
+              # (matching the plain-name example in the prompt's own JSON
+              # schema). Comparing those strings directly made EVERY
+              # correctly-included place get reported as both missing (exact
+              # match failed one way) and extra (failed the other way) -
+              # strip the trailing "(...)" before comparing, but keep the
+              # original (suffixed) strings for what's actually displayed.
+              strip_type_suffix <- function(x) trimws(sub("\\s*\\([^)]*\\)\\s*$", "", x))
+              
+              included_names <- unique(trimws(unlist(lapply(itinerary_list, function(d) {
+                sapply(d$attractions, function(a) a$name %||% "")
+              }))))
+              included_names <- included_names[nchar(included_names) > 0]
+              selected_trimmed <- trimws(selected_places_list)
+              
+              included_core <- tolower(strip_type_suffix(included_names))
+              selected_core <- tolower(strip_type_suffix(selected_trimmed))
+              
+              missing_places <- selected_trimmed[!selected_core %in% included_core]
+              extra_places <- included_names[!included_core %in% selected_core]
+              
+              rv$checklist_mismatch <- if (length(missing_places) > 0 || length(extra_places) > 0) {
+                list(missing = missing_places, extra = extra_places)
+              } else NULL
+              
+              if (length(missing_places) > 0) cat("  ⚠️  Missing from itinerary:", paste(missing_places, collapse = ", "), "\n")
+              if (length(extra_places) > 0) cat("  ⚠️  Added but not in checklist:", paste(extra_places, collapse = ", "), "\n")
             }
           }, error = function(e) {
             cat("  JSON parse error:", e$message, "\n")
@@ -387,22 +598,37 @@ travel_itinerary_planner_server <- function(id, api_manager) {
                 if (is.null(attr$name)) return(NULL)
                 
                 time_label <- paste0(attr$time_start %||% "??:??", " - ", attr$time_end %||% "??:??")
+                travel <- attr$travel_from_previous
                 
-                tags$details(
-                  tags$summary(
-                    tags$strong(attr$name),
-                    tags$span(class = "text-muted", style = "float:right; font-size:0.85em;",
-                             time_label)
-                  ),
+                transport_block <- if (!is.null(travel)) {
                   tags$div(
-                    style = "background-color: #f9f9f9; padding: 12px; border-radius: 4px; margin-top: 8px;",
-                    tags$p(tags$strong("Time: "), time_label),
-                    tags$p(attr$description %||% "No description"),
-                    tags$p(class = "text-muted", style = "font-size:0.9em;",
-                          "📍 ", 
-                          if (!is.null(attr$latitude)) round(attr$latitude, 4) else "?",
-                          ", ", 
-                          if (!is.null(attr$longitude)) round(attr$longitude, 4) else "?")
+                    style = "background-color: #fff8e1; border-left: 3px solid #f39c12; padding: 8px 12px; margin: 6px 0 6px 20px; border-radius: 4px; font-size: 0.88em;",
+                    tags$span(icon("route"), " ",
+                              tags$strong(travel$mode %||% "N/A"),
+                              if (!is.na(travel$duration_minutes %||% NA)) paste0(" \u00b7 ", travel$duration_minutes, " min") else "",
+                              if (!is.na(travel$distance_km %||% NA)) paste0(" \u00b7 ", travel$distance_km, " km") else ""),
+                    if (nchar(travel$notes %||% "") > 0) tags$div(class = "text-muted", travel$notes) else NULL
+                  )
+                } else NULL
+                
+                tagList(
+                  transport_block,
+                  tags$details(
+                    tags$summary(
+                      tags$strong(attr$name),
+                      tags$span(class = "text-muted", style = "float:right; font-size:0.85em;",
+                               time_label)
+                    ),
+                    tags$div(
+                      style = "background-color: #f9f9f9; padding: 12px; border-radius: 4px; margin-top: 8px;",
+                      tags$p(tags$strong("Time: "), time_label),
+                      tags$p(attr$description %||% "No description"),
+                      tags$p(class = "text-muted", style = "font-size:0.9em;",
+                            "📍 ", 
+                            if (!is.null(attr$latitude)) round(attr$latitude, 4) else "?",
+                            ", ", 
+                            if (!is.null(attr$longitude)) round(attr$longitude, 4) else "?")
+                    )
                   )
                 )
               }))
@@ -428,13 +654,38 @@ travel_itinerary_planner_server <- function(id, api_manager) {
         })
         
         output$itinerary_status <- renderUI({
-          if (!is.null(rv$itinerary_data) && length(rv$itinerary_data) > 0) {
-            tags$div(class = "alert alert-success",
-                    tags$strong("✓ Itinerary created with GPS!"))
-          } else {
-            tags$div(class = "alert alert-warning",
-                    tags$strong("⚠️ Itinerary created (text mode)"))
+          warnings <- list()
+          
+          if (was_truncated) {
+            warnings <- c(warnings, list(tags$div(class = "alert alert-danger",
+              tags$strong("⚠️ Response was cut off (max_tokens limit reached). "),
+              "The itinerary below is likely incomplete - try selecting fewer places, fewer days, or regenerating.")))
           }
+          
+          if (!is.null(rv$checklist_mismatch)) {
+            mismatch_parts <- list()
+            if (length(rv$checklist_mismatch$missing) > 0) {
+              mismatch_parts <- c(mismatch_parts, list(tags$p(
+                tags$strong("Not included, despite being checked: "),
+                paste(rv$checklist_mismatch$missing, collapse = ", "))))
+            }
+            if (length(rv$checklist_mismatch$extra) > 0) {
+              mismatch_parts <- c(mismatch_parts, list(tags$p(
+                tags$strong("Added, but not in your checklist: "),
+                paste(rv$checklist_mismatch$extra, collapse = ", "))))
+            }
+            warnings <- c(warnings, list(tags$div(class = "alert alert-warning",
+              tags$strong("⚠️ Itinerary doesn't exactly match your checklist selection:"),
+              mismatch_parts)))
+          }
+          
+          success_box <- if (!is.null(rv$itinerary_data) && length(rv$itinerary_data) > 0) {
+            tags$div(class = "alert alert-success", tags$strong("✓ Itinerary created with GPS, transport, and route optimization!"))
+          } else {
+            tags$div(class = "alert alert-warning", tags$strong("⚠️ Itinerary created (text mode)"))
+          }
+          
+          tagList(warnings, success_box)
         })
         
         cat("✅ [GENERATE] Success!\n")
@@ -1227,6 +1478,58 @@ travel_itinerary_planner_server <- function(id, api_manager) {
       }
     )
     
+    # ==================
+    # TITAN CALENDAR HAND-OFF (Events Scheduling > Events to Calendar)
+    # ==================
+    # Builds zone-aware ics_event objects from the generated itinerary: the
+    # clock times are read in the zone chosen on this tab (input$time_zone).
+    # The existing "Calendar (.ics)" download above is left untouched.
+    travel_ics_result <- reactive({
+      it <- rv$itinerary_data
+      if (is.null(it) || length(it) == 0) return(list(events = list(), notes = character()))
+      tz <- bos_tz_value(input$time_zone)
+      start_date <- as.Date(input$trip_start_date)
+      dest <- trimws(as.character(input$destination %||% ""))
+      events <- list(); notes <- character()
+      to_min <- function(x) {
+        m <- regmatches(x, regexec("^\\s*(\\d{1,2}):(\\d{2})", as.character(x)))[[1]]
+        if (length(m) < 3) return(NA_real_)
+        as.numeric(m[2]) * 60 + as.numeric(m[3])
+      }
+      for (day in it) {
+        if (is.null(day$attractions)) next
+        dn <- suppressWarnings(as.numeric(day$day)); if (is.na(dn)) dn <- 1
+        dt <- start_date + (dn - 1)
+        for (k in seq_along(day$attractions)) {
+          a <- day$attractions[[k]]
+          nm <- as.character(a$name %||% ""); if (!nzchar(nm)) next
+          s <- to_min(a$time_start); e <- to_min(a$time_end)
+          if (is.na(e) || (!is.na(s) && e <= s)) e <- if (is.na(s)) NA_real_ else s + 60
+          trv <- a$travel_from_previous
+          desc <- paste(c(as.character(a$description %||% ""),
+                          if (is.list(trv) && !is.null(trv$mode) && !is.na(trv$mode))
+                            sprintf("Getting there: %s%s%s", trv$mode,
+                                    if (!is.null(trv$duration_minutes) && !is.na(trv$duration_minutes)) sprintf(", ~%d min", as.integer(trv$duration_minutes)) else "",
+                                    if (nzchar(as.character(trv$notes %||% ""))) paste0(" - ", trv$notes) else "")),
+                        collapse = "\n")
+          geo <- if (!is.null(a$latitude) && !is.null(a$longitude) && is.finite(a$latitude) && is.finite(a$longitude))
+                   c(a$latitude, a$longitude) else NULL
+          uid <- ics_make_uid("travel", c(dest, format(dt), nm), k)
+          if (is.na(s)) {
+            notes <- c(notes, sprintf("'%s' has no readable time - added as an all-day entry.", nm))
+            events[[length(events) + 1]] <- ics_event(uid, paste0("\U0001F4CD ", nm), dt, description = desc,
+                                                      location = dest, categories = c("Travel", dest), geo = geo, tz = tz)
+          } else {
+            events[[length(events) + 1]] <- ics_event(uid, paste0("\U0001F4CD ", nm), dt, s, e, desc,
+                                                      dest, categories = c("Travel", dest), geo = geo,
+                                                      alarms = "-PT30M", tz = tz)
+          }
+        }
+      }
+      list(events = events, notes = notes)
+    })
+    titan_viz_hook(input, output, session, api_manager, travel_ics_result, "Travel")
+
     # ==================
     # RESET
     # ==================

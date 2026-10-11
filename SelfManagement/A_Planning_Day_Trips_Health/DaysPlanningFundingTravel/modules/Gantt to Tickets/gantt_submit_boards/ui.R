@@ -24,6 +24,8 @@ gantt_submit_boards_ui <- function(id) {
           p("Every submission is logged as its own row in ", tags$code("gantt_tasks"), " - nothing here is ever overwritten."),
           verbatimTextOutput(ns("submission_summary"))
       )
-    )
+    ),
+
+    generic_export_box_ui(ns, title = "Save Submission History")
   )
 }

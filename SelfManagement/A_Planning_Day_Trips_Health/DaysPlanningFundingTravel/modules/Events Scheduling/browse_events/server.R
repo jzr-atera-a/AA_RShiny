@@ -23,8 +23,9 @@ browse_events_server <- function(id, api_manager) {
         query <- sprintf(
           "SELECT event_name, organiser, city, country, category, subcategory,
                   event_date, event_time, venue_name, address, latitude, longitude,
-                  description, ticket_url, price_range, source_url, scan_date, created_at
+                  description, ticket_url, price_range, source_url, scan_date, created_at%s
            FROM `%s` ORDER BY event_date ASC, created_at DESC LIMIT %d",
+          if (isTRUE(api_manager$bq_time_zone_ready[["events"]])) ", time_zone" else "",
           api_manager$bq_full_table_events, input$max_rows
         )
         data <- api_manager$bq_query(query)

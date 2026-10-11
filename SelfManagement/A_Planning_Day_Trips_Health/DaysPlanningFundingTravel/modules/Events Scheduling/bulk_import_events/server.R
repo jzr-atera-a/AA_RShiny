@@ -28,7 +28,7 @@ bulk_import_events_server <- function(id, api_manager) {
       })
 
       tryCatch({
-        df <- parse_events_text(input$events_text)
+        df <- parse_events_text(input$events_text, default_tz = input$time_zone)
         parsed_data(df)
 
         output$parse_info <- renderUI({

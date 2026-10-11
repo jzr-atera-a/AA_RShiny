@@ -24,6 +24,7 @@ bulk_import_events_ui <- function(id) {
             )
         ),
 
+        bos_tz_dropdown_ui(ns, label = "Time zone of the pasted times:", help = "Used only when the text has no [time_zone] line (text from the generator tabs already carries one)."),
         textAreaInput(ns("events_text"), "Paste Events Text Here:", height = "500px",
                       placeholder = paste0(
                         "[city]: London\n[country]: United Kingdom\n[scan_date]: 2026-07-01\n\n",

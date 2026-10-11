@@ -12,6 +12,7 @@ exercise_add_single_ui <- function(id) {
         width = 12,
 
         dateInput(ns("workout_date"), "Date:", value = Sys.Date()),
+        bos_tz_dropdown_ui(ns, help = "Saved with the entry, so calendar exports use the right zone."),
         session_type_dropdown_ui(ns),
         textInput(ns("session_notes"), "Session Notes (optional):", placeholder = "e.g., Felt strong today"),
 

@@ -67,6 +67,7 @@ add_single_event_server <- function(id, api_manager) {
           stringsAsFactors = FALSE
         )
 
+        df$time_zone <- bos_tz_value(input$time_zone)
         api_manager$bq_insert_events(df)
         api_manager$trigger_state_update_events()
 

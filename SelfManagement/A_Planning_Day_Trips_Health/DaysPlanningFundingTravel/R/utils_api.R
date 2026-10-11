@@ -57,6 +57,7 @@ APIManager <- R6::R6Class(
     # ── Non-blocking schema-compatibility warning (Events only — see notes
     #    on check_events_table_compatibility below) ─────────────────────────
     events_schema_warning = NULL,
+    bq_setup_key = NULL,
 
     # ── Suite-scoped reactive triggers ──────────────────────────────────────
     state_trigger_schedule = NULL,
@@ -131,7 +132,40 @@ APIManager <- R6::R6Class(
     contacts_selected_contact_email = NULL,
     contacts_generated_message = NULL,
 
+    # ── Titan calendar (Events Scheduling group): sign-in state, the
+    #    "Events to save" list, and the hand-off buffers used by the
+    #    Visualisation tabs. The password lives only here, in server memory.
+    gantt_time_zone = NULL,       # zone chosen in Gantt > Review & Edit, used for later history rows
+    bq_time_zone_ready = list(),  # per table: TRUE once the time_zone column is confirmed to exist
+    titan_state = NULL,          # reactiveVal: list(ok, email, server, calendars)
+    titan_pass = NULL,           # plain string, never printed or logged
+    titan_tz = "America/Mexico_City",  # zone chosen on Events to Calendar > Events to save
+    titan_queue = NULL,          # reactiveVal: list of "Events to save" items
+    titan_pending_ics = NULL,    # reactiveVal: list(text, label, stamp) for the Import tab
+    titan_goto_tab = NULL,       # reactiveVal: list(tab, stamp) horizontal subtab to show
+    titan_log = NULL,            # reactiveVal: character vector, newest first
+    titan_smtp = NULL,           # reactiveVal: list(host, port) used for sending email
+    titan_smtp_ok = NULL,        # reactiveVal: TRUE after a successful SMTP login test
+    # ---- Slack (Online Collaboration group) ----
+    slack_state = NULL,          # reactiveVal: list(ok, team, bot_user, url, scopes...)
+    slack_token = NULL,          # plain string, never printed or logged
+    slack_users = NULL,          # named vector: user id -> display name
+    slack_log = NULL,            # reactiveVal: character vector, newest first
+
     initialize = function() {
+      self$titan_state       <- shiny::reactiveVal(list(ok = FALSE))
+      self$titan_queue       <- shiny::reactiveVal(list())
+      self$titan_pending_ics <- shiny::reactiveVal(NULL)
+      self$titan_goto_tab    <- shiny::reactiveVal(NULL)
+      self$titan_log         <- shiny::reactiveVal(character())
+      self$titan_smtp        <- shiny::reactiveVal(list(host = "", port = 465))
+      self$titan_smtp_ok     <- shiny::reactiveVal(FALSE)
+      self$slack_state       <- shiny::reactiveVal(list(ok = FALSE))
+      self$slack_log         <- shiny::reactiveVal(character())
+      self$initialize_core()
+    },
+
+    initialize_core = function() {
       self$state_trigger_schedule <- shiny::reactiveVal(0)
       self$state_trigger_diet     <- shiny::reactiveVal(0)
       self$state_trigger_exercise <- shiny::reactiveVal(0)
@@ -204,6 +238,55 @@ APIManager <- R6::R6Class(
       self$state_trigger_funding(self$state_trigger_funding() + 1)
       self$funding_taxonomy_cache <- NULL
       cat("🔔 [Funding Programmes] state trigger fired\n")
+    },
+
+    # ============================================================
+    # TITAN CALENDAR METHODS (Events Scheduling group)
+    # ============================================================
+    titan_set_session = function(email, pass, server, calendars) {
+      self$titan_pass <- pass
+      self$titan_state(list(ok = TRUE, email = email, server = server, calendars = calendars))
+    },
+    titan_sign_out = function() {
+      self$titan_pass <- NULL
+      self$titan_smtp_ok(FALSE)
+      self$titan_state(list(ok = FALSE))
+    },
+    titan_credentials = function() {
+      st <- self$titan_state()
+      list(user = if (isTRUE(st$ok)) st$email else "", pass = if (isTRUE(st$ok)) self$titan_pass else "")
+    },
+    titan_log_add = function(msg) {
+      line <- sprintf("[%s] %s", format(Sys.time(), "%H:%M:%S"), paste0(msg, collapse = ""))
+      self$titan_log(head(c(line, self$titan_log()), 500))
+    },
+    # Adds items (by UID, skipping ones already queued); returns how many were new.
+    titan_queue_add = function(items) {
+      q <- self$titan_queue()
+      have <- vapply(q, function(x) as.character(x$uid), "")
+      fresh <- Filter(function(x) !(as.character(x$uid) %in% have), items)
+      if (length(fresh)) self$titan_queue(c(q, fresh))
+      length(fresh)
+    },
+    titan_set_pending_ics = function(text, label = "") {
+      self$titan_pending_ics(list(text = text, label = label, stamp = Sys.time()))
+    },
+    slack_set_session = function(token, info) {
+      self$slack_token <- token
+      self$slack_state(c(list(ok = TRUE), info))
+    },
+    slack_sign_out = function() {
+      self$slack_token <- NULL
+      self$slack_users <- NULL
+      self$slack_state(list(ok = FALSE))
+    },
+    slack_log_add = function(method, result, secs = NA) {
+      line <- sprintf("[%s] %s - %s%s", format(Sys.time(), "%H:%M:%S"), method, result,
+                      if (is.na(secs)) "" else sprintf(" (%.1fs)", secs))
+      self$slack_log(head(c(line, self$slack_log()), 500))
+    },
+    titan_goto = function(tab) {
+      self$titan_goto_tab(list(tab = tab, stamp = Sys.time()))
     },
 
     set_pending_bulk_text_schedule = function(text) { self$pending_bulk_text_schedule(text) },
@@ -557,10 +640,32 @@ APIManager <- R6::R6Class(
         # Quick connection check
         bq_project_datasets(self$bq_project_id)
 
+        # Table set-up is done ONCE per project+dataset per R process. Reconnecting
+        # (or a second click) skips straight to "authenticated".
+        setup_key <- paste(self$bq_project_id, self$bq_dataset_id, sep = "|")
+        if (identical(self$bq_setup_key, setup_key)) {
+          cat("\u2713 [BigQuery] tables already verified this session - skipping checks\n")
+          self$bq_authenticated <- TRUE
+          return(TRUE)
+        }
+
+        # ONE metadata query tells us which tables/columns already exist; only
+        # what is genuinely missing is created/altered afterwards.
+        schema_cols <- tryCatch({
+          bq_table_download(bq_project_query(self$bq_project_id, sprintf(
+            "SELECT table_name, column_name FROM `%s.%s.INFORMATION_SCHEMA.COLUMNS`",
+            self$bq_project_id, self$bq_dataset_id)))
+        }, error = function(e) {
+          cat("\u26a0\ufe0f  [BigQuery] could not read INFORMATION_SCHEMA - falling back to CREATE IF NOT EXISTS:", e$message, "\n")
+          NULL
+        })
+        known_tables <- if (is.null(schema_cols)) character() else unique(schema_cols$table_name)
+        bq_known <- function(t) t %in% known_tables
+
         # ── Day Planner: CREATE TABLE IF NOT EXISTS — safe no-op if it
         #    already exists, never alters or drops anything. ──────────────
         tryCatch({
-          bq_project_query(self$bq_project_id, sprintf("
+          if (!bq_known(self$bq_table_schedule)) bq_project_query(self$bq_project_id, sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
               schedule_date STRING, day_type STRING, country STRING, city STRING,
@@ -579,7 +684,7 @@ APIManager <- R6::R6Class(
         #    bq_update_prep_completion()/bq_delete_prep_steps_for_date()
         #    below for the real UPDATE/DELETE DML this requires. ──────────
         tryCatch({
-          bq_project_query(self$bq_project_id, sprintf("
+          if (!bq_known(self$bq_table_prep)) bq_project_query(self$bq_project_id, sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
               schedule_date STRING, category STRING, location STRING,
@@ -596,7 +701,7 @@ APIManager <- R6::R6Class(
         #    bq_update_commitment() below), a deliberate exception to the
         #    append-only pattern used elsewhere. ───────────────────────────
         tryCatch({
-          bq_project_query(self$bq_project_id, sprintf("
+          if (!bq_known(self$bq_table_commitments)) bq_project_query(self$bq_project_id, sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
               category STRING, sector STRING, topic STRING,
@@ -611,7 +716,7 @@ APIManager <- R6::R6Class(
         # ── Diet Planner: CREATE TABLE IF NOT EXISTS — same safe pattern,
         #    same architecture as day_scheduler (day-level metadata + rows). ─
         tryCatch({
-          bq_project_query(self$bq_project_id, sprintf("
+          if (!bq_known(self$bq_table_diet)) bq_project_query(self$bq_project_id, sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
               log_date STRING, diet_type STRING, dietary_restrictions STRING,
@@ -624,7 +729,7 @@ APIManager <- R6::R6Class(
 
         # ── Exercise Tracker: CREATE TABLE IF NOT EXISTS — same safe pattern. ─
         tryCatch({
-          bq_project_query(self$bq_project_id, sprintf("
+          if (!bq_known(self$bq_table_exercise)) bq_project_query(self$bq_project_id, sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
               workout_date STRING, session_type STRING, session_notes STRING,
@@ -639,7 +744,7 @@ APIManager <- R6::R6Class(
         # ── Funding Programmes: CREATE TABLE IF NOT EXISTS — same safe
         #    pattern. ─────────────────────────────────────────────────────
         tryCatch({
-          bq_project_query(self$bq_project_id, sprintf("
+          if (!bq_known(self$bq_table_funding)) bq_project_query(self$bq_project_id, sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
               category STRING, country STRING, city_region STRING,
@@ -655,7 +760,7 @@ APIManager <- R6::R6Class(
         #    suite - one row per task per stage: "Saved" after Review & Edit,
         #    "Submitted_Trello"/"Submitted_Jira" after a submit action). ────
         tryCatch({
-          bq_project_query(self$bq_project_id, sprintf("
+          if (!bq_known(self$bq_table_gantt_tasks)) bq_project_query(self$bq_project_id, sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
               upload_batch STRING, log_stage STRING,
@@ -668,7 +773,7 @@ APIManager <- R6::R6Class(
 
         # ── Gantt to Tickets: assignee contact list. ─────────────────────
         tryCatch({
-          bq_project_query(self$bq_project_id, sprintf("
+          if (!bq_known(self$bq_table_gantt_contacts)) bq_project_query(self$bq_project_id, sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
               country STRING, city STRING, organization STRING, full_name STRING,
@@ -684,7 +789,7 @@ APIManager <- R6::R6Class(
         #    original app's design. See bq_update_contact/bq_delete_contact
         #    below for the real UPDATE/DELETE DML this requires. ──────────
         tryCatch({
-          bq_project_query(self$bq_project_id, sprintf("
+          if (!bq_known(self$bq_table_contacts)) bq_project_query(self$bq_project_id, sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               contact_id STRING, full_name STRING, industry STRING, company STRING,
               job_title STRING, location STRING, country STRING, email STRING,
@@ -698,7 +803,7 @@ APIManager <- R6::R6Class(
         # ── Contact Manager: contact_communications (append-only history,
         #    same insert-only pattern as everything else). ────────────────
         tryCatch({
-          bq_project_query(self$bq_project_id, sprintf("
+          if (!bq_known(self$bq_table_communications)) bq_project_query(self$bq_project_id, sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               message_id STRING, contact_id STRING, channel_type STRING,
               communication_purpose STRING, language STRING, message_length STRING,
@@ -715,7 +820,7 @@ APIManager <- R6::R6Class(
         #    the schema inferred from the original app's insert code. Either
         #    way, nothing already in the table is ever touched. ───────────
         tryCatch({
-          bq_project_query(self$bq_project_id, sprintf("
+          if (!bq_known(self$bq_table_events)) bq_project_query(self$bq_project_id, sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
               event_name STRING, organiser STRING, city STRING, country STRING,
@@ -735,8 +840,21 @@ APIManager <- R6::R6Class(
         # is completely fine to write to. It only surfaces something
         # concrete for you to look at if a column this app depends on is
         # genuinely missing from the real table.
-        self$events_schema_warning <- self$check_events_table_compatibility()
+        self$events_schema_warning <- self$check_events_table_compatibility(schema_cols)
 
+        # time_zone column on every table that stores times/dates generated by
+        # Claude - ALTER only where the metadata shows it is missing.
+        tz_tables <- c(schedule = self$bq_table_schedule, diet = self$bq_table_diet,
+                       exercise = self$bq_table_exercise, events = self$bq_table_events,
+                       funding = self$bq_table_funding, gantt_tasks = self$bq_table_gantt_tasks)
+        for (k in names(tz_tables)) {
+          has_tz <- !is.null(schema_cols) &&
+            any(schema_cols$table_name == tz_tables[[k]] & schema_cols$column_name == "time_zone")
+          if (has_tz) self$bq_time_zone_ready[[k]] <- TRUE
+          else self$bq_ensure_time_zone_column(k)
+        }
+
+        self$bq_setup_key <- setup_key
         self$bq_authenticated <- TRUE
         self$trigger_state_update_schedule()
         self$trigger_state_update_events()
@@ -755,19 +873,24 @@ APIManager <- R6::R6Class(
     # or a character string describing what's missing if not. Never raises
     # an error itself - incompatibility is reported, not blocked, since the
     # table may intentionally have a different but still-writable shape.
-    check_events_table_compatibility = function() {
+    check_events_table_compatibility = function(schema_cols = NULL) {
       required_cols <- c("id", "created_at", "event_name", "organiser", "city", "country",
                          "category", "subcategory", "event_date", "event_time", "venue_name",
                          "address", "latitude", "longitude", "description", "ticket_url",
                          "price_range", "source_url", "scan_date", "extra_info")
 
       result <- tryCatch({
+        if (!is.null(schema_cols) && any(schema_cols$table_name == self$bq_table_events))
+          return_cols <- schema_cols[schema_cols$table_name == self$bq_table_events, "column_name", drop = FALSE]
+        else return_cols <- NULL
+        if (!is.null(return_cols)) return_cols else {
         query <- sprintf(
           "SELECT column_name FROM `%s.%s.INFORMATION_SCHEMA.COLUMNS` WHERE table_name = '%s'",
           self$bq_project_id, self$bq_dataset_id, self$bq_table_events
         )
         job <- bq_project_query(self$bq_project_id, query)
         bq_table_download(job)
+        }
       }, error = function(e) {
         cat("⚠️  [check_events_table_compatibility] Could not read INFORMATION_SCHEMA:", e$message, "\n")
         NULL
@@ -826,6 +949,44 @@ APIManager <- R6::R6Class(
       result
     },
 
+    # ── Time zone column (itineraries/schedules/events/deadlines) ────────
+    # ALTER TABLE ... ADD COLUMN IF NOT EXISTS only ever ADDS a nullable
+    # column: existing rows and tables are never altered, dropped or rewritten
+    # (old rows simply have NULL, which the app reads as the default zone).
+    bq_ensure_time_zone_column = function(key) {
+      full <- switch(key,
+        schedule = self$bq_full_table_schedule, diet = self$bq_full_table_diet,
+        exercise = self$bq_full_table_exercise, events = self$bq_full_table_events,
+        funding = self$bq_full_table_funding, gantt_tasks = self$bq_full_table_gantt_tasks, NULL)
+      if (is.null(full)) return(invisible(FALSE))
+      ok <- tryCatch({
+        bq_project_query(self$bq_project_id, sprintf("ALTER TABLE `%s` ADD COLUMN IF NOT EXISTS time_zone STRING", full))
+        TRUE
+      }, error = function(e) {
+        # no permission to alter? the column may already exist - check by reading it
+        tryCatch({
+          bq_project_query(self$bq_project_id, sprintf("SELECT time_zone FROM `%s` LIMIT 0", full))
+          TRUE
+        }, error = function(e2) {
+          cat("\u26a0\ufe0f  [BigQuery] could not add time_zone to", key, "-", e$message, "\n")
+          FALSE
+        })
+      })
+      self$bq_time_zone_ready[[key]] <- isTRUE(ok)
+      if (isTRUE(ok)) cat("\u2713 [BigQuery]", key, "time_zone column ready\n")
+      invisible(isTRUE(ok))
+    },
+
+    # Adds the time_zone column to an upload only when the table is known to
+    # have it, so a failed ALTER can never break saving.
+    bq_attach_time_zone = function(data_frame, tz_vec, key) {
+      if (isTRUE(self$bq_time_zone_ready[[key]])) data_frame$time_zone <- tz_vec
+      data_frame
+    },
+
+    # ============================================================
+    # DAY PLANNER
+    # ============================================================
     bq_insert_schedule = function(data_frame) {
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
 
@@ -843,7 +1004,9 @@ APIManager <- R6::R6Class(
       data_frame$id <- seq(start_id, start_id + nrow(data_frame) - 1L)
       data_frame$created_at <- Sys.time()
       for (col in required_cols) if (!col %in% names(data_frame)) data_frame[[col]] <- ""
+      tz_vec <- bos_tz_vector(data_frame$time_zone, nrow(data_frame))   # zone saved with each row
       data_frame <- data_frame[, required_cols]
+      data_frame <- self$bq_attach_time_zone(data_frame, tz_vec, "schedule")
 
       table_ref <- bq_table(self$bq_project_id, self$bq_dataset_id, self$bq_table_schedule)
       bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
@@ -1116,7 +1279,9 @@ APIManager <- R6::R6Class(
       data_frame$id <- seq(start_id, start_id + nrow(data_frame) - 1L)
       data_frame$created_at <- Sys.time()
       for (col in required_cols) if (!col %in% names(data_frame)) data_frame[[col]] <- ""
+      tz_vec <- bos_tz_vector(data_frame$time_zone, nrow(data_frame))   # zone saved with each row
       data_frame <- data_frame[, required_cols]
+      data_frame <- self$bq_attach_time_zone(data_frame, tz_vec, "diet")
 
       table_ref <- bq_table(self$bq_project_id, self$bq_dataset_id, self$bq_table_diet)
       bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
@@ -1169,7 +1334,9 @@ APIManager <- R6::R6Class(
       data_frame$id <- seq(start_id, start_id + nrow(data_frame) - 1L)
       data_frame$created_at <- Sys.time()
       for (col in required_cols) if (!col %in% names(data_frame)) data_frame[[col]] <- ""
+      tz_vec <- bos_tz_vector(data_frame$time_zone, nrow(data_frame))   # zone saved with each row
       data_frame <- data_frame[, required_cols]
+      data_frame <- self$bq_attach_time_zone(data_frame, tz_vec, "exercise")
 
       table_ref <- bq_table(self$bq_project_id, self$bq_dataset_id, self$bq_table_exercise)
       bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
@@ -1227,7 +1394,9 @@ APIManager <- R6::R6Class(
 
       data_frame$id <- seq(start_id, start_id + nrow(data_frame) - 1L)
       data_frame$created_at <- Sys.time()
+      tz_vec <- bos_tz_vector(data_frame$time_zone, nrow(data_frame))   # zone saved with each row
       data_frame <- data_frame[, required_cols]
+      data_frame <- self$bq_attach_time_zone(data_frame, tz_vec, "events")
 
       # Standardised on bq_table_upload() (same mechanism as Day Planner and
       # Funding Programmes) instead of the standalone app's DBI::dbWriteTable().
@@ -1282,7 +1451,9 @@ APIManager <- R6::R6Class(
       data_frame$id <- seq(start_id, start_id + nrow(data_frame) - 1L)
       data_frame$created_at <- Sys.time()
       for (col in required_cols) if (!col %in% names(data_frame)) data_frame[[col]] <- ""
+      tz_vec <- bos_tz_vector(data_frame$time_zone, nrow(data_frame))   # zone saved with each row
       data_frame <- data_frame[, required_cols]
+      data_frame <- self$bq_attach_time_zone(data_frame, tz_vec, "funding")
 
       table_ref <- bq_table(self$bq_project_id, self$bq_dataset_id, self$bq_table_funding)
       bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
@@ -1510,7 +1681,9 @@ APIManager <- R6::R6Class(
 
       data_frame$id <- seq(start_id, start_id + nrow(data_frame) - 1L)
       data_frame$created_at <- Sys.time()
+      tz_vec <- bos_tz_vector(if (!is.null(data_frame$time_zone)) data_frame$time_zone else self$gantt_time_zone, nrow(data_frame))   # zone saved with each row
       data_frame <- data_frame[, required_cols]
+      data_frame <- self$bq_attach_time_zone(data_frame, tz_vec, "gantt_tasks")
 
       table_ref <- bq_table(self$bq_project_id, self$bq_dataset_id, self$bq_table_gantt_tasks)
       bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")

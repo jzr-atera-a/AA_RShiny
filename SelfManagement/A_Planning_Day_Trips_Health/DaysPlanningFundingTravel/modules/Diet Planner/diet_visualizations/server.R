@@ -172,6 +172,61 @@ diet_visualizations_server <- function(id, api_manager) {
     output$diet_type_box <- renderValueBox({ valueBox("—", "Diet Type", icon = icon("tag"), color = "green") })
     output$total_entries <- renderValueBox({ valueBox(0, "Total Entries", icon = icon("database"), color = "blue") })
 
+    # ── Save as HTML/PDF (shared generic exporter, see R/utils_export.R) ──
+    output$export_download <- downloadHandler(
+      filename = function() {
+        d <- viz_data()
+        base_name <- if (!is.null(d) && nrow(d) > 0) paste0("diet_log_", d$log_date[1]) else "diet_log_export"
+        paste0(base_name, if (identical(input$export_format, "pdf")) ".pdf" else ".html")
+      },
+      content = function(file) {
+        tryCatch({
+          d <- viz_data()
+          if (is.null(d) || nrow(d) == 0) {
+            writeLines("<html><body><p>No data loaded - load a day's diet log first.</p></body></html>", file)
+            return()
+          }
+
+          cols <- c("row_type", "meal_name", "meal_details", "meal_time", "calories_macros", "observations")
+          labels <- c("Type", "Meal", "Details", "Time", "Calories/Macros", "Notes")
+          subtitle <- sprintf("%s - %s | %d entries", d$log_date[1], d$diet_type[1], nrow(d))
+
+          if (identical(input$export_format, "pdf")) {
+            ok <- generate_generic_pdf(file, paste0("Diet Log - ", d$log_date[1]), subtitle, d, cols, labels)
+            if (!isTRUE(ok)) stop("PDF generation failed internally - see console log above for the real cause")
+          } else {
+            result <- generate_generic_html(paste0("Diet Log - ", d$log_date[1]), subtitle, d, cols, labels)
+            writeLines(result$content, file)
+          }
+        }, error = function(e) {
+          cat("\u274c [diet_visualizations export] Error:", e$message, "\n")
+          writeLines(c("<html><body>", "<h2>Export failed</h2>",
+                       paste0("<p>", htmltools::htmlEscape(e$message), "</p>"),
+                       "<p>Check the Debug Console (API Configuration group) for full detail.</p>",
+                       "</body></html>"), file)
+        })
+      }
+    )
+    output$export_status <- renderUI({ tags$div() })
+
+    # ── Add to Calendar (.ics) - engine in R/utils_ics.R ──
+    ics_result <- reactive({
+      ics_safe_build(ics_events_diet, viz_data(), alarms = isTRUE(input$ics_alarms))
+    })
+    output$export_ics_status <- renderUI({ ics_status_html(ics_result(), loaded = !is.null(viz_data())) })
+    output$export_ics <- downloadHandler(
+      filename = function() { d <- viz_data(); ics_filename("diet_plan", if (!is.null(d) && nrow(d) > 0) d$log_date[1]) },
+      content = function(file) {
+        d <- viz_data()
+        ics_write_safe(function() ics_result()$events,
+                       paste("Diet Plan", if (!is.null(d) && nrow(d) > 0) as.character(d$log_date[1]) else ""), file)
+      },
+      contentType = "text/calendar"
+    )
+
+    # Titan calendar buttons (".ics load to calendar" / "Load events into calendar")
+    titan_viz_hook(input, output, session, api_manager, ics_result, "Diet Planner")
+
     session$onSessionEnded(function() {})
   })
 }

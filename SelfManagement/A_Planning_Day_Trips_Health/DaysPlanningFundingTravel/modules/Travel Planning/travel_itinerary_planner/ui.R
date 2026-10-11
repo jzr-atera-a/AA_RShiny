@@ -151,7 +151,9 @@ travel_itinerary_planner_ui <- function(id) {
                  selectInput(ns("end_time"), "End Time:",
                             choices = c("3:00 PM" = "15:00", "4:00 PM" = "16:00", "5:00 PM" = "17:00",
                                        "6:00 PM" = "18:00", "7:00 PM" = "19:00"),
-                            selected = "16:00")
+                            selected = "16:00"),
+                 bos_tz_dropdown_ui(ns, label = "Time zone of these times:",
+                                    help = "The daily window and every time in the itinerary are written in this zone.")
           )
         ),
 
@@ -177,6 +179,8 @@ travel_itinerary_planner_ui <- function(id) {
                      )),
 
         hr(),
+
+        uiOutput(ns("capacity_warning")),
 
         fluidRow(
           column(4,
@@ -276,6 +280,11 @@ travel_itinerary_planner_ui <- function(id) {
                                class = "btn-info", style = "width: 100%;")
           )
         ),
+
+        # Titan calendar buttons (".ics load to calendar" / "Load events into
+        # calendar"): rendered by titan_viz_hook() once signed in under
+        # API Configuration > Titan Authentication.
+        uiOutput(ns("titan_buttons")),
 
         hr(),
 

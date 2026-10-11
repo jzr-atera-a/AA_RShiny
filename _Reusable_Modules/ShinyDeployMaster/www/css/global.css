@@ -1,0 +1,191 @@
+/* ============================================================
+   SHINY DEPLOY MASTER — Global CSS
+   Theme: Deep Purple / Indigo · Deploy-accent: Amber / Orange
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root {
+  --purple-deep:  #1E0A3C;
+  --purple-mid:   #4C1D95;
+  --purple-main:  #7C3AED;
+  --purple-light: #A855F7;
+  --amber:        #F59E0B;
+  --rose:         #F43F5E;
+  --sky:          #38BDF8;
+  --lime:         #4ADE80;
+  --teal:         #00C7BA;
+  --orange:       #FB923C;
+}
+
+/* ── Base ───────────────────────────────────────────────────── */
+body, .content-wrapper, .right-side {
+  background: linear-gradient(135deg, #0F0520 0%, #1E0A3C 40%, #2D1060 100%) !important;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* ── Sidebar ────────────────────────────────────────────────── */
+.sidebar, .main-sidebar {
+  background: linear-gradient(180deg, #0A0318 0%, #12062A 40%, #1E0A3C 80%, #2D1060 100%) !important;
+  box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+}
+.sidebar .sidebar-menu > li > a {
+  color: rgba(255,255,255,0.85) !important;
+  border-left: 3px solid transparent;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px; font-weight: 600;
+  transition: all 0.2s ease;
+  padding: 10px 15px 10px 18px;
+}
+.sidebar .sidebar-menu > li.active > a,
+.sidebar .sidebar-menu > li > a:hover {
+  background: rgba(255,255,255,0.10) !important;
+  border-left-color: #A855F7 !important;
+  color: #ffffff !important;
+}
+.sidebar .sidebar-menu li ul.treeview-menu > li > a {
+  color: rgba(255,255,255,0.68) !important;
+  font-size: 12px !important; font-weight: 500 !important;
+  padding: 6px 14px 6px 32px !important;
+  border-left: 2px solid transparent;
+  transition: all 0.17s ease;
+}
+.sidebar .sidebar-menu li ul.treeview-menu > li.active > a,
+.sidebar .sidebar-menu li ul.treeview-menu > li > a:hover {
+  background: rgba(124,58,237,0.18) !important;
+  border-left-color: #F59E0B !important;
+  color: #ffffff !important;
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+.main-header, .main-header .navbar {
+  background: linear-gradient(135deg, #0A0318 0%, #1E0A3C 100%) !important;
+  border-bottom: 1px solid rgba(124,58,237,0.40) !important;
+}
+.main-header .logo {
+  background: linear-gradient(135deg, #0A0318 0%, #2D1060 100%) !important;
+  color: #ffffff !important;
+  font-weight: 800;
+  font-family: 'Inter', sans-serif;
+  border-right: 1px solid rgba(124,58,237,0.4);
+}
+.main-header .navbar .sidebar-toggle,
+.main-header .navbar .sidebar-toggle:hover { color: rgba(255,255,255,.8) !important; }
+
+/* Platform badge */
+.sidebar-platform-badge { padding:14px 16px 10px; border-bottom:1px solid rgba(255,255,255,.10); margin-bottom:4px; }
+.platform-chip { background:rgba(124,58,237,.28); border:1px solid rgba(124,58,237,.55); color:#E9D5FF; border-radius:8px; padding:6px 12px; font-size:11px; font-weight:700; text-align:center; font-family:'JetBrains Mono',monospace; }
+.platform-sub  { font-size:10px; color:rgba(255,255,255,.42); text-align:center; margin-top:5px; font-style:italic; }
+
+/* ── Boxes ──────────────────────────────────────────────────── */
+.box { background:rgba(255,255,255,.98) !important; border:none !important; border-radius:14px !important; box-shadow:0 8px 28px rgba(30,10,60,.22) !important; margin-bottom:20px; transition:transform .2s, box-shadow .2s; }
+.box:hover { transform:translateY(-2px); box-shadow:0 14px 38px rgba(30,10,60,.30) !important; }
+.box-header { background:linear-gradient(135deg,#4C1D95,#7C3AED) !important; color:#fff !important; border-radius:14px 14px 0 0 !important; padding:12px 20px; border-bottom:none !important; }
+.box-header > .box-title { color:#fff !important; font-weight:700; font-size:13.5px; }
+.box-body { background:#fff !important; color:#1e293b !important; padding:20px; border-radius:0 0 14px 14px; }
+.box.box-primary > .box-header { background:linear-gradient(135deg,#4C1D95,#7C3AED) !important; }
+.box.box-info    > .box-header { background:linear-gradient(135deg,#0369a1,#0ea5e9) !important; }
+.box.box-success > .box-header { background:linear-gradient(135deg,#166534,#22c55e) !important; }
+.box.box-warning > .box-header { background:linear-gradient(135deg,#92400e,#f59e0b) !important; }
+.box.box-danger  > .box-header { background:linear-gradient(135deg,#991b1b,#ef4444) !important; }
+
+/* ── Small boxes ─────────────────────────────────────────────── */
+.small-box { border-radius:12px !important; box-shadow:0 6px 20px rgba(0,0,0,.15) !important; transition:transform .2s; }
+.small-box:hover { transform:translateY(-3px); }
+
+/* ── Hero banner ─────────────────────────────────────────────── */
+.meta-hero {
+  background: linear-gradient(135deg,#1E0A3C 0%,#4C1D95 50%,#7C3AED 100%);
+  color:white; padding:34px 36px 30px; border-radius:16px;
+  margin-bottom:22px; text-align:center;
+  box-shadow:0 12px 40px rgba(30,10,60,.45);
+  position:relative; overflow:hidden;
+}
+.meta-hero::before {
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(ellipse at 65% 30%, rgba(255,255,255,.07) 0%, transparent 65%);
+  pointer-events:none;
+}
+.meta-hero h1 { font-size:2em; font-weight:800; margin:0 0 8px; letter-spacing:-.4px; color:#fff; }
+.meta-hero h2 { font-size:.95em; font-weight:400; opacity:.77; margin-bottom:16px; color:#DDD6FE; }
+.meta-hero .hero-badge { display:inline-block; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.30); color:#fff; padding:4px 13px; border-radius:20px; font-size:11px; margin:3px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; }
+
+/* ── Metric cards ────────────────────────────────────────────── */
+.metric-card { background:linear-gradient(135deg,#6D28D9,#7C3AED); border:none; color:white; border-radius:12px; padding:18px; text-align:center; margin-bottom:14px; box-shadow:0 4px 20px rgba(30,10,60,.28); transition:transform .2s, box-shadow .2s; }
+.metric-card:hover { transform:translateY(-3px); box-shadow:0 8px 28px rgba(30,10,60,.38); }
+.metric-card .metric-value { font-size:2em; font-weight:800; display:block; line-height:1.1; color:#fff; font-family:'JetBrains Mono',monospace; }
+.metric-card .metric-label { font-size:10px; text-transform:uppercase; letter-spacing:1px; margin-top:5px; color:rgba(255,255,255,.70); }
+
+/* ── Callout boxes ───────────────────────────────────────────── */
+.tip-box     { background:#EFF6FF; border-left:4px solid #3B82F6; color:#1e3a5f; border-radius:10px; padding:12px 16px; margin:10px 0; font-size:13px; line-height:1.55; }
+.warn-box    { background:#FFFBEB; border-left:4px solid #F59E0B; color:#78350f; border-radius:10px; padding:12px 16px; margin:10px 0; font-size:13px; line-height:1.55; }
+.success-box { background:#F0FDF4; border-left:4px solid #22C55E; color:#14532d; border-radius:10px; padding:12px 16px; margin:10px 0; font-size:13px; line-height:1.55; }
+.ua-callout  { background:#F0F9FF; border-left:4px solid #38BDF8; border-radius:8px; padding:11px 15px; margin:10px 0; font-size:12.5px; color:#0c4a6e; }
+
+/* ── Code box ────────────────────────────────────────────────── */
+.code-box { background:#060D18; border-radius:10px; padding:13px 17px; font-family:'JetBrains Mono',monospace; font-size:12px; color:#E9D5FF; line-height:1.65; overflow-x:auto; margin:10px 0; }
+
+/* ── Section headings ────────────────────────────────────────── */
+.section-heading      { color:#7C3AED; font-weight:700; font-size:1.05em; border-bottom:2px solid #A855F7; padding-bottom:6px; margin-bottom:12px; }
+.section-heading-dark { color:#4C1D95; font-weight:700; font-size:11.5px; text-transform:uppercase; letter-spacing:1.5px; border-left:4px solid #7C3AED; padding-left:11px; margin:13px 0 10px; }
+
+/* ── GL items (key-value display) ───────────────────────────── */
+.gl-item   { background:#F8FAFC; border:1px solid #E2E8F0; border-radius:9px; padding:12px 14px; margin-bottom:7px; }
+.gl-term   { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:#7C3AED; margin-bottom:3px; }
+.gl-def    { font-size:12.5px; color:#374151; }
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.btn-primary { background:linear-gradient(135deg,#6D28D9,#7C3AED) !important; border:none !important; border-radius:8px !important; color:#fff !important; font-weight:600 !important; transition:all .2s ease; }
+.btn-primary:hover { background:linear-gradient(135deg,#4C1D95,#6D28D9) !important; transform:translateY(-1px); box-shadow:0 4px 14px rgba(124,58,237,.4); color:#fff !important; }
+.btn-warning { background:linear-gradient(135deg,#92400e,#f59e0b) !important; border:none !important; border-radius:8px !important; color:#fff !important; }
+.btn-info    { background:linear-gradient(135deg,#0369a1,#38bdf8) !important; border:none !important; border-radius:8px !important; color:#fff !important; }
+.btn-success { background:linear-gradient(135deg,#166534,#22c55e) !important; border:none !important; border-radius:8px !important; color:#fff !important; }
+
+/* ── Inputs ──────────────────────────────────────────────────── */
+.shiny-input-container label { color:#1E0A3C !important; font-size:12px !important; font-weight:600 !important; }
+.form-control { background:#fff !important; border:2px solid #C4B5FD !important; border-radius:8px !important; color:#1e293b !important; font-family:'Inter',sans-serif !important; font-size:12.5px !important; transition:border-color .3s, box-shadow .3s; }
+.form-control:focus { border-color:#7C3AED !important; box-shadow:0 0 0 3px rgba(124,58,237,.12) !important; }
+textarea.form-control { resize:vertical; min-height:68px; }
+.selectize-control .selectize-input { background:#fff !important; border:2px solid #C4B5FD !important; border-radius:8px !important; color:#1e293b !important; }
+.selectize-dropdown { background:#fff !important; border:1px solid #C4B5FD !important; color:#1e293b !important; box-shadow:0 4px 20px rgba(30,10,60,.15); }
+.selectize-dropdown .option:hover, .selectize-dropdown .option.active { background:#EDE9FE !important; color:#1E0A3C !important; }
+
+/* ── Tables ──────────────────────────────────────────────────── */
+.table th { background:#EDE9FE !important; color:#4C1D95 !important; border-color:#C4B5FD !important; font-size:11px !important; text-transform:uppercase; letter-spacing:.8px; font-weight:700 !important; }
+.table td { border-color:#F3F4F6 !important; color:#374151 !important; font-size:12.5px !important; }
+.table-hover tbody tr:hover td { background:#F5F3FF !important; }
+
+/* ── Checkboxes ──────────────────────────────────────────────── */
+.checkbox label { color:#374151; font-size:13px; font-weight:500; }
+
+/* ── Progress bars ───────────────────────────────────────────── */
+.progress { height:10px; border-radius:6px !important; background:#EDE9FE !important; }
+.progress-bar { background:linear-gradient(90deg,#7C3AED,#A855F7) !important; border-radius:6px !important; }
+
+/* ── Notifications ───────────────────────────────────────────── */
+.shiny-notification { background:#fff !important; border:2px solid #7C3AED !important; border-radius:10px !important; color:#1E0A3C !important; font-family:'Inter',sans-serif !important; font-size:13px !important; }
+
+/* ── Modal ───────────────────────────────────────────────────── */
+.modal-header { background:linear-gradient(135deg,#4C1D95,#7C3AED); color:#fff; border-radius:5px 5px 0 0; }
+.modal-header .modal-title { color:#fff; font-weight:700; }
+.modal-header .close { color:#fff; opacity:.8; }
+
+/* ── Verbatim output ─────────────────────────────────────────── */
+pre, code { background:#F5F3FF !important; color:#1E0A3C !important; border:1px solid #C4B5FD !important; border-radius:7px !important; font-family:'JetBrains Mono',monospace !important; font-size:11.5px !important; }
+pre { padding:13px !important; line-height:1.7 !important; overflow-x:auto; }
+
+/* ── Scroll pane ─────────────────────────────────────────────── */
+*::-webkit-scrollbar       { width:5px; height:5px; }
+*::-webkit-scrollbar-track { background:rgba(0,0,0,.15); }
+*::-webkit-scrollbar-thumb { background:#6D28D9; border-radius:3px; }
+
+/* ── DT tables ───────────────────────────────────────────────── */
+.dataTables_wrapper      { font-size:12.5px; color:#374151; }
+.dataTables_filter input { background:#fff !important; border:2px solid #C4B5FD !important; border-radius:6px !important; color:#1e293b !important; }
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width:768px) {
+  .meta-hero h1 { font-size:1.5em; }
+  .metric-card .metric-value { font-size:1.5em; }
+}

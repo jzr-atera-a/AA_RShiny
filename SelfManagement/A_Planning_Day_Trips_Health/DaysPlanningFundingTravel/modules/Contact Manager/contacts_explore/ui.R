@@ -38,6 +38,8 @@ contacts_explore_ui <- function(id) {
           br(),
           htmlOutput(ns("update_status"))
       )
-    )
+    ),
+
+    generic_export_box_ui(ns, title = "Save Contacts")
   )
 }

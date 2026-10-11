@@ -13,7 +13,7 @@ groups:
     label: "API Settings"
     icon: "key"
     expanded: true
-    modules: [claude_config, chatgpt_config, bq_config]
+    modules: [claude_config, bq_config, openai_api, debug_console]
 
   - id: communications
     label: "Communications"
@@ -49,7 +49,7 @@ groups:
     label: "Audio Transcription"
     icon: "microphone"
     expanded: false
-    modules: [video_extractor, converter, whisper_settings, chatgpt_settings, transcription, summary, bulk_analysis, analytics]
+    modules: [video_extractor, converter, transcription, summary, bulk_analysis, analytics]
 
   - id: receipt_processor
     label: "Receipt Processor"
@@ -84,6 +84,41 @@ modules:
     icon: "database"
     folder: "API Settings"
     file: "bq_config"
+
+  debug_console:
+    enabled: true
+    label: "Debug Console"
+    icon: "terminal"
+    folder: "API Settings"
+    file: "debug_console"
+
+  openai_api:
+    enabled: true
+    label: "OpenAI API (Whisper + ChatGPT)"
+    icon: "robot"
+    folder: "API Settings"
+    file: "openai_api"
+
+  openai_base:
+    enabled: false
+    label: "OpenAI API Base (Shared - Utility Only)"
+    icon: "cogs"
+    folder: "API Settings"
+    file: "openai_base"
+
+  whisper_api:
+    enabled: false
+    label: "Whisper API Settings (DEPRECATED - use openai_api)"
+    icon: "microphone"
+    folder: "API Settings"
+    file: "whisper_api"
+
+  chatgpt_api:
+    enabled: false
+    label: "ChatGPT API Settings (DEPRECATED - use openai_api)"
+    icon: "brain"
+    folder: "API Settings"
+    file: "chatgpt_api"
 
   smtp_config:
     enabled: true
@@ -308,20 +343,6 @@ modules:
     icon: "scissors"
     folder: "Audio Transcription"
     file: "converter"
-
-  whisper_settings:
-    enabled: true
-    label: "Whisper API Settings"
-    icon: "microphone"
-    folder: "Audio Transcription"
-    file: "whisper_settings"
-
-  chatgpt_settings:
-    enabled: true
-    label: "ChatGPT API Settings"
-    icon: "brain"
-    folder: "Audio Transcription"
-    file: "chatgpt_settings"
 
   transcription:
     enabled: true

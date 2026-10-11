@@ -1,0 +1,17 @@
+module:
+  id: "schedule_prep_checklist"
+  name: "Prep Checklist"
+  description: "Interactive checklist to track completion of a day's preparation steps"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "Prep Checklist"
+    icon: "tasks"
+    tabname: "schedule_prep_checklist"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

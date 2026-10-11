@@ -13,7 +13,7 @@ generate_diet_server <- function(id, api_manager) {
         return(invisible(NULL))
       }
       tryCatch({
-        df <- parse_diet_text(text)
+        df <- parse_diet_text(text, default_tz = input$time_zone)
         parsed_preview(df)
         output$preview_table <- DT::renderDataTable({
           DT::datatable(df, options = list(pageLength = 10, scrollX = TRUE), rownames = FALSE)
@@ -69,10 +69,10 @@ generate_diet_server <- function(id, api_manager) {
       })
 
       prompt <- tryCatch({
-        generate_diet_prompt(
+        bos_tz_wrap_prompt(generate_diet_prompt(
           as.character(input$log_date), dt,
           input$dietary_restrictions, input$preferences, input$target_calories
-        )
+        ), input$time_zone, input$log_date)
       }, error = function(e) {
         shinyjs::hide("loading_spinner")
         output$status <- renderUI({
@@ -88,9 +88,9 @@ generate_diet_server <- function(id, api_manager) {
           progress_callback = function(msg) { progress_msg(msg) }
         )
 
-        diet_text <- overwrite_diet_header(
+        diet_text <- bos_tz_set_header(overwrite_diet_header(
           result$text, as.character(input$log_date), dt, input$dietary_restrictions
-        )
+        ), input$time_zone)
 
         updateTextAreaInput(session, "diet_text_edit", value = diet_text)
         shinyjs::hide("loading_spinner")
@@ -145,7 +145,7 @@ generate_diet_server <- function(id, api_manager) {
       })
 
       tryCatch({
-        parsed_df <- parse_diet_text(current_text)
+        parsed_df <- parse_diet_text(current_text, default_tz = input$time_zone)
         rows_uploaded <- api_manager$bq_insert_diet(parsed_df)
         api_manager$trigger_state_update_diet()
 

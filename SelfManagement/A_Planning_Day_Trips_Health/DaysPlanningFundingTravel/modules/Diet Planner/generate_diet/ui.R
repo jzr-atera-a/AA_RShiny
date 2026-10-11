@@ -15,6 +15,7 @@ generate_diet_ui <- function(id) {
           column(6,
                  dateInput(ns("log_date"), "Date:", value = Sys.Date()),
                  diet_type_dropdown_ui(ns),
+                 bos_tz_dropdown_ui(ns),
                  numericInput(ns("target_calories"), "Daily Calorie Target (optional):",
                               value = NA, min = 800, max = 5000, step = 50)
           ),
