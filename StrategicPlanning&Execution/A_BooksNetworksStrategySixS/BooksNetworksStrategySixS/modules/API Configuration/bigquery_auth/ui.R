@@ -11,7 +11,7 @@ bigquery_auth_ui <- function(id) {
         solidHeader = TRUE,
         width = 12,
 
-        h4("BigQuery Configuration - shared by all seven suites"),
+        h4("BigQuery Configuration - shared by all eight suites"),
         p("Connect ONCE here. This authenticates Book Summary, Flex Table, Mind Map, Knowledge Graph, ",
           "Sankey Graph, Strategic Analysis, AND Six Sigma Analysis together - they share the same ",
           "project/dataset, but each has its own table, all auto-created below."),
@@ -46,7 +46,7 @@ bigquery_auth_ui <- function(id) {
                  textInput(ns("dataset_id"), "Dataset ID:", value = "Wonderfulp_March", width = "100%"),
 
                  p(style = "color: #7f8c8d; font-size: 12px;",
-                   "All seven tables live in this one project/dataset. Table names are fixed (shown above) ",
+                   "All eight tables live in this one project/dataset. Table names are fixed (shown above) ",
                    "since each suite's code targets its table by name directly.")
           )
         ),
@@ -61,7 +61,7 @@ bigquery_auth_ui <- function(id) {
                  selectInput(ns("test_table_choice"), "Table to test-query:",
                             choices = c("Book Summary" = "books", "Flex Table" = "flex", "Mind Map" = "mindmap",
                                         "Knowledge Graph" = "kg", "Sankey Graph" = "sankey",
-                                        "Strategic Analysis" = "diagram", "Six Sigma Analysis" = "sixsigma"))
+                                        "Strategic Analysis" = "diagram", "Six Sigma Analysis" = "sixsigma", "Technical Designs" = "techdesign"))
           )
         ),
         actionButton(ns("test_query"), "Test Query (Top 5 Rows of selected table)",

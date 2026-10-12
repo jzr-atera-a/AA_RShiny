@@ -14,7 +14,7 @@ edit_mindmap_server <- function(id, api_manager) {
     edit_taxonomy <- reactive({
       api_manager$state_trigger_mindmap()
       if (!api_manager$bq_authenticated) return(api_manager$empty_mindmap_taxonomy())
-      tryCatch(api_manager$bq_get_mindmap_taxonomy(), error = function(e) api_manager$empty_mindmap_taxonomy())
+      tryCatch(api_manager$bq_get_mindmap_taxonomy_regular(), error = function(e) api_manager$empty_mindmap_taxonomy())
     })
 
     observeEvent(edit_taxonomy(), {
@@ -133,7 +133,7 @@ edit_mindmap_server <- function(id, api_manager) {
     observeEvent(input$request_edit, {
 
       if (!api_manager$claude_authenticated) {
-        showNotification("Please configure Claude API credentials first!", type = "error")
+        showNotification("Please configure Editing Tool API credentials first!", type = "error")
         return()
       }
       if (is.null(current_tree())) {
@@ -227,7 +227,7 @@ edit_mindmap_server <- function(id, api_manager) {
           output$edit_status <- renderUI({
             tags$div(class = "status-warning",
                      tags$i(class = "fa fa-exclamation-triangle"),
-                     " Claude's response has issues - review carefully before applying:",
+                     " The Editing Tool's response has issues - review carefully before applying:",
                      tags$ul(lapply(problems, tags$li)))
           })
         } else {

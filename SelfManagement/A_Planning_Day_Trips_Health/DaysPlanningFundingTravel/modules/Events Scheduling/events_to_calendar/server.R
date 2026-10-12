@@ -4,13 +4,31 @@ events_to_calendar_server <- function(id, api_manager) {
   moduleServer(id, function(input, output, session) {
 
     ns <- session$ns
-    rv <- reactiveValues(imported = NULL, import_label = NULL, import_text = NULL, events = NULL)
+    rv <- reactiveValues(imported = NULL, import_label = NULL, import_text = NULL, events = NULL,
+                         pending_invite = NULL, extra_zone = NULL)
 
     log_msg <- function(...) api_manager$titan_log_add(paste0(...))
 
     sel_tz <- function() {
       z <- input$tz
       if (is.null(z) || !nzchar(z) || !z %in% OlsonNames()) TITAN_DEFAULT_TZ else z
+    }
+
+    sel_form_tz <- function() {
+      z <- input$form_tz
+      if (is.null(z) || !nzchar(z) || !z %in% OlsonNames()) TITAN_DEFAULT_TZ else z
+    }
+
+    # A zone that is not in the 30-zone list (e.g. read from a Zoom invite) is added to all three selectors.
+    zone_choices <- function() {
+      z <- rv$extra_zone
+      if (is.null(z) || z %in% TITAN_TIMEZONES) TITAN_TIMEZONES else c(TITAN_TIMEZONES, setNames(z, paste0(z, " (from invite)")))
+    }
+    use_zone <- function(z) {
+      z <- bos_tz_value(z)
+      if (!z %in% TITAN_TIMEZONES) rv$extra_zone <- z
+      ch <- zone_choices()
+      for (id in c("form_tz", "tz", "import_tz")) updateSelectInput(session, id, choices = ch, selected = z)
     }
 
     creds <- reactive(api_manager$titan_credentials())
@@ -56,7 +74,7 @@ events_to_calendar_server <- function(id, api_manager) {
       if (!is.null(input$custom_rem) && !is.na(input$custom_rem) && input$custom_rem >= 0)
         rem <- c(rem, as.integer(input$custom_rem))
       rem <- sort(unique(rem))
-      tz <- sel_tz()
+      tz <- sel_form_tz()
       if (isTRUE(input$all_day)) {
         s_min <- NA_real_; e_min <- NA_real_
       } else {
@@ -68,9 +86,11 @@ events_to_calendar_server <- function(id, api_manager) {
         s_min <- hm[1] * 60 + hm[2]
         e_min <- s_min + dur
       }
-      ev <- ics_event(titan_new_uid(), title, as.Date(input$date), s_min, e_min,
+      inv <- rv$pending_invite
+      ev <- ics_event(if (!is.null(inv)) inv$uid else titan_new_uid(), title, as.Date(input$date), s_min, e_min,
                       description = titan_or(input$description, ""), location = titan_or(input$location, ""),
-                      alarms = if (length(rem)) sprintf("-PT%dM", rem) else NULL)
+                      alarms = if (length(rem)) sprintf("-PT%dM", rem) else NULL, tz = tz)   # the event keeps ITS zone
+      if (!is.null(inv) && !isTRUE(input$all_day)) ev$invite <- inv                          # remembered for Send Email
       titan_events_to_queue(list(ev), tz)[[1]]
     }
 
@@ -87,6 +107,7 @@ events_to_calendar_server <- function(id, api_manager) {
       ev <- try_form(); if (is.null(ev)) return()
       api_manager$titan_queue_add(list(ev))
       updateTextInput(session, "title", value = "")
+      rv$pending_invite <- NULL
       showNotification(paste("Added:", ev$title), type = "message")
     })
 
@@ -144,18 +165,42 @@ events_to_calendar_server <- function(id, api_manager) {
       res
     }
 
+    # Saved events that came from a Zoom invite: prepare the invite email and go to Send Email.
+    offer_invites <- function(items) {
+      inv_items <- Filter(function(it) !is.null(it$ev$invite), items)
+      if (!length(inv_items)) return(invisible(FALSE))
+      org <- creds()$user
+      drafts <- api_manager$mail_drafts()
+      for (it in inv_items) {
+        d <- zoom_make_draft(it, org)
+        drafts <- c(Filter(function(x) x$uid != d$uid, drafts), list(d))
+      }
+      api_manager$mail_drafts(drafts)
+      log_msg("Invite email prepared for ", length(inv_items), " event(s): opening Send Email.")
+      showNotification("Saved. The invite email is ready in Send Email.", type = "message", duration = 8)
+      tryCatch(updateTabItems(session$rootScope(), "sidebar_menu", selected = "contacts_send_email"),
+               error = function(e) cat("[Zoom] could not switch tab:", conditionMessage(e), "\n"))
+      invisible(TRUE)
+    }
+
     observeEvent(input$save_one, {
       if (!need_connection()) return()
       ev <- try_form(); if (is.null(ev)) return()
-      if (all(save_items(list(ev)))) updateTextInput(session, "title", value = "")
+      if (all(save_items(list(ev)))) {
+        updateTextInput(session, "title", value = "")
+        offer_invites(list(ev))
+        rv$pending_invite <- NULL
+      }
     })
 
     observeEvent(input$save_all, {
       if (!need_connection()) return()
       q <- api_manager$titan_queue()
       if (!length(q)) { showNotification("The list is empty.", type = "warning"); return() }
-      ok <- save_items(rendered_queue(), overwrite = isTRUE(input$overwrite_queue))
+      rq <- rendered_queue()
+      ok <- save_items(rq, overwrite = isTRUE(input$overwrite_queue))
       api_manager$titan_queue(q[!ok])        # failed items stay in the list
+      if (any(ok)) offer_invites(rq[ok])
     })
 
     # ---- import ----
@@ -188,6 +233,10 @@ events_to_calendar_server <- function(id, api_manager) {
     observeEvent(input$tz, {
       api_manager$titan_tz <- sel_tz()
       if (!identical(input$import_tz, input$tz)) updateSelectInput(session, "import_tz", selected = input$tz)
+      if (!identical(input$form_tz, input$tz)) updateSelectInput(session, "form_tz", selected = input$tz)
+    }, ignoreInit = TRUE)
+    observeEvent(input$form_tz, {
+      if (!identical(input$form_tz, input$tz)) updateSelectInput(session, "tz", selected = input$form_tz)
     }, ignoreInit = TRUE)
     observeEvent(input$import_tz, {
       if (!identical(input$import_tz, input$tz)) updateSelectInput(session, "tz", selected = input$import_tz)
@@ -200,6 +249,33 @@ events_to_calendar_server <- function(id, api_manager) {
       if (is.null(p)) return()
       load_import_text(p$text, paste0("the ", p$label, " tab"))
     }, ignoreInit = TRUE)
+
+    # Zoom invite read by Claude (Zoom Schedule tab): fill Event details, zone included
+    observeEvent(api_manager$zoom_invite(), {
+      z <- api_manager$zoom_invite()
+      if (is.null(z)) return()
+      use_zone(z$tz)
+      join <- zoom_join_text(z$zoom_link, z$meeting_id, z$passcode, z$join_details)
+      updateTextInput(session, "title", value = z$subject)
+      updateDateInput(session, "date", value = z$date)
+      updateTextInput(session, "start", value = z$start)
+      updateNumericInput(session, "duration", value = z$duration)
+      updateCheckboxInput(session, "all_day", value = FALSE)
+      updateTextInput(session, "location", value = if (nzchar(z$zoom_link)) z$zoom_link else "Zoom")
+      updateTextAreaInput(session, "description", value = join)
+      rv$pending_invite <- list(uid = titan_new_uid(), attendees = z$attendees, zoom_link = z$zoom_link,
+                                meeting_id = z$meeting_id, passcode = z$passcode, join_details = z$join_details,
+                                organizer_email = z$organizer_email)
+      api_manager$titan_log_add(sprintf("Zoom invite received: %s (%s %s %s)", z$subject, format(z$date), z$start, z$tz))
+    }, ignoreInit = TRUE)
+
+    output$invite_note <- renderUI({
+      inv <- rv$pending_invite
+      if (is.null(inv)) return(NULL)
+      div(class = "status-info", style = "margin-bottom: 10px;", icon("video"), " From a Zoom invite. To: ",
+          tags$strong(if (length(inv$attendees)) paste(inv$attendees, collapse = ", ") else "(none found)"),
+          ". After you add the event to the list and save it, the invite email opens in Send Email.")
+    })
 
     # ask for a particular horizontal sub-tab (set by the Visualisation tabs)
     observeEvent(api_manager$titan_goto_tab(), {

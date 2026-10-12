@@ -1,7 +1,7 @@
 module:
   id: "generate_summary"
   name: "Generate Summary"
-  description: "AI-powered book summary generation with Claude"
+  description: "AI-powered book summary generation with the Editing Tool"
   version: "1.0.0"
   author: "Book Summary Suite Team"
   

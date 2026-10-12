@@ -37,7 +37,7 @@ edit_mindmap_ui <- function(id) {
         solidHeader = TRUE,
         width = 12,
 
-        p("Describe what should change. Claude will return ONLY the delta (new/changed/removed ",
+        p("Describe what should change. The Editing Tool will return ONLY the delta (new/changed/removed ",
           "nodes) - the app automatically cascades any DELETE to that node's descendants, so you ",
           "don't need to list them individually."),
 
@@ -59,13 +59,13 @@ edit_mindmap_ui <- function(id) {
           )
         ),
 
-        actionButton(ns("request_edit"), "Request Edit from Claude", class = "btn-primary btn-lg",
+        actionButton(ns("request_edit"), "Request Edit from the Editing Tool", class = "btn-primary btn-lg",
                     icon = icon("magic"), style = "width: 100%;"),
 
         hr(),
         div(id = ns("loading_spinner"), style = "display: none; text-align: center; padding: 20px;",
             icon("spinner", class = "fa-spin fa-3x"),
-            h4("Requesting edit from Claude...")),
+            h4("Requesting edit from the Editing Tool...")),
         htmlOutput(ns("edit_status")),
         verbatimTextOutput(ns("raw_delta_text"))
       )

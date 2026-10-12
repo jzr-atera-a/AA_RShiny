@@ -1,0 +1,35 @@
+module:
+  id: "techdesign_about"
+  name: "About Technical Designs"
+  description: "Schema, text format and how to extend the catalog"
+  version: "1.0.0"
+  author: "Technical Designs Suite"
+
+  enabled: true
+
+  menu:
+    label: "About Technical Designs"
+    icon: "info-circle"
+    tabname: "techdesign_about"
+    group: "Technical Designs"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinyjs
+      - jsonlite
+      - DT
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: ["claude", "bigquery"]
+
+  data:
+    required: []
+    optional: []

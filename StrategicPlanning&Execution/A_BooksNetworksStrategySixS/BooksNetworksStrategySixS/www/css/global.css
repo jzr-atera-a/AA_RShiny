@@ -489,7 +489,7 @@ table.flex-comparison-table tbody tr:hover th.row-index-cell {
 
    Layout is deliberately done with CSS Grid/Flexbox for the grid/quadrant/
    stacked_list/linear_flow family specifically because the browser's layout
-   engine makes overlapping elements structurally impossible - Claude never
+   engine makes overlapping elements structurally impossible - the Editing Tool never
    supplies pixel positions for these, only grid_row/grid_col/sequence_order.
    ============================================================================= */
 :root {
@@ -724,3 +724,64 @@ table.flex-comparison-table tbody tr:hover th.row-index-cell {
   border-radius: 8px; font-size: 14px; font-weight: 600;
   box-shadow: 0 4px 14px rgba(0,0,0,0.3);
 }
+
+
+/* ---- Rules Table (Strategic Analysis -> Rules & Guidelines) ---- */
+.rules-table { width: 100%; border-collapse: collapse; margin-top: 14px; table-layout: fixed; }
+.rules-table th { background: #002C3C; color: #fff; text-align: left; padding: 10px 12px; font-size: 0.95em; }
+.rules-table td { vertical-align: top; padding: 10px 12px; border-bottom: 1px solid #e6ecec; word-wrap: break-word; overflow-wrap: anywhere; }
+.rules-table tbody tr:nth-child(even) td { background: #f8fafa; }
+.rules-table .rules-col-rule { font-weight: 700; width: 26%; }
+.rules-table th:nth-child(1) { width: 26%; }
+.rules-table th:nth-child(2), .rules-table th:nth-child(3) { width: 37%; }
+.rules-num { display: inline-block; min-width: 1.6em; height: 1.6em; line-height: 1.6em; text-align: center; border-radius: 50%; background: #008A82; color: #fff; font-size: 0.85em; margin-right: 6px; }
+.rules-source { margin-top: 6px; font-size: 0.88em; font-style: italic; color: #5d6d7e; }
+@media (max-width: 700px) { .rules-table { font-size: 0.85em; } .rules-table td, .rules-table th { padding: 6px; } }
+
+
+/* ---- Technical Designs diagrams ---- */
+.td-card { background:#fff; border-radius:12px; padding:20px; margin:12px 0; box-shadow:0 4px 15px rgba(0,44,60,0.15); border-left:5px solid #008A82; }
+.td-title { font-size:1.35em; font-weight:700; color:#002C3C; }
+.td-variant { font-size:0.65em; font-weight:600; background:#D6EAF8; color:#1B4F72; border-radius:10px; padding:2px 9px; margin-left:6px; vertical-align:middle; }
+.td-complexity { font-size:0.6em; font-weight:600; background:#FCF3CF; color:#7D6608; border-radius:10px; padding:2px 9px; margin-left:6px; vertical-align:middle; }
+.td-tags { margin:6px 0; }
+.td-tag { display:inline-block; font-size:0.78em; background:#EAEDED; color:#2C3E50; border-radius:10px; padding:1px 9px; margin:2px 4px 2px 0; }
+.td-summary { color:#34495E; margin:8px 0 12px; }
+.td-svg-wrap { overflow-x:auto; border:1px solid #E5E8E8; border-radius:10px; background:#FDFEFE; padding:8px; }
+.td-svg { display:block; margin:0 auto; font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif; }
+.td-svg .td-lane { fill:#fff; font-size:13px; font-weight:700; letter-spacing:0.3px; }
+.td-svg .td-kind { font-size:8.5px; font-weight:700; letter-spacing:1.2px; opacity:0.85; }
+.td-svg .td-label { font-size:12.5px; font-weight:700; fill:#1B2631; }
+.td-svg .td-tech { font-size:10.2px; fill:#566573; font-style:italic; }
+.td-svg .td-elabel { font-size:10px; font-weight:600; }
+.td-svg .td-tier { font-size:10px; font-weight:700; fill:#7B8794; letter-spacing:1.4px; }
+.td-svg .td-cname { font-size:13px; font-weight:700; fill:#1B2631; }
+.td-svg .td-ital { font-style:italic; }
+.td-svg .td-stereo { font-size:10px; fill:#566573; }
+.td-svg .td-member { font-size:11px; fill:#2C3E50; font-family:Consolas,'Courier New',monospace; }
+.td-svg .td-node { cursor:pointer; transition:opacity .2s; }
+.td-svg .td-node:hover rect, .td-svg .td-node:hover path, .td-svg .td-node:hover polygon { filter:drop-shadow(0 2px 4px rgba(0,0,0,0.35)); }
+.td-svg .td-edge { transition:opacity .2s; }
+.td-card.td-focus .td-node:not(.td-on) { opacity:0.18; }
+.td-card.td-focus .td-edge:not(.td-on) { opacity:0.08; }
+.td-card.td-focus .td-edge.td-on path { stroke-width:3; }
+.td-legend { margin:10px 0 4px; font-size:0.82em; color:#34495E; }
+.td-chip { display:inline-flex; align-items:center; gap:4px; margin:2px 10px 2px 0; }
+.td-swatch { display:inline-block; width:14px; height:14px; border:2px solid; border-radius:3px; }
+.td-detail { background:#F4F8FB; border:1px dashed #AEB6BF; border-radius:8px; padding:10px 14px; margin:10px 0; min-height:44px; color:#2C3E50; }
+.td-detail p { margin:4px 0; }
+.td-kindtag, .td-lanetag { font-size:0.75em; border-radius:9px; padding:1px 8px; margin-left:4px; }
+.td-kindtag { background:#E8DAEF; color:#4A235A; } .td-lanetag { background:#D6EAF8; color:#1B4F72; }
+.td-two-col { display:flex; gap:14px; flex-wrap:wrap; }
+.td-two-col > div { flex:1 1 280px; border-radius:8px; padding:8px 14px; }
+.td-use { background:#EAFAF1; border-left:4px solid #27AE60; } .td-avoid { background:#FDEDEC; border-left:4px solid #C0392B; }
+.td-two-col h5 { margin:4px 0; font-weight:700; }
+.td-section { margin-top:14px; } .td-section h4 { color:#002C3C; font-weight:700; font-size:1.05em; }
+.td-steps { padding-left:22px; } .td-steps li { cursor:pointer; padding:4px 8px; border-radius:6px; margin:2px 0; }
+.td-steps li:hover { background:#EAF2F8; } .td-steps li.td-active { background:#FCF3CF; font-weight:600; }
+.td-trade-grid { display:flex; gap:12px; flex-wrap:wrap; }
+.td-trade { flex:1 1 220px; background:#F8F9F9; border-radius:8px; padding:6px 14px; border-top:4px solid #AAB7B8; }
+.td-trade h5 { font-weight:700; margin:4px 0; } .td-trade ul { padding-left:18px; margin-bottom:6px; }
+.td-trade-pro { border-top-color:#27AE60; } .td-trade-con { border-top-color:#C0392B; } .td-trade-risk { border-top-color:#E67E22; }
+.td-trade-cost { border-top-color:#2E86C1; } .td-trade-scaling { border-top-color:#8E44AD; }
+@media (max-width: 700px) { .td-card { padding:12px; } .td-title { font-size:1.15em; } }

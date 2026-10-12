@@ -1,7 +1,7 @@
 module:
   id: "generate_sixsigma"
   name: "Generate Six Sigma Diagram"
-  description: "AI-powered Six Sigma diagram generation (Fishbone, Pareto, Control Chart, CTQ Tree, FMEA, etc.) via Claude"
+  description: "AI-powered Six Sigma diagram generation (Fishbone, Pareto, Control Chart, CTQ Tree, FMEA, etc.) via the Editing Tool"
   version: "1.0.0"
   author: "Six Sigma Analysis Suite Team"
 

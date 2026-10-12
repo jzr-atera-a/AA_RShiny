@@ -122,6 +122,7 @@ source("R/utils_export.R")
 source("R/utils_ics.R")
 source("R/utils_titan.R")
 source("R/utils_slack.R")
+source("R/utils_zoom.R")
 
 api_manager <- APIManager$new()
 

@@ -1,0 +1,306 @@
+design_id: seed_medallion_lakehouse
+design_group: data_processing
+design_type: medallion_lakehouse
+title: Medallion Lakehouse
+variant: Bronze, silver and gold layers
+summary: The medallion architecture organises a lakehouse into progressively refined layers. Bronze keeps raw data as ingested, silver holds cleaned, conformed and deduplicated data, and gold holds business-level aggregates and feature tables ready for analytics, BI and machine learning.
+when_to_use: You want one governed platform for raw, curated and analytics-ready data with clear quality stages and lineage.
+when_not_to_use: Data is small and simple enough for a single warehouse schema, or ultra-low-latency serving is the main need.
+complexity: Medium
+tags: medallion, lakehouse, bronze silver gold, delta lake, governance
+
+@component
+id: C1
+label: Operational Databases
+lane: Sources
+kind: external
+description: Transactional systems of record.
+technologies: Postgres, MySQL, SAP
+attributes: N/A
+methods: N/A
+
+@component
+id: C2
+label: SaaS and Files
+lane: Sources
+kind: external
+description: APIs, CSV and JSON drops from partners and tools.
+technologies: Salesforce, SFTP
+attributes: N/A
+methods: N/A
+
+@component
+id: C3
+label: Streams
+lane: Sources
+kind: external
+description: Event streams from applications and devices.
+technologies: Kafka, Kinesis
+attributes: N/A
+methods: N/A
+
+@component
+id: C4
+label: Ingestion Jobs
+lane: Ingestion
+kind: process
+description: Land data as is, with load timestamps and source metadata.
+technologies: Fivetran, Auto Loader, Airbyte
+attributes: N/A
+methods: N/A
+
+@component
+id: C5
+label: Bronze Layer
+lane: Lakehouse
+kind: store
+description: Raw, append-only tables that preserve the source exactly.
+technologies: Delta Lake, Iceberg
+attributes: N/A
+methods: N/A
+
+@component
+id: C6
+label: Silver Transformations
+lane: Lakehouse
+kind: process
+description: Clean, deduplicate, validate, type and join into entity tables.
+technologies: Spark, dbt, SQL
+attributes: N/A
+methods: N/A
+
+@component
+id: C7
+label: Silver Layer
+lane: Lakehouse
+kind: store
+description: Validated and conformed data at the entity level.
+technologies: Delta Lake, Iceberg
+attributes: N/A
+methods: N/A
+
+@component
+id: C8
+label: Gold Transformations
+lane: Lakehouse
+kind: process
+description: Aggregate and model data for business use.
+technologies: dbt, Spark SQL
+attributes: N/A
+methods: N/A
+
+@component
+id: C9
+label: Gold Layer
+lane: Lakehouse
+kind: store
+description: Business-ready marts, KPIs and feature tables.
+technologies: Delta Lake, Iceberg
+attributes: N/A
+methods: N/A
+
+@component
+id: C10
+label: Data Quality Checks
+lane: Governance
+kind: monitor
+description: Expectations on each layer that quarantine bad records.
+technologies: Great Expectations, DLT expectations
+attributes: N/A
+methods: N/A
+
+@component
+id: C11
+label: Catalog and Lineage
+lane: Governance
+kind: service
+description: Central metadata, access control and lineage across layers.
+technologies: Unity Catalog, DataHub
+attributes: N/A
+methods: N/A
+
+@component
+id: C12
+label: BI and Reporting
+lane: Consumers
+kind: actor
+description: Dashboards and ad hoc SQL.
+technologies: Power BI, Looker
+attributes: N/A
+methods: N/A
+
+@component
+id: C13
+label: ML and Data Science
+lane: Consumers
+kind: actor
+description: Model training and feature use.
+technologies: Notebooks, MLflow
+attributes: N/A
+methods: N/A
+
+@connection
+from: C1
+to: C4
+label: extract
+type: data
+
+@connection
+from: C2
+to: C4
+label: files
+type: data
+
+@connection
+from: C3
+to: C4
+label: events
+type: event
+
+@connection
+from: C4
+to: C5
+label: raw data
+type: data
+
+@connection
+from: C5
+to: C6
+label: raw tables
+type: data
+
+@connection
+from: C6
+to: C7
+label: clean tables
+type: data
+
+@connection
+from: C7
+to: C8
+label: entities
+type: data
+
+@connection
+from: C8
+to: C9
+label: marts
+type: data
+
+@connection
+from: C9
+to: C12
+label: curated data
+type: data
+
+@connection
+from: C9
+to: C13
+label: features
+type: data
+
+@connection
+from: C7
+to: C13
+label: detailed data
+type: data
+
+@connection
+from: C10
+to: C6
+label: quality rules
+type: control
+
+@connection
+from: C10
+to: C8
+label: quality rules
+type: control
+
+@connection
+from: C11
+to: C5
+label: govern
+type: control
+
+@connection
+from: C11
+to: C7
+label: govern
+type: control
+
+@connection
+from: C11
+to: C9
+label: govern
+type: control
+
+@connection
+from: C6
+to: C10
+label: failed records
+type: feedback
+
+@step
+order: 1
+text: Ingestion jobs land data from databases, files and streams.
+components: C1,C2,C3,C4
+
+@step
+order: 2
+text: Raw data is stored unchanged in bronze.
+components: C5
+
+@step
+order: 3
+text: Silver transformations clean, deduplicate and validate, with quality checks quarantining bad records.
+components: C6,C10,C7
+
+@step
+order: 4
+text: Gold transformations build business marts and feature tables.
+components: C8,C9
+
+@step
+order: 5
+text: BI and ML consume gold and silver data under catalog governance.
+components: C12,C13,C11
+
+@tradeoff
+kind: pro
+text: Clear quality stages, easy debugging and full reprocessing from bronze.
+
+@tradeoff
+kind: pro
+text: One platform serves BI, data science and streaming.
+
+@tradeoff
+kind: con
+text: Data is stored several times across layers.
+
+@tradeoff
+kind: con
+text: Layer boundaries need discipline and naming standards.
+
+@tradeoff
+kind: risk
+text: Without governance silver and gold can become unowned swamps.
+
+@tradeoff
+kind: cost
+text: Storage and compute grow with each layer and duplicate copy.
+
+@tradeoff
+kind: scaling
+text: Partition and compact tables; scale compute per layer independently.
+
+@reference
+title: Lakehouse: A New Generation of Open Platforms that Unify Data Warehousing and Advanced Analytics
+author: Armbrust et al., CIDR 2021
+url: N/A
+
+@reference
+title: Medallion Architecture
+author: Databricks documentation
+url: N/A
+

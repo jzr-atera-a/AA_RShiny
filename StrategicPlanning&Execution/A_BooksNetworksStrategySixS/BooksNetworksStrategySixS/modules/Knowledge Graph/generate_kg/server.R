@@ -8,10 +8,10 @@ generate_kg_server <- function(id, api_manager) {
     observeEvent(input$generate, {
 
       if (!api_manager$claude_authenticated) {
-        showNotification("Please configure and save Claude API credentials first!", type = "error", duration = 10)
+        showNotification("Please configure and save Editing Tool API credentials first!", type = "error", duration = 10)
         output$status <- renderUI({
           tags$div(class = "status-error", tags$i(class = "fa fa-exclamation-triangle"),
-                   " Please configure Claude API in the Claude API Config tab first!")
+                   " Please configure Editing Tool API in the Editing Tool API Config tab first!")
         })
         return()
       }
@@ -92,7 +92,7 @@ generate_kg_server <- function(id, api_manager) {
           output$status <- renderUI({
             tags$div(class = "status-error",
                      tags$i(class = "fa fa-exclamation-triangle"),
-                     sprintf(" ⚠️ Response was CUT OFF - Claude hit the %d-token budget mid-generation. ",
+                     sprintf(" ⚠️ Response was CUT OFF - the Editing Tool hit the %d-token budget mid-generation. ",
                              dynamic_max_tokens),
                      "The last block in the text below is very likely incomplete and will be dropped ",
                      "automatically before upload. ",
@@ -118,11 +118,11 @@ generate_kg_server <- function(id, api_manager) {
         error_message <- e$message
         suggestion <- ""
         if (grepl("timeout", error_message, ignore.case = TRUE)) {
-          suggestion <- "💡 Try: Increase timeout in Claude API Config"
+          suggestion <- "💡 Try: Increase timeout in Editing Tool API Config"
         } else if (grepl("schannel|close_notify|peer|connection", error_message, ignore.case = TRUE)) {
-          suggestion <- "💡 Try: Run Network Diagnostics in Claude API Config, or a smaller graph first"
+          suggestion <- "💡 Try: Run Network Diagnostics in Editing Tool API Config, or a smaller graph first"
         } else if (grepl("401|authentication", error_message, ignore.case = TRUE)) {
-          suggestion <- "💡 Try: Re-enter your API key in Claude API Config"
+          suggestion <- "💡 Try: Re-enter your API key in Editing Tool API Config"
         }
 
         output$status <- renderUI({

@@ -8,8 +8,19 @@
 # sibling slot, it MATHEMATICALLY guarantees no two nodes anywhere in
 # the tree ever overlap, which is what was actually going wrong before.
 
+# The viewer logic lives in a plain function so BOTH this tab and the
+# Message Hierarchy tab can run it inside their own module scope. Only the
+# taxonomy source differs: regular Mind Map hides the MessageHierarchy
+# category, the Message Hierarchy tab shows only that category.
 visualize_mindmap_server <- function(id, api_manager) {
   moduleServer(id, function(input, output, session) {
+    mindmap_viewer_logic(input, output, session, api_manager, "bq_get_mindmap_taxonomy_regular")
+  })
+}
+
+mindmap_viewer_logic <- function(input, output, session, api_manager,
+                                  taxonomy_method = "bq_get_mindmap_taxonomy_regular") {
+  local({
 
     loaded_nodes <- reactiveVal(NULL)  # current_tree_state()$nodes, with level computed
 
@@ -31,7 +42,7 @@ visualize_mindmap_server <- function(id, api_manager) {
     viz_taxonomy <- reactive({
       api_manager$state_trigger_mindmap()
       if (!api_manager$bq_authenticated) return(api_manager$empty_mindmap_taxonomy())
-      tryCatch(api_manager$bq_get_mindmap_taxonomy(), error = function(e) api_manager$empty_mindmap_taxonomy())
+      tryCatch(api_manager[[taxonomy_method]](), error = function(e) api_manager$empty_mindmap_taxonomy())
     })
 
     observe({

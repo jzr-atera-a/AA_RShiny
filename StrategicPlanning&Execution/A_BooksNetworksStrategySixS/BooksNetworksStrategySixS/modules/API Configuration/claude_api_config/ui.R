@@ -7,12 +7,12 @@ claude_api_config_ui <- function(id) {
   tagList(
     fluidRow(
       box(
-        title = "Claude API Credentials",
+        title = "Editing Tool API Credentials",
         status = "primary",
         solidHeader = TRUE,
         width = 12,
 
-        h4("Configure Claude API for Table Generation"),
+        h4("Configure Editing Tool API for Table Generation"),
         p("Enter your Anthropic API credentials to enable AI-powered comparison table generation."),
 
         fluidRow(
@@ -25,9 +25,9 @@ claude_api_config_ui <- function(id) {
                  selectInput(ns("model"),
                              "Model:",
                              choices = c(
-                               "Claude Sonnet 4.6 (Recommended)" = "claude-sonnet-4-6",
-                               "Claude Opus 4.8 (Most Capable)" = "claude-opus-4-8",
-                               "Claude Haiku 4.5 (Fastest)" = "claude-haiku-4-5-20251001"
+                               "Editing Tool Sonnet 4.6 (Recommended)" = "claude-sonnet-4-6",
+                               "Editing Tool Opus 4.8 (Most Capable)" = "claude-opus-4-8",
+                               "Editing Tool Haiku 4.5 (Fastest)" = "claude-haiku-4-5-20251001"
                              ),
                              selected = "claude-sonnet-4-6"),
 

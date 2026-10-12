@@ -36,7 +36,7 @@ sort_order        INTEGER    ordering / audit-trail sequencing"
         ),
 
         h4("The generation prompt: rules first, request second"),
-        p("Every 'Generate Mind Map' call sends Claude a fixed structural rule block FIRST - covering ",
+        p("Every 'Generate Mind Map' call sends the Editing Tool a fixed structural rule block FIRST - covering ",
           "output format, the root/hierarchy rule, the two branching HARD CAPS below, the cross-link ",
           "delimiter contract, and formatting rules - and only THEN the specific Category/Domain/Topic/ ",
           "description for this particular map. Presenting the full rule set before the task tends to ",
@@ -49,7 +49,7 @@ sort_order        INTEGER    ordering / audit-trail sequencing"
           "branching for every other node. 'Target Total Nodes' remains a soft guideline, since the ",
           "right total still depends on what the topic naturally calls for. As defense-in-depth, the ",
           "validator also re-checks the actual generated tree against both caps after the fact and ",
-          "surfaces a non-blocking warning (not an upload-blocking error) if Claude exceeded either one."),
+          "surfaces a non-blocking warning (not an upload-blocking error) if the Editing Tool exceeded either one."),
 
         h4("Why append-only, and why no stored depth/level column"),
         p("Every edit inserts a NEW row - never an UPDATE or DELETE statement - matching the same ",
@@ -60,7 +60,7 @@ sort_order        INTEGER    ordering / audit-trail sequencing"
           "parent_node_id chains, never stored."),
 
         h4("Cascade delete"),
-        p("Deleting a node deletes its entire subtree. When you ask Claude to delete a node, Claude ",
+        p("Deleting a node deletes its entire subtree. When you ask the Editing Tool to delete a node, the Editing Tool ",
           "only needs to name that ONE node_id - the app itself walks the CURRENT tree (already loaded ",
           "in memory) to find every descendant and tombstones them automatically. This is deliberate: ",
           "asking an LLM to correctly enumerate an entire subtree by hand is exactly the kind of ",
@@ -77,16 +77,16 @@ sort_order        INTEGER    ordering / audit-trail sequencing"
           "exist, or a branching hard cap that was exceeded) - shown to you, but the upload still proceeds."),
 
         h4("Editing model: delta, not full regeneration"),
-        p("When editing an existing map, Claude is shown a compact outline of the CURRENT tree plus ",
+        p("When editing an existing map, the Editing Tool is shown a compact outline of the CURRENT tree plus ",
           "your edit request, and returns ONLY what changed - CREATE/UPDATE/DELETE blocks for the ",
-          "affected nodes, never the whole tree re-transcribed. This avoids token waste, avoids Claude ",
+          "affected nodes, never the whole tree re-transcribed. This avoids token waste, avoids the Editing Tool ",
           "subtly rewording untouched nodes, and avoids asking it to manually enumerate a deleted ",
           "subtree (see above)."),
 
         h4("Tabs"),
         tags$ul(
           tags$li(tags$strong("BigQuery Setup"), " - connect to your dataset (auto-creates the table)"),
-          tags$li(tags$strong("Claude API Config"), " - credentials, model, timeout, network diagnostics"),
+          tags$li(tags$strong("Editing Tool API Config"), " - credentials, model, timeout, network diagnostics"),
           tags$li(tags$strong("Generate Mind Map"), " - create a brand-new map (full tree)"),
           tags$li(tags$strong("Edit Mind Map"), " - load an existing map, request a delta edit, review the cascade-computed preview, apply"),
           tags$li(tags$strong("Visualize Mind Map"), " - interactive D3.js collapsible tree: solid colored lines = hierarchy, dashed orange = cross-links, click a circle to collapse/expand, click a label for full content"),

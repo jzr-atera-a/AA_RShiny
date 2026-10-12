@@ -83,7 +83,7 @@ generate_sixsigma_server <- function(id, api_manager) {
     observeEvent(input$generate, {
 
       if (!api_manager$claude_authenticated) {
-        showNotification("Please configure and save Claude API credentials first!", type = "error", duration = 10)
+        showNotification("Please configure and save Editing Tool API credentials first!", type = "error", duration = 10)
         return()
       }
       cdt <- cat_dom_topic_react()
@@ -123,13 +123,13 @@ generate_sixsigma_server <- function(id, api_manager) {
       # ---- DEBUG: everything about this generation request, printed to
       #     the console every time a new diagram is generated via Claude. --
       cat("========================================================\n")
-      cat("🧠 [Six Sigma Analysis][DEBUG] Requesting diagram generation from Claude\n")
+      cat("🧠 [Six Sigma Analysis][DEBUG] Requesting diagram generation from the Editing Tool\n")
       cat(sprintf("    diagram_id      : %s\n", new_diag_id))
       cat(sprintf("    diagram_type    : %s (group: %s)\n", diagram_type, diagram_group))
       cat(sprintf("    category        : %s\n", cdt$category))
       cat(sprintf("    domain          : %s\n", cdt$domain))
       cat(sprintf("    topic           : %s\n", cdt$topic))
-      cat(sprintf("    title_hint      : %s\n", ifelse(nchar(title_hint) > 0, title_hint, "(none - Claude will choose)")))
+      cat(sprintf("    title_hint      : %s\n", ifelse(nchar(title_hint) > 0, title_hint, "(none - the Editing Tool will choose)")))
       cat(sprintf("    user_request    : %s\n", input$user_request))
       cat(sprintf("    prompt_length   : %d characters\n", nchar(prompt)))
       cat(sprintf("    claude_model    : %s\n", api_manager$claude_model))
@@ -153,7 +153,7 @@ generate_sixsigma_server <- function(id, api_manager) {
 
         # ---- DEBUG: what came back, before any parsing happens ----------
         cat("--------------------------------------------------------\n")
-        cat("🧠 [Six Sigma Analysis][DEBUG] Claude generation complete\n")
+        cat("🧠 [Six Sigma Analysis][DEBUG] the Editing Tool generation complete\n")
         cat(sprintf("    elapsed_seconds : %s\n", elapsed))
         cat(sprintf("    response_chars  : %d\n", nchar(response_text)))
         cat(sprintf("    truncated       : %s\n", was_truncated))

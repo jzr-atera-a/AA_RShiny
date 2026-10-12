@@ -9,7 +9,7 @@ module:
 
   menu:
     label: "Visualizations"
-    icon: "chart-network"
+    icon: "project-diagram"
     tabname: "diagram_visualizations"
     group: "Strategic Analysis"
     badge:

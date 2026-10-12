@@ -7,7 +7,7 @@ sankey_about_ui <- function(id) {
     fluidRow(
       box(title = "About Sankey Graph", status = "primary", solidHeader = TRUE, width = 12,
           h4("What this suite does"),
-          p("Generates professional Sankey flow diagrams via the Claude API - the kind used for energy flows, ",
+          p("Generates professional Sankey flow diagrams via the Editing Tool API - the kind used for energy flows, ",
             "budget breakdowns, customer funnels, or any quantity that redistributes across a sequence of ",
             "stages - stored as structured rows in its own BigQuery table (sankey_graphs, same project/dataset ",
             "as the other six suites), and rendered with D3's d3-sankey layout plugin."),
@@ -36,17 +36,17 @@ sankey_about_ui <- function(id) {
 
           h4("The two sliders"),
           tags$ul(
-            tags$li(tags$strong("Number of Columns (2-12, default 6):"), " the left-to-right depth of the diagram. Fixed - Claude must use exactly this many stages."),
+            tags$li(tags$strong("Number of Columns (2-12, default 6):"), " the left-to-right depth of the diagram. Fixed - the Editing Tool must use exactly this many stages."),
             tags$li(tags$strong("Number of Initial Rows (2-20, default 8):"), " exactly how many nodes must exist in column 1 - the starting streams everything flows from. Later columns are free to have a different node count as flows merge or split.")
           ),
 
           h4("Never trust the AI with the layout math"),
-          p("The single most important design rule in this suite, same as everywhere else in this app: Claude ",
+          p("The single most important design rule in this suite, same as everywhere else in this app: The Editing Tool ",
             "supplies only which nodes exist, which column each sits in, and the raw flow value of each link. ",
             "It never calculates node height or link curve width - the d3-sankey JavaScript library computes ",
             "both of those directly from the raw ", tags$code("value_numeric"), " figures at render time, using ",
             "an explicit ", tags$code("nodeAlign()"), " override so every node renders in the exact column ",
-            "Claude assigned it, rather than d3-sankey's own automatic (and, for this app's purposes, wrong) ",
+            "The Editing Tool assigned it, rather than d3-sankey's own automatic (and, for this app's purposes, wrong) ",
             "column-from-topology inference."),
 
           h4("Debugging"),

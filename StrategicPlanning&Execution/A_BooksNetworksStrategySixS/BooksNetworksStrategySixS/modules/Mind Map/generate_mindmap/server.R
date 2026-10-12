@@ -3,16 +3,16 @@
 generate_mindmap_server <- function(id, api_manager) {
   moduleServer(id, function(input, output, session) {
 
-    cat_dom_topic <- setup_category_domain_topic_cascade(input, output, session, api_manager, "bq_get_mindmap_taxonomy", "empty_mindmap_taxonomy", "state_trigger_mindmap")
+    cat_dom_topic <- setup_category_domain_topic_cascade(input, output, session, api_manager, "bq_get_mindmap_taxonomy_regular", "empty_mindmap_taxonomy", "state_trigger_mindmap")
 
     observeEvent(input$generate, {
 
       if (!api_manager$claude_authenticated) {
-        showNotification("Please configure and save Claude API credentials first!", type = "error", duration = 10)
+        showNotification("Please configure and save Editing Tool API credentials first!", type = "error", duration = 10)
         output$status <- renderUI({
           tags$div(class = "status-error",
                    tags$i(class = "fa fa-exclamation-triangle"),
-                   " Please configure Claude API in the Claude API Config tab first!")
+                   " Please configure Editing Tool API in the Editing Tool API Config tab first!")
         })
         return()
       }
@@ -20,6 +20,11 @@ generate_mindmap_server <- function(id, api_manager) {
       cdt <- cat_dom_topic()
       if (nchar(cdt$category) == 0 || nchar(cdt$domain) == 0 || nchar(cdt$topic) == 0) {
         showNotification("Please select or enter Category, Domain, and Topic!", type = "error")
+        return()
+      }
+
+      if (tolower(cdt$category) == tolower(MESSAGE_HIERARCHY_CATEGORY)) {
+        showNotification("'MessageHierarchy' is reserved for the Message Hierarchy tab - choose another category.", type = "error")
         return()
       }
 
@@ -94,7 +99,7 @@ generate_mindmap_server <- function(id, api_manager) {
           output$status <- renderUI({
             tags$div(class = "status-error",
                      tags$i(class = "fa fa-exclamation-triangle"),
-                     sprintf(" ⚠️ Response was CUT OFF - Claude hit the %d-token budget mid-generation. ",
+                     sprintf(" ⚠️ Response was CUT OFF - the Editing Tool hit the %d-token budget mid-generation. ",
                              dynamic_max_tokens),
                      "The last node in the text below is very likely incomplete and will be dropped ",
                      "automatically before upload (you'll see which one). ",
@@ -121,11 +126,11 @@ generate_mindmap_server <- function(id, api_manager) {
         error_message <- e$message
         suggestion <- ""
         if (grepl("timeout", error_message, ignore.case = TRUE)) {
-          suggestion <- "💡 Try: Increase timeout in Claude API Config"
+          suggestion <- "💡 Try: Increase timeout in Editing Tool API Config"
         } else if (grepl("schannel|close_notify|peer|connection", error_message, ignore.case = TRUE)) {
-          suggestion <- "💡 Try: Run Network Diagnostics in Claude API Config, or a smaller node count first"
+          suggestion <- "💡 Try: Run Network Diagnostics in Editing Tool API Config, or a smaller node count first"
         } else if (grepl("401|authentication", error_message, ignore.case = TRUE)) {
-          suggestion <- "💡 Try: Re-enter your API key in Claude API Config"
+          suggestion <- "💡 Try: Re-enter your API key in Editing Tool API Config"
         }
 
         output$status <- renderUI({

@@ -37,9 +37,9 @@ diagram_tool_guide_ui <- function(id) {
       box(title = "Which strategy framework should I ask for?", status = "primary", solidHeader = TRUE, width = 12,
           p("Each entry below is one value of the ", tags$strong("Framework"), " dropdown on the Generate ",
             "Diagram tab, organized by which ", tags$strong("Diagram Group"), " (strategic lens) it belongs ",
-            "to. Pick the Group first, then the specific Framework. Claude fills in the content, but the ",
+            "to. Pick the Group first, then the specific Framework. The Editing Tool fills in the content, but the ",
             "framework's exact structure - its named quadrants, axes, cells, or stages - is fixed by this ",
-            "choice, not left to Claude to guess. Each card also links to a reputable external source if you ",
+            "choice, not left to the Editing Tool to guess. Each card also links to a reputable external source if you ",
             "want to read more about the framework itself before using it.")
       )
     ),
@@ -340,7 +340,7 @@ diagram_tool_guide_ui <- function(id) {
       ),
       box(title = "Still not sure?", status = "info", solidHeader = TRUE, width = 6,
           p("If you know the framework's name, just say it in your request - e.g. \"Build a SWOT for...\" - and ",
-            "pick the matching Group + Framework from the dropdowns above. Claude fills in the content; the ",
+            "pick the matching Group + Framework from the dropdowns above. The Editing Tool fills in the content; the ",
             "Framework you pick fixes the exact structure.")
       )
     )

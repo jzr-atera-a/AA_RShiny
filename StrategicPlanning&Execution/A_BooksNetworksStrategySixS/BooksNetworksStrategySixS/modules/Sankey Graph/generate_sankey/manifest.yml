@@ -1,7 +1,7 @@
 module:
   id: "generate_sankey"
   name: "Generate Sankey Graph"
-  description: "AI-powered Sankey flow diagram generation via Claude, rendered with D3's d3-sankey layout"
+  description: "AI-powered Sankey flow diagram generation via the Editing Tool, rendered with D3's d3-sankey layout"
   version: "1.0.0"
   author: "Sankey Graph Suite Team"
 

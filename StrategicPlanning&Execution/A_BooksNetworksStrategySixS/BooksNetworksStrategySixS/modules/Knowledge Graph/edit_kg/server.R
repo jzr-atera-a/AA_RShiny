@@ -136,7 +136,7 @@ edit_kg_server <- function(id, api_manager) {
     observeEvent(input$request_edit, {
 
       if (!api_manager$claude_authenticated) {
-        showNotification("Please configure Claude API credentials first!", type = "error")
+        showNotification("Please configure Editing Tool API credentials first!", type = "error")
         return()
       }
       if (is.null(current_graph())) {
@@ -242,7 +242,7 @@ edit_kg_server <- function(id, api_manager) {
         if (length(problems) > 0) {
           output$edit_status <- renderUI({
             tags$div(class = "status-warning", tags$i(class = "fa fa-exclamation-triangle"),
-                     " Claude's response has issues - review carefully before applying:",
+                     " The Editing Tool's response has issues - review carefully before applying:",
                      tags$ul(lapply(problems, tags$li)))
           })
         } else {

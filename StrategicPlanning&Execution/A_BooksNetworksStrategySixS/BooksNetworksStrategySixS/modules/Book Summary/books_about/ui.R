@@ -18,7 +18,7 @@ books_about_ui <- function(id) {
         
         h4("Features:"),
         tags$ul(
-          tags$li(tags$strong("AI Summary Generation:"), " Claude AI for automatic structured summaries"),
+          tags$li(tags$strong("AI Summary Generation:"), " The Editing Tool AI for automatic structured summaries"),
           tags$li(tags$strong("BigQuery Integration:"), " Cloud database storage (atera-2.Wonderfulp_March.book_summaries_test3)"),
           tags$li(tags$strong("Mathematical Formulas:"), " LaTeX/MathJax expressions with explanations"),
           tags$li(tags$strong("Reference Resources:"), " URLs with descriptions"),

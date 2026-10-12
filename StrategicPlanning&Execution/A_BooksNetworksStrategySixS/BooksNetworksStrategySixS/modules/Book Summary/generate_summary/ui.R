@@ -29,6 +29,20 @@ generate_summary_ui <- function(id) {
           "(fiction, biography, philosophy, etc). When unchecked, those fields are saved blank."),
         
         hr(),
+
+        h4(icon("list-ol"), " Book index / table of contents (optional)"),
+        fileInput(ns("index_files"), "Upload images or PDFs of the book's index:",
+                  multiple = TRUE, width = "100%",
+                  accept = c("image/*", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tif", ".tiff", ".heic", ".pdf", "application/pdf"),
+                  buttonLabel = "Browse...", placeholder = "JPEG, PNG, GIF, WEBP, PDF, ... (several files allowed)"),
+        checkboxInput(ns("sort_index_files"), "Order files by file name (untick to keep the order they were selected in)", value = TRUE),
+        p(class = "text-muted", style = "margin-top: -10px; font-size: 0.9em;",
+          "Optional. If you upload the index pages, all files are sent together to the Editing Tool in one request, in order, and the summary will have ",
+          "exactly one entry per chapter in that index, with the same numbers, titles and order. ",
+          "If you upload nothing, the Editing Tool still aims to cover all the actual chapters of the book."),
+        uiOutput(ns("index_files_info")),
+
+        hr(),
         
         fluidRow(
           column(3,

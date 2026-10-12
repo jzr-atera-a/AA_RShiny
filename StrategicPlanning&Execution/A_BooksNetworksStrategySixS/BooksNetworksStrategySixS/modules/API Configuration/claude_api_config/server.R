@@ -35,7 +35,7 @@ claude_api_config_server <- function(id, api_manager) {
                    tags$small("Status: Ready to generate tables"))
         })
 
-        showNotification("✓ Claude API connection successful!", type = "message")
+        showNotification("✓ Editing Tool API connection successful!", type = "message")
 
       }, error = function(e) {
         output$status <- renderUI({

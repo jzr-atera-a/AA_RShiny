@@ -25,11 +25,11 @@ generate_table_server <- function(id, api_manager) {
     observeEvent(input$generate, {
 
       if (!api_manager$claude_authenticated) {
-        showNotification("Please configure and save Claude API credentials first!", type = "error", duration = 10)
+        showNotification("Please configure and save Editing Tool API credentials first!", type = "error", duration = 10)
         output$status <- renderUI({
           tags$div(class = "status-error",
                    tags$i(class = "fa fa-exclamation-triangle"),
-                   " Please configure Claude API in the Claude API Config tab first!")
+                   " Please configure Editing Tool API in the Editing Tool API Config tab first!")
         })
         return()
       }
@@ -102,7 +102,7 @@ generate_table_server <- function(id, api_manager) {
       tryCatch({
         progress_msg("Building prompt...")
         Sys.sleep(0.2)
-        progress_msg("Connecting to Claude API...")
+        progress_msg("Connecting to Editing Tool API...")
         Sys.sleep(0.2)
         progress_msg(sprintf("Sending request (budgeted ~%d tokens for ~%d rows x %d columns, %d words/cell)...",
                              dynamic_max_tokens, expected_rows, expected_columns, words_per_cell))
@@ -138,11 +138,11 @@ generate_table_server <- function(id, api_manager) {
         error_message <- e$message
         suggestion <- ""
         if (grepl("timeout", error_message, ignore.case = TRUE)) {
-          suggestion <- "💡 Try: Increase timeout in Claude API Config (recommended: 300-600 seconds)"
+          suggestion <- "💡 Try: Increase timeout in Editing Tool API Config (recommended: 300-600 seconds)"
         } else if (grepl("network|peer|connection", error_message, ignore.case = TRUE)) {
           suggestion <- "💡 Try: Check internet connection, firewall settings, or try again in a moment"
         } else if (grepl("401|authentication", error_message, ignore.case = TRUE)) {
-          suggestion <- "💡 Try: Re-enter your API key in Claude API Config"
+          suggestion <- "💡 Try: Re-enter your API key in Editing Tool API Config"
         } else if (grepl("429|rate limit", error_message, ignore.case = TRUE)) {
           suggestion <- "💡 Try: Wait a few moments and try again"
         }

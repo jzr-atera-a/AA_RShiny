@@ -12,7 +12,7 @@ generate_sixsigma_ui <- function(id) {
         width = 12,
 
         div(class = "alert alert-info",
-            tags$strong("How this works:"), " Claude never places elements on the canvas or does the maths - it ",
+            tags$strong("How this works:"), " The Editing Tool never places elements on the canvas or does the maths - it ",
             "only fills in labels, causes, and raw values. Cumulative percentages, control limits, RPN scores, ",
             "and Pugh totals are always calculated by the app itself, never trusted to the AI."),
 
@@ -28,7 +28,7 @@ generate_sixsigma_ui <- function(id) {
           column(6, sixsigma_type_dropdown_ui(ns))
         ),
         textInput(ns("title_hint"), "Diagram Title (optional):",
-                 placeholder = "Leave blank to let Claude choose one"),
+                 placeholder = "Leave blank to let the Editing Tool choose one"),
         textAreaInput(ns("user_request"), "Describe the process/problem this diagram should cover: *", height = "120px",
                       placeholder = "e.g. Investigate why our cereal boxes have inconsistent fill weight"),
 

@@ -8,7 +8,7 @@ sixsigma_recommender_server <- function(id, api_manager) {
     observeEvent(input$recommend, {
 
       if (!api_manager$claude_authenticated) {
-        showNotification("Please configure and save Claude API credentials first!", type = "error", duration = 10)
+        showNotification("Please configure and save Editing Tool API credentials first!", type = "error", duration = 10)
         return()
       }
       if (nchar(trimws(input$problem_description %||% "")) < 15) {
@@ -28,7 +28,7 @@ sixsigma_recommender_server <- function(id, api_manager) {
 
       # ---- DEBUG ----
       cat("========================================================\n")
-      cat("🧠 [Six Sigma Recommender][DEBUG] Requesting tool recommendations from Claude\n")
+      cat("🧠 [Six Sigma Recommender][DEBUG] Requesting tool recommendations from the Editing Tool\n")
       cat(sprintf("    num_recommendations : %d\n", n))
       cat(sprintf("    problem_description  : %s\n", input$problem_description))
       cat(sprintf("    catalog_size          : %d tools offered\n", length(SIXSIGMA_ALL_TYPES)))

@@ -54,7 +54,7 @@ generate_sankey_server <- function(id, api_manager) {
     observeEvent(input$generate, {
 
       if (!api_manager$claude_authenticated) {
-        showNotification("Please configure and save Claude API credentials first!", type = "error", duration = 10)
+        showNotification("Please configure and save Editing Tool API credentials first!", type = "error", duration = 10)
         return()
       }
       cdt <- cat_dom_topic_react()
@@ -86,14 +86,14 @@ generate_sankey_server <- function(id, api_manager) {
 
       # ---- DEBUG: everything about this generation request ----
       cat("========================================================\n")
-      cat("🧠 [Sankey Graph][DEBUG] Requesting Sankey generation from Claude\n")
+      cat("🧠 [Sankey Graph][DEBUG] Requesting Sankey generation from the Editing Tool\n")
       cat(sprintf("    sankey_id       : %s\n", new_sky_id))
       cat(sprintf("    num_columns     : %d\n", num_columns))
       cat(sprintf("    num_initial_rows: %d\n", num_initial_rows))
       cat(sprintf("    category        : %s\n", cdt$category))
       cat(sprintf("    domain          : %s\n", cdt$domain))
       cat(sprintf("    topic           : %s\n", cdt$topic))
-      cat(sprintf("    title_hint      : %s\n", ifelse(nchar(title_hint) > 0, title_hint, "(none - Claude will choose)")))
+      cat(sprintf("    title_hint      : %s\n", ifelse(nchar(title_hint) > 0, title_hint, "(none - the Editing Tool will choose)")))
       cat(sprintf("    user_request    : %s\n", input$user_request))
       cat(sprintf("    prompt_length   : %d characters\n", nchar(prompt)))
       cat(sprintf("    claude_model    : %s\n", api_manager$claude_model))
@@ -117,7 +117,7 @@ generate_sankey_server <- function(id, api_manager) {
 
         # ---- DEBUG: what came back ----
         cat("--------------------------------------------------------\n")
-        cat("🧠 [Sankey Graph][DEBUG] Claude generation complete\n")
+        cat("🧠 [Sankey Graph][DEBUG] the Editing Tool generation complete\n")
         cat(sprintf("    elapsed_seconds : %s\n", elapsed))
         cat(sprintf("    response_chars  : %d\n", nchar(response_text)))
         cat(sprintf("    truncated       : %s\n", was_truncated))

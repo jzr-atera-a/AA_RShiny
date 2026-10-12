@@ -11,7 +11,7 @@ generate_kg_ui <- function(id) {
         solidHeader = TRUE,
         width = 12,
 
-        p("Define a new knowledge graph. Unlike a mind map, there is no root and no hierarchy - Claude ",
+        p("Define a new knowledge graph. Unlike a mind map, there is no root and no hierarchy - the Editing Tool ",
           "generates a set of typed ENTITIES (e.g. Person, Organization, Concept) connected by typed, ",
           "directed RELATIONSHIPS (subject-predicate-object triples). Cycles and many-to-many connections ",
           "are normal and expected."),
@@ -68,7 +68,7 @@ generate_kg_ui <- function(id) {
           )
         ),
         p(style = "color: #7f8c8d; font-size: 12px;",
-          "'Max Relationships per Entity' is enforced as a strict limit in the prompt sent to Claude - ",
+          "'Max Relationships per Entity' is enforced as a strict limit in the prompt sent to the Editing Tool - ",
           "the two 'Target Total' fields remain soft guidelines since the exact counts still depend on ",
           "what the topic naturally calls for."),
 

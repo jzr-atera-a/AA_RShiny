@@ -9,7 +9,7 @@ sixsigma_about_ui <- function(id) {
           h4("What this suite does"),
           p("Generates Lean Six Sigma diagrams covering every tool named in the Green Belt Body of Knowledge - ",
             "Fishbone, Pareto, Control Chart, CTQ Tree, FMEA, SIPOC, Pugh Matrix, DMAIC/DMADV flows, House of ",
-            "Quality, Gage R&R, Process Capability, Spaghetti Diagrams, and more - via the Claude API, stored ",
+            "Quality, Gage R&R, Process Capability, Spaghetti Diagrams, and more - via the Editing Tool API, stored ",
             "as structured rows in its own BigQuery table (six_sigma_diagrams, same project/dataset as the ",
             "other five suites), and rendered with a small set of professional, type-aware renderers."),
 
@@ -44,7 +44,7 @@ sixsigma_about_ui <- function(id) {
           ),
 
           h4("Never trust the AI with arithmetic"),
-          p("This is the single most important design rule in this suite. Claude supplies only RAW values - ",
+          p("This is the single most important design rule in this suite. The Editing Tool supplies only RAW values - ",
             "candidate causes, raw frequency counts, raw 1-10 ratings, raw measurements, raw +/-/S symbols, ",
             "raw (x,y) points, raw mean/sigma/spec-limit numbers - and is explicitly instructed never to ",
             "compute anything derived. Every calculation that actually matters is done here, deterministically, in R:"),
@@ -59,8 +59,8 @@ sixsigma_about_ui <- function(id) {
             tags$li(tags$strong("Spaghetti Diagram:"), " total distance travelled is summed from the individual leg distances")
           ),
 
-          h4("Why Claude never sets pixel positions"),
-          p("Exactly the same principle as Strategic Analysis: Claude supplies categorical layout slots (grid ",
+          h4("Why the Editing Tool never sets pixel positions"),
+          p("Exactly the same principle as Strategic Analysis: The Editing Tool supplies categorical layout slots (grid ",
             "row/column, sequence order, quadrant position, or for tree/fishbone/path shapes, a lightweight ",
             "component_ref/parent_ref pair or visit sequence recording structure), and the renderer computes ",
             "real geometry - CSS Grid placement, SVG bone angles, SVG tree coordinates, SVG path layout - ",

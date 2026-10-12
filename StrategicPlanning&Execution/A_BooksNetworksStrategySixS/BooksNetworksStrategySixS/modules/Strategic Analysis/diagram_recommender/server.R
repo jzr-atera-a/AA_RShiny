@@ -8,7 +8,7 @@ diagram_recommender_server <- function(id, api_manager) {
     observeEvent(input$recommend, {
 
       if (!api_manager$claude_authenticated) {
-        showNotification("Please configure and save Claude API credentials first!", type = "error", duration = 10)
+        showNotification("Please configure and save Editing Tool API credentials first!", type = "error", duration = 10)
         return()
       }
       if (nchar(trimws(input$problem_description %||% "")) < 15) {
@@ -28,7 +28,7 @@ diagram_recommender_server <- function(id, api_manager) {
 
       # ---- DEBUG ----
       cat("========================================================\n")
-      cat("🧠 [Strategy Recommender][DEBUG] Requesting framework recommendations from Claude\n")
+      cat("🧠 [Strategy Recommender][DEBUG] Requesting framework recommendations from the Editing Tool\n")
       cat(sprintf("    num_recommendations : %d\n", n))
       cat(sprintf("    problem_description  : %s\n", input$problem_description))
       cat(sprintf("    catalog_size          : %d frameworks offered\n", length(DIAGRAM_TYPES)))

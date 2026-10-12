@@ -45,7 +45,7 @@ sixsigma_tool_guide_ui <- function(id) {
             "app will generate for it, and links to a reputable source (mostly ASQ, the American Society for ",
             "Quality) if you want to read more. Cards marked ", tags$strong("\u2713 Computed"),
             " mean the app itself calculates the key numbers (cumulative %, RPN, control limits, Cp/Cpk, ",
-            "correlation, totals) from Claude's raw inputs - Claude is never trusted with that arithmetic.")
+            "correlation, totals) from the Editing Tool's raw inputs - the Editing Tool is never trusted with that arithmetic.")
       )
     ),
 
@@ -194,7 +194,7 @@ sixsigma_tool_guide_ui <- function(id) {
       ),
       .sixsigma_tool_card(
         "Scatter Plot",
-        "\u2713 Computed. Tests whether two variables are actually related, rather than assumed to be. The app fits a real linear trend line and computes the correlation coefficient from your raw data points - it never asks Claude to eyeball or state a correlation.",
+        "\u2713 Computed. Tests whether two variables are actually related, rather than assumed to be. The app fits a real linear trend line and computes the correlation coefficient from your raw data points - it never asks the Editing Tool to eyeball or state a correlation.",
         "A scatter of (x,y) points plus a computed trend line, labeled with the computed correlation coefficient (r).",
         "you suspect two variables are correlated (e.g. a process input and a defect rate) and want it quantified, not guessed.",
         "\"Build a scatter plot of machine temperature vs. defect rate\"",
@@ -227,7 +227,7 @@ sixsigma_tool_guide_ui <- function(id) {
     fluidRow(
       .sixsigma_tool_card(
         "Pareto Chart",
-        "\u2713 Computed. Applies the 80/20 rule: a small number of causes usually account for most of the problem. The app sorts your raw categories by frequency and computes the cumulative percentage line itself - Claude only supplies the raw counts.",
+        "\u2713 Computed. Applies the 80/20 rule: a small number of causes usually account for most of the problem. The app sorts your raw categories by frequency and computes the cumulative percentage line itself - the Editing Tool only supplies the raw counts.",
         "Bars sorted descending by frequency, with a computed cumulative % line and the standard 80% threshold marker overlaid.",
         "you need to prioritize which causes or categories to fix first, based on actual impact rather than assumption.",
         "\"Build a Pareto chart of our top customer complaint categories\"",
@@ -236,7 +236,7 @@ sixsigma_tool_guide_ui <- function(id) {
       ),
       .sixsigma_tool_card(
         "FMEA",
-        "\u2713 Computed. Failure Mode and Effects Analysis - a proactive risk-assessment tool. The app computes the Risk Priority Number (RPN = Severity \u00d7 Occurrence \u00d7 Detection) for every failure mode and sorts by it; Claude only supplies the three raw 1-10 ratings.",
+        "\u2713 Computed. Failure Mode and Effects Analysis - a proactive risk-assessment tool. The app computes the Risk Priority Number (RPN = Severity \u00d7 Occurrence \u00d7 Detection) for every failure mode and sorts by it; the Editing Tool only supplies the three raw 1-10 ratings.",
         "A table of failure modes with their potential effects and causes, each row showing S/O/D ratings and a computed, color-banded RPN (red \u2265200, amber 100-199, green <100), sorted highest-risk first.",
         "you need to proactively identify and prioritize the risk of things that could go wrong before they do.",
         "\"Build an FMEA for our new online payment system\"",
@@ -257,7 +257,7 @@ sixsigma_tool_guide_ui <- function(id) {
       .sixsigma_tool_card(
         "Spaghetti Diagram",
         "\u2713 Computed. Tracks the actual movement of a person, material, or piece of information through a physical space - the tangled path it produces is what gives the tool its name, and usually reveals surprising amounts of wasted travel.",
-        "A path connecting each location in visit order, with the total distance travelled computed by summing the individual leg distances Claude supplies - never a total Claude states itself.",
+        "A path connecting each location in visit order, with the total distance travelled computed by summing the individual leg distances the Editing Tool supplies - never a total the Editing Tool states itself.",
         "you want to visualize and quantify wasted movement to justify a layout change.",
         "\"Build a spaghetti diagram of a nurse's movement pattern through a hospital ward\"",
         "https://www.lean.org/explore-lean/lexicon-terms/",
@@ -269,7 +269,7 @@ sixsigma_tool_guide_ui <- function(id) {
     fluidRow(
       .sixsigma_tool_card(
         "Pugh Decision Matrix",
-        "\u2713 Computed. An objective way to compare several candidate solutions against a baseline across multiple criteria, scoring each as better (+), worse (-), or the same (S). The app sums each option's column total itself - Claude only supplies the raw symbols.",
+        "\u2713 Computed. An objective way to compare several candidate solutions against a baseline across multiple criteria, scoring each as better (+), worse (-), or the same (S). The app sums each option's column total itself - the Editing Tool only supplies the raw symbols.",
         "A table: criteria as rows, candidate solutions (including a Baseline column) as columns, +/-/S symbols in each cell, with a computed totals row at the bottom.",
         "you're choosing between several options and want to remove personal bias from the decision.",
         "\"Compare 3 candidate CRM systems using a Pugh matrix against our current system\"",
@@ -388,7 +388,7 @@ sixsigma_tool_guide_ui <- function(id) {
     fluidRow(
       .sixsigma_tool_card(
         "Normal Distribution",
-        "\u2713 Computed. Illustrates the Central Limit Theorem and the classic bell-curve shape that underpins most Six Sigma statistics. The app computes the actual curve mathematically from just a mean and standard deviation - Claude never describes or draws the shape itself.",
+        "\u2713 Computed. Illustrates the Central Limit Theorem and the classic bell-curve shape that underpins most Six Sigma statistics. The app computes the actual curve mathematically from just a mean and standard deviation - the Editing Tool never describes or draws the shape itself.",
         "A real, computed bell curve with \u00b11\u03c3/\u00b12\u03c3/\u00b13\u03c3 zone boundaries marked.",
         "you're teaching or explaining variation and want a mathematically accurate curve, not an approximation.",
         "\"Show the normal distribution of our part weights with mean 250g and sd 3g\"",
@@ -397,7 +397,7 @@ sixsigma_tool_guide_ui <- function(id) {
       ),
       .sixsigma_tool_card(
         "Process Capability (Cp/Cpk)",
-        "\u2713 Computed. Formally assesses whether a process can reliably meet specification limits. The app computes Cp, Cpk, and an approximate sigma level directly from your raw mean, standard deviation, and spec limits - the exact calculation a real capability study performs, never left to Claude.",
+        "\u2713 Computed. Formally assesses whether a process can reliably meet specification limits. The app computes Cp, Cpk, and an approximate sigma level directly from your raw mean, standard deviation, and spec limits - the exact calculation a real capability study performs, never left to the Editing Tool.",
         "A capability histogram with USL/LSL specification lines overlaid, titled with the computed Cp, Cpk, and approximate sigma level.",
         "you need a rigorous, numeric answer to \"can this process meet spec?\", not a qualitative guess.",
         "\"Assess process capability for our shaft diameter with spec 100\u00b15mm\"",
@@ -408,9 +408,9 @@ sixsigma_tool_guide_ui <- function(id) {
     fluidRow(
       box(title = "Still not sure?", status = "info", solidHeader = TRUE, width = 12,
           p("If you know the tool's name, just say it in your request - e.g. \"Build a Fishbone for...\" - and ",
-            "pick the matching Group + Type from the dropdowns above. Claude fills in the content; the Type you ",
+            "pick the matching Group + Type from the dropdowns above. The Editing Tool fills in the content; the Type you ",
             "pick fixes the exact structure and, where the tool involves real statistics, guarantees the app - ",
-            "not Claude - does the maths.")
+            "not the Editing Tool - does the maths.")
       )
     )
   )

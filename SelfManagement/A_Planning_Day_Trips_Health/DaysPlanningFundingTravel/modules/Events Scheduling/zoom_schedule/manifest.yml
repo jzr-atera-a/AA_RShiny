@@ -1,0 +1,16 @@
+module:
+  id: "zoom_schedule"
+  name: "Zoom Schedule"
+  description: "Read a Zoom invite screenshot with Claude and prepare the calendar event and the invite email"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Zoom Schedule"
+    icon: "video"
+    tabname: "zoom_schedule"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, jsonlite, base64enc]
+    package_versions: {}
+  api: {required: [claude], optional: []}
+  data: {required: [], optional: []}

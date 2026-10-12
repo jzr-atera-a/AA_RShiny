@@ -33,7 +33,7 @@ groups:
     label: "Events Scheduling"
     icon: "calendar-alt"
     expanded: false
-    modules: [scan_events, bulk_import_events, add_single_event, browse_events, visualizations_events, events_to_calendar, events_about]
+    modules: [scan_events, zoom_schedule, bulk_import_events, browse_events, visualizations_events, events_to_calendar, events_about]
 
   - id: funding_programmes
     label: "Funding Programmes"
@@ -206,13 +206,18 @@ modules:
     priority: 30
     description: "AI-powered city event scanning via Claude web search"
 
+  zoom_schedule:
+    enabled: true
+    priority: 30.5
+    description: "Read a Zoom invite screenshot with Claude and hand it to Events to Calendar"
+
   bulk_import_events:
     enabled: true
     priority: 31
     description: "Parse and bulk-upload events text"
 
   add_single_event:
-    enabled: true
+    enabled: false
     priority: 32
     description: "Manually add a single event"
 

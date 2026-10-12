@@ -7,18 +7,27 @@ generate_summary_server <- function(id, api_manager) {
     genre_topic <- setup_genre_topic_cascade(input, output, session, api_manager)
     
     # Generate summary
+    output$index_files_info <- renderUI({
+      f <- input$index_files
+      if (is.null(f) || nrow(f) == 0) return(NULL)
+      f <- if (isTRUE(input$sort_index_files)) f[order(tolower(f$name)), , drop = FALSE] else f
+      tags$div(class = "status-info", style = "font-size:12.5px;",
+               tags$strong(sprintf("%d file(s) will be sent together, in this order: ", nrow(f))),
+               paste(sprintf("%d. %s (%.0f KB)", seq_len(nrow(f)), f$name, f$size / 1024), collapse = "  |  "))
+    })
+
     observeEvent(input$generate, {
       
       cat("\n🖱️  [generate_summary] Generate button clicked\n")
       
       if (!api_manager$claude_authenticated) {
         cat("❌ [generate_summary] Blocked: api_manager$claude_authenticated is FALSE\n")
-        cat("   -> Go to Claude API Config tab and click 'Test Connection' (not just 'Save Credentials')\n")
-        showNotification("Please configure and save Claude API credentials first!", type = "error", duration = 10)
+        cat("   -> Go to Editing Tool API Config tab and click 'Test Connection' (not just 'Save Credentials')\n")
+        showNotification("Please configure and save Editing Tool API credentials first!", type = "error", duration = 10)
         output$status <- renderUI({
           tags$div(class = "status-error",
                    tags$i(class = "fa fa-exclamation-triangle"),
-                   " Please configure Claude API in the Claude API Config tab first!")
+                   " Please configure Editing Tool API in the Editing Tool API Config tab first!")
         })
         return()
       }
@@ -52,6 +61,21 @@ generate_summary_server <- function(id, api_manager) {
                  " ", progress_msg())
       })
       
+      # Optional index files (images / PDFs) -> content blocks sent with the prompt
+      att <- NULL
+      if (!is.null(input$index_files) && nrow(input$index_files) > 0) {
+        att <- tryCatch(build_claude_attachments(input$index_files, sort_by_name = isTRUE(input$sort_index_files)),
+                        error = function(e) {
+                          shinyjs::hide("loading_spinner")
+                          output$status <- renderUI(tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"),
+                                                             " Index files problem: ", e$message))
+                          showNotification(paste("Index files:", e$message), type = "error", duration = 12)
+                          NULL })
+        if (is.null(att)) return()
+        for (nt in att$notes) showNotification(nt, type = "message", duration = 6)
+        cat("📎 [generate_summary] Attaching", att$n, "index file(s)\n")
+      }
+
       cat("⚙️  [generate_summary] Building prompt... (include_math =", input$include_math, ")\n")
       prompt <- tryCatch({
         generate_summary_prompt(
@@ -59,7 +83,9 @@ generate_summary_server <- function(id, api_manager) {
           author = input$book_author,
           genre = gt$genre,
           topic = gt$topic,
-          include_math = input$include_math
+          include_math = input$include_math,
+          has_index_files = !is.null(att),
+          n_index_files = if (is.null(att)) 0 else att$n
         )
       }, error = function(e) {
         cat("❌ [generate_summary] generate_summary_prompt() failed:", e$message, "\n")
@@ -83,7 +109,7 @@ generate_summary_server <- function(id, api_manager) {
         progress_msg("Building prompt...")
         Sys.sleep(0.3)
         
-        progress_msg("Connecting to Claude API...")
+        progress_msg("Connecting to Editing Tool API...")
         Sys.sleep(0.3)
         
         progress_msg("Sending request (this may take 1-3 minutes for long summaries)...")
@@ -93,6 +119,7 @@ generate_summary_server <- function(id, api_manager) {
         # Call API with progress callback
         summary_text <- api_manager$call_claude(
           prompt = prompt,
+          attachments = if (is.null(att)) NULL else att$blocks,
           progress_callback = function(msg) {
             cat("   …", msg, "\n")
             progress_msg(msg)
@@ -127,7 +154,7 @@ generate_summary_server <- function(id, api_manager) {
             tags$span(style = "color: #e67e22; font-weight: bold;",
                       "⚠️ Warning: this response was cut off because it hit the Max Tokens limit. ",
                       "It is likely incomplete (missing later chapters or a cut-off final entry). ",
-                      "Increase Max Tokens in Claude API Config and regenerate.")
+                      "Increase Max Tokens in Editing Tool API Config and regenerate.")
           )
         } else {
           NULL
@@ -162,11 +189,11 @@ generate_summary_server <- function(id, api_manager) {
         # Provide helpful suggestions based on error type
         suggestion <- ""
         if (grepl("timeout", error_message, ignore.case = TRUE)) {
-          suggestion <- "💡 Try: Increase timeout in Claude API Config (recommended: 300-600 seconds)"
+          suggestion <- "💡 Try: Increase timeout in Editing Tool API Config (recommended: 300-600 seconds)"
         } else if (grepl("network|peer|connection", error_message, ignore.case = TRUE)) {
           suggestion <- "💡 Try: Check internet connection, firewall settings, or try again in a moment"
         } else if (grepl("401|authentication", error_message, ignore.case = TRUE)) {
-          suggestion <- "💡 Try: Re-enter your API key in Claude API Config"
+          suggestion <- "💡 Try: Re-enter your API key in Editing Tool API Config"
         } else if (grepl("429|rate limit", error_message, ignore.case = TRUE)) {
           suggestion <- "💡 Try: Wait a few moments and try again"
         }

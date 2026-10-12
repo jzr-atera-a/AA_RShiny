@@ -1,7 +1,7 @@
 module:
   id: "diagram_tool_guide"
   name: "Diagram Tool Guide"
-  description: "Reference guide to all Strategic Analysis diagram types - what each is for and when to ask Claude for it"
+  description: "Reference guide to all Strategic Analysis diagram types - what each is for and when to ask the Editing Tool for it"
   version: "1.0.0"
   author: "Strategic Analysis Suite Team"
 

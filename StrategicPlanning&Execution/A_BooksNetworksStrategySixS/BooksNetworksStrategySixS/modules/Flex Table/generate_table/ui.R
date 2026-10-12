@@ -12,7 +12,7 @@ generate_table_ui <- function(id) {
         width = 12,
 
         p("Define what the ROWS and COLUMNS of your comparison table represent. ",
-          "Claude decides how many columns are actually relevant - the number can be ",
+          "The Editing Tool decides how many columns are actually relevant - the number can be ",
           "different every time you generate a table, and that's fine: it's stored as ",
           "flexible delimited text, not fixed BigQuery columns."),
 

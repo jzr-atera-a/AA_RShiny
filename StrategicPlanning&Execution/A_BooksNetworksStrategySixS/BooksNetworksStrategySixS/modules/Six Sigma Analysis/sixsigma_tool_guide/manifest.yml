@@ -1,7 +1,7 @@
 module:
   id: "sixsigma_tool_guide"
   name: "Six Sigma Tool Guide"
-  description: "Reference guide to all Six Sigma diagram types organized by DMAIC phase - what each is for and when to ask Claude for it"
+  description: "Reference guide to all Six Sigma diagram types organized by DMAIC phase - what each is for and when to ask the Editing Tool for it"
   version: "1.0.0"
   author: "Six Sigma Analysis Suite Team"
 

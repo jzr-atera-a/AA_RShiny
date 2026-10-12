@@ -12,7 +12,7 @@ sixsigma_recommender_ui <- function(id) {
         width = 12,
 
         div(class = "alert alert-info",
-            tags$strong("How this works:"), " Claude sees the full catalog of all ", length(SIXSIGMA_ALL_TYPES),
+            tags$strong("How this works:"), " The Editing Tool sees the full catalog of all ", length(SIXSIGMA_ALL_TYPES),
             " available Six Sigma tools (with a short description of each) and picks the ones that genuinely ",
             "fit YOUR problem best - not just whichever tool is most famous. Click any recommended tool's name ",
             "below to jump straight to the Generate Diagram tab with it pre-selected."),

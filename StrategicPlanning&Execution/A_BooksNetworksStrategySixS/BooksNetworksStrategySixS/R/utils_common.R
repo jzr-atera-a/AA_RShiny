@@ -163,7 +163,7 @@ parse_summary_text <- function(text) {
 }
 
 # Generate Claude prompt for book summary
-generate_summary_prompt <- function(book_title, author, genre = "", topic = "", include_math = FALSE) {
+generate_summary_prompt <- function(book_title, author, genre = "", topic = "", include_math = FALSE, has_index_files = FALSE, n_index_files = 0) {
 
   genre_text <- if (nchar(genre) > 0) {
     paste0("[", genre, "]\n")
@@ -217,6 +217,19 @@ generate_summary_prompt <- function(book_title, author, genre = "", topic = "", 
    - If you cannot provide a specific URL, suggest search terms'
   }
 
+  chapter_coverage <- if (isTRUE(has_index_files)) {
+    paste0(
+'   - The ', n_index_files, ' attached file(s) are the INDEX / TABLE OF CONTENTS of this book (images or PDF pages, in reading order, labelled "Index file k of n"). Read them carefully BEFORE writing anything.
+   - The index is the single source of truth for the chapter structure. Produce EXACTLY ONE entry for EVERY chapter listed in the index, in the same order, with no chapter skipped, merged, split or invented.
+   - Use the chapter titles exactly as printed in the index (fix only obvious OCR or spacing errors). Where the index shows chapter numbers, keep them; where an entry has no number (Introduction, Preface, Conclusion, Epilogue, Appendix, unnumbered chapters), give it the next sequential number in index order. Part or section divider headings are not chapters: do not create entries for them, but mention the Part in the main_details of the chapters it contains.
+   - If the index lists sub-sections under a chapter, keep ONE entry for that chapter with [section]: All Sections and cover those sub-sections inside main_details.
+   - Chapter numbers, titles and order must be consistent with the index in every entry. If part of the index is illegible, include only what you can read confidently and never invent chapters to fill gaps.
+   - Write each summary from what you know of the actual book content for that chapter; do not summarize the index text itself.')
+  } else {
+'   - Use the book\'s ACTUAL chapter structure (its real table of contents), covering EVERY chapter of the book in order: do not skip, merge or invent chapters. Include Introduction, Conclusion or Epilogue chapters if the book has them.
+   - If you are not certain of the exact chapter list, reconstruct it as faithfully as you can from your knowledge of the book and keep chapter titles as close to the real ones as possible.'
+  }
+
   prompt <- paste0(
     'Generate a comprehensive summary of the book "', book_title, '" by ', author, ' following this EXACT format:
 
@@ -232,7 +245,10 @@ Format Requirements:
 [main_details]: Write 100-200 words summarizing the chapter/section content
 ', fields_example, '
 
-3. CRITICAL CHAPTER NUMBERING:
+3. CHAPTER COVERAGE (CRITICAL):
+', chapter_coverage, '
+
+3b. CRITICAL CHAPTER NUMBERING:
    - For chapters 1-9: Use TWO digits with leading zero (Chapter 01, Chapter 02, ..., Chapter 09)
    - For chapters 10+: Use normal numbering (Chapter 10, Chapter 11, etc.)
 
@@ -847,6 +863,10 @@ setup_category_topic_cascade <- function(input, output, session, api_manager) {
 # bq_get_kg_taxonomy), this function is parametrized by METHOD NAME
 # (a string, dispatched via api_manager[[...]]()) rather than being
 # duplicated per app.
+# Reserved Mind Map category used by the Message Hierarchy tab. Stored in the
+# SAME mind map BigQuery table; the regular Mind Map tabs filter it out.
+MESSAGE_HIERARCHY_CATEGORY <- "MessageHierarchy"
+
 CATEGORY_ADD_NEW_VALUE <- "__ADD_NEW_CATEGORY__"
 DOMAIN_ADD_NEW_VALUE <- "__ADD_NEW_DOMAIN__"
 TOPIC_ADD_NEW_VALUE <- "__ADD_NEW_TOPIC__"
@@ -898,7 +918,7 @@ category_domain_topic_dropdown_ui <- function(ns) {
 # final values.
 setup_category_domain_topic_cascade <- function(input, output, session, api_manager,
                                                   taxonomy_method, empty_taxonomy_method,
-                                                  state_trigger_field) {
+                                                  state_trigger_field, fixed_category = NULL) {
 
   taxonomy <- reactive({
     api_manager[[state_trigger_field]]()
@@ -908,6 +928,12 @@ setup_category_domain_topic_cascade <- function(input, output, session, api_mana
 
   observeEvent(taxonomy(), {
     tax <- taxonomy()
+    if (!is.null(fixed_category)) {
+      # Category is locked (e.g. Message Hierarchy): one choice, preselected.
+      updateSelectInput(session, "category_select",
+                        choices = setNames(fixed_category, fixed_category), selected = fixed_category)
+      return()
+    }
     categories <- sort(unique(tax$category[nchar(trimws(tax$category)) > 0]))
     choices <- c("+ Add New Category" = CATEGORY_ADD_NEW_VALUE, setNames(categories, categories))
 
@@ -919,7 +945,7 @@ setup_category_domain_topic_cascade <- function(input, output, session, api_mana
 
   observe({
     tax <- taxonomy()
-    cat_val <- input$category_select
+    cat_val <- if (!is.null(fixed_category)) fixed_category else input$category_select
 
     if (is.null(cat_val) || cat_val == CATEGORY_ADD_NEW_VALUE) {
       updateSelectInput(session, "domain_select", choices = c("+ Add New Domain" = DOMAIN_ADD_NEW_VALUE))
@@ -936,7 +962,7 @@ setup_category_domain_topic_cascade <- function(input, output, session, api_mana
 
   observe({
     tax <- taxonomy()
-    cat_val <- input$category_select
+    cat_val <- if (!is.null(fixed_category)) fixed_category else input$category_select
     dom_val <- input$domain_select
 
     if (is.null(cat_val) || cat_val == CATEGORY_ADD_NEW_VALUE ||
@@ -956,7 +982,9 @@ setup_category_domain_topic_cascade <- function(input, output, session, api_mana
   })
 
   reactive({
-    category <- if (identical(input$category_select, CATEGORY_ADD_NEW_VALUE)) {
+    category <- if (!is.null(fixed_category)) {
+      fixed_category
+    } else if (identical(input$category_select, CATEGORY_ADD_NEW_VALUE)) {
       trimws(input$new_category_text %||% "")
     } else {
       input$category_select %||% ""
@@ -1812,6 +1840,38 @@ generate_mindmap_edit_prompt <- function(category, domain, topic, map_title,
 # response produces an incomplete tree that used to (before this fix)
 # masquerade as a confusing "2 nodes claim ROOT" structural error. See
 # parse_mindmap_creation_text()'s truncated_node_id handling.
+# ============================================================
+# MESSAGE HIERARCHY - enriched request for the proven mind map prompt
+# ============================================================
+# Same pattern as Business Consulting: build a precise request and feed
+# it to generate_mindmap_prompt() so the output is guaranteed to parse
+# with parse_mindmap_creation_text() and store in the mind map table.
+build_message_hierarchy_request <- function(core_message, n_points, outcome,
+                                             audience = "", reference = "",
+                                             evidence_per_point = 2, extra = "") {
+  paste0(
+    "Build a MESSAGE HIERARCHY (a pyramid-principle structure) for a talk or presentation.\n\n",
+    "Core message (the ONE thing the audience must remember): ", core_message, "\n",
+    "Critical outcome wanted from the audience: ", outcome, "\n",
+    if (nchar(trimws(audience)) > 0) paste0("Audience: ", audience, "\n") else "",
+    if (nchar(trimws(reference)) > 0) paste0(
+      "Reference resource to follow: ", reference,
+      "\nApply the principles of this resource when choosing and ordering the points; ",
+      "mention the relevant principle briefly in node content where it helps. Do not invent quotes or page numbers.\n") else "",
+    "\nSTRUCTURE REQUIREMENTS (follow exactly):\n",
+    "- The ROOT node is the core message, stated as one clear, complete sentence in [label] (not a topic word).\n",
+    "- The root has EXACTLY ", n_points, " direct children: the key supporting points. Each point label is a short claim, ",
+    "and the points must be MUTUALLY EXCLUSIVE and COLLECTIVELY sufficient to prove the core message, ordered in the ",
+    "sequence a speaker should present them (state in the [content] why this point comes in this position).\n",
+    "- Every supporting point must visibly reinforce the root: its [content] states in one sentence how it proves or supports the core message.\n",
+    "- Under each supporting point add ", evidence_per_point, " child node(s) of evidence: a fact, example, story, data point or demonstration the speaker can use. ",
+    "Label each evidence node with its type (e.g. 'Story: ...', 'Data: ...', 'Example: ...').\n",
+    "- Do NOT add extra children of the root beyond the ", n_points, " points. Put the opening hook and the closing call to action in the [content] of the root node.\n",
+    "- Use cross-links only to show where a later point calls back to the root message or to an earlier point.\n",
+    if (nchar(trimws(extra)) > 0) paste0("\nAdditional guidance: ", extra, "\n") else ""
+  )
+}
+
 estimate_mindmap_max_tokens <- function(max_nodes, words_per_node, include_latex = FALSE) {
   max_nodes <- max(1, as.numeric(max_nodes))
   words_per_node <- max(1, as.numeric(words_per_node))
@@ -2590,10 +2650,11 @@ DIAGRAM_FIELDS <- c(
 # diagram_type already existed and simply now holds finer-grained values.
 # ============================================================
 DIAGRAM_GROUPS <- c(
-  "situational_analysis", "competitive_positioning", "business_model_design",
+  "rules_guidelines", "situational_analysis", "competitive_positioning", "business_model_design",
   "decision_making_process", "organizational_alignment", "timing_lifecycle", "foundational"
 )
 DIAGRAM_GROUP_LABELS <- c(
+  rules_guidelines = "Rules & Guidelines",
   situational_analysis = "Situational Analysis",
   competitive_positioning = "Competitive Positioning",
   business_model_design = "Business Model & Design",
@@ -2604,6 +2665,7 @@ DIAGRAM_GROUP_LABELS <- c(
 )
 
 DIAGRAM_TYPES_BY_GROUP <- list(
+  rules_guidelines        = c("rules_table"),
   situational_analysis    = c("swot", "pestel", "five_forces", "vrio", "value_chain"),
   competitive_positioning = c("bcg_matrix", "ge_mckinsey_matrix", "ansoff_matrix",
                               "porters_generic_strategies", "tows_matrix",
@@ -2618,6 +2680,7 @@ DIAGRAM_TYPES_BY_GROUP <- list(
 )
 
 DIAGRAM_TYPE_LABELS <- c(
+  rules_table = "Rules Table (rule / rationale / example)",
   swot = "SWOT Analysis",
   pestel = "PESTEL Analysis",
   five_forces = "Porter's Five Forces",
@@ -2660,6 +2723,7 @@ DIAGRAM_TYPES <- unlist(DIAGRAM_TYPES_BY_GROUP, use.names = FALSE)
 # below - because no existing shape does justice to a real 9-block
 # canvas or Porter's primary/support-activity arrow diagram).
 DIAGRAM_RENDER_SHAPE <- c(
+  rules_table = "rules_table",
   swot = "grid", pestel = "grid", five_forces = "network", vrio = "table", value_chain = "value_chain",
   bcg_matrix = "quadrant", ge_mckinsey_matrix = "grid", ansoff_matrix = "quadrant",
   porters_generic_strategies = "quadrant", tows_matrix = "table",
@@ -2704,8 +2768,30 @@ generate_new_diagram_id <- function(topic) {
 #     generic "arrange in 2x2" hint. This is what makes asking for
 #     "BCG Growth-Share Matrix" produce Stars/Question Marks/Cash Cows/
 #     Dogs specifically, not four unnamed boxes Claude has to guess at. --
-framework_specific_guidance <- function(diagram_type) {
+framework_specific_guidance <- function(diagram_type, rules_count = NULL, outcome = "", reference = "") {
   switch(diagram_type,
+    "rules_table" = paste0(
+      'FRAMEWORK = Rules Table. A numbered set of ',
+      if (!is.null(rules_count) && !is.na(rules_count)) paste0('EXACTLY ', rules_count, ' ') else '5-8 ',
+      'rules for the concept in the user request. Each rule is ONE block (one table row) with: ',
+      'sequence_order = the rule number (1..N, in the order the rules should be applied or prioritised); ',
+      'label_text = the RULE itself, stated as a short imperative in a few words up to one short sentence ',
+      '(e.g. "Listen before you respond"); ',
+      'sub_text = the RATIONALE behind the rule (1-3 sentences explaining WHY it works) followed by the ',
+      'literal text " Source: " and a relevant reference - a real book (title and author), research finding, ',
+      'or well-known online resource. Never invent URLs, quotes or page numbers; if you are not sure of a ',
+      'specific source, cite the general principle or author you are confident about; ',
+      'items_packed = ONE practical example (1-3 sentences) showing the rule applied in the concrete situation ',
+      'of the user request. Use exactly one item - do not use the item separator in this framework. ',
+      'Do not wrap any value in square brackets. The renderer draws the three column headers ',
+      '(Rule / Rationale and Reference / Practical Example) itself, so do NOT output header cells.\n',
+      if (nchar(trimws(outcome %||% "")) > 0) paste0(
+        'The rules must collectively drive this critical outcome: ', trimws(outcome), '\n') else '',
+      if (nchar(trimws(reference %||% "")) > 0) paste0(
+        'Base the rules on the principles of this reference resource and cite it in Source where relevant: ',
+        trimws(reference), '\n') else '',
+      '\n'
+    ),
     "swot" = paste0(
       'FRAMEWORK = SWOT Analysis. Exactly 4 cells in a 2x2 grid, in this fixed layout: ',
       'Strengths (grid_row=1, grid_col=1), Weaknesses (grid_row=1, grid_col=2), ',
@@ -2915,11 +3001,12 @@ framework_specific_guidance <- function(diagram_type) {
 #     exactly which fields to fill for that structural family, the
 #     delimiter rule, and the field format so Claude's output is directly
 #     copy-parseable by parse_diagram_text(). --------------------------
-diagram_type_instructions <- function(diagram_type, diagram_group, category, domain, topic, title_hint) {
+diagram_type_instructions <- function(diagram_type, diagram_group, category, domain, topic, title_hint,
+                                       rules_count = NULL, outcome = "", reference = "") {
   sep <- DIAG_ITEM_SEP
   shape <- DIAGRAM_RENDER_SHAPE[[diagram_type]]
   if (is.null(shape)) stop("Unknown diagram_type (no render shape mapped): ", diagram_type)
-  specific <- framework_specific_guidance(diagram_type)
+  specific <- framework_specific_guidance(diagram_type, rules_count, outcome, reference)
 
   title_line <- if (nchar(trimws(title_hint %||% "")) > 0) {
     paste0('[', trimws(title_hint), ']')
@@ -2952,6 +3039,15 @@ diagram_type_instructions <- function(diagram_type, diagram_group, category, dom
   )
 
   shape_block <- switch(shape,
+    "rules_table" = paste0(
+      'For EACH rule output one block:\n',
+      '[component_type]: table_cell\n[layout_role]: grid_cell\n',
+      '[sequence_order]: <rule number 1..N>\n',
+      '[label_text]: <the rule, short imperative>\n',
+      '[sub_text]: <why it works. Source: book/author or resource>\n',
+      '[items_packed]: <one practical example>\n\n',
+      'Title block:\n[component_type]: title\n[layout_role]: title\n[label_text]: <diagram title>\n'
+    ),
     "grid" = paste0(
       'This diagram is drawn as a RECTANGULAR grid of ROWS and COLUMNS - the exact arrangement is given ',
       'above; do NOT default to a single row. For EACH cell, output one block with its ACTUAL 1-indexed ',
@@ -3087,8 +3183,10 @@ diagram_type_instructions <- function(diagram_type, diagram_group, category, dom
   paste0(common_header, shape_block)
 }
 
-generate_diagram_prompt <- function(diagram_type, diagram_group, category, domain, topic, title_hint, user_request) {
-  type_instructions <- diagram_type_instructions(diagram_type, diagram_group, category, domain, topic, title_hint)
+generate_diagram_prompt <- function(diagram_type, diagram_group, category, domain, topic, title_hint, user_request,
+                                     rules_count = NULL, outcome = "", reference = "") {
+  type_instructions <- diagram_type_instructions(diagram_type, diagram_group, category, domain, topic, title_hint,
+                                                 rules_count, outcome, reference)
 
   paste0(
     'You are a strategy consultant building a "', DIAGRAM_TYPE_LABELS[[diagram_type]], '" (',
@@ -3363,7 +3461,7 @@ render_diagram <- function(components_df, diagram_type) {
     return(tags$div(class = "status-warning", "No components found for this diagram."))
   }
 
-  html_family <- c("grid", "quadrant", "table", "stacked_list", "linear_flow", "business_model_canvas", "value_chain")
+  html_family <- c("grid", "quadrant", "table", "stacked_list", "linear_flow", "business_model_canvas", "value_chain", "rules_table")
   svg_family <- c("radial", "network")
   plotly_family <- c("line_chart", "bar_chart", "funnel", "dual_axis_timeseries")
 
@@ -3393,7 +3491,38 @@ render_diagram_html_grid <- function(components_df, diagram_type) {
 
   html_parts <- c(sprintf('<div class="diagram-card"><div class="chapter-title"><i class="fa fa-project-diagram"></i> %s</div>', htmltools::htmlEscape(title_text)))
 
-  if (diagram_type == "linear_flow") {
+  if (diagram_type == "rules_table") {
+    # Real HTML table, 3 columns: rule | rationale + reference | practical example.
+    # One stored component row per rule (label_text / sub_text / items_packed),
+    # so it lives in the same diagram table as every other framework.
+    rule_rows <- body_rows[body_rows$component_type != "axis_label", , drop = FALSE]
+    rule_rows <- rule_rows[order(rule_rows$sequence_order, na.last = TRUE), , drop = FALSE]
+    row_html <- character(0)
+    for (i in seq_len(nrow(rule_rows))) {
+      row <- rule_rows[i, ]
+      num <- if (!is.na(row$sequence_order)) row$sequence_order else i
+      why <- if (has_real_value(row$sub_text)) as.character(row$sub_text) else ""
+      src <- ""
+      if (grepl(" Source: ", why, fixed = TRUE)) {
+        parts <- strsplit(why, " Source: ", fixed = TRUE)[[1]]
+        why <- parts[1]
+        src <- paste(parts[-1], collapse = " Source: ")
+      }
+      examples <- diagram_unpack_items(row$items_packed)
+      row_html <- c(row_html, sprintf(
+        '<tr><td class="rules-col-rule"><span class="rules-num">%s</span> %s</td><td>%s%s</td><td>%s</td></tr>',
+        htmltools::htmlEscape(as.character(num)),
+        htmltools::htmlEscape(row$label_text %||% ""),
+        htmltools::htmlEscape(why),
+        if (nchar(trimws(src)) > 0) sprintf('<div class="rules-source"><i class="fa fa-book"></i> %s</div>', htmltools::htmlEscape(src)) else "",
+        htmltools::htmlEscape(paste(examples, collapse = " "))
+      ))
+    }
+    html_parts <- c(html_parts,
+      '<table class="rules-table"><thead><tr><th>Rule</th><th>Rationale &amp; Reference</th><th>Practical Example</th></tr></thead><tbody>',
+      row_html, '</tbody></table>')
+
+  } else if (diagram_type == "linear_flow") {
     # Genuinely sequential - a single row, DOM order = sequence_order.
     ordered <- body_rows[order(body_rows$sequence_order), , drop = FALSE]
     n_cols <- max(ordered$sequence_order, 1, na.rm = TRUE)
@@ -4851,7 +4980,7 @@ render_sixsigma_svg <- function(components_df, diagram_type) {
       '<text x="%d" y="20" font-size="14" font-weight="bold" fill="var(--ss-spine-color, #37474F)">Total distance travelled: %.1f %s (computed from the %d individual legs)</text>',
       10, total_distance, unit, n
     ))
-    cat(sprintf("🔎 [Six Sigma Analysis][DEBUG] Spaghetti diagram: total distance computed as %.1f %s across %d stops (never trusted from Claude)\n", total_distance, unit, n))
+    cat(sprintf("🔎 [Six Sigma Analysis][DEBUG] Spaghetti diagram: total distance computed as %.1f %s across %d stops (never trusted from the Editing Tool)\n", total_distance, unit, n))
 
     svg <- sprintf('<svg viewBox="0 0 %d %d" xmlns="http://www.w3.org/2000/svg">%s</svg>', W, H, paste(svg_parts, collapse = ""))
 
@@ -5051,7 +5180,7 @@ render_sixsigma_plotly <- function(components_df, diagram_type) {
                                name = sprintf("Trend line (r = %.2f)", r),
                                line = list(color = "#C0392B", width = 2))
         correlation_note <- sprintf(" (correlation r = %.2f, computed from the %d points shown)", r, length(x_vals))
-        cat(sprintf("🔎 [Six Sigma Analysis][DEBUG] Scatter plot: correlation r=%.3f computed from %d points (never trusted from Claude)\n", r, length(x_vals)))
+        cat(sprintf("🔎 [Six Sigma Analysis][DEBUG] Scatter plot: correlation r=%.3f computed from %d points (never trusted from the Editing Tool)\n", r, length(x_vals)))
       }
     }
     p <- plotly::layout(p, title = paste0(title_text, correlation_note), xaxis = list(title = x_label), yaxis = list(title = y_label))
@@ -5066,7 +5195,7 @@ render_sixsigma_plotly <- function(components_df, diagram_type) {
     x_range <- seq(mean_val - 4 * sigma, mean_val + 4 * sigma, length.out = 200)
     y_density <- dnorm(x_range, mean = mean_val, sd = sigma)
 
-    cat(sprintf("🔎 [Six Sigma Analysis][DEBUG] Normal distribution: curve computed from mean=%.3f, sd=%.3f (never trusted from Claude)\n", mean_val, sigma))
+    cat(sprintf("🔎 [Six Sigma Analysis][DEBUG] Normal distribution: curve computed from mean=%.3f, sd=%.3f (never trusted from the Editing Tool)\n", mean_val, sigma))
 
     p <- plotly::plot_ly(x = x_range, y = y_density, type = "scatter", mode = "lines", fill = "tozeroy",
                          line = list(color = "#2C8C99", width = 2), fillcolor = "rgba(44,140,153,0.15)", name = "Distribution")
@@ -5079,7 +5208,7 @@ render_sixsigma_plotly <- function(components_df, diagram_type) {
                              showlegend = FALSE)
     }
     p <- plotly::layout(p,
-      title = sprintf("%s (mean=%.2f, \u03c3=%.2f - curve computed, not drawn by Claude)", title_text, mean_val, sigma),
+      title = sprintf("%s (mean=%.2f, \u03c3=%.2f - curve computed, not drawn by the Editing Tool)", title_text, mean_val, sigma),
       xaxis = list(title = metric_name), yaxis = list(title = "Probability Density"))
 
   } else { # process_capability
@@ -5098,7 +5227,7 @@ render_sixsigma_plotly <- function(components_df, diagram_type) {
     # standard 1.5-sigma shift) - a well-known approximation, not exact.
     sigma_level <- 3 * cpk + 1.5
 
-    cat(sprintf("🔎 [Six Sigma Analysis][DEBUG] Process capability: Cp=%.3f, Cpk=%.3f, approx sigma level=%.2f (all computed, never trusted from Claude)\n", cp, cpk, sigma_level))
+    cat(sprintf("🔎 [Six Sigma Analysis][DEBUG] Process capability: Cp=%.3f, Cpk=%.3f, approx sigma level=%.2f (all computed, never trusted from the Editing Tool)\n", cp, cpk, sigma_level))
 
     x_range <- seq(min(lsl, mean_val - 4 * sigma), max(usl, mean_val + 4 * sigma), length.out = 200)
     y_density <- dnorm(x_range, mean = mean_val, sd = sigma)
@@ -5110,7 +5239,7 @@ render_sixsigma_plotly <- function(components_df, diagram_type) {
     p <- plotly::add_trace(p, x = c(lsl, lsl), y = c(0, max(y_density)), type = "scatter", mode = "lines",
                            name = sprintf("LSL (%.2f)", lsl), line = list(color = "#C0392B", width = 2, dash = "dash"))
     p <- plotly::layout(p,
-      title = sprintf("%s | Cp = %.2f, Cpk = %.2f, approx. sigma level = %.1f\u03c3 (all computed from your mean/sd/USL/LSL, never Claude's arithmetic)",
+      title = sprintf("%s | Cp = %.2f, Cpk = %.2f, approx. sigma level = %.1f\u03c3 (all computed from your mean/sd/USL/LSL, never the Editing Tool's arithmetic)",
                       title_text, cp, cpk, sigma_level),
       xaxis = list(title = metric_name), yaxis = list(title = "Probability Density"))
   }
@@ -5566,7 +5695,7 @@ render_sankey <- function(components_df) {
       .style("opacity", 0);
 
   // ---- Links: gradient-filled flowing paths, thickness computed by
-  //     d3-sankey itself from each link's raw value - never Claude/R math
+  //     d3-sankey itself from each link's raw value - never the Editing Tool/R math
   var defs = svg.append("defs");
   graph.links.forEach(function(l, i) {
     var gradId = "__CONTAINER_ID__-grad-" + i;
@@ -5696,6 +5825,7 @@ render_sankey <- function(components_df) {
 # index Claude reasons over - condensed from diagram_tool_guide's own
 # "when to use" text so the two stay in sync in spirit if not verbatim.
 DIAGRAM_TYPE_SHORT_DESC <- c(
+  rules_table = "Produces a clear numbered set of rules for any concept (a date, a difficult conversation, a startup team), each with its rationale, a book or online reference, and a practical example.",
   swot = "Broad first-pass assessment of internal strengths/weaknesses and external opportunities/threats.",
   pestel = "Macro-environment scan across political, economic, social, technological, environmental, legal factors.",
   five_forces = "Assesses competitive intensity and attractiveness of an industry.",
@@ -5811,7 +5941,7 @@ parse_diagram_recommendations <- function(text, num_recommendations) {
   }
   flush_block()
 
-  if (length(blocks) == 0) stop("No valid recommendation blocks found in Claude's response")
+  if (length(blocks) == 0) stop("No valid recommendation blocks found in the Editing Tool's response")
 
   df <- data.frame(
     rank = integer(), diagram_type = character(), diagram_label = character(), diagram_group = character(),
@@ -5840,7 +5970,7 @@ parse_diagram_recommendations <- function(text, num_recommendations) {
     ))
   }
 
-  if (nrow(df) == 0) stop("Claude's response contained no recommendations with a valid, recognized diagram_type")
+  if (nrow(df) == 0) stop("The Editing Tool's response contained no recommendations with a valid, recognized diagram_type")
   df <- df[order(df$rank), ]
 
   if (dropped > 0) {
@@ -5980,7 +6110,7 @@ parse_sixsigma_recommendations <- function(text, num_recommendations) {
   }
   flush_block()
 
-  if (length(blocks) == 0) stop("No valid recommendation blocks found in Claude's response")
+  if (length(blocks) == 0) stop("No valid recommendation blocks found in the Editing Tool's response")
 
   df <- data.frame(
     rank = integer(), diagram_type = character(), diagram_label = character(), diagram_group = character(),
@@ -6009,7 +6139,7 @@ parse_sixsigma_recommendations <- function(text, num_recommendations) {
     ))
   }
 
-  if (nrow(df) == 0) stop("Claude's response contained no recommendations with a valid, recognized diagram_type")
+  if (nrow(df) == 0) stop("The Editing Tool's response contained no recommendations with a valid, recognized diagram_type")
   df <- df[order(df$rank), ]
 
   if (dropped > 0) {
@@ -6067,4 +6197,146 @@ export_capture_wrapper <- function(ns, content, export_title) {
     `data-export-title` = export_title %||% "diagram",
     content
   )
+}
+
+# ============================================================
+# BUSINESS CONSULTING (Strategic Analysis only)
+# ============================================================
+# Turns a loaded Strategic Analysis diagram's (or Six Sigma tool's) raw
+# component rows into readable prose Claude can reason over as context -
+# used by the Business Consulting subtab to fold an existing diagram's
+# actual content into a new Flex Table generation request. Deliberately
+# does NOT write a new prompt-format function: the generated case is fed
+# through the EXISTING, already-proven generate_table_prompt() unchanged,
+# with this summarized context folded into its request_description
+# argument - guaranteeing the output is byte-for-byte the same format
+# Flex Table's own Generate tab produces (and therefore that
+# parse_table_text() / Flex Table's Bulk Import can read it), rather than
+# risking a second, hand-rolled prompt spec drifting out of sync with the
+# real one over time.
+summarize_diagram_for_consulting <- function(components_df) {
+  if (is.null(components_df) || nrow(components_df) == 0) return(NULL)
+
+  title <- if (has_real_value(components_df$title[1])) components_df$title[1] else "Untitled diagram"
+  framework <- DIAGRAM_TYPE_LABELS[[components_df$diagram_type[1]]] %||% components_df$diagram_type[1]
+  body_rows <- components_df[components_df$component_type != "title", , drop = FALSE]
+
+  lines <- c(sprintf("STRATEGIC DIAGRAM: \"%s\" (%s framework)", title, framework))
+  for (i in seq_len(nrow(body_rows))) {
+    r <- body_rows[i, ]
+    label <- r$label_text %||% ""
+    if (!has_real_value(label)) next
+    entry <- sprintf("  - %s", label)
+    if (has_real_value(r$sub_text)) entry <- paste0(entry, ": ", r$sub_text)
+    items <- diagram_unpack_items(r$items_packed %||% "")
+    if (length(items) > 0) entry <- paste0(entry, " [", paste(items, collapse = "; "), "]")
+    lines <- c(lines, entry)
+  }
+  paste(lines, collapse = "\n")
+}
+
+summarize_sixsigma_for_consulting <- function(components_df) {
+  if (is.null(components_df) || nrow(components_df) == 0) return(NULL)
+
+  title <- if (has_real_value(components_df$title[1])) components_df$title[1] else "Untitled diagram"
+  tool <- SIXSIGMA_TYPE_LABELS[[components_df$diagram_type[1]]] %||% components_df$diagram_type[1]
+  body_rows <- components_df[components_df$component_type != "title", , drop = FALSE]
+
+  lines <- c(sprintf("SIX SIGMA TOOL: \"%s\" (%s)", title, tool))
+  for (i in seq_len(nrow(body_rows))) {
+    r <- body_rows[i, ]
+    label <- r$label_text %||% ""
+    if (!has_real_value(label)) next
+    entry <- sprintf("  - %s", label)
+    if (has_real_value(r$sub_text)) entry <- paste0(entry, ": ", r$sub_text)
+    items <- sankey_unpack_items <- tryCatch(sixsigma_unpack_items(r$items_packed %||% ""), error = function(e) character(0))
+    if (length(items) > 0) entry <- paste0(entry, " [", paste(items, collapse = "; "), "]")
+    if (!is.na(r$severity %||% NA)) entry <- paste0(entry, sprintf(" (Severity=%s, Occurrence=%s, Detection=%s)", r$severity, r$occurrence, r$detection))
+    lines <- c(lines, entry)
+  }
+  paste(lines, collapse = "\n")
+}
+
+# Builds the enriched request_description fed to generate_table_prompt() -
+# combines whichever of (diagram summary, six sigma summary, user context)
+# are actually present. At least one must be non-empty; validated by the
+# calling module before this is invoked.
+build_consulting_request_description <- function(diagram_summary, sixsigma_summary, user_context) {
+  parts <- character(0)
+  if (has_real_value(user_context)) {
+    parts <- c(parts, paste0("THE PROBLEM / CONTEXT (from the user):\n", user_context))
+  }
+  if (!is.null(diagram_summary)) parts <- c(parts, diagram_summary)
+  if (!is.null(sixsigma_summary)) parts <- c(parts, sixsigma_summary)
+
+  paste0(
+    'Build a solid, structured business consulting case/recommendation set. Ground it specifically in the ',
+    'information below - do not write generic consulting boilerplate that ignores it.\n\n',
+    paste(parts, collapse = "\n\n")
+  )
+}
+
+
+# ============================================================
+# ATTACHMENTS FOR CLAUDE (index images / PDFs for the Book Summary)
+# ============================================================
+# files: data.frame as produced by shiny::fileInput(multiple = TRUE)
+# (columns name, size, type, datapath). Returns list(blocks, notes, n).
+# Every file becomes one content block (image or PDF document) in the order
+# given, each preceded by a short text label, so Claude receives all files
+# joined together in ONE request and can read them as one continuous index.
+# Formats the API does not accept natively (BMP, TIFF, HEIC, AVIF, ...) and
+# oversized images are converted / downscaled with magick when available.
+BOOK_INDEX_MAX_FILES <- 30
+BOOK_INDEX_MAX_IMAGE_BYTES <- 3.5 * 1024 * 1024   # raw bytes; base64 adds ~33% (API limit 5MB)
+BOOK_INDEX_MAX_TOTAL_BYTES <- 22 * 1024 * 1024     # raw; request limit is 32MB after base64
+
+build_claude_attachments <- function(files, sort_by_name = TRUE) {
+  if (is.null(files) || nrow(files) == 0) return(list(blocks = list(), notes = character(0), n = 0))
+  if (isTRUE(sort_by_name)) files <- files[order(tolower(files$name)), , drop = FALSE]
+  if (nrow(files) > BOOK_INDEX_MAX_FILES) stop(sprintf("Please upload at most %d files (got %d).", BOOK_INDEX_MAX_FILES, nrow(files)))
+
+  native <- c(jpg = "image/jpeg", jpeg = "image/jpeg", png = "image/png", gif = "image/gif", webp = "image/webp")
+  blocks <- list(); notes <- character(0); total <- 0
+  n <- nrow(files)
+
+  for (i in seq_len(n)) {
+    nm <- files$name[i]; path <- files$datapath[i]
+    ext <- tolower(tools::file_ext(nm))
+    label <- list(type = "text", text = sprintf("Index file %d of %d: %s", i, n, nm))
+
+    if (ext == "pdf") {
+      raw <- readBin(path, "raw", file.info(path)$size)
+      if (length(raw) > 20 * 1024 * 1024) stop(sprintf("'%s' is larger than 20 MB; please split or compress it.", nm))
+      blk <- list(type = "document", source = list(type = "base64", media_type = "application/pdf", data = base64enc::base64encode(raw)))
+    } else {
+      raw <- NULL; media <- native[ext]
+      needs_convert <- is.na(media) || file.info(path)$size > BOOK_INDEX_MAX_IMAGE_BYTES
+      if (needs_convert) {
+        if (!requireNamespace("magick", quietly = TRUE)) {
+          stop(sprintf("'%s' needs conversion (format or size) but the 'magick' package is not installed. Use JPEG, PNG, GIF, WEBP or PDF files under 3.5 MB.", nm))
+        }
+        img <- tryCatch(magick::image_read(path), error = function(e) stop(sprintf("Could not read '%s' as an image: %s", nm, e$message)))
+        img <- img[1]  # first frame / page only
+        info <- magick::image_info(img)
+        if (max(info$width, info$height) > 2000) img <- magick::image_resize(img, "2000x2000>")
+        q <- 85
+        repeat {
+          raw <- magick::image_write(magick::image_flatten(img, "Over"), format = "jpeg", quality = q)
+          if (length(raw) <= BOOK_INDEX_MAX_IMAGE_BYTES || q <= 40) break
+          q <- q - 15
+        }
+        media <- "image/jpeg"
+        notes <- c(notes, sprintf("'%s' was converted/compressed to JPEG before sending.", nm))
+      } else {
+        raw <- readBin(path, "raw", file.info(path)$size)
+      }
+      blk <- list(type = "image", source = list(type = "base64", media_type = unname(media), data = base64enc::base64encode(raw)))
+    }
+    total <- total + length(raw)
+    if (total > BOOK_INDEX_MAX_TOTAL_BYTES) stop("The uploaded files are too large together (limit about 22 MB). Remove some or compress them.")
+    blocks[[length(blocks) + 1]] <- label
+    blocks[[length(blocks) + 1]] <- blk
+  }
+  list(blocks = blocks, notes = notes, n = n)
 }

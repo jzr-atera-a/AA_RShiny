@@ -12,10 +12,10 @@ generate_sankey_ui <- function(id) {
         width = 12,
 
         div(class = "alert alert-info",
-            tags$strong("How this works:"), " Claude decides which nodes exist, which column each sits in, ",
+            tags$strong("How this works:"), " The Editing Tool decides which nodes exist, which column each sits in, ",
             "and each link's flow value - it never places anything on the canvas directly, and links may skip ",
             "ahead past intermediate columns. The actual layout (node heights, link curve widths) is computed ",
-            "by the d3-sankey library from those raw values at render time, not by Claude or by this app."),
+            "by the d3-sankey library from those raw values at render time, not by the Editing Tool or by this app."),
 
         category_domain_topic_dropdown_ui(ns),
 
@@ -34,7 +34,7 @@ generate_sankey_ui <- function(id) {
           "way across the diagram."),
 
         textInput(ns("title_hint"), "Sankey Title (optional):",
-                 placeholder = "Leave blank to let Claude choose one"),
+                 placeholder = "Leave blank to let the Editing Tool choose one"),
         textAreaInput(ns("user_request"), "Describe the flow this Sankey should show: *", height = "120px",
                       placeholder = "e.g. Show electricity flow in the UK from generation sources (gas, wind, nuclear) through the grid to end users, including transmission losses"),
 

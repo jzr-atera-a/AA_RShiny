@@ -11,7 +11,7 @@ generate_mindmap_ui <- function(id) {
         solidHeader = TRUE,
         width = 12,
 
-        p("Define a new mind map. Claude decides the exact tree shape - the root node represents ",
+        p("Define a new mind map. The Editing Tool decides the exact tree shape - the root node represents ",
           "your Topic, every other node has exactly one primary parent (forming a clean hierarchy), ",
           "and nodes may optionally carry extra 'cross-links' to any other node in the map, including ",
           "nodes higher up the hierarchy."),
@@ -68,7 +68,7 @@ generate_mindmap_ui <- function(id) {
           )
         ),
         p(style = "color: #7f8c8d; font-size: 12px;",
-          "The two 'hard cap' fields are enforced as strict limits in the prompt sent to Claude - ",
+          "The two 'hard cap' fields are enforced as strict limits in the prompt sent to the Editing Tool - ",
           "'Target Total Nodes' remains a soft guideline since the exact count still depends on what ",
           "the topic naturally calls for."),
 

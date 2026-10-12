@@ -92,6 +92,8 @@ rsconnect::deployApp(
 )
 
 #Atera Analytics Confirmed 
+
+rsconnect::deployApp('C:/101_Code/R/AA_RShiny/StrategicPlanning&Execution/A_BooksNetworksStrategySixS/BooksNetworksStrategySixS/')
 rsconnect::deployApp('C:/101_Code/R/AA_RShiny/StrategicPlanning&Execution/A_BusinessOperationsSuite/BusinessOperationsSuite/')
 rsconnect::deployApp('C:/101_Code/R/AA_RShiny/SelfManagement/A_Planning_Day_Trips_Health/DaysPlanningFundingTravel/')
 rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Pitching Projects/Matresa/maternal_health_intelligence_app/mat_health_intelligence_poc/')
@@ -99,7 +101,7 @@ rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Pitching Projects/CambridgeNeuroTe
 rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Skills/Social/Serendipity_CompComm_App/david_cleevely_serendipity/')
 rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Skills/Communication/CompComm_v9/Simon_Hall_CC/')
 rsconnect::deployApp('C:/101_Code/R/AA_RShiny/LAT_Trading/2026/LAT_full_app/trading_analysis_lat_2026_u3/')
-rsconnect::deployApp('C:/101_Code/R/AA_RShiny/StrategicPlanning&Execution/A_BooksNetworksStrategySixS/BooksNetworksStrategySixS/')
+
 rsconnect::deployApp('C:/101_Code/R/AA_RShiny/Finance/JBS_CME_Forex_Symp_2026/trading_analysis_f1/')
 rsconnect::deployApp('C:/101_Code/R/Finance/crypto_&_equities_analysis/')
 rsconnect::deployApp('C:/101_Code/R/Entrepreneurship&Pitching/VentureAnalysis_Main/VentureAnalysis/')

@@ -12,7 +12,7 @@ generate_diagram_ui <- function(id) {
         width = 12,
 
         div(class = "alert alert-info",
-            tags$strong("How this works:"), " Claude never places elements on the canvas directly - it only ",
+            tags$strong("How this works:"), " The Editing Tool never places elements on the canvas directly - it only ",
             "fills in labels, bullets, and structural slots (which grid cell, which quadrant, which position ",
             "in a sequence). The renderer computes actual layout, so nothing overlaps."),
 
@@ -29,8 +29,21 @@ generate_diagram_ui <- function(id) {
           column(6, diagram_group_dropdown_ui(ns)),
           column(6, diagram_type_dropdown_ui(ns))
         ),
+        # Rules Table options - only shown when that framework is selected
+        conditionalPanel(
+          condition = sprintf("input['%s'] == 'rules_table'", ns("diagram_type_select")),
+          div(class = "well",
+              tags$strong("Rules Table options"),
+              fluidRow(
+                column(4, numericInput(ns("rules_count"), "Number of rules:", value = 6, min = 2, max = 15, step = 1)),
+                column(4, textInput(ns("rules_outcome"), "Critical outcome wanted:",
+                                    placeholder = "e.g., Both people want a second date")),
+                column(4, textInput(ns("rules_reference"), "Book or online resource to follow (optional):",
+                                    placeholder = "e.g., Never Split the Difference"))
+              ))
+        ),
         textInput(ns("title_hint"), "Diagram Title (optional):",
-                 placeholder = "Leave blank to let Claude choose one"),
+                 placeholder = "Leave blank to let the Editing Tool choose one"),
         textAreaInput(ns("user_request"), "Describe what you want the diagram to cover: *", height = "120px",
                       placeholder = "e.g. Build a SWOT for whether we should acquire Competitor X"),
 

@@ -9,7 +9,7 @@ module:
 
   menu:
     label: "Visualizations"
-    icon: "chart-network"
+    icon: "project-diagram"
     tabname: "sixsigma_visualizations"
     group: "Six Sigma Analysis"
     badge:

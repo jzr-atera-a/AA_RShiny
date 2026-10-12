@@ -12,8 +12,8 @@ flex_table_about_ui <- function(id) {
         width = 12,
 
         h4("What this app does"),
-        p("Generates and stores comparison tables via the Claude API where the ",
-          "NUMBER OF COLUMNS is decided by Claude at generation time and can be ",
+        p("Generates and stores comparison tables via the Editing Tool API where the ",
+          "NUMBER OF COLUMNS is decided by the Editing Tool at generation time and can be ",
           "different every time - e.g. 12 ML models for one query, 8 markets for another - ",
           "without changing the BigQuery table schema."),
 
@@ -34,7 +34,7 @@ notes                   STRING    optional free-text note about the row"
 
         h4("The columns_data delimiter contract"),
         p("One physical BigQuery row = one row of the rendered table. All of that row's columns are ",
-          "packed into a single STRING using two literal separator tokens that Claude is instructed ",
+          "packed into a single STRING using two literal separator tokens that the Editing Tool is instructed ",
           "never to use elsewhere:"),
         tags$ul(
           tags$li(tags$code("|||COL|||"), " separates one column entry from the next"),
@@ -51,7 +51,7 @@ notes                   STRING    optional free-text note about the row"
           "grid loads - every row, every column - reading back each row's ", tags$code("columns_data"),
           ", taking the union of column headers across all matching rows, and rendering a wide, ",
           "scrollable HTML table labeled with the stored Rows/Columns Label text, with no schema ",
-          "migration needed no matter how many columns Claude generated."),
+          "migration needed no matter how many columns the Editing Tool generated."),
 
         h4("LaTeX / MathJax"),
         p("Any cell value may contain inline ($...$) or display ($$...$$) LaTeX. MathJax is loaded ",
@@ -66,8 +66,8 @@ notes                   STRING    optional free-text note about the row"
         h4("Tabs"),
         tags$ul(
           tags$li(tags$strong("BigQuery Setup"), " - connect to your dataset (auto-creates the table)"),
-          tags$li(tags$strong("Claude API Config"), " - credentials, model, timeout"),
-          tags$li(tags$strong("Generate Table"), " - describe the comparison, Claude decides the column count"),
+          tags$li(tags$strong("Editing Tool API Config"), " - credentials, model, timeout"),
+          tags$li(tags$strong("Generate Table"), " - describe the comparison, the Editing Tool decides the column count"),
           tags$li(tags$strong("Bulk Import"), " - paste/parse/upload raw generated text"),
           tags$li(tags$strong("Add Single Entry"), " - manually add or correct one row"),
           tags$li(tags$strong("Browse Data"), " - raw backup view + CSV export"),

@@ -144,6 +144,8 @@ APIManager <- R6::R6Class(
     titan_pending_ics = NULL,    # reactiveVal: list(text, label, stamp) for the Import tab
     titan_goto_tab = NULL,       # reactiveVal: list(tab, stamp) horizontal subtab to show
     titan_log = NULL,            # reactiveVal: character vector, newest first
+    zoom_invite = NULL,          # reactiveVal: invite read from a screenshot (Zoom Schedule -> Events to Calendar)
+    mail_drafts = NULL,          # reactiveVal: list of invite emails waiting in Send Email
     titan_smtp = NULL,           # reactiveVal: list(host, port) used for sending email
     titan_smtp_ok = NULL,        # reactiveVal: TRUE after a successful SMTP login test
     # ---- Slack (Online Collaboration group) ----
@@ -158,6 +160,8 @@ APIManager <- R6::R6Class(
       self$titan_pending_ics <- shiny::reactiveVal(NULL)
       self$titan_goto_tab    <- shiny::reactiveVal(NULL)
       self$titan_log         <- shiny::reactiveVal(character())
+      self$zoom_invite       <- shiny::reactiveVal(NULL)
+      self$mail_drafts       <- shiny::reactiveVal(list())
       self$titan_smtp        <- shiny::reactiveVal(list(host = "", port = 465))
       self$titan_smtp_ok     <- shiny::reactiveVal(FALSE)
       self$slack_state       <- shiny::reactiveVal(list(ok = FALSE))
@@ -397,7 +401,7 @@ APIManager <- R6::R6Class(
     # recognise (content_block_start, server_tool_use, web_search_tool_result,
     # ping, etc.) and only accumulates text_delta pieces, so enabling the
     # web_search tool works with no change to the parsing loop itself.
-    call_claude = function(prompt, max_tokens = NULL, progress_callback = NULL, enable_web_search = FALSE) {
+    call_claude = function(prompt, max_tokens = NULL, progress_callback = NULL, enable_web_search = FALSE, images = NULL) {
       if (!self$claude_authenticated) stop("Not authenticated to Claude API. Please save credentials first.")
       if (is.null(self$claude_api_key) || nchar(self$claude_api_key) == 0) stop("Claude API key is empty. Please configure credentials.")
 
@@ -414,7 +418,10 @@ APIManager <- R6::R6Class(
 
       body_list <- list(
         model = self$claude_model, max_tokens = tokens, stream = TRUE,
-        messages = list(list(role = "user", content = prompt))
+        messages = list(list(role = "user", content = if (length(images)) c(
+          lapply(images, function(im) list(type = "image", source = list(type = "base64",
+                                           media_type = im$media_type, data = im$data))),
+          list(list(type = "text", text = prompt))) else prompt))
       )
       if (isTRUE(enable_web_search)) {
         body_list$tools <- list(list(type = "web_search_20250305", name = "web_search"))

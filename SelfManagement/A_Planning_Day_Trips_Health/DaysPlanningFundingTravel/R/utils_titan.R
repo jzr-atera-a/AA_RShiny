@@ -746,7 +746,7 @@ titan_b64_lines <- function(raw_or_text) {
 }
 
 # Builds the RFC 5322 message (CRLF line endings). attachments: list(list(path, name)).
-titan_build_message <- function(from, to, subject, body, cc = NULL, attachments = NULL) {
+titan_build_message <- function(from, to, subject, body, cc = NULL, attachments = NULL, calendar = NULL) {
   stopifnot(length(to) > 0)
   dom <- sub("^.*@", "", from)
   mid <- sprintf("<%s@%s>", gsub("-", "", uuid::UUIDgenerate()), if (nzchar(dom)) dom else "localhost")
@@ -760,10 +760,33 @@ titan_build_message <- function(from, to, subject, body, cc = NULL, attachments 
   text_part <- c("Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: base64", "",
                  titan_b64_lines(as.character(titan_or(body, ""))))
   atts <- Filter(function(a) !is.null(a$path) && file.exists(a$path), titan_or(attachments, list()))
-  if (length(atts) == 0) return(paste0(paste(c(hdr, text_part), collapse = "\r\n"), "\r\n"))
-  bd <- paste0("=_bos_", gsub("-", "", uuid::UUIDgenerate()))
-  parts <- c(paste0('Content-Type: multipart/mixed; boundary="', bd, '"'), "",
-             paste0("--", bd), text_part, "")
+  new_bd <- function() paste0("=_bos_", gsub("-", "", uuid::UUIDgenerate()))
+  # Calendar invite: text/calendar as an alternative body (this is what makes mail apps
+  # show Yes / No / Maybe) plus the same .ics as an attachment (for apps that only list it).
+  cal <- NULL
+  if (!is.null(calendar) && nzchar(calendar$text)) {
+    meth <- toupper(titan_or(calendar$method, "REQUEST"))
+    alt <- new_bd()
+    cal_hdr <- paste0("Content-Type: text/calendar; charset=UTF-8; method=", meth)
+    cal <- list(
+      alt = alt,
+      body = c(paste0("--", alt), text_part, "",
+               paste0("--", alt), cal_hdr, "Content-Transfer-Encoding: base64", "", titan_b64_lines(calendar$text), "",
+               paste0("--", alt, "--")),
+      att = c(paste0('Content-Type: text/calendar; charset=UTF-8; method=', meth, '; name="', titan_or(calendar$filename, "invite.ics"), '"'),
+              "Content-Transfer-Encoding: base64",
+              paste0('Content-Disposition: attachment; filename="', titan_or(calendar$filename, "invite.ics"), '"'), "",
+              titan_b64_lines(calendar$text), ""))
+  }
+  if (length(atts) == 0 && is.null(cal)) return(paste0(paste(c(hdr, text_part), collapse = "\r\n"), "\r\n"))
+  bd <- new_bd()
+  parts <- c(paste0('Content-Type: multipart/mixed; boundary="', bd, '"'), "")
+  if (!is.null(cal)) {
+    parts <- c(parts, paste0("--", bd), paste0('Content-Type: multipart/alternative; boundary="', cal$alt, '"'), "", cal$body, "",
+               paste0("--", bd), cal$att)
+  } else {
+    parts <- c(parts, paste0("--", bd), text_part, "")
+  }
   for (a in atts) {
     ext <- tolower(tools::file_ext(a$name))
     ct <- switch(ext, pdf = "application/pdf",
@@ -784,21 +807,103 @@ titan_build_message <- function(from, to, subject, body, cc = NULL, attachments 
 
 # Sends one message. Returns TRUE or stops with a readable message.
 # use_ssl: "force" for real servers (TLS is mandatory); "no" only for local tests.
+# One line to the R console (which the API Configuration > Debug tab mirrors).
+titan_dbg <- function(...) {
+  cat(sprintf("[Titan Mail] %s\n", paste0(..., collapse = "")))
+  flush.console()
+}
+
+# Summary of the MIME structure of a built message (no body text, no secrets):
+# lets you see in the log whether the calendar part and the .ics attachment exist.
+titan_mime_outline <- function(msg) {
+  m <- if (is.raw(msg)) rawToChar(msg) else paste(msg, collapse = "\r\n")
+  ln <- unlist(strsplit(m, "\r?\n"))
+  ct <- grep("^Content-Type:", ln, ignore.case = TRUE, value = TRUE)
+  fn <- grep("(file)?name=", ln, ignore.case = TRUE, value = TRUE)
+  c(paste0("size=", nchar(m, type = "bytes"), " bytes"),
+    paste0(trimws(sub("^Content-Type:", "", ct, ignore.case = TRUE))),
+    if (length(fn)) paste0("filename lines: ", paste(trimws(fn), collapse = " | ")))
+}
+
+# Hide anything that could carry the login (AUTH lines and their base64 replies).
+titan_mask_smtp_line <- function(x) {
+  x <- sub("^(AUTH\\s+\\w+).*$", "\\1 <hidden>", x, ignore.case = TRUE)
+  ifelse(grepl("^[A-Za-z0-9+/=]{8,}$", x), "<hidden>", x)
+}
+
+# One SMTP delivery of an already built message. Never stops: returns
+# list(ok, error, transcript, rejected) where `transcript` is the SMTP dialogue
+# (login hidden, message body not included) and `rejected` is the recipient the
+# server refused, when it did.
+titan_smtp_deliver <- function(msg, from, rcpt, url, user, pass, use_ssl = "force", timeout = 60) {
+  transcript <- character(0)
+  dbgf <- function(type, data) {
+    if (!(type %in% c(0L, 1L, 2L))) return(invisible())
+    txt <- trimws(unlist(strsplit(rawToChar(data[data != as.raw(0)]), "\r?\n")))
+    txt <- txt[nzchar(txt)]
+    if (!length(txt)) return(invisible())
+    pre <- c("* ", "< ", "> ")[type + 1L]
+    transcript <<- c(transcript, paste0(pre, titan_mask_smtp_line(txt)))
+    invisible()
+  }
+  raw_msg <- if (is.raw(msg)) msg else charToRaw(paste(msg, collapse = "\r\n"))
+  con <- rawConnection(raw_msg); on.exit(close(con), add = TRUE)
+  h <- curl::new_handle(upload = TRUE, readfunction = function(nbytes, ...) readBin(con, raw(), nbytes),
+                        mail_from = from, mail_rcpt = rcpt,
+                        use_ssl = if (identical(use_ssl, "no")) 0 else 2,
+                        verbose = TRUE, debugfunction = dbgf,
+                        username = user, password = pass, timeout = timeout, connecttimeout = 20)
+  r <- tryCatch(curl::curl_fetch_memory(url, handle = h), error = function(e) e)
+  if (!inherits(r, "error")) return(list(ok = TRUE, error = NULL, transcript = transcript, rejected = NULL))
+  rej <- NULL
+  rc <- grep("^> RCPT TO:", transcript, value = TRUE)
+  if (grepl("RCPT", conditionMessage(r), ignore.case = TRUE) && length(rc))
+    rej <- sub("^> RCPT TO:\\s*<?([^>\\s]*)>?.*$", "\\1", tail(rc, 1), perl = TRUE)
+  list(ok = FALSE, error = conditionMessage(r), transcript = transcript, rejected = rej)
+}
+
 titan_send_mail <- function(user, pass, host, port, to, subject, body,
-                            cc = NULL, attachments = NULL, use_ssl = "force", timeout = 60) {
+                            cc = NULL, attachments = NULL, use_ssl = "force", timeout = 60, calendar = NULL) {
   if (!nzchar(user) || !nzchar(pass)) stop("Not signed in to Titan: load authenticateT.R first.", call. = FALSE)
   to <- trimws(to[nzchar(trimws(to))]); cc <- trimws(cc[nzchar(trimws(cc))])
   bad <- c(to, cc)[!grepl("^[^@[:space:]<>]+@[^@[:space:]<>]+\\.[^@[:space:]<>]+$", c(to, cc))]
   if (length(bad)) stop("These addresses do not look valid: ", paste(bad, collapse = ", "), call. = FALSE)
-  msg <- titan_build_message(user, to, subject, body, cc, attachments)
-  res <- tryCatch({
-    curl::send_mail(mail_from = user, mail_rcpt = unique(c(to, cc)), message = msg,
-                    smtp_server = titan_smtp_url(host, port), use_ssl = use_ssl, verbose = FALSE,
-                    username = user, password = pass, timeout = timeout, connecttimeout = 20)
-    TRUE
-  }, error = function(e) e)
-  if (inherits(res, "error")) stop(titan_smtp_error_text(conditionMessage(res), host, port), call. = FALSE)
-  TRUE
+  msg <- titan_build_message(user, to, subject, body, cc, attachments, calendar)
+  rcpt <- unique(c(to, cc))
+  url <- titan_smtp_url(host, port)
+
+  titan_dbg("---- sending ", if (!is.null(calendar)) "CALENDAR INVITE" else "email", " ----")
+  titan_dbg("server=", url, " ssl=", use_ssl, " login=", user, " (password not logged)")
+  titan_dbg("envelope from=<", user, ">  to=", paste(to, collapse = ", "), "  cc=", if (length(cc)) paste(cc, collapse = ", ") else "(none)")
+  titan_dbg("subject=", subject)
+  titan_dbg("user attachments=", if (length(attachments)) paste(vapply(attachments, function(a) a$name %||% basename(a$path), ""), collapse = ", ") else "(none)",
+            "  calendar part=", if (!is.null(calendar)) paste0("yes (METHOD:", calendar$method %||% "REQUEST", ", ", calendar$filename %||% "invite.ics", ")") else "no")
+  for (l in titan_mime_outline(msg)) titan_dbg("  mime: ", l)
+
+  one <- titan_smtp_deliver(msg, user, rcpt, url, user, pass, use_ssl, timeout)
+  for (l in one$transcript) titan_dbg("  smtp ", l)
+  if (one$ok) { titan_dbg("OK: accepted for ", length(rcpt), " recipient(s)"); return(TRUE) }
+  titan_dbg("FAILED: ", one$error)
+
+  # The server refused a recipient before any message data was sent. Nothing
+  # was delivered yet, so try each recipient on its own to find out which
+  # addresses the server accepts and which it refuses.
+  if (!is.null(one$rejected) && length(rcpt) > 1) {
+    titan_dbg("Server refused recipient <", one$rejected, ">. Retrying one recipient at a time...")
+    okv <- character(0); refused <- character(0); why <- character(0)
+    for (r in rcpt) {
+      res <- titan_smtp_deliver(msg, user, r, url, user, pass, use_ssl, timeout)
+      titan_dbg("  <", r, "> ", if (res$ok) "accepted" else paste0("REFUSED: ", res$error))
+      if (res$ok) okv <- c(okv, r) else { refused <- c(refused, r); why <- c(why, res$error) }
+    }
+    if (length(okv) && length(refused))
+      stop(sprintf("Delivered to: %s. The server REFUSED: %s (%s). Fix or remove those addresses and send to them again.",
+                   paste(okv, collapse = ", "), paste(refused, collapse = ", "), paste(unique(why), collapse = "; ")), call. = FALSE)
+    if (!length(refused)) { titan_dbg("OK: every recipient accepted when sent one at a time"); return(TRUE) }
+    stop(titan_smtp_error_text(paste0("The server refused every recipient (", paste(refused, collapse = ", "), "): ", why[1]), host, port), call. = FALSE)
+  }
+  msgtxt <- if (!is.null(one$rejected)) paste0(one$error, " - refused recipient: <", one$rejected, ">") else one$error
+  stop(titan_smtp_error_text(msgtxt, host, port), call. = FALSE)
 }
 
 titan_smtp_error_text <- function(m, host, port) {
@@ -807,6 +912,8 @@ titan_smtp_error_text <- function(m, host, port) {
     " Check the mailbox password (not the GoDaddy account password) and that SMTP is allowed for this mailbox."
   else if (grepl("resolve|connect|timed out|timeout", m, ignore.case = TRUE))
     paste0(" Could not reach ", host, ":", port, " - check the SMTP server and port in Titan Authentication.")
+  else if (grepl("RCPT|550|551|553", m))
+    " The mail server refused a recipient address. Check the spelling of every To and CC address; the R console and the Debug tab show which one."
   else ""
   paste0("Sending failed: ", trimws(m), hint)
 }

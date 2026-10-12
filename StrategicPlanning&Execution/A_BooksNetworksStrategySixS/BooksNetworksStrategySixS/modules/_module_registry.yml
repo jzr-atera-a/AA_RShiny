@@ -14,7 +14,7 @@ groups:
     label: "API Configuration"
     icon: "key"
     expanded: true
-    modules: [bigquery_auth, claude_api_config]
+    modules: [bigquery_auth, claude_api_config, debug_console]
 
   - id: book_summary
     label: "Book Summary"
@@ -32,7 +32,7 @@ groups:
     label: "Mind Map"
     icon: "share-nodes"
     expanded: false
-    modules: [generate_mindmap, edit_mindmap, visualize_mindmap, mindmap_browse, mindmap_about]
+    modules: [generate_mindmap, edit_mindmap, visualize_mindmap, message_hierarchy, mindmap_browse, mindmap_about]
 
   - id: knowledge_graph
     label: "Knowledge Graph"
@@ -50,13 +50,19 @@ groups:
     label: "Strategic Analysis"
     icon: "chess"
     expanded: false
-    modules: [diagram_tool_guide, diagram_recommender, generate_diagram, diagram_bulk_import, diagram_add_single, diagram_browse, diagram_visualizations, diagram_about]
+    modules: [diagram_tool_guide, diagram_recommender, generate_diagram, diagram_bulk_import, diagram_add_single, diagram_browse, diagram_visualizations, business_consulting, diagram_about]
 
   - id: six_sigma_analysis
     label: "Six Sigma Analysis"
     icon: "microscope"
     expanded: false
     modules: [sixsigma_tool_guide, sixsigma_recommender, generate_sixsigma, sixsigma_bulk_import, sixsigma_add_single, sixsigma_browse, sixsigma_visualizations, sixsigma_about]
+
+  - id: technical_designs
+    label: "Technical Designs"
+    icon: "sitemap"
+    expanded: false
+    modules: [techdesign_guide, techdesign_recommender, techdesign_ml, techdesign_data, techdesign_patterns, techdesign_bulk_import, techdesign_library, techdesign_editor, techdesign_compare, techdesign_about]
 
 modules:
   # ---- API Configuration (shared by all three suites) ----
@@ -68,7 +74,12 @@ modules:
   claude_api_config:
     enabled: true
     priority: 2
-    description: "Claude API credentials management"
+    description: "Editing Tool API credentials management"
+
+  debug_console:
+    enabled: true
+    priority: 2.5
+    description: "Live, copy-friendly mirror of every cat()/print() the app writes - built for copying long console output from a phone browser"
 
   # ---- Book Summary ----
   generate_summary:
@@ -148,6 +159,11 @@ modules:
     priority: 22
     description: "Interactive collapsible mind map via D3.js"
 
+  message_hierarchy:
+    enabled: true
+    priority: 22.5
+    description: "Pyramid-principle message structure for talks (stored in the mind map table, category MessageHierarchy)"
+
   mindmap_browse:
     enabled: true
     priority: 23
@@ -193,7 +209,7 @@ modules:
   generate_sankey:
     enabled: true
     priority: 36
-    description: "AI-powered Sankey flow diagram generation via Claude, rendered with D3's d3-sankey layout"
+    description: "AI-powered Sankey flow diagram generation via the Editing Tool, rendered with D3's d3-sankey layout"
 
   sankey_bulk_import:
     enabled: true
@@ -219,7 +235,7 @@ modules:
   diagram_tool_guide:
     enabled: true
     priority: 39
-    description: "Reference guide to all Strategic Analysis diagram types - what each is for and when to ask Claude for it"
+    description: "Reference guide to all Strategic Analysis diagram types - what each is for and when to ask the Editing Tool for it"
 
   diagram_recommender:
     enabled: true
@@ -229,7 +245,7 @@ modules:
   generate_diagram:
     enabled: true
     priority: 40
-    description: "AI-powered strategy diagram generation (SWOT, PESTEL, Five Forces, etc.) via Claude"
+    description: "AI-powered strategy diagram generation (SWOT, PESTEL, Five Forces, etc.) via the Editing Tool"
 
   diagram_bulk_import:
     enabled: true
@@ -251,6 +267,11 @@ modules:
     priority: 44
     description: "Render a selected diagram using the type-appropriate generic renderer"
 
+  business_consulting:
+    enabled: true
+    priority: 44.5
+    description: "Build a Flex-Table-formatted business consulting case from an existing Strategic Analysis diagram and/or Six Sigma tool, plus user context, via the Editing Tool"
+
   diagram_about:
     enabled: true
     priority: 45
@@ -260,7 +281,7 @@ modules:
   sixsigma_tool_guide:
     enabled: true
     priority: 49
-    description: "Reference guide to all Six Sigma diagram types organized by DMAIC phase - what each is for and when to ask Claude for it"
+    description: "Reference guide to all Six Sigma diagram types organized by DMAIC phase - what each is for and when to ask the Editing Tool for it"
 
   sixsigma_recommender:
     enabled: true
@@ -270,7 +291,7 @@ modules:
   generate_sixsigma:
     enabled: true
     priority: 50
-    description: "AI-powered Six Sigma diagram generation (Fishbone, Pareto, Control Chart, CTQ Tree, FMEA, etc.) via Claude"
+    description: "AI-powered Six Sigma diagram generation (Fishbone, Pareto, Control Chart, CTQ Tree, FMEA, etc.) via the Editing Tool"
 
   sixsigma_bulk_import:
     enabled: true
@@ -297,6 +318,57 @@ modules:
     priority: 55
     description: "Schema documentation for six_sigma_diagrams and the delimiter convention"
 
+  # ---- Technical Designs (one table, one row per design) ----
+  techdesign_ml:
+    enabled: true
+    priority: 80
+    description: "ML / GenAI architecture diagrams"
+
+  techdesign_data:
+    enabled: true
+    priority: 81
+    description: "Data processing architecture diagrams"
+
+  techdesign_patterns:
+    enabled: true
+    priority: 82
+    description: "Software design pattern class diagrams"
+
+  techdesign_guide:
+    enabled: true
+    priority: 77
+    description: "Design guide with offline examples"
+
+  techdesign_recommender:
+    enabled: true
+    priority: 78
+    description: "Design recommender"
+
+  techdesign_bulk_import:
+    enabled: true
+    priority: 83
+    description: "Bulk import of designs"
+
+  techdesign_library:
+    enabled: true
+    priority: 84
+    description: "Design library and version history"
+
+  techdesign_editor:
+    enabled: true
+    priority: 85
+    description: "Table-based design editor"
+
+  techdesign_compare:
+    enabled: true
+    priority: 86
+    description: "Compare two designs"
+
+  techdesign_about:
+    enabled: true
+    priority: 87
+    description: "About Technical Designs"
+
 settings:
   auto_install: false
   check_versions: true
@@ -304,7 +376,7 @@ settings:
   dev_mode: false
 
 app:
-  name: "Unified Suite: Book Summary + Flex Table + Mind Map + Knowledge Graph + Sankey Graph + Strategic Analysis + Six Sigma Analysis"
+  name: "BooksNetworksStrategySixS"
   version: "1.3.0"
-  description: "Seven AI-powered BigQuery-backed data suites in one app: book summaries, flexible comparison tables, mind maps, knowledge graphs, AI-generated Sankey flow diagrams, AI-generated strategy diagrams, and AI-generated Six Sigma diagrams - sharing one Claude API connection and one BigQuery connection across seven tables in the same project/dataset"
+  description: "Seven AI-powered BigQuery-backed data suites in one app: book summaries, flexible comparison tables, mind maps, knowledge graphs, AI-generated Sankey flow diagrams, AI-generated strategy diagrams, and AI-generated Six Sigma diagrams - sharing one Editing Tool API connection and one BigQuery connection across seven tables in the same project/dataset"
   author: "Your Team"

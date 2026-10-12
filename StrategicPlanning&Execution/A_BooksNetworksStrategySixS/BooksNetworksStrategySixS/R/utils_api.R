@@ -47,6 +47,7 @@ APIManager <- R6::R6Class(
     bq_table_sankey = "sankey_graphs",
     bq_table_diagram = "strategy_diagrams",
     bq_table_sixsigma = "six_sigma_diagrams",
+    bq_table_techdesign = "technical_designs",
     bq_full_table_books = NULL,
     bq_full_table_flex = NULL,
     bq_full_table_mindmap = NULL,
@@ -54,6 +55,7 @@ APIManager <- R6::R6Class(
     bq_full_table_sankey = NULL,
     bq_full_table_diagram = NULL,
     bq_full_table_sixsigma = NULL,
+    bq_full_table_techdesign = NULL,
     bq_authenticated = FALSE,
     bq_temp_file = NULL,
 
@@ -69,6 +71,7 @@ APIManager <- R6::R6Class(
     state_trigger_sankey = NULL,
     state_trigger_diagram = NULL,
     state_trigger_sixsigma = NULL,
+    state_trigger_techdesign = NULL,
 
     # ⭐ PERFORMANCE: taxonomy result cache, one per sub-app. Because
     # shinydashboard doesn't lazy-load hidden tabs, EVERY module across
@@ -122,6 +125,17 @@ APIManager <- R6::R6Class(
     # Analysis only). Same shape as pending_diagram_selection above.
     pending_sixsigma_selection = NULL,
 
+    # Technical Designs handoffs.
+    #  - pending_techdesign_selection: list(group, design_type, context) from the
+    #    Design Recommender / Design Guide to a generate subtab.
+    #  - pending_bulk_text_techdesign: design text from a generate subtab to the
+    #    Technical Designs Bulk Import subtab.
+    #  - pending_techdesign_load: design_id (and optional row id) from the
+    #    Design Library to the Design Editor.
+    pending_techdesign_selection = NULL,
+    pending_bulk_text_techdesign = NULL,
+    pending_techdesign_load = NULL,
+
     initialize = function() {
       self$state_trigger_books <- shiny::reactiveVal(0)
       self$state_trigger_flex <- shiny::reactiveVal(0)
@@ -130,6 +144,7 @@ APIManager <- R6::R6Class(
       self$state_trigger_sankey <- shiny::reactiveVal(0)
       self$state_trigger_diagram <- shiny::reactiveVal(0)
       self$state_trigger_sixsigma <- shiny::reactiveVal(0)
+      self$state_trigger_techdesign <- shiny::reactiveVal(0)
       self$pending_bulk_text_books <- shiny::reactiveVal("")
       self$pending_bulk_text_flex <- shiny::reactiveVal("")
       self$pending_bulk_text_sankey <- shiny::reactiveVal("")
@@ -137,6 +152,9 @@ APIManager <- R6::R6Class(
       self$pending_bulk_text_sixsigma <- shiny::reactiveVal("")
       self$pending_diagram_selection <- shiny::reactiveVal(NULL)
       self$pending_sixsigma_selection <- shiny::reactiveVal(NULL)
+      self$pending_techdesign_selection <- shiny::reactiveVal(NULL)
+      self$pending_bulk_text_techdesign <- shiny::reactiveVal("")
+      self$pending_techdesign_load <- shiny::reactiveVal(NULL)
       private$recompute_full_table_ids()
       cat("🔌 API Manager initialized (Book Summary + Flex Table + Mind Map + Knowledge Graph + Sankey Graph + Strategic Analysis + Six Sigma Analysis)\n")
     },
@@ -185,6 +203,16 @@ APIManager <- R6::R6Class(
       self$sixsigma_taxonomy_cache <- NULL
       cat("🔔 [Six Sigma Analysis] State trigger fired:", current + 1, "\n")
     },
+
+    trigger_state_update_techdesign = function() {
+      current <- self$state_trigger_techdesign()
+      self$state_trigger_techdesign(current + 1)
+      cat("🔔 [Technical Designs] State trigger fired:", current + 1, "\n")
+    },
+
+    set_pending_techdesign_selection = function(sel) { self$pending_techdesign_selection(sel) },
+    set_pending_bulk_text_techdesign = function(text) { self$pending_bulk_text_techdesign(text) },
+    set_pending_techdesign_load = function(x) { self$pending_techdesign_load(x) },
 
     set_pending_bulk_text_books = function(text) {
       self$pending_bulk_text_books(text)
@@ -260,7 +288,7 @@ APIManager <- R6::R6Class(
     },
 
     test_claude_connection = function() {
-      if (is.null(self$claude_api_key)) stop("Claude API key not set")
+      if (is.null(self$claude_api_key)) stop("Editing Tool API key not set")
 
       tryCatch({
         response <- POST(
@@ -342,12 +370,12 @@ APIManager <- R6::R6Class(
       return(lines)
     },
 
-    call_claude = function(prompt, max_tokens = NULL, progress_callback = NULL) {
-      if (!self$claude_authenticated) stop("Not authenticated to Claude API. Please save credentials first.")
-      if (is.null(self$claude_api_key) || nchar(self$claude_api_key) == 0) stop("Claude API key is empty. Please configure credentials.")
+    call_claude = function(prompt, max_tokens = NULL, progress_callback = NULL, attachments = NULL) {
+      if (!self$claude_authenticated) stop("Not authenticated to Editing Tool API. Please save credentials first.")
+      if (is.null(self$claude_api_key) || nchar(self$claude_api_key) == 0) stop("Editing Tool API key is empty. Please configure credentials.")
 
       tokens <- max_tokens %||% self$claude_max_tokens
-      if (!is.null(progress_callback)) progress_callback("Connecting to Claude API...")
+      if (!is.null(progress_callback)) progress_callback("Connecting to Editing Tool API...")
 
       call_id <- paste(sample(c(letters, LETTERS, 0:9), 8, replace = TRUE), collapse = "")
       start_time <- Sys.time()
@@ -357,9 +385,19 @@ APIManager <- R6::R6Class(
         call_id, self$claude_model, tokens, self$claude_timeout, nchar(prompt)
       ), tag = "call_claude")
 
+      # Optional attachments (list of image / document content blocks, see
+      # build_claude_attachments()) are sent in the SAME single user message,
+      # in order, followed by the text prompt.
+      user_content <- if (length(attachments) > 0) {
+        c(attachments, list(list(type = "text", text = prompt)))
+      } else prompt
+      if (length(attachments) > 0) {
+        self$log_debug(sprintf("[%s] Including %d attachment block(s)", call_id, length(attachments)), tag = "call_claude")
+      }
+
       body_json <- toJSON(list(
         model = self$claude_model, max_tokens = tokens, stream = TRUE,
-        messages = list(list(role = "user", content = prompt))
+        messages = list(list(role = "user", content = user_content))
       ), auto_unbox = TRUE)
 
       h <- curl::new_handle()
@@ -398,7 +436,7 @@ APIManager <- R6::R6Class(
             if (!is.null(parsed$usage)) final_usage <<- parsed$usage
             if (!is.null(parsed$delta$stop_reason)) final_stop_reason <<- parsed$delta$stop_reason
           } else if (parsed$type == "error") {
-            stream_error_msg <<- parsed$error$message %||% "Unknown streaming error from Claude API"
+            stream_error_msg <<- parsed$error$message %||% "Unknown streaming error from Editing Tool API"
           }
         }
       }
@@ -456,18 +494,18 @@ APIManager <- R6::R6Class(
 
           if (status == 401) error_msg <- "Authentication failed: Invalid API key. Please check your credentials."
           else if (status == 429) error_msg <- "Rate limit exceeded: Too many requests. Please wait and try again."
-          else if (status == 500) error_msg <- "Claude API server error: Please try again in a few moments."
-          else if (status == 529) error_msg <- "Claude API is overloaded: Please try again in a few moments."
+          else if (status == 500) error_msg <- "Editing Tool API server error: Please try again in a few moments."
+          else if (status == 529) error_msg <- "Editing Tool API is overloaded: Please try again in a few moments."
 
           stop(error_msg)
         }
 
-        if (!is.null(stream_error_msg)) stop(paste0("Streaming error from Claude API: ", stream_error_msg))
+        if (!is.null(stream_error_msg)) stop(paste0("Streaming error from Editing Tool API: ", stream_error_msg))
 
         response_text <- paste(accumulated_text, collapse = "")
         if (nchar(response_text) == 0) {
           self$log_debug(sprintf("[%s] Stream completed but produced no text", call_id), tag = "call_claude")
-          stop("Claude API returned an empty response. Please try again.")
+          stop("Editing Tool API returned an empty response. Please try again.")
         }
 
         self$log_debug(sprintf(
@@ -521,7 +559,7 @@ APIManager <- R6::R6Class(
         } else if (grepl("Timeout", error_msg, ignore.case = TRUE)) {
           error_msg <- paste0(
             "Request timeout after ", self$claude_timeout, " seconds (elapsed ", round(elapsed, 1), "s). ",
-            "Try: (1) Increase timeout in Claude API Config, (2) narrow the request scope, or (3) try again later. ",
+            "Try: (1) Increase timeout in Editing Tool API Config, (2) narrow the request scope, or (3) try again later. ",
             "[call_id: ", call_id, " - see R console for full diagnostic dump]"
           )
         } else if (grepl("schannel|close_notify", error_msg, ignore.case = TRUE)) {
@@ -529,7 +567,7 @@ APIManager <- R6::R6Class(
             "TLS connection closed abruptly after ", round(elapsed, 1), "s (schannel/close_notify), before any ",
             "data was received. This points to a firewall, antivirus HTTPS inspection, VPN, or proxy blocking ",
             "the connection outright - it is usually NOT a real loss of internet access. ",
-            "Try: (1) Run Network Diagnostics in Claude API Config, (2) temporarily disable VPN/antivirus ",
+            "Try: (1) Run Network Diagnostics in Editing Tool API Config, (2) temporarily disable VPN/antivirus ",
             "HTTPS scanning, (3) try a different network. [call_id: ", call_id, " - see R console for full diagnostic dump]"
           )
         } else if (grepl("peer|SSL|connection", error_msg, ignore.case = TRUE)) {
@@ -751,7 +789,24 @@ APIManager <- R6::R6Class(
             created_by STRING
           )", self$bq_full_table_sixsigma)
 
-        for (q in list(books_create, flex_create, mindmap_create, kg_create, sankey_create, diagram_create, diagram_alter_add_domain, diagram_alter_add_group, sixsigma_create)) {
+        # ---- Technical Designs: technical_designs. ONE ROW PER DESIGN VERSION
+        #     (unlike the component-per-row diagram tables). Plain columns for
+        #     filtering plus JSON text columns holding the diagram data, so a
+        #     new architecture or pattern needs no schema change. Append-only:
+        #     the newest row per design_id is the current version.
+        techdesign_create <- sprintf("
+          CREATE TABLE IF NOT EXISTS `%s` (
+            id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+            design_id STRING, design_group STRING, design_type STRING,
+            name STRING, variant STRING, title STRING, summary STRING,
+            when_to_use STRING, when_not_to_use STRING,
+            complexity_level STRING, tags STRING, diagram_kind STRING,
+            components_json STRING, connections_json STRING, flow_steps_json STRING,
+            tradeoffs_json STRING, references_json STRING, extras_json STRING,
+            schema_version INTEGER, change_type STRING, created_by STRING
+          )", self$bq_full_table_techdesign)
+
+        for (q in list(books_create, flex_create, mindmap_create, kg_create, sankey_create, diagram_create, diagram_alter_add_domain, diagram_alter_add_group, sixsigma_create, techdesign_create)) {
           tryCatch({ bq_project_query(self$bq_project_id, q) }, error = function(e) {})
         }
 
@@ -763,6 +818,7 @@ APIManager <- R6::R6Class(
         self$trigger_state_update_sankey()
         self$trigger_state_update_diagram()
         self$trigger_state_update_sixsigma()
+        self$trigger_state_update_techdesign()
         return(TRUE)
 
       }, error = function(e) {
@@ -902,6 +958,19 @@ APIManager <- R6::R6Class(
       })
       self$mindmap_taxonomy_cache <- result
       result
+    },
+
+    # Scoped views of the SAME mind map table: the regular Mind Map
+    # tabs never show the reserved "MessageHierarchy" category, and the
+    # Message Hierarchy tab shows ONLY that category.
+    bq_get_mindmap_taxonomy_regular = function() {
+      tax <- self$bq_get_mindmap_taxonomy()
+      tax[tolower(trimws(tax$category)) != tolower(MESSAGE_HIERARCHY_CATEGORY), , drop = FALSE]
+    },
+
+    bq_get_mindmap_taxonomy_messages = function() {
+      tax <- self$bq_get_mindmap_taxonomy()
+      tax[tolower(trimws(tax$category)) == tolower(MESSAGE_HIERARCHY_CATEGORY), , drop = FALSE]
     },
 
     bq_get_map_ids_for_topic = function(category, domain, topic) {
@@ -1304,6 +1373,88 @@ APIManager <- R6::R6Class(
     },
 
     # ============================================================
+    # TECHNICAL DESIGNS (architectures and design patterns; one row per design version)
+    # ============================================================
+    # Latest, non-deleted version of every design in one group (or all groups).
+    bq_get_techdesign_list = function(group = NULL) {
+      if (!self$bq_authenticated) return(data.frame())
+      where <- if (!is.null(group) && nzchar(group)) sprintf("WHERE design_group = '%s'", safe_sql_escape(group)) else "WHERE TRUE"
+      tryCatch({
+        self$bq_query(sprintf("
+          SELECT * FROM (
+            SELECT design_id, design_group, design_type, name, variant, title, summary,
+                   complexity_level, tags, diagram_kind, change_type, created_at, id
+            FROM `%s` %s
+            QUALIFY ROW_NUMBER() OVER (PARTITION BY design_id ORDER BY id DESC) = 1
+          ) WHERE change_type != 'delete'
+          ORDER BY created_at DESC
+        ", self$bq_full_table_techdesign, where))
+      }, error = function(e) {
+        cat("⚠️  [bq_get_techdesign_list] Query failed:", e$message, "\n")
+        data.frame()
+      })
+    },
+
+    bq_get_techdesign = function(design_id) {
+      if (!self$bq_authenticated) return(data.frame())
+      tryCatch({
+        self$bq_query(sprintf("SELECT * FROM `%s` WHERE design_id = '%s' ORDER BY id DESC LIMIT 1",
+                              self$bq_full_table_techdesign, safe_sql_escape(design_id)))
+      }, error = function(e) {
+        cat("⚠️  [bq_get_techdesign] Query failed:", e$message, "\n")
+        data.frame()
+      })
+    },
+
+    # Every stored version of one design, newest first (full rows).
+    bq_get_techdesign_versions = function(design_id) {
+      if (!self$bq_authenticated) return(data.frame())
+      tryCatch({
+        self$bq_query(sprintf("SELECT * FROM `%s` WHERE design_id = '%s' ORDER BY id DESC",
+                              self$bq_full_table_techdesign, safe_sql_escape(design_id)))
+      }, error = function(e) {
+        cat("⚠️  [bq_get_techdesign_versions] Query failed:", e$message, "\n")
+        data.frame()
+      })
+    },
+
+    # One specific stored version by its row id.
+    bq_get_techdesign_row = function(row_id) {
+      if (!self$bq_authenticated) return(data.frame())
+      tryCatch({
+        self$bq_query(sprintf("SELECT * FROM `%s` WHERE id = %d LIMIT 1",
+                              self$bq_full_table_techdesign, as.integer(row_id)))
+      }, error = function(e) {
+        cat("⚠️  [bq_get_techdesign_row] Query failed:", e$message, "\n")
+        data.frame()
+      })
+    },
+
+    bq_insert_techdesign = function(data_frame) {
+      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      required_cols <- c("id", "created_at", "design_id", "design_group", "design_type", "name", "variant", "title",
+                         "summary", "when_to_use", "when_not_to_use", "complexity_level", "tags", "diagram_kind",
+                         "components_json", "connections_json", "flow_steps_json", "tradeoffs_json",
+                         "references_json", "extras_json", "schema_version", "change_type", "created_by")
+      max_id_query <- sprintf("SELECT COALESCE(MAX(id), 0) as max_id FROM `%s`", self$bq_full_table_techdesign)
+      start_id <- tryCatch({
+        result <- bq_project_query(self$bq_project_id, max_id_query)
+        as.integer(bq_table_download(result)$max_id) + 1
+      }, error = function(e) 1L)
+      data_frame$id <- seq(start_id, start_id + nrow(data_frame) - 1L)
+      data_frame$created_at <- Sys.time()
+      for (col in required_cols) if (!col %in% names(data_frame)) data_frame[[col]] <- NA
+      data_frame <- data_frame[, required_cols]
+      cat(sprintf("🧩 [Technical Designs][DEBUG] Inserting design %s (%s/%s, %s) -> %s\n",
+                  data_frame$design_id[1], data_frame$design_group[1], data_frame$design_type[1],
+                  data_frame$change_type[1], self$bq_full_table_techdesign))
+      table_ref <- bq_table(self$bq_project_id, self$bq_dataset_id, self$bq_table_techdesign)
+      bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
+      self$trigger_state_update_techdesign()
+      return(nrow(data_frame))
+    },
+
+    # ============================================================
     # SANKEY GRAPH (AI-generated Sankey flow diagrams)
     # ============================================================
     bq_get_sankey_taxonomy = function() {
@@ -1414,6 +1565,7 @@ APIManager <- R6::R6Class(
       self$bq_full_table_sankey <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_sankey)
       self$bq_full_table_diagram <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_diagram)
       self$bq_full_table_sixsigma <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_sixsigma)
+      self$bq_full_table_techdesign <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_techdesign)
     }
   )
 )

@@ -32,7 +32,7 @@ graph_id                  STRING     groups all versions of all entities/relatio
 graph_title               STRING     display title
 entity_id                 STRING     populated when row_kind='entity', e.g. 'E1'
 entity_label              STRING     the entity's name/title
-entity_type               STRING     e.g. 'Person', 'Award', 'Concept' - Claude's choice, not a fixed list
+entity_type               STRING     e.g. 'Person', 'Award', 'Concept' - the Editing Tool's choice, not a fixed list
 entity_description        STRING
 relationship_id           STRING     populated when row_kind='relationship', e.g. 'R1'
 source_entity_id          STRING     the entity_id this relationship starts FROM
@@ -58,18 +58,18 @@ sort_order                INTEGER    ordering / audit-trail sequencing"
 
         h4("Cascade delete: entity -> its relationships"),
         p("Deleting an entity also deletes every relationship that touches it (as source OR target) - ",
-          "otherwise the graph would contain a dangling reference. Claude only needs to name the ONE ",
+          "otherwise the graph would contain a dangling reference. The Editing Tool only needs to name the ONE ",
           "entity_id to delete; the app itself finds every relationship that references it and tombstones ",
           "them automatically. Unlike the Mind Map Suite's subtree cascade, this needs no recursive ",
           "traversal - relationships don't have their own dependents, so it's a single filter, not a walk."),
 
         h4("Editing model: delta, not full regeneration"),
-        p("When editing an existing graph, Claude is shown a compact list of the CURRENT entities and ",
+        p("When editing an existing graph, the Editing Tool is shown a compact list of the CURRENT entities and ",
           "relationships plus your edit request, and returns ONLY what changed - CREATE/UPDATE/DELETE ",
           "blocks tagged with an ENTITY or RELATIONSHIP kind, never the whole graph re-transcribed."),
 
         h4("Generation prompt: rules first, request second"),
-        p("Every generation call sends Claude a fixed structural rule block FIRST - covering output ",
+        p("Every generation call sends the Editing Tool a fixed structural rule block FIRST - covering output ",
           "format, entity/relationship block tags, the hard per-entity relationship cap, and formatting ",
           "rules - and only THEN the specific Category/Domain/Topic/description for this particular ",
           "graph. 'Max Relationships per Entity' is enforced as a hard cap; total entity/relationship ",
@@ -92,7 +92,7 @@ sort_order                INTEGER    ordering / audit-trail sequencing"
         h4("Tabs"),
         tags$ul(
           tags$li(tags$strong("BigQuery Setup"), " - connect to your dataset (auto-creates the table)"),
-          tags$li(tags$strong("Claude API Config"), " - credentials, model, timeout, network diagnostics"),
+          tags$li(tags$strong("Editing Tool API Config"), " - credentials, model, timeout, network diagnostics"),
           tags$li(tags$strong("Generate Graph"), " - create a brand-new knowledge graph"),
           tags$li(tags$strong("Edit Graph"), " - load an existing graph, request a delta edit, review the cascade-computed preview, apply"),
           tags$li(tags$strong("D3 Visualization"), " - interactive force-directed graph"),

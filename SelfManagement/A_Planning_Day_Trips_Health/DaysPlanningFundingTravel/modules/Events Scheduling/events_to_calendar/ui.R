@@ -28,6 +28,8 @@ events_to_calendar_ui <- function(id) {
                       column(6, dateInput(ns("date"), "Date", Sys.Date(), weekstart = 1)),
                       column(6, textInput(ns("start"), "Start (HH:MM)", titan_next_slot()))
                     ),
+                    selectInput(ns("form_tz"), "Time zone of this event", TITAN_TIMEZONES, selected = TITAN_DEFAULT_TZ),
+                    uiOutput(ns("invite_note")),
                     fluidRow(
                       column(6, numericInput(ns("duration"), "Duration (minutes)", 60, min = 5, step = 5)),
                       column(6, br(), checkboxInput(ns("all_day"), "All-day event", FALSE))
@@ -54,8 +56,8 @@ events_to_calendar_ui <- function(id) {
                     selectInput(ns("tz"), "Time zone for these events", TITAN_TIMEZONES,
                                 selected = TITAN_DEFAULT_TZ),
                     p(tags$small("Times are entered, shown and sent in this zone (saved to Titan as UTC). ",
-                                 "Events loaded from a Visualisation tab keep the zone they were saved with (see the Zone column); ",
-                                 "this dropdown applies to events you type in here.")),
+                                 "Every event keeps the zone it was created or saved with (see the Zone column). This dropdown follows the ",
+                                 "Time zone in Event details, and is the zone for events that have none.")),
                     DT::DTOutput(ns("queue_tbl")),
                     br(),
                     checkboxInput(ns("overwrite_queue"), "Replace events that already exist (same UID)", FALSE),

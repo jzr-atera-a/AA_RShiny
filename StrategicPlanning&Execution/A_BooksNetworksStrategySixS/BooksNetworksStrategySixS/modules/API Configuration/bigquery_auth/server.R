@@ -37,7 +37,7 @@ bigquery_auth_server <- function(id, api_manager) {
       shinyjs::disable("authenticate")
       output$auth_status <- renderUI({
         tags$div(class = "status-info", tags$i(class = "fa fa-spinner fa-spin"),
-                 " Connecting and preparing all seven tables - this can take up to a minute the first time, ",
+                 " Connecting and preparing all eight tables - this can take up to a minute the first time, ",
                  "since every suite's dropdowns refresh at once. Please wait; clicking again won't speed it up.")
       })
 
@@ -58,7 +58,7 @@ bigquery_auth_server <- function(id, api_manager) {
         output$auth_status <- renderUI({
           tags$div(class = "status-success",
                    tags$i(class = "fa fa-check-circle"),
-                   " ✓ Successfully authenticated! All seven tables are ready:",
+                   " ✓ Successfully authenticated! All eight tables are ready:",
                    tags$br(),
                    tags$small("Book Summary: ", api_manager$bq_full_table_books),
                    tags$br(),
@@ -72,10 +72,12 @@ bigquery_auth_server <- function(id, api_manager) {
                    tags$br(),
                    tags$small("Strategic Analysis: ", api_manager$bq_full_table_diagram),
                    tags$br(),
-                   tags$small("Six Sigma Analysis: ", api_manager$bq_full_table_sixsigma))
+                   tags$small("Six Sigma Analysis: ", api_manager$bq_full_table_sixsigma),
+                   tags$br(),
+                   tags$small("Technical Designs: ", api_manager$bq_full_table_techdesign))
         })
 
-        showNotification("✓ BigQuery connected - all seven suites ready!", type = "message")
+        showNotification("✓ BigQuery connected - all eight suites ready!", type = "message")
 
       }, error = function(e) {
         output$auth_status <- renderUI({
@@ -106,7 +108,8 @@ bigquery_auth_server <- function(id, api_manager) {
         kg = api_manager$bq_full_table_kg,
         sankey = api_manager$bq_full_table_sankey,
         diagram = api_manager$bq_full_table_diagram,
-        sixsigma = api_manager$bq_full_table_sixsigma
+        sixsigma = api_manager$bq_full_table_sixsigma,
+        techdesign = api_manager$bq_full_table_techdesign
       )
 
       output$test_status <- renderUI({

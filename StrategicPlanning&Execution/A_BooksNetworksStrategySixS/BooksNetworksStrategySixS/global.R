@@ -1,3 +1,41 @@
+# ── Debug console capture ───────────────────────────────────────────────
+# Mirrors every cat()/print() this app writes into an in-memory buffer,
+# read by the Debug Console tab (API Configuration group). This must run
+# BEFORE anything else in this file, so every module's own startup
+# cat() calls (module discovery, package loading, etc.) get captured
+# too, not just output from requests made after the app finishes
+# loading. Deliberately captures stdout only (cat()/print()), not R's
+# message()/warning()/error stream - sinking that stream risks silently
+# hiding real errors from the actual console, so it's left alone; check
+# the real console for those.
+.debug_log_max_lines <- 5000
+
+if (!exists(".debug_log_conn", envir = .GlobalEnv) ||
+    !isTRUE(tryCatch(isOpen(get(".debug_log_conn", envir = .GlobalEnv)), error = function(e) FALSE))) {
+
+  assign("debug_log_buffer", character(0), envir = .GlobalEnv)
+  .debug_log_conn <- textConnection("debug_log_buffer", open = "w", local = FALSE)
+  sink(.debug_log_conn, type = "output", split = TRUE)
+  cat("✓ [Debug Console] Log capture initialized\n")
+} else {
+  cat("✓ [Debug Console] Reusing existing log capture (already active this R session)\n")
+}
+
+get_debug_log_lines <- function() {
+  raw <- tryCatch(get("debug_log_buffer", envir = .GlobalEnv), error = function(e) character(0))
+  if (length(raw) > .debug_log_max_lines) raw <- tail(raw, .debug_log_max_lines)
+  raw
+}
+
+clear_debug_log <- function() {
+  sink(type = "output")
+  close(.debug_log_conn)
+  assign("debug_log_buffer", character(0), envir = .GlobalEnv)
+  .debug_log_conn <<- textConnection("debug_log_buffer", open = "w", local = FALSE)
+  sink(.debug_log_conn, type = "output", split = TRUE)
+  invisible(TRUE)
+}
+
 # global.R - Global Configuration
 # UNIFIED SUITE: Flex Table + Mind Map + Knowledge Graph v1.0
 # =============================================================
@@ -50,6 +88,11 @@ suppressPackageStartupMessages({
 source("R/module_loader.R")
 source("R/utils_common.R")
 source("R/utils_api.R")
+source("R/utils_techdesign_catalog.R")
+source("R/utils_techdesign_parse.R")
+source("R/utils_techdesign_render.R")
+source("R/utils_techdesign_module.R")
+source("R/utils_techdesign_actions.R")
 
 api_manager <- APIManager$new()
 

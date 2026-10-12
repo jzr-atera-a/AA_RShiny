@@ -1,7 +1,7 @@
 module:
   id: "generate_diagram"
   name: "Generate Diagram"
-  description: "AI-powered strategy diagram generation (SWOT, PESTEL, Five Forces, etc.) via Claude"
+  description: "AI-powered strategy diagram generation (SWOT, PESTEL, Five Forces, etc.) via the Editing Tool"
   version: "1.0.0"
   author: "Strategic Analysis Suite Team"
 
