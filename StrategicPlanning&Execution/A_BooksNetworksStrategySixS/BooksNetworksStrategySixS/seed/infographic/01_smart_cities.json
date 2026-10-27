@@ -1,0 +1,352 @@
+{
+ "meta": {
+  "title": "Smart Cities at a Glance",
+  "subtitle": "How connected sensors, open data and shared services are changing the way urban areas run. Illustrative figures for demonstration.",
+  "kicker": "Urban technology brief",
+  "hero_icons": [
+   "building",
+   "wifi",
+   "chart_up"
+  ],
+  "theme": "sky",
+  "topic": "Seed example: illustrative figures, no web research",
+  "research": "none"
+ },
+ "sections": [
+  {
+   "id": "s1",
+   "type": "stat_row",
+   "heading": "The city in numbers",
+   "intro": "Three headline measures a city dashboard usually tracks. Every figure here is a placeholder for illustration.",
+   "items": [
+    {
+     "value": "68%",
+     "label": "Residents living in urban areas",
+     "note": "A rising share each decade.",
+     "bar": 68,
+     "icon": "users",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "value": "42%",
+     "label": "Streetlights on adaptive control",
+     "note": "Dimming when roads are empty.",
+     "bar": 42,
+     "icon": "bolt",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "value": "1.2M",
+     "label": "Connected sensors",
+     "note": "Traffic, air, water and waste.",
+     "icon": "wifi",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    }
+   ]
+  },
+  {
+   "id": "s2",
+   "type": "icon_row",
+   "heading": "What is generating the data?",
+   "intro": "Cities collect signals from many small devices and services.",
+   "items": [
+    {
+     "icon": "phone",
+     "label": "Smartphones",
+     "text": "Movement and app usage, anonymised."
+    },
+    {
+     "icon": "car",
+     "label": "Vehicles",
+     "text": "Traffic counts and transit locations."
+    },
+    {
+     "icon": "droplet",
+     "label": "Water meters",
+     "text": "Flow, pressure and leak alerts."
+    },
+    {
+     "icon": "leaf",
+     "label": "Air sensors",
+     "text": "Particles and gases at street level."
+    },
+    {
+     "icon": "bolt",
+     "label": "Smart grid",
+     "text": "Demand and outages in real time."
+    },
+    {
+     "icon": "building",
+     "label": "Buildings",
+     "text": "Energy use and occupancy."
+    }
+   ]
+  },
+  {
+   "id": "s3",
+   "type": "donut",
+   "heading": "Where the budget goes",
+   "intro": "A sample split of a city technology budget.",
+   "center_value": "100",
+   "center_label": "percent of budget",
+   "items": [
+    {
+     "label": "Mobility and transit",
+     "value": 34,
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "label": "Energy and utilities",
+     "value": 26,
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "label": "Public safety",
+     "value": 18,
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "label": "Citizen services",
+     "value": 13,
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "label": "Other",
+     "value": 9,
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    }
+   ]
+  },
+  {
+   "id": "s4",
+   "type": "bar_chart",
+   "style": "pencils",
+   "heading": "Adoption by area",
+   "intro": "Share of cities running a pilot, by theme.",
+   "items": [
+    {
+     "label": "Mobility",
+     "value": 72,
+     "display": "72%",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "label": "Energy",
+     "value": 58,
+     "display": "58%",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "label": "Waste",
+     "value": 41,
+     "display": "41%",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "label": "Water",
+     "value": 35,
+     "display": "35%",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    }
+   ]
+  },
+  {
+   "id": "s5",
+   "type": "pictogram",
+   "heading": "Who is interested?",
+   "intro": "Out of every ten city leaders, how many rank each theme as a priority.",
+   "items": [
+    {
+     "label": "Transport leaders",
+     "value": 70,
+     "icon": "user",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "label": "Utility operators",
+     "value": 50,
+     "icon": "user",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "label": "Health officials",
+     "value": 30,
+     "icon": "user",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    }
+   ]
+  },
+  {
+   "id": "s6",
+   "type": "branch_tree",
+   "heading": "Promise and risk",
+   "intro": "Two lists, drawn as a branching tree.",
+   "root": "Will smart cities help or harm residents?",
+   "left": {
+    "label": "Positives",
+    "icon": "plus",
+    "items": [
+     {
+      "icon": "lightbulb",
+      "text": "Faster, cheaper services when data is shared across departments."
+     },
+     {
+      "icon": "leaf",
+      "text": "Lower emissions from smarter traffic and building control."
+     },
+     {
+      "icon": "users",
+      "text": "Residents can see and use open data."
+     }
+    ]
+   },
+   "right": {
+    "label": "Negatives",
+    "icon": "minus",
+    "items": [
+     {
+      "icon": "lock",
+      "text": "Privacy risk when location data is kept too long."
+     },
+     {
+      "icon": "dollar",
+      "text": "Costs can fall unevenly across neighbourhoods."
+     },
+     {
+      "icon": "warning",
+      "text": "Dependence on a few technology vendors."
+     }
+    ]
+   }
+  },
+  {
+   "id": "s7",
+   "type": "quote_cards",
+   "heading": "Key points to remember",
+   "intro": "Summaries, not attributed quotations.",
+   "items": [
+    {
+     "quote": "Start with a problem residents care about, then pick the sensor, not the other way round.",
+     "attribution": "Key point"
+    },
+    {
+     "quote": "Open data only builds trust when people can see what is collected and why.",
+     "attribution": "Key point"
+    },
+    {
+     "quote": "Pilot small, measure honestly, and publish the results.",
+     "attribution": "Key point"
+    }
+   ]
+  },
+  {
+   "id": "s8",
+   "type": "steps",
+   "heading": "How a pilot runs",
+   "intro": "Four steps from idea to results.",
+   "items": [
+    {
+     "label": "Frame",
+     "text": "Pick one clear problem and a measure of success."
+    },
+    {
+     "label": "Pilot",
+     "text": "Deploy a few sensors in one district."
+    },
+    {
+     "label": "Measure",
+     "text": "Compare against the old way for three months."
+    },
+    {
+     "label": "Scale",
+     "text": "Roll out only what the data supports."
+    }
+   ]
+  },
+  {
+   "id": "s9",
+   "type": "region_map",
+   "heading": "Where adoption is strongest",
+   "intro": "Illustrative index of smart-city programmes by region (0 to 100).",
+   "items": [
+    {
+     "region": "north_america",
+     "value": 74,
+     "display": "74",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "region": "europe",
+     "value": 81,
+     "display": "81",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "region": "asia",
+     "value": 88,
+     "display": "88",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "region": "middle_east",
+     "value": 63,
+     "display": "63",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "region": "oceania",
+     "value": 52,
+     "display": "52",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    }
+   ]
+  },
+  {
+   "id": "s10",
+   "type": "callout",
+   "icon": "lightbulb",
+   "text": "The best smart city is the one residents barely notice because things simply work."
+  }
+ ],
+ "sources": []
+}

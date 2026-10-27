@@ -1,0 +1,57 @@
+{
+  "audience": "Course assessors",
+  "themes": ["Leadership & teams", "Strategy & competition"],
+  "profile": [
+    {"q": "Who", "a": "The author, writing a reflective diary for the Negotiations Lab."},
+    {"q": "For whom", "a": "The course assessors."},
+    {"q": "What", "a": "Which negotiation strategies worked across five simulations and what the author learned about himself and others."},
+    {"q": "When", "a": "Lent term 2025; handed in on 17 March 2025."},
+    {"q": "Where", "a": "Simulations covering a real-estate deal, a US-Asian joint venture, a contract dispute, an African airport partnership and the World Trade Center rebuild; plenaries with an ISS astronaut and on Brexit."},
+    {"q": "Why", "a": "Negotiation is treated as a life skill that combines communication, judgement, decision-making and conflict resolution."},
+    {"q": "How", "a": "Each case is read through the five core books (Fisher, Ury and Patton; Kahneman; Malhotra; Stone, Patton and Heen; Voss) plus wider reading on emotion, coalitions and power."}
+  ],
+  "headline": [
+    {"value": "5", "label": "Negotiations simulated"},
+    {"value": "2", "label": "Plenary sessions"},
+    {"value": "70:30", "label": "Listening to talking ratio applied"},
+    {"value": "9", "label": "Dimensions in the preparation worksheet"}
+  ],
+  "facts": [
+    {"what": "Core books covered", "value": "5", "page": 85},
+    {"what": "Simulations analysed", "value": "5", "page": 85},
+    {"what": "Talk ratio used (counterpart : self)", "value": "70 : 30", "page": 87},
+    {"what": "Dimensions in the negotiation worksheet", "value": "9", "page": 87},
+    {"what": "Parties in the Afroport coalition", "value": "3 (one party excluded)", "page": 86},
+    {"what": "Plenary speakers", "value": "an ISS astronaut and Lord Bilimoria on Brexit", "page": 89}
+  ],
+  "charts": [
+    {"type": "table", "title": "Five negotiations: setting, strategy and outcome",
+     "columns": ["Case", "Setting", "Strategy that worked", "Outcome"],
+     "rows": [
+       ["Salt Harbor", "Real-estate development balancing profit and community", "Interests not positions; incremental concessions", "Satisfactory for both sides"],
+       ["MedLee", "US-Asian joint venture, family firm", "Reframing with empathy; identity conversation", "Deal reached; the family kept its identity"],
+       ["PowerScreen", "Royalty and contract dispute (author as Hacker's lawyer)", "Recognition before money; mediation", "Company and relationship preserved"],
+       ["Grand Afroport", "Public-private airport partnership", "Coalition of three; use of the bank's veto", "Agreement; one party excluded"],
+       ["World Trade Center", "Rebuilding, emotionally charged", "Emotional intelligence; separate preferable from unacceptable", "Option satisfying most parties"]
+     ],
+     "takeaway": "The cases move from rational bargaining to identity and emotion. In the three hardest cases, emotional and identity work was what unlocked a deal."},
+    {"type": "donut", "title": "The 70:30 rule: who should be talking", "labels": ["Counterpart talking", "Author talking"], "values": [70, 30], "suffix": "%",
+     "colors": ["#1a3a6a", "#E8A020"],
+     "takeaway": "Listening more surfaced the information that showed the author's bank role held a veto in Afroport, the source of his leverage.",
+     "source": "Page 87."},
+    {"type": "cards", "cols": 3, "title": "What the author learned about himself",
+     "items": [
+       {"title": "Preparation", "text": "Reading cases and related news in depth paid off; peers who relied on AI summaries underperformed."},
+       {"title": "Do not assume", "text": "The PowerScreen video made Hacker look reactive; focusing on the other side's psychology removed the bias."},
+       {"title": "Quantify", "text": "Weighted spreadsheets and the 9-dimension worksheet kept slow, deliberate thinking in charge."},
+       {"title": "Sequence and frame", "text": "Early on he stated positions too directly; the order and context of options matter."},
+       {"title": "Use information and power", "text": "Listening revealed the bank's veto, which was then used boldly."},
+       {"title": "Separate must-haves", "text": "Distinguishing preferable from unacceptable outcomes rescued the WTC negotiation."}
+     ]},
+    {"type": "cards", "cols": 2, "title": "Lessons from the plenaries",
+     "items": [
+       {"tag": "ISS", "title": "Astronaut training", "text": "Timely, factual communication and teamwork keep elite teams safe in high-stakes settings."},
+       {"tag": "Brexit", "title": "Brexit negotiations", "text": "Read as a failure of risk assessment, over-reliance on polls and missing contingency plans, especially for Northern Ireland."}
+     ]}
+  ]
+}

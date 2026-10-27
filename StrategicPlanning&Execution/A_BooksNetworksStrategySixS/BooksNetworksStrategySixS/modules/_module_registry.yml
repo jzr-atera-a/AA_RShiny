@@ -62,7 +62,7 @@ groups:
     label: "Technical Designs"
     icon: "sitemap"
     expanded: false
-    modules: [techdesign_guide, techdesign_recommender, techdesign_ml, techdesign_data, techdesign_patterns, techdesign_bulk_import, techdesign_library, techdesign_editor, techdesign_compare, techdesign_about]
+    modules: [techdesign_guide, techdesign_recommender, techdesign_ml, techdesign_data, techdesign_patterns, techdesign_bulk_import, techdesign_library, techdesign_editor, techdesign_compare, techdesign_matrix, techdesign_infographic, techdesign_about]
 
 modules:
   # ---- API Configuration (shared by all three suites) ----
@@ -358,6 +358,16 @@ modules:
     enabled: true
     priority: 85
     description: "Table-based design editor"
+
+  techdesign_matrix:
+    enabled: true
+    priority: 88
+    description: "Dual-hierarchy evidence matrix researched on the web"
+
+  techdesign_infographic:
+    enabled: true
+    priority: 89
+    description: "Infographic posters with sourced research and PDF/HTML/JPEG/GIF/PNG download"
 
   techdesign_compare:
     enabled: true

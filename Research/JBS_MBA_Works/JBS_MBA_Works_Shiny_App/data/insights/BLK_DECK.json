@@ -1,0 +1,81 @@
+{
+  "audience": "Investors",
+  "themes": ["AI & digital", "Real estate", "Finance & investment", "Risk & regulation"],
+  "profile": [
+    {"q": "Who", "a": "The five-person Global Consulting Project team."},
+    {"q": "For whom", "a": "BlackRock's Global Real Estate Research team, which supports investment teams across regions and asset classes."},
+    {"q": "What", "a": "How AI changes real estate demand, where it adds value in the investment process, and how BlackRock should adopt it safely."},
+    {"q": "When", "a": "Spring 2025, with expert interviews from 20 March to 14 April 2025; a roadmap over 0-1, 2-5 and 5+ years."},
+    {"q": "Where", "a": "Global, with cases from the US (Redfin, URG), Australia (CoreLogic), Norway (NBIM), Canada and Singapore (CPP Investments, GIC)."},
+    {"q": "Why", "a": "AI is framed as the fourth wave of real estate change, and black-box outputs threaten the trust BlackRock needs from its clients."},
+    {"q": "How", "a": "Six expert interviews, case studies, a sector matrix of winners and losers, a structured AI judgement process with verification, a GenAI risk matrix and a three-horizon roadmap."}
+  ],
+  "headline": [
+    {"value": "9", "label": "Asset classes rated for AI impact"},
+    {"value": "3", "label": "Horizons in the roadmap"},
+    {"value": "100 leases", "label": "Reviewed by AI in a 10-day due diligence"},
+    {"value": "15%", "label": "IRR in the data-centre demo"}
+  ],
+  "facts": [
+    {"what": "Leases reviewed with AI lease abstraction in a 10-day due diligence (URG, 14m sq ft portfolio)", "value": "100", "page": 104},
+    {"what": "Missing documents found in that review", "value": "20+", "page": 104},
+    {"what": "NBIM productivity target from AI within 12 months", "value": "10%", "page": 104},
+    {"what": "CPP Investments, GIC and Equinix data-centre venture", "value": "$15bn", "page": 105},
+    {"what": "BrainBox AI HVAC retrofit: energy cost / greenhouse gas reduction", "value": "25% / 40%", "page": 116},
+    {"what": "Digital twins: energy / maintenance cost reductions reported", "value": "~20% / ~25%", "page": 117},
+    {"what": "Office occupier rating of proximity to the CBD (out of 10)", "value": "8.6", "page": 101},
+    {"what": "Demo assumptions: electricity price growth / data-centre utilisation", "value": "at most 5% / at least 80%", "page": 106},
+    {"what": "Confidence threshold that sends output back for re-checking", "value": "60%", "page": 106},
+    {"what": "Expert interviews listed", "value": "6", "page": 114}
+  ],
+  "charts": [
+    {"type": "diverging", "title": "AI's effect on demand by asset class (the deck's classification)", "height": 380,
+     "labels": ["Data centres", "Logistics and warehousing", "Life sciences and healthcare", "Hotels and hospitality", "Single- and multi-family housing", "Student housing", "Senior living", "Office", "Retail"],
+     "values": [2, 2, 2, 1, 1, 1, 1, -1, -1],
+     "groups": ["Front runner", "Front runner", "Front runner", "Marginal gainer", "Marginal gainer", "Marginal gainer", "Marginal gainer", "Straggler", "Straggler"],
+     "text": ["Front runner", "Front runner", "Front runner", "Marginal gainer", "Marginal gainer", "Marginal gainer", "Marginal gainer", "Straggler", "Straggler"],
+     "colors": ["#1e8449", "#1e8449", "#1e8449", "#7dcea0", "#7dcea0", "#7dcea0", "#7dcea0", "#C0392B", "#C0392B"],
+     "xticks": {"vals": [-1, 0, 1, 2], "text": ["Headwind", "", "Modest gain", "Strong gain"]},
+     "takeaway": "AI pulls demand towards the infrastructure it runs on (data centres, logistics, labs) and away from space it replaces (office and retail). For a portfolio, the implication is to tilt towards the top and reposition the bottom.",
+     "source": "Pages 100-101."},
+    {"type": "bar", "horizontal": true, "title": "What office occupiers value most (rating out of 10)",
+     "labels": ["Proximity to the CBD", "Amenity in the local area", "Amenity in the building", "Access to public transport", "ESG certification"],
+     "values": [8.6, 8.3, 8.1, 8.1, 6.5], "colors": ["#1a3a6a", "#2A6FB5", "#E8A020", "#2A6FB5", "#7f8c8d"],
+     "takeaway": "After location, what a building offers counts almost as much, which supports the deck's case that landlords must act as service providers. ESG certification ranks last.",
+     "source": "Page 101."},
+    {"type": "bar", "horizontal": true, "title": "Gains reported in the AI cases (%)",
+     "labels": ["BrainBox AI: greenhouse gas cut", "BrainBox AI: energy cost cut", "Digital twins: maintenance cost cut", "Digital twins: energy saving", "NBIM: productivity target"],
+     "values": [40, 25, 25, 20, 10], "suffix": "%", "colors": ["#2E9D6A", "#2E9D6A", "#2A6FB5", "#2A6FB5", "#E8A020"],
+     "takeaway": "The operational gains are large, but they come from vendors' own reports or targets rather than independent results, and the deck does not test them.",
+     "source": "Pages 104, 116 and 117."},
+    {"type": "steps", "title": "The structured AI judgement process, using the data-centre demo",
+     "items": [
+       {"title": "Ask the in-house model", "text": "'What is the best exit for this data centre?' The answer comes back as structured data."},
+       {"title": "Expose the assumptions", "text": "REIT listing, electricity prices rising at most 5% a year, utilisation at least 80%, enough REIT liquidity, expected IRR 15%."},
+       {"title": "Verify each assumption", "text": "AI-augmented quantitative models test each one against real and synthetic data: stress tests, back-tests, causal checks."},
+       {"title": "Loop back if weak", "text": "Confidence below 60% or a failed stress test sends the result back to the model to revise."},
+       {"title": "Report", "text": "A structured, visual validation report that a client can price."}
+     ],
+     "takeaway": "The deck's central idea: explainability means 'priceability', an answer whose assumptions a client can see, test and pay for."},
+    {"type": "gantt", "title": "Three-horizon adoption roadmap", "xlab": "Years from now", "height": 320,
+     "items": [
+       {"label": "Unified 'CoStar-like' data platform", "start": 0, "end": 1, "group": "H1", "text": "Horizon 1"},
+       {"label": "AI in underwriting and due diligence pilots", "start": 0, "end": 1, "group": "H1", "text": "Horizon 1"},
+       {"label": "Scalable AI platform and real estate LLM", "start": 2, "end": 5, "group": "H2", "text": "Horizon 2"},
+       {"label": "AI talent, structural intelligence, portfolio AI", "start": 2, "end": 5, "group": "H2", "text": "Horizon 2"},
+       {"label": "AI-centric assets and digital twins", "start": 5, "end": 8, "group": "H3", "text": "Horizon 3 (5+ years)"},
+       {"label": "New ownership models such as tokenisation", "start": 5, "end": 8, "group": "H3", "text": "Horizon 3 (5+ years)"}
+     ],
+     "takeaway": "Foundations first: data before models, pilots before platforms. Two expert cautions sit awkwardly with it: custom models date quickly, and generic chatbots conflict with the explainability goal.",
+     "source": "Pages 109-110. Horizon 3 shown to year 8 for display; the deck says 5+ years."},
+    {"type": "table", "title": "GenAI risks rated high, and their mitigations",
+     "columns": ["Who is at risk", "High-severity risk", "Mitigation"],
+     "rows": [
+       ["Investors and decision makers", "Misread GenAI insights misallocate capital", "Counterfactual explanations and external audit"],
+       ["Reputation", "Backlash over biased or unexplained predictions", "Diverse data and regular ethical reviews"],
+       ["Finances", "Major losses from hallucinated outputs", "Multi-agent and retrieval-augmented systems"],
+       ["Workforce", "Resistance or disengagement", "Participatory design with staff"],
+       ["Legal", "Penalties under AI laws, fair-housing breaches", "Regulatory alignment, legal audits, guardrails"]
+     ]}
+  ]
+}

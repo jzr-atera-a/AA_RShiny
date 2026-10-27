@@ -1,0 +1,56 @@
+{
+  "audience": "Executives & boards",
+  "themes": ["AI & digital", "Sustainability & climate", "Operations & data"],
+  "profile": [
+    {"q": "Who", "a": "The author summarising his team's solution for the Digital Business 'Green Data' challenge."},
+    {"q": "For whom", "a": "Green Data, a hypothetical company running AI for driverless cars, and its partners ARM (low-power chips) and SAC (solar energy)."},
+    {"q": "What", "a": "How to make AI data centres sustainable through AI optimisation, renewable power and new data-centre designs."},
+    {"q": "When", "a": "Handed in on 18 March 2025; net zero by 2030 and a commercial plan to 2034."},
+    {"q": "Where", "a": "A coastal site in southern England near a solar farm; reference cases in Scotland, Chile, Ireland, the US and Singapore."},
+    {"q": "Why", "a": "Data-centre energy use is expected to double from 2022 to 2026 across about 8,000 data centres, and training one large model emits as much as five cars over their lifetimes."},
+    {"q": "How", "a": "Weighs AI's carbon cost against its savings, then combines solar sourcing, underwater and natural cooling, reinforcement-learning control and ARM chips, framed as a Massive Transformative Purpose."}
+  ],
+  "headline": [
+    {"value": "2030", "label": "Net-zero target"},
+    {"value": "70,000 t", "label": "CO2 saved, 2024-2034"},
+    {"value": "2x", "label": "Data-centre energy, 2022 to 2026"},
+    {"value": "5 MW", "label": "SAC reference solar farm"}
+  ],
+  "facts": [
+    {"what": "CO2 from AI writing a page vs a human (claim cited)", "value": "130x less", "page": 94},
+    {"what": "CO2 from AI generating an image vs a human (claim cited)", "value": "310x less", "page": 94},
+    {"what": "Energy cut in Google's data centres from DeepMind", "value": "30%", "page": 94},
+    {"what": "Data centres in the world", "value": "8,000", "page": 94},
+    {"what": "Expected growth in data-centre energy use, 2022-2026", "value": "2x", "page": 94},
+    {"what": "CO2 from training one generative model", "value": "equal to 5 cars over their lifetime", "page": 94},
+    {"what": "Water drawn by Google's data centre in Chile", "value": "170 litres a second", "page": 94},
+    {"what": "SAC solar farm used as reference", "value": "5 MW", "page": 94},
+    {"what": "CO2 reduction target, 2024-2034", "value": "70,000 tonnes (about 7,000 a year)", "page": 94},
+    {"what": "Depth of Microsoft's underwater data centre, Scotland", "value": "117 feet", "page": 94},
+    {"what": "Meta net emissions referenced", "value": "7.4m tonnes CO2", "page": 95}
+  ],
+  "charts": [
+    {"type": "versus", "title": "AI as a carbon cost and as a carbon saver", "mid": "net?",
+     "left": {"title": "The cost", "items": ["Data-centre energy use doubles 2022-2026", "About 8,000 data centres worldwide", "Training one model = 5 cars' lifetime CO2", "170 litres a second of water in drought-prone Chile", "Singapore restricts new data centres"]},
+     "right": {"title": "The saving", "items": ["AI text emits 130x and images 310x less CO2 than human work", "DeepMind cut Google data-centre energy by 30%", "Reinforcement learning tunes cooling at Meta", "On-device AI avoids data-centre load", "ARM low-power chips in cars and servers"]},
+     "takeaway": "The sustainability case depends on what the AI is used for. The plan rests on the right-hand side outweighing the left, without measuring Green Data's own load."},
+    {"type": "bar", "horizontal": true, "title": "How much less CO2 AI emits than a person for the same task (claim cited)",
+     "labels": ["Writing a page of text", "Creating an image"], "values": [130, 310], "suffix": "x less", "colors": ["#2A6FB5", "#2E9D6A"],
+     "takeaway": "These are the strongest numbers on the 'saver' side, but they compare single outputs and leave out training, which the same page says is costly.",
+     "source": "Page 94."},
+    {"type": "gantt", "title": "Green Data's horizons", "xlab": "Year", "height": 260,
+     "items": [
+       {"label": "Net-zero programme", "start": 2024, "end": 2030, "group": "Target", "text": "Net zero by 2030"},
+       {"label": "CO2 reduction (70,000 t)", "start": 2024, "end": 2034, "group": "Impact", "text": "~7,000 t a year"},
+       {"label": "Commercial plan", "start": 2024, "end": 2034, "group": "Plan", "text": "Plan to 2034"}
+     ],
+     "takeaway": "The 70,000-tonne saving averages about 7,000 tonnes a year; the paper does not show the calculation behind it.",
+     "source": "Pages 93-94. Yearly average calculated."},
+    {"type": "cards", "cols": 3, "title": "The three strands of the plan",
+     "items": [
+       {"tag": "AI", "title": "AI for sustainability", "items": ["Fleet management and predictive maintenance", "Workload distribution to cut power waste", "Reinforcement-learning cooling control"]},
+       {"tag": "Energy", "title": "Alternative energy", "items": ["Co-invest in solar farms in southern England", "Adjusted for lower UK sunlight", "Tidal and wind for scale"]},
+       {"tag": "Design", "title": "Data-centre design", "items": ["Underwater site next to a coastal solar farm", "Smart cooling and heat reuse", "ARM low-power chips"]}
+     ]}
+  ]
+}

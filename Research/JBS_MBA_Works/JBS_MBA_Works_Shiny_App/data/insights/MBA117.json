@@ -1,0 +1,64 @@
+{
+  "audience": "Executives & boards",
+  "themes": ["Finance & investment", "Sustainability & climate", "Risk & regulation", "Governance & ethics"],
+  "profile": [
+    {"q": "Who", "a": "The author playing the lending bank in a role-play for Organisations versus Markets, drawing on work in three financial institutions and a consulting project for H&M."},
+    {"q": "For whom", "a": "The bank's board and credit committee (Part 1), and the five other role-players: government, H&M's CEO, investor, not-for-profit and politician (Part 2)."},
+    {"q": "What", "a": "Whether the bank should cut interest rates on green loans to H&M, a textile company reducing emissions and waste, while accepting a higher chance of default."},
+    {"q": "When", "a": "Handed in on 10 January 2025; OKRs run to 2035. The EU textiles strategy dates from March 2022."},
+    {"q": "Where", "a": "UK and EU (H&M Hennes & Mauritz UK Ltd), under the FCA and the European Banking Authority."},
+    {"q": "Why", "a": "Regulators and markets push banks towards green lending, and banks must report their green loans in detail; the fashion sector faces growing sustainability rules."},
+    {"q": "How", "a": "Freeman's stakeholder theory sorts primary and secondary stakeholders, each one's position is stated, then mitigations (benchmarking, WACC from market betas) and OKRs are set; Part 2 critiques the other roles."}
+  ],
+  "headline": [
+    {"value": "5 of 7", "label": "Stakeholder groups in favour"},
+    {"value": "5%", "label": "Minimum NIM on high-risk loans"},
+    {"value": "90%", "label": "Accuracy target in audit checks"},
+    {"value": "2035", "label": "Deadline for the OKRs"}
+  ],
+  "facts": [
+    {"what": "European banks committed to green finance since", "value": "2015", "page": 32},
+    {"what": "EU Strategy for Sustainable and Circular Textiles launched", "value": "March 2022", "page": 32},
+    {"what": "Green finance reported by the Corporate Knights ranking", "value": "$2.6tn", "page": 33},
+    {"what": "Key result: accuracy of financial statement checks against independent audits", "value": "at least 90%", "page": 36},
+    {"what": "Key result: minimum net interest margin on high-risk loans", "value": "5%", "page": 36},
+    {"what": "Deadline for the bank's OKRs", "value": "2035", "page": 36},
+    {"what": "Politician's recycling target cited in Part 2", "value": "50% of materials by 2030", "page": 38},
+    {"what": "Stakeholder groups in favour / against the policy", "value": "5 / 2", "page": 35}
+  ],
+  "charts": [
+    {"type": "diverging", "title": "Who backs cheaper green loans to H&M", "height": 340,
+     "labels": ["Bank governing body", "H&M (corporate client)", "Shareholders, classes A and B", "Regulators (FCA, EBA)", "Sustainability NGOs", "Shareholders, class C", "Bank CEO and CFO"],
+     "values": [1, 1, 1, 1, 1, -1, -1],
+     "groups": ["Primary", "Primary", "Primary", "Secondary", "Secondary", "Primary", "Leadership"],
+     "text": ["For: better standing with regulators", "For: needs the loans", "For: low-carbon valuation trend", "For: spurs sustainable firms", "For: funding keeps green models alive", "Against: short horizon, no votes", "Against: greenwashing and default risk"],
+     "xticks": {"vals": [-1, 0, 1], "text": ["Against", "", "In favour"]},
+     "takeaway": "Support is broad, but the opposition sits exactly where the risk is managed: the executives and the short-term shareholders. That is why the paper answers with guardrails rather than a simple yes.",
+     "source": "Positions as stated on pages 34-35."},
+    {"type": "cards", "cols": 2, "title": "The guardrails the bank sets",
+     "items": [
+       {"tag": "Check", "title": "Before approval", "items": ["Understand H&M's sustainability KPIs", "Benchmark against other textile clients", "Full WACC model using market, project and company betas"]},
+       {"tag": "OKR I", "title": "Comprehensive risk assessment", "items": ["At least 90% accuracy in statement checks against independent audits", "Stress tests for worst-case scenarios"]},
+       {"tag": "OKR II", "title": "Monitoring and early warning", "items": ["Real-time flags on revenue drops and cash flow problems", "Net interest margin of at least 5% on high-risk loans"]},
+       {"tag": "Alternative", "title": "If the risk is too high", "items": ["Renewable energy lending: similar environmental impact at a lower risk rate"]}
+     ],
+     "takeaway": "The tension the paper leaves open: a 5% margin floor on high-risk loans sits awkwardly with a policy of cutting rates for green borrowers."},
+    {"type": "milestones", "title": "The regulatory clock behind the decision", "height": 280,
+     "items": [
+       {"year": 2015, "label": "European banks commit to green finance"},
+       {"year": 2022.2, "when": "Mar 2022", "label": "EU sustainable textiles strategy"},
+       {"year": 2025, "when": "Jan 2025", "label": "Bank reviews H&M's loan request"},
+       {"year": 2030, "label": "50% of materials recycled (politician's target)"},
+       {"year": 2035, "label": "Bank's OKRs must be met"}
+     ]},
+    {"type": "table", "title": "How the other five roles look from the bank",
+     "columns": ["Role", "Their main argument", "Bank's verdict"],
+     "rows": [
+       ["Government", "Carbon taxes, carbon credits, modular production", "Most important: sets the rules and incentives"],
+       ["H&M CEO", "Relies on consumer trends and government support", "Weak: no loans, investors or milestones to 2035"],
+       ["Investor", "Diversify risk across a portfolio", "Consistent: bank judges one borrower, investor the portfolio"],
+       ["Not-for-profit", "Carbon pricing and full emissions accounting", "Useful: lets the bank verify impact of the loan"],
+       ["Politician", "Tax credits, regional recycling centres, 50% recycled by 2030", "Relevant, but US-focused for a European case"]
+     ]}
+  ]
+}

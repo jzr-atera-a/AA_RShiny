@@ -370,7 +370,7 @@ APIManager <- R6::R6Class(
       return(lines)
     },
 
-    call_claude = function(prompt, max_tokens = NULL, progress_callback = NULL, attachments = NULL) {
+    call_claude = function(prompt, max_tokens = NULL, progress_callback = NULL, attachments = NULL, tools = NULL) {
       if (!self$claude_authenticated) stop("Not authenticated to Editing Tool API. Please save credentials first.")
       if (is.null(self$claude_api_key) || nchar(self$claude_api_key) == 0) stop("Editing Tool API key is empty. Please configure credentials.")
 
@@ -395,10 +395,17 @@ APIManager <- R6::R6Class(
         self$log_debug(sprintf("[%s] Including %d attachment block(s)", call_id, length(attachments)), tag = "call_claude")
       }
 
-      body_json <- toJSON(list(
+      body <- list(
         model = self$claude_model, max_tokens = tokens, stream = TRUE,
         messages = list(list(role = "user", content = user_content))
-      ), auto_unbox = TRUE)
+      )
+      # Optional server tools (e.g. claude_web_search_tool()). The search runs on
+      # Anthropic's side; we only receive the final text plus search metadata.
+      if (length(tools) > 0) {
+        body$tools <- tools
+        self$log_debug(sprintf("[%s] Tools enabled: %s", call_id, paste(vapply(tools, function(t) t$name %||% t$type, ""), collapse = ", ")), tag = "call_claude")
+      }
+      body_json <- toJSON(body, auto_unbox = TRUE)
 
       h <- curl::new_handle()
       curl::handle_setopt(h, post = TRUE, postfields = body_json, timeout = self$claude_timeout)
@@ -408,7 +415,7 @@ APIManager <- R6::R6Class(
         "content-type" = "application/json"
       )
 
-      accumulated_text <- character(0)
+      st <- claude_stream_new_state()
       sse_buffer <- ""
       raw_buffer <- ""
       last_log_time <- start_time
@@ -429,15 +436,8 @@ APIManager <- R6::R6Class(
           parsed <- tryCatch(jsonlite::fromJSON(json_str, simplifyVector = FALSE), error = function(e) NULL)
           if (is.null(parsed) || is.null(parsed$type)) next
 
-          if (parsed$type == "content_block_delta" &&
-              !is.null(parsed$delta) && identical(parsed$delta$type, "text_delta")) {
-            accumulated_text[[length(accumulated_text) + 1]] <<- parsed$delta$text %||% ""
-          } else if (parsed$type == "message_delta") {
-            if (!is.null(parsed$usage)) final_usage <<- parsed$usage
-            if (!is.null(parsed$delta$stop_reason)) final_stop_reason <<- parsed$delta$stop_reason
-          } else if (parsed$type == "error") {
-            stream_error_msg <<- parsed$error$message %||% "Unknown streaming error from Editing Tool API"
-          }
+          claude_stream_apply(st, parsed)
+          if (!is.null(st$error)) stream_error_msg <<- st$error
         }
       }
 
@@ -453,11 +453,11 @@ APIManager <- R6::R6Class(
         if (as.numeric(difftime(now, last_log_time, units = "secs")) >= 5) {
           self$log_debug(sprintf(
             "[%s] Streaming... %d chunk(s), %d bytes, %d chars accumulated so far (%.1fs elapsed)",
-            call_id, chunk_count, byte_count, sum(nchar(accumulated_text)),
+            call_id, chunk_count, byte_count, st$all_chars,
             as.numeric(difftime(now, start_time, units = "secs"))
           ), tag = "call_claude")
           if (!is.null(progress_callback)) {
-            progress_callback(sprintf("Streaming response... %d characters received so far", sum(nchar(accumulated_text))))
+            progress_callback(if (st$n_search > 0) sprintf("Researching... %d web search(es) so far, %d characters written", st$n_search, st$all_chars) else sprintf("Streaming response... %d characters received so far", st$all_chars))
           }
           last_log_time <<- now
         }
@@ -502,7 +502,8 @@ APIManager <- R6::R6Class(
 
         if (!is.null(stream_error_msg)) stop(paste0("Streaming error from Editing Tool API: ", stream_error_msg))
 
-        response_text <- paste(accumulated_text, collapse = "")
+        final_usage <- st$usage; final_stop_reason <- st$stop_reason
+        response_text <- claude_stream_text(st)
         if (nchar(response_text) == 0) {
           self$log_debug(sprintf("[%s] Stream completed but produced no text", call_id), tag = "call_claude")
           stop("Editing Tool API returned an empty response. Please try again.")
@@ -520,8 +521,8 @@ APIManager <- R6::R6Class(
 
         if (!is.null(progress_callback)) progress_callback("Complete!")
 
-        attr(response_text, "claude_stop_reason") <- final_stop_reason %||% "unknown"
-        return(response_text)
+        if (st$n_search > 0) self$log_debug(sprintf("[%s] web searches=%d | result urls=%d | errors=%s", call_id, st$n_search, length(st$search_urls), paste(st$search_errors, collapse = ",")), tag = "call_claude")
+        return(claude_stream_attrs(response_text, st))
 
       }, error = function(e) {
         elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
@@ -532,7 +533,7 @@ APIManager <- R6::R6Class(
         self$log_debug(sprintf("[%s] Raw message: %s", call_id, error_msg), tag = "call_claude ERROR")
         self$log_debug(sprintf(
           "[%s] Stream progress before failure: %d chunk(s), %d bytes, %d chars accumulated",
-          call_id, chunk_count, byte_count, sum(nchar(accumulated_text))
+          call_id, chunk_count, byte_count, st$all_chars
         ), tag = "call_claude ERROR")
         self$log_debug(sprintf(
           "[%s] Request context: model=%s max_tokens=%d timeout=%ds prompt_chars=%d",
@@ -549,7 +550,7 @@ APIManager <- R6::R6Class(
         if (chunk_count > 0 && grepl("schannel|close_notify|peer", error_msg, ignore.case = TRUE)) {
           error_msg <- paste0(
             "Connection dropped mid-stream after ", round(elapsed, 1), "s, having already received ",
-            chunk_count, " chunk(s) / ", byte_count, " bytes / ", sum(nchar(accumulated_text)),
+            chunk_count, " chunk(s) / ", byte_count, " bytes / ", st$all_chars,
             " characters. Since data WAS flowing, this looks like a firewall/proxy/VPN actively ",
             "terminating long HTTPS connections rather than a simple idle timeout. ",
             "Try: (1) a different network (e.g. mobile hotspot) to confirm, (2) ask IT to allow-list ",
@@ -1378,7 +1379,7 @@ APIManager <- R6::R6Class(
     # Latest, non-deleted version of every design in one group (or all groups).
     bq_get_techdesign_list = function(group = NULL) {
       if (!self$bq_authenticated) return(data.frame())
-      where <- if (!is.null(group) && nzchar(group)) sprintf("WHERE design_group = '%s'", safe_sql_escape(group)) else "WHERE TRUE"
+      where <- if (!is.null(group) && nzchar(group)) sprintf("WHERE design_group = '%s'", safe_sql_escape(group)) else "WHERE design_group NOT IN ('market_matrix', 'infographic')"
       tryCatch({
         self$bq_query(sprintf("
           SELECT * FROM (

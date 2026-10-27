@@ -1,0 +1,48 @@
+{
+  "audience": "Public & policy",
+  "themes": ["AI & digital", "Risk & regulation", "Finance & investment"],
+  "profile": [
+    {"q": "Who", "a": "The author, writing a letter to the editor for Macroeconomics."},
+    {"q": "For whom", "a": "Readers of The Guardian and, through them, UK financial regulators."},
+    {"q": "What", "a": "Whether AI chatbots giving personal financial advice are a helpful tool or a dangerous shortcut, and what regulators should do."},
+    {"q": "When", "a": "Responds to a Guardian test published on 14 June 2025 and a Bank of England warning reported on 9 April 2025; handed in on 23 June 2025."},
+    {"q": "Where", "a": "The UK (Bank of England) and the EU (European Securities and Markets Authority)."},
+    {"q": "Why", "a": "Experts found ChatGPT's mortgage advice 'not even close' to qualified advice and its pension answers contained basic errors such as the wrong state pension age, delivered with confidence consumers may not question."},
+    {"q": "How", "a": "A 298-word argument moving from the test evidence, to the risk for consumers, to the risk for markets, to a specific request to regulators."}
+  ],
+  "headline": [
+    {"value": "298 / 300", "label": "Words used vs Guardian limit"},
+    {"value": "3", "label": "Advice areas tested"},
+    {"value": "2", "label": "Regulators cited: BoE and ESMA"},
+    {"value": "2 asks", "label": "Authorisation and clear disclaimers"}
+  ],
+  "facts": [
+    {"what": "Experts' verdict on ChatGPT pension guidance", "value": "'decent', but with basic errors", "page": 159},
+    {"what": "Experts' verdict on mortgage advice", "value": "'not even close' to qualified advice", "page": 159},
+    {"what": "Insurance brokers' verdict", "value": "'very generic'", "page": 159},
+    {"what": "Error found in pension calculations", "value": "incorrect state pension age", "page": 159},
+    {"what": "Guardian article responded to", "value": "14 June 2025", "page": 160},
+    {"what": "Bank of England warning on AI and market manipulation", "value": "9 April 2025", "page": 160},
+    {"what": "Letter length", "value": "298 words (limit 300)", "page": 158}
+  ],
+  "charts": [
+    {"type": "bar", "horizontal": true, "title": "How the experts rated ChatGPT's advice",
+     "labels": ["Pensions", "Insurance", "Mortgages"], "values": [2, 1, 0.15], "text": ["'Decent' (with errors)", "'Very generic'", "'Not even close'"],
+     "colors": ["#E8A020", "#d35400", "#C0392B"], "xlab": "Verdict (ordinal: 0 = unfit, 2 = usable)",
+     "takeaway": "Quality falls as the product gets more complex and personal. Mortgages, where borrower criteria and deal structures matter most, is where the chatbot failed outright.",
+     "source": "Page 159. The scale orders the experts' quoted verdicts; it is not a score from the article."},
+    {"type": "steps", "title": "How the letter builds its case",
+     "items": [
+       {"title": "The evidence", "text": "Expert reviewers find pension advice usable, insurance generic and mortgages unfit."},
+       {"title": "The consumer risk", "text": "Incomplete answers given with confidence can push people into the wrong products."},
+       {"title": "The system risk", "text": "The Bank of England warns AI trading could exploit weaknesses and trigger volatility."},
+       {"title": "The rules", "text": "The Bank of England and ESMA say AI must sit within existing oversight and transparency rules."},
+       {"title": "The ask", "text": "Decide whether AI platforms giving financial guidance need authorisation, and require clear disclaimers."}
+     ],
+     "takeaway": "Step three is the weak link: it moves from a consumer chatbot to institutional trading, two different risks."},
+    {"type": "versus", "title": "Helpful tool or dangerous shortcut", "mid": "AI advice",
+     "left": {"title": "Helpful", "items": ["Pension guidance judged 'decent'", "A useful starting point (The Guardian's own conclusion)", "Free access for people who cannot afford an adviser (not raised in the letter)"]},
+     "right": {"title": "Dangerous", "items": ["Ignores borrower criteria and alternative deal structures", "Generic on policy complexity", "Basic factual errors, e.g. state pension age", "Confident tone hides the gaps"]},
+     "takeaway": "The letter argues only the right-hand side; the access argument on the left is the main counter-case it leaves unanswered."}
+  ]
+}

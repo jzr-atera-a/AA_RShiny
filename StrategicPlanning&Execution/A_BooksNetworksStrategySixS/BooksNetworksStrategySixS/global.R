@@ -93,6 +93,11 @@ source("R/utils_techdesign_parse.R")
 source("R/utils_techdesign_render.R")
 source("R/utils_techdesign_module.R")
 source("R/utils_techdesign_actions.R")
+source("R/utils_claude_stream.R")
+source("R/utils_techdesign_matrix.R")
+source("R/utils_techdesign_matrix_render.R")
+source("R/utils_infographic_render.R")
+source("R/utils_infographic.R")
 
 api_manager <- APIManager$new()
 
@@ -200,6 +205,7 @@ create_ui <- function(module_loader) {
         # GitHub releases) is its own official CDN distribution channel.
         tags$script(src = "https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"),
         tags$script(src = "js/diagram_export.js"),
+        tags$script(src = "js/infographic_export.js"),
 
         tags$script(HTML("
           if (typeof MathJax !== 'undefined') {

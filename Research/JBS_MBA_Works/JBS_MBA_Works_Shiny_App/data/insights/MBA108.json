@@ -1,0 +1,65 @@
+{
+  "audience": "Executives & boards",
+  "themes": ["Sustainability & climate", "Strategy & competition", "Risk & regulation"],
+  "profile": [
+    {"q": "Who", "a": "The author, writing individually for Business and Sustainable Development, as an outside adviser assessing BP."},
+    {"q": "For whom", "a": "BP's leadership, which has to decide whether to expand its electric vehicle (EV) charging network."},
+    {"q": "What", "a": "Whether BP should scale up EV charging and organise the move around four UN Sustainable Development Goals: 7 (clean energy), 9 (infrastructure), 12 (responsible production) and 13 (climate action)."},
+    {"q": "When", "a": "Handed in on 12 November 2024. The decision looks ahead to 2030, when the UK requires 80% of new vehicles to be non-fossil and Shell aims to have 90% of drivers within 10 minutes of a rapid charger."},
+    {"q": "Where", "a": "The UK, mainland Europe and North America, with offshore wind in Northern Europe as BP's main renewable base."},
+    {"q": "Why", "a": "Transport produced 21.11% of global CO2 in 2023 and power 38.24%. BP has committed more than $69bn to the 2010 Gulf of Mexico spill and needs both a credible net-zero story and a business that survives falling fossil fuel demand."},
+    {"q": "How", "a": "Each SDG target is mapped to concrete actions, then four market forces (policy, EV demand, renewable supply, competition) are assessed for opportunity and risk, and Natura's Integral P&L, regeneration and the Corporate Knights ranking are proposed as ways to measure progress."}
+  ],
+  "headline": [
+    {"value": "21.11%", "label": "Global CO2 from transport, 2023"},
+    {"value": "$69bn+", "label": "BP Gulf spill commitments"},
+    {"value": "4x", "label": "EV market growth 2021-2025"},
+    {"value": "20x", "label": "Renewable supply scale-up needed"}
+  ],
+  "facts": [
+    {"what": "Share of global CO2 emissions from the power industry, 2023", "value": "38.24%", "page": 6},
+    {"what": "Share of global CO2 emissions from transportation, 2023", "value": "21.11%", "page": 6},
+    {"what": "BP commitments for Gulf of Mexico compensation and settlements", "value": "more than $69bn", "page": 6},
+    {"what": "Gasoline displaced by EV use", "value": "13.1bn litres", "page": 6},
+    {"what": "UK mandate: share of new vehicles running on non-fossil fuels by 2030", "value": "80%", "page": 8},
+    {"what": "Expected growth of the global EV market, 2021-2025", "value": "4x (quadruple)", "page": 9},
+    {"what": "Carbon emissions of EVs compared with fossil-fuel vehicles (claim cited)", "value": "66% lower", "page": 9},
+    {"what": "Scale-up of renewable supply needed once chargers are deployed", "value": "about 20x", "page": 9},
+    {"what": "Shell target: drivers within 10 minutes of a Shell rapid charger by 2030", "value": "90%", "page": 9},
+    {"what": "Growth needed in charging infrastructure", "value": "at least one order of magnitude (10x)", "page": 10},
+    {"what": "SDG targets used in the mapping", "value": "7 targets across 4 goals", "page": 7}
+  ],
+  "charts": [
+    {"type": "donut", "title": "Where global CO2 came from in 2023",
+     "labels": ["Power industry", "Transportation", "All other sources"], "values": [38.24, 21.11, 40.65], "suffix": "%",
+     "colors": ["#1a3a6a", "#E8A020", "#b0bec5"],
+     "takeaway": "Power and transport together produce nearly 60% of emissions. EV charging sits exactly where the two meet, which is why the paper picks it as BP's lever: clean charging cuts transport emissions only if the power behind it is also clean.",
+     "source": "Pages 6 and 9. 'All other sources' is the remainder of the two stated shares."},
+    {"type": "bar", "horizontal": true, "title": "How fast each part of the system has to grow",
+     "labels": ["EV market, 2021-2025", "Charging infrastructure", "Renewable energy supply"], "values": [4, 10, 20], "suffix": "x",
+     "colors": ["#2A6FB5", "#E8A020", "#C0392B"],
+     "takeaway": "The paper's real constraint is supply, not demand. If renewable supply cannot grow about 20 times, the extra charging load is met by coal, gas or incineration and EVs lose most of their emissions advantage.",
+     "source": "Pages 9 and 10. The infrastructure figure is the paper's 'at least one order of magnitude'."},
+    {"type": "milestones", "title": "The timeline the decision sits on", "height": 300,
+     "items": [
+       {"year": 2010, "label": "Gulf of Mexico spill: BP commits more than $69bn"},
+       {"year": 2015, "label": "UN adopts the Sustainable Development Goals"},
+       {"year": 2021, "label": "EV market starts a fourfold rise to 2025"},
+       {"year": 2024, "when": "Nov 2024", "label": "Paper recommends BP scales up EV charging"},
+       {"year": 2030, "label": "UK: 80% of new vehicles non-fossil; Shell: 90% of drivers within 10 minutes"}
+     ],
+     "takeaway": "The window is short. Competitors and regulation converge on 2030, so the paper argues BP has to commit early to secure locations before the network is built by others."},
+    {"type": "cards", "cols": 4, "title": "From each SDG target to a concrete action for BP",
+     "items": [
+       {"tag": "SDG 7", "title": "Clean energy (7.2, 7.3, 7.a)", "items": ["Expand offshore wind in Northern Europe", "Pair wind farms with hydrogen storage", "Solar panels and batteries at charging stations"]},
+       {"tag": "SDG 9", "title": "Infrastructure (9.1, 9.4)", "items": ["Smart-grid charging timed to grid carbon intensity", "Mobile charging vans for remote areas", "AI app predicting queues and routes"]},
+       {"tag": "SDG 12", "title": "Responsible production (12.6)", "items": ["Shift investment to renewables", "Gradually reduce oil and gas output", "Carbon capture and storage"]},
+       {"tag": "SDG 13", "title": "Climate action (13.2)", "items": ["Rapid-charging hubs at existing petrol stations", "Kerbside chargers with local authorities", "Dynamic pricing to move charging off-peak"]}
+     ],
+     "takeaway": "Every goal turns into actions BP can start with assets it already owns: petrol station sites, offshore wind and energy trading."},
+    {"type": "versus", "title": "The four forces: what helps and what threatens the investment",
+     "left": {"title": "Opportunities", "items": ["Policy: UK, US and EU mandates create guaranteed demand", "Market: EV demand quadruples 2021-2025", "Supply: BP can already connect renewables and co-locate solar at chargers", "Competition: Shell's pace shows the market is real and can be matched"]},
+     "right": {"title": "Risks", "items": ["Policy: support changes with the ruling party (UK example)", "Market: range anxiety, upfront cost and thin networks slow adoption", "Supply: renewables must scale about 20x or emissions rise again", "Competition: oversupply in some areas, undersupply in others, and a shortage of maintenance talent"]},
+     "takeaway": "The paper treats the risks as manageable but never prices them; the recommendation to scale up rests on the opportunities outweighing risks that remain unquantified."}
+  ]
+}

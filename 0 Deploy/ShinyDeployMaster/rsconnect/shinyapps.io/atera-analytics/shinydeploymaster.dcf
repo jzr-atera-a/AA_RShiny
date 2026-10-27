@@ -1,0 +1,10 @@
+name: shinydeploymaster
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17969089
+bundleId: 12682177
+url: https://atera-analytics.shinyapps.io/shinydeploymaster/
+version: 1
