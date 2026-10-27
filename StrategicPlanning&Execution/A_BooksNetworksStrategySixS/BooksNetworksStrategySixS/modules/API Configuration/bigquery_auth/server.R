@@ -18,6 +18,14 @@ bigquery_auth_server <- function(id, api_manager) {
     # a no-op instead.
     authenticating <- reactiveVal(FALSE)
 
+    cred_tick <- reactiveVal(0)
+    output$auto_key <- renderUI(app_cred_banner("bq", cred_tick))
+    observeEvent(input$cred_load, {
+      d <- trimws(input$cred_dir %||% ""); if (!nzchar(d)) { showNotification("Type the folder first.", type = "warning"); return() }
+      showNotification("Looking for the key and connecting ...", type = "message")
+      app_cred_autoload(api_manager, dir = d, which = "bq", force = TRUE); cred_tick(cred_tick() + 1)
+    })
+
     observeEvent(input$authenticate, {
 
       if (isTRUE(authenticating())) {
@@ -37,8 +45,7 @@ bigquery_auth_server <- function(id, api_manager) {
       shinyjs::disable("authenticate")
       output$auth_status <- renderUI({
         tags$div(class = "status-info", tags$i(class = "fa fa-spinner fa-spin"),
-                 " Connecting and preparing all eight tables - this can take up to a minute the first time, ",
-                 "since every suite's dropdowns refresh at once. Please wait; clicking again won't speed it up.")
+                 " Connecting to BigQuery ... this takes a few seconds. Each suite's table is checked and its lists are loaded when you open its tab.")
       })
 
       tryCatch({
@@ -58,7 +65,7 @@ bigquery_auth_server <- function(id, api_manager) {
         output$auth_status <- renderUI({
           tags$div(class = "status-success",
                    tags$i(class = "fa fa-check-circle"),
-                   " ✓ Successfully authenticated! All eight tables are ready:",
+                   " ✓ Connected! Tables used (each is checked and loaded when you open its tab):",
                    tags$br(),
                    tags$small("Book Summary: ", api_manager$bq_full_table_books),
                    tags$br(),
@@ -77,7 +84,7 @@ bigquery_auth_server <- function(id, api_manager) {
                    tags$small("Technical Designs: ", api_manager$bq_full_table_techdesign))
         })
 
-        showNotification("✓ BigQuery connected - all eight suites ready!", type = "message")
+        showNotification("✓ BigQuery connected. Each suite loads when you open its tab.", type = "message")
 
       }, error = function(e) {
         output$auth_status <- renderUI({
@@ -93,7 +100,7 @@ bigquery_auth_server <- function(id, api_manager) {
 
     observeEvent(input$test_query, {
 
-      if (!api_manager$bq_authenticated) {
+      if (!(isTRUE(api_manager$bq_authenticated) || isTRUE(api_manager$bq_connected))) {
         showNotification("Please authenticate first!", type = "error")
         output$test_status <- renderUI({
           tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Please authenticate before testing")

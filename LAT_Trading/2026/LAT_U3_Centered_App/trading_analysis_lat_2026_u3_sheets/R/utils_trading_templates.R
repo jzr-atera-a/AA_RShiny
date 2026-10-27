@@ -215,8 +215,15 @@ tr_trade_sheet_template <- function(trade, legs, events, name, charts = list(), 
   why <- tr_txt(last$reason_for_exit)
   tr_tpl_set(tr_tpl_cell(tb[[6]], 1, 2), trimws(paste(code, why)))
   tr_tpl_set(tr_tpl_cell(tb[[6]], 2, 2), tr_txt(last$lessons_learned))
-  post <- sl("post_exit")
-  tr_tpl_fill_items(tp, p_exit, c(tr_tpl_pic_items(sl("exit")), if (nrow(post)) c(list(list(type = "caption", value = "Post Exit")), tr_tpl_pic_items(transform(post, caption = ifelse(is.na(caption), NA, caption)))) else list()))
+  # Overall analysis (LLM analysis saved with the trade): a new row just before "Lessons learned"
+  oa <- if ("overall_analysis" %in% names(trade)) tr_txt(trade$overall_analysis[1]) else ""
+  if (nzchar(oa)) { rows6 <- tr_tpl_rows(tb[[6]])
+    if (length(rows6) >= 2) { nr <- xml2::xml_add_sibling(rows6[[2]], rows6[[2]], .where = "before", .copy = TRUE)
+      cs <- tr_tpl_cells(nr); tr_tpl_set(cs[[1]], "Overall analysis"); if (length(cs) >= 2) tr_tpl_set(cs[[2]], oa) } }
+  post <- sl("post_exit"); outc <- sl("outcome")
+  tr_tpl_fill_items(tp, p_exit, c(tr_tpl_pic_items(sl("exit")),
+    if (nrow(outc)) c(list(list(type = "caption", value = "Outcome of Trade")), tr_tpl_pic_items(transform(outc, caption = NA_character_))) else list(),
+    if (nrow(post)) c(list(list(type = "caption", value = "Post Exit")), tr_tpl_pic_items(transform(post, caption = ifelse(is.na(caption), NA, caption)))) else list()))
   # an empty chart slot shows nothing (not the template's "[Insert chart picture here]" prompt)
   for (k in 1:2) { ph <- tr_tpl_find_par(tp, "[Insert chart picture here]", 1); if (is.null(ph)) break; tr_tpl_clear_par(ph) }
   tr_tpl_save(tp, file)

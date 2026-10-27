@@ -10,29 +10,39 @@
 # the real console for those.
 .debug_log_max_lines <- 5000
 
-if (!exists(".debug_log_conn", envir = .GlobalEnv) ||
-    !isTRUE(tryCatch(isOpen(get(".debug_log_conn", envir = .GlobalEnv)), error = function(e) FALSE))) {
-
-  assign("debug_log_buffer", character(0), envir = .GlobalEnv)
-  .debug_log_conn <- textConnection("debug_log_buffer", open = "w", local = FALSE)
-  sink(.debug_log_conn, type = "output", split = TRUE)
-  cat("✓ [Debug Console] Log capture initialized\n")
-} else {
-  cat("✓ [Debug Console] Reusing existing log capture (already active this R session)\n")
+# The buffer and its connection are named for THIS app and the connection is remembered in an R option
+# (options survive the rm(list = ls()) in app.R). Every start of the app closes the previous capture of this
+# app and opens a fresh, empty one, so the Debug Console only ever shows the current run: nothing left over
+# from an earlier run, and nothing from any other app that was open in the same R session.
+.sixs_log_var <- "sixs_debug_log_buffer"
+.sixs_log_close <- function() {
+  con <- getOption("sixs.debug_conn")
+  if (!is.null(con)) {
+    if (isTRUE(tryCatch(isOpen(con), error = function(e) FALSE))) {
+      if (sink.number() > 0) try(sink(type = "output"), silent = TRUE)
+      try(close(con), silent = TRUE)
+    }
+    options(sixs.debug_conn = NULL)
+  }
 }
+.sixs_log_open <- function() {
+  assign(.sixs_log_var, character(0), envir = .GlobalEnv)
+  con <- textConnection(.sixs_log_var, open = "w", local = FALSE)
+  options(sixs.debug_conn = con)
+  sink(con, type = "output", split = TRUE)
+  invisible(con)
+}
+.sixs_log_close(); .sixs_log_open()
+cat("✓ [Debug Console] Log capture started for this run of the app\n")
 
 get_debug_log_lines <- function() {
-  raw <- tryCatch(get("debug_log_buffer", envir = .GlobalEnv), error = function(e) character(0))
+  raw <- tryCatch(get(.sixs_log_var, envir = .GlobalEnv), error = function(e) character(0))
   if (length(raw) > .debug_log_max_lines) raw <- tail(raw, .debug_log_max_lines)
   raw
 }
 
 clear_debug_log <- function() {
-  sink(type = "output")
-  close(.debug_log_conn)
-  assign("debug_log_buffer", character(0), envir = .GlobalEnv)
-  .debug_log_conn <<- textConnection("debug_log_buffer", open = "w", local = FALSE)
-  sink(.debug_log_conn, type = "output", split = TRUE)
+  .sixs_log_close(); .sixs_log_open()
   invisible(TRUE)
 }
 
@@ -88,6 +98,8 @@ suppressPackageStartupMessages({
 source("R/module_loader.R")
 source("R/utils_common.R")
 source("R/utils_api.R")
+source("R/utils_local_creds.R")
+source("R/utils_bq_lazy.R")
 source("R/utils_techdesign_catalog.R")
 source("R/utils_techdesign_parse.R")
 source("R/utils_techdesign_render.R")
@@ -96,8 +108,13 @@ source("R/utils_techdesign_actions.R")
 source("R/utils_claude_stream.R")
 source("R/utils_techdesign_matrix.R")
 source("R/utils_techdesign_matrix_render.R")
-source("R/utils_infographic_render.R")
-source("R/utils_infographic.R")
+# NOTE: the infographic files are numbered (x1..x5) because Shiny also auto-loads every file in R/ in alphabetical order,
+# and each of these needs the one before it (icons, themes and block tables are defined in x1).
+source("R/utils_x1_infographic_render.R")
+source("R/utils_x2_infographic_blocks.R")
+source("R/utils_x3_infographic_dash.R")
+source("R/utils_x4_infographic_flow.R")
+source("R/utils_x5_infographic.R")
 
 api_manager <- APIManager$new()
 
@@ -172,7 +189,8 @@ create_ui <- function(module_loader) {
     dashboardHeader(title = module_loader$registry$app$name %||% "Unified Suite"),
 
     dashboardSidebar(
-      sidebarMenu(id = "sidebar_menu", do.call(tagList, menu_items))
+      sidebarMenu(id = "sidebar_menu", do.call(tagList, menu_items)),
+      app_api_status_ui()
     ),
 
     dashboardBody(
@@ -205,7 +223,8 @@ create_ui <- function(module_loader) {
         # GitHub releases) is its own official CDN distribution channel.
         tags$script(src = "https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"),
         tags$script(src = "js/diagram_export.js"),
-        tags$script(src = "js/infographic_export.js"),
+        # version tag = file time, so a browser never keeps an old copy of the export code
+        tags$script(src = paste0("js/infographic_export.js?v=", tryCatch(format(file.mtime("www/js/infographic_export.js"), "%Y%m%d%H%M%S"), error = function(e) "1"))),
 
         tags$script(HTML("
           if (typeof MathJax !== 'undefined') {

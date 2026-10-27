@@ -29,7 +29,7 @@ u3_report_builder_ui <- function(id) {
       tabPanel("2. Your task answers",
         u3rb_note("Drafts are saved to BigQuery (trading_settings) with the Save button, so they survive a restart. Word counts follow Word (anything with a letter or digit is a word). The brief allows 3150-3850 words in total, excluding references."),
         uiOutput(ns("wc_total")),
-        actionButton(ns("save_drafts"), "Save drafts", icon = icon("floppy-disk"), class = "btn-success", style = "color:#ffffff; font-weight:700;"), tags$br(), tags$br(),
+        actionButton(ns("save_drafts"), "Save drafts → BigQuery only", icon = icon("floppy-disk"), class = "btn-success", style = "color:#ffffff; font-weight:700;"), tags$br(), tags$br(),
         draft("task1"), draft("task2"), draft("task3", 10),
         u3rb_h("Task 3 SWOT boxes (optional: printed after your Task 3 text, under bold headings)"),
         u3rb_box(tags$div(style = "font-weight:800; margin-bottom:4px;", "Evidence from your records"), uiOutput(ns("swot_evidence"))),
@@ -68,7 +68,7 @@ u3_report_builder_ui <- function(id) {
         checkboxInput(ns("as_swot"), "Print the SWOT boxes after the Task 3 text", TRUE),
         uiOutput(ns("as_check")),
         downloadButton(ns("dl_docx"), "Download Answer Sheet (.docx)"), downloadButton(ns("dl_pdf"), "Download Answer Sheet (PDF)"),
-        actionButton(ns("as_dbx"), "Save Word + PDF to Dropbox", icon = icon("dropbox")), uiOutput(ns("as_dbx_out")),
+        actionButton(ns("as_dbx"), "Save report Word + PDF → Dropbox only", icon = icon("dropbox")), uiOutput(ns("as_dbx_out")),
         u3rb_note("Open the Word file and read it through before you submit: check numbering, spacing and that every figure is referred to in your text."))
     )
   )

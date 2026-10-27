@@ -35,7 +35,7 @@ trading_evidence_ui <- function(id) {
         fluidRow(
           column(7, fileInput(ns("ex_file"), lab("Screenshots (select one or several)"), multiple = TRUE, accept = c("image/png", "image/jpeg", "image/webp", "image/gif", ".png", ".jpg", ".jpeg", ".webp", ".gif"))),
           column(5, selectInput(ns("ex_kind"), lab("Screen type (leave on Auto-detect: Claude decides)"), tr_vision_kinds))),
-        actionButton(ns("ex_read"), "Read all with Claude", icon = icon("wand-magic-sparkles"), class = "btn-primary", style = "color:#ffffff; font-weight:700;"),
+        actionButton(ns("ex_read"), "Read all with Claude (screenshot files → Dropbox)", icon = icon("wand-magic-sparkles"), class = "btn-primary", style = "color:#ffffff; font-weight:700;"),
         tags$br(), tags$br(),
         uiOutput(ns("ex_items")),
         fluidRow(
@@ -61,11 +61,11 @@ trading_evidence_ui <- function(id) {
         textAreaInput(ns("ex_notes"), lab("Your note on this screenshot (optional)"), rows = 2, width = "100%"),
         actionButton(ns("ex_build"), "Build the trade from ALL screenshots (recommended)", icon = icon("layer-group"), class = "btn-primary", style = "color:#ffffff; font-weight:800; margin-bottom:6px;"),
         tags$div(style = "font-size:12px; color:#475569; margin-bottom:6px;", "Uses every screenshot read above as one trade: direction, entry, stop and limit from the ticket / position, the exit from History, the chart as the sheet's picture and its interval as the chart period. Your edits to each screenshot are used."),
-        actionButton(ns("ex_send_auto"), "Send to Trades (right form for this screen)", icon = icon("arrow-right"), class = "btn-success", style = "color:#ffffff; font-weight:700;"),
-        actionButton(ns("ex_send_open"), "Send to Trades: open-trade form", icon = icon("arrow-right"), class = "btn-success", style = "color:#ffffff; font-weight:700;"),
-        actionButton(ns("ex_send_close"), "Send to Trades: exit form", icon = icon("arrow-right"), class = "btn-success", style = "color:#ffffff; font-weight:700;"),
-        actionButton(ns("ex_save_only"), "Save as evidence only (no form)", icon = icon("floppy-disk"), class = "btn-primary", style = "color:#ffffff; font-weight:700;"),
-        actionButton(ns("ex_discard"), "Discard this extraction", icon = icon("trash")),
+        actionButton(ns("ex_send_auto"), "Send to Trades form (nothing saved yet)", icon = icon("arrow-right"), class = "btn-success", style = "color:#ffffff; font-weight:700;"),
+        actionButton(ns("ex_send_open"), "Send to Trades: open-trade form (nothing saved yet)", icon = icon("arrow-right"), class = "btn-success", style = "color:#ffffff; font-weight:700;"),
+        actionButton(ns("ex_send_close"), "Send to Trades: exit form (nothing saved yet)", icon = icon("arrow-right"), class = "btn-success", style = "color:#ffffff; font-weight:700;"),
+        actionButton(ns("ex_save_only"), "Save as evidence only → BigQuery", icon = icon("floppy-disk"), class = "btn-primary", style = "color:#ffffff; font-weight:700;"),
+        actionButton(ns("ex_discard"), "Discard this extraction → BigQuery", icon = icon("trash")),
         tags$div(style = "font-size:12px; color:#64748b; margin-top:8px;", "Pick each screenshot from the list above to review it. The file name of each screenshot is saved in the evidence log, so you can find the original in your own Screenshots folder; the app does not store the image. Sending fills the form fields only. You still write the set-up, trigger, reasons for stop and target, reason for exit and lessons yourself, then save the trade. Ticket and market screens are record-only: save them as evidence.")),
 
       tabPanel("2. Evidence log",

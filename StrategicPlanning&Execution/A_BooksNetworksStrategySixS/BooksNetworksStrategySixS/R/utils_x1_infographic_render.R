@@ -32,7 +32,7 @@ IG_THEMES <- list(
                bandA = "#FFFFFF", bandB = "#F3F4F6", ink = "#111827", muted = "#4B5563", panel = "#FFFFFF", panel_line = "#D1D5DB",
                track = "#E5E7EB", line = "#D1D5DB", accents = c("#111827", "#2563EB", "#DC2626", "#6B7280"))
 )
-IG_THEME_CHOICES <- setNames(names(IG_THEMES), vapply(IG_THEMES, function(t) t$label, ""))
+IG_THEME_CHOICES <- c(setNames(names(IG_THEMES), vapply(IG_THEMES, function(t) t$label, "")), "Your brand colours (set below)" = "custom")
 
 # ---- small helpers ---------------------------------------------------------
 ig_n <- function(x) formatC(x, format = "f", digits = 1)
@@ -183,13 +183,18 @@ ig_item_status <- function(it) {
   conf <- tolower(as.character(it$confidence %||% ""))
   if (!nzchar(conf)) return("")
   ver <- tolower(as.character(it$verified %||% "unchecked"))
-  if (conf == "judgment") "judgment" else if (ver == "yes") "verified" else if (ver == "no") "contradicted" else "unverified"
+  if (conf == "judgment") "judgment" else if (conf == "applicant") "applicant" else if (ver == "yes") "verified" else if (ver == "no") "contradicted" else "unverified"
 }
-IG_STATUS_COL <- c(verified = "#16A34A", unverified = "#F59E0B", contradicted = "#DC2626", judgment = "#94A3B8")
+IG_STATUS_COL <- c(verified = "#16A34A", unverified = "#F59E0B", contradicted = "#DC2626", judgment = "#94A3B8", applicant = "#2F4F9E")
+# one status dot: hollow ring (judgment), diamond (supplied by the applicant) or filled dot
+ig_status_dot <- function(st, x, y, r = 4.4) {
+  if (st == "judgment") ig_circle(x, y, r - 0.4, "#FFFFFF", IG_STATUS_COL[["judgment"]], 1.4, ' fill-opacity="0.85"')
+  else if (st == "applicant") sprintf('<rect x="%s" y="%s" width="%s" height="%s" fill="%s" stroke="#FFFFFF" stroke-width="1.1" transform="rotate(45 %s %s)"/>', ig_n(x - r * 0.85), ig_n(y - r * 0.85), ig_n(r * 1.7), ig_n(r * 1.7), IG_STATUS_COL[["applicant"]], ig_n(x), ig_n(y))
+  else ig_circle(x, y, r, IG_STATUS_COL[[st]], "#FFFFFF", 1.2)
+}
 ig_marker <- function(it, x, y) {
   st <- ig_item_status(it); if (!nzchar(st)) return("")
-  if (st == "judgment") ig_circle(x, y, 4, "#FFFFFF", IG_STATUS_COL[["judgment"]], 1.4, ' fill-opacity="0.85"')
-  else ig_circle(x, y, 4.4, IG_STATUS_COL[[st]], "#FFFFFF", 1.2)
+  ig_status_dot(st, x, y)
 }
 ig_tip <- function(it, label = "") {
   src <- paste(unlist(it$source_ids), collapse = ", ")
@@ -204,6 +209,15 @@ ig_fmt_value <- function(it) {
   if (!nzchar(v)) "-" else v
 }
 
+# small label for items that are targets, placeholders to fill in, or self-assessed
+IG_TAGS <- c(target = "TARGET", insert = "INSERT", estimate = "SELF-ASSESSED")
+ig_tag_id <- function(x) { x <- tolower(trimws(as.character(if (is.null(x) || length(x) == 0) "" else x[[1]]))); x <- sub("^(placeholder|to_fill|todo)$", "insert", x); x <- sub("^(self_assessed|self-assessed|assumed|proposed)$", "estimate", x); if (x %in% names(IG_TAGS)) x else "" }
+ig_tag_chip <- function(x, y, tag, th, anchor = "start") {
+  tg <- ig_tag_id(tag); if (!nzchar(tg)) return(list(svg = "", w = 0, h = 0))
+  lab <- IG_TAGS[[tg]]; w <- nchar(lab) * 6.6 + 14; col <- ig_acc(th, c(target = 1, insert = 3, estimate = 2)[[tg]]); x0 <- if (anchor == "end") x - w else if (anchor == "middle") x - w / 2 else x
+  list(svg = paste0(ig_rect(x0, y, w, 17, "none", 8.5, col, 1.3, ' stroke-dasharray="3 2"'), ig_text(x0 + w / 2, y + 2.5, lab, 9.5, col, 800, "middle", ls = 0.8)$svg), w = w, h = 17)
+}
+
 # ============================================================
 # BLOCKS: function(sec, th, y) -> list(svg, h)   (y = top of the body area)
 # ============================================================
@@ -215,8 +229,10 @@ ig_block_stat_row <- function(sec, th, y) {
     it <- its[[i]]; x <- IG_M + (i - 1) * colw; col <- ig_acc(th, i); yy <- y
     inner <- character(0)
     if (nzchar(as.character(it$icon %||% ""))) { inner <- c(inner, ig_badge(x + 26, yy + 26, 22, col, it$icon)); yy <- yy + 62 }
-    vt <- ig_text(x, yy, ig_fmt_value(it), if (n >= 4) 44 else 54, col, 800, lh = 56)
+    vtxt <- ig_fmt_value(it); fsv <- min(if (n >= 4) 44 else 54, max(22, floor((colw - 22) / (0.6 * max(3, nchar(vtxt))))))
+    vt <- ig_text(x, yy, vtxt, fsv, if (ig_tag_id(it$tag) == "insert") th$muted else col, 800, lh = fsv * 1.27)
     inner <- c(inner, vt$svg); yy <- yy + vt$h + 6
+    tg <- ig_tag_chip(x, yy, it$tag, th); if (tg$h > 0) { inner <- c(inner, tg$svg); yy <- yy + tg$h + 8 }
     bar <- ig_num(it$bar, NA)
     if (!is.na(bar)) {
       bw <- colw - 36
@@ -235,25 +251,25 @@ ig_block_stat_row <- function(sec, th, y) {
 ig_block_donut <- function(sec, th, y) {
   its <- ig_items(sec, 6); vals <- vapply(its, function(it) max(0, ig_num(it$value)), 0)
   if (length(its) == 0 || sum(vals) <= 0) return(list(svg = "", h = 0))
-  cx <- IG_M + 135; cy <- y + 130; r1 <- 112; r0 <- 66; tot <- sum(vals); a <- -pi / 2; out <- character(0)
+  r1 <- min(112, max(50, IG_CW * 0.155)); r0 <- r1 * 0.59; cx <- IG_M + r1 + 22; cy <- y + r1 + 18; tot <- sum(vals); a <- -pi / 2; out <- character(0)
   for (i in seq_along(its)) {
     a1 <- a + 2 * pi * vals[i] / tot
     if (vals[i] / tot > 0.9999) out <- c(out, sprintf('<path d="%s" fill="%s" fill-rule="evenodd"/>', paste0(ig_arc(cx, cy, r0, r1, 0, pi), ig_arc(cx, cy, r0, r1, pi, 2 * pi)), ig_acc(th, i)))
     else if (vals[i] > 0) out <- c(out, sprintf('<path d="%s" fill="%s" stroke="%s" stroke-width="3">%s</path>', ig_arc(cx, cy, r0, r1, a, a1), ig_acc(th, i), th$bandA, ig_tip(its[[i]], as.character(its[[i]]$label %||% ""))))
     a <- a1
   }
-  cv <- as.character(sec$center_value %||% ""); cl <- as.character(sec$center_label %||% "")
-  if (nzchar(cv)) out <- c(out, ig_text(cx, cy - 22, cv, 34, th$ink, 800, "middle")$svg, ig_text(cx, cy + 14, ig_wrap(cl, 100, 12, FALSE, 2), 12, th$muted, 400, "middle")$svg)
-  lx <- IG_M + 300; ly <- y + 40
+  cv <- as.character(sec$center_value %||% ""); cl <- as.character(sec$center_label %||% ""); k <- r1 / 112
+  if (nzchar(cv)) out <- c(out, ig_text(cx, cy - 22 * k, cv, max(20, 34 * k), th$ink, 800, "middle")$svg, ig_text(cx, cy + 14 * k, ig_wrap(cl, 2 * r0 - 16, max(10, 12 * k), FALSE, 2), max(10, 12 * k), th$muted, 400, "middle")$svg)
+  lx <- cx + r1 + 36; ly <- y + 22; lw <- max(80, IG_W - IG_M - lx - 30 - 62); two <- lw < 200; rowh <- if (two) 44 else 40
   for (i in seq_along(its)) {
-    it <- its[[i]]; yy <- ly + (i - 1) * 40
+    it <- its[[i]]; yy <- ly + (i - 1) * rowh
     pct <- sprintf("%d%%", round(100 * vals[i] / tot))
-    out <- c(out, ig_rect(lx, yy, 18, 18, ig_acc(th, i), 5),
-             ig_text(lx + 30, yy - 1, ig_wrap(it$label, 360, 15, TRUE, 1), 15, th$ink, 700)$svg,
+    out <- c(out, ig_rect(lx, yy, 16, 16, ig_acc(th, i), 5),
+             ig_text(lx + 26, yy - 1, ig_wrap(it$label, lw, 14.5, TRUE, if (two) 2 else 1), 14.5, th$ink, 700, lh = 17)$svg,
              ig_text(IG_W - IG_M, yy - 1, if (nzchar(as.character(it$display %||% ""))) as.character(it$display) else pct, 15, ig_acc(th, i), 800, "end")$svg,
              ig_marker(it, lx - 12, yy + 9))
   }
-  list(svg = paste(out, collapse = ""), h = max(260, 40 + length(its) * 40 + 10))
+  list(svg = paste(out, collapse = ""), h = max(2 * r1 + 40, 30 + length(its) * rowh + 10))
 }
 
 ig_block_bar_chart <- function(sec, th, y) {
@@ -296,7 +312,7 @@ ig_block_bar_chart <- function(sec, th, y) {
 ig_block_ranking <- function(sec, th, y) {
   its <- ig_items(sec, 8); n <- length(its); if (n == 0) return(list(svg = "", h = 0))
   vals <- vapply(its, function(it) max(0, ig_num(it$value)), 0); vmax <- max(vals, 1e-9)
-  lw <- 220; tw <- IG_CW - lw - 90; out <- character(0)
+  lw <- min(220, IG_CW * 0.38); tw <- max(60, IG_CW - lw - 90); out <- character(0)
   for (i in seq_len(n)) {
     yy <- y + (i - 1) * 40; col <- ig_acc(th, if (i == 1) 1 else 2)
     out <- c(out, sprintf("<g>%s", ig_tip(its[[i]], as.character(its[[i]]$label %||% ""))),
@@ -311,20 +327,20 @@ ig_block_ranking <- function(sec, th, y) {
 
 ig_block_pictogram <- function(sec, th, y) {
   its <- ig_items(sec, 4); n <- length(its); if (n == 0) return(list(svg = "", h = 0))
-  out <- character(0); rowh <- 64; sz <- 30; gap <- 6; x0 <- IG_M + 215
+  out <- character(0); rowh <- 64; lw <- min(215, IG_CW * 0.34); x0 <- IG_M + lw; per <- (IG_W - IG_M - x0 - 74) / 10; gap <- max(3, round(per * 0.17)); sz <- max(12, min(30, per - gap)); pf <- if (IG_CW < 600) 20 else 26
   for (i in seq_len(n)) {
     it <- its[[i]]; yy <- y + (i - 1) * rowh; col <- ig_acc(th, i); v <- min(100, max(0, ig_num(it$value))); k <- round(v / 10)
     out <- c(out, sprintf("<g>%s", ig_tip(it, as.character(it$label %||% ""))),
-             ig_text(IG_M, yy + 6, ig_wrap(it$label, 195, 15, TRUE, 2), 15, th$ink, 700)$svg)
+             ig_text(IG_M, yy + 6, ig_wrap(it$label, lw - 20, 15, TRUE, 2), 15, th$ink, 700)$svg)
     for (j in 1:10) out <- c(out, ig_icon(it$icon %||% "user", x0 + (j - 1) * (sz + gap) + sz / 2, yy + 22, sz, if (j <= k) col else th$track, filled = TRUE, sw = 1.2))
-    out <- c(out, ig_text(IG_W - IG_M, yy + 2, as.character(it$display %||% sprintf("%d%%", round(v))), 26, col, 800, "end")$svg, ig_marker(it, x0 + 10 * (sz + gap) + 6, yy + 22), "</g>")
+    out <- c(out, ig_text(IG_W - IG_M, yy + 2, as.character(it$display %||% sprintf("%d%%", round(v))), pf, col, 800, "end")$svg, ig_marker(it, x0 + 10 * (sz + gap) + 6, yy + 22), "</g>")
   }
   list(svg = paste(out, collapse = ""), h = n * rowh)
 }
 
 ig_block_icon_row <- function(sec, th, y) {
   its <- ig_items(sec, 6); n <- length(its); if (n == 0) return(list(svg = "", h = 0))
-  per <- if (n <= 4) n else 3; rows <- ceiling(n / per); colw <- IG_CW / per; out <- character(0); hrow <- 0; cells <- list()
+  per <- min(max(2, floor(IG_CW / 170)), if (n <= 4) n else 3); rows <- ceiling(n / per); colw <- IG_CW / per; out <- character(0); hrow <- 0; cells <- list()
   for (i in seq_len(n)) {
     it <- its[[i]]; cx <- IG_M + ((i - 1) %% per + 0.5) * colw
     lt <- ig_wrap(it$label, colw - 28, 14.5, TRUE, 2); tt <- ig_wrap(it$text, colw - 30, 12.5, FALSE, 5)
@@ -343,7 +359,7 @@ ig_block_icon_row <- function(sec, th, y) {
 
 ig_block_quote_cards <- function(sec, th, y) {
   its <- ig_items(sec, 4); n <- length(its); if (n == 0) return(list(svg = "", h = 0))
-  per <- if (n == 1) 1 else 2; cw <- (IG_CW - (per - 1) * 20) / per; out <- character(0); rows <- ceiling(n / per); ys <- y; tot <- 0
+  per <- if (n == 1 || IG_CW < 600) 1 else 2; cw <- (IG_CW - (per - 1) * 20) / per; out <- character(0); rows <- ceiling(n / per); ys <- y; tot <- 0
   for (r in seq_len(rows)) {
     idx <- ((r - 1) * per + 1):min(n, r * per)
     lines <- lapply(idx, function(i) ig_wrap(its[[i]]$quote, cw - 86, 14, FALSE, 7))
@@ -364,7 +380,7 @@ ig_block_quote_cards <- function(sec, th, y) {
 ig_block_steps <- function(sec, th, y) {
   its <- ig_items(sec, 6); n <- length(its); if (n == 0) return(list(svg = "", h = 0))
   out <- character(0)
-  if (n <= 4) {
+  if (n <= 4 && IG_CW / n >= 130) {
     colw <- IG_CW / n; hmax <- 0
     out <- c(out, ig_line(IG_M + colw / 2, y + 28, IG_M + colw * (n - 0.5), y + 28, th$track, 6))
     for (i in seq_len(n)) {
@@ -389,7 +405,7 @@ ig_block_steps <- function(sec, th, y) {
   list(svg = paste(out, collapse = ""), h = yy - y - 6)
 }
 
-ig_block_branch_tree <- function(sec, th, y) {
+ig_block_branch_tree_wide <- function(sec, th, y) {
   L <- sec$left %||% list(); R <- sec$right %||% list()
   items_of <- function(s) Filter(is.list, (s$items %||% list())[seq_len(min(4, length(s$items %||% list())))])
   li <- items_of(L); ri <- items_of(R)
@@ -420,6 +436,28 @@ ig_block_branch_tree <- function(sec, th, y) {
   list(svg = paste(c(out, a$svg, b$svg), collapse = ""), h = max(a$bottom, b$bottom) - y)
 }
 
+ig_block_branch_tree_narrow <- function(sec, th, y) {
+  items_of <- function(s) Filter(is.list, (s$items %||% list())[seq_len(min(4, length(s$items %||% list())))])
+  sides <- list(list(s = sec$left %||% list(), col = ig_acc(th, 3), di = "plus"), list(s = sec$right %||% list(), col = ig_acc(th, 2), di = "minus"))
+  root <- ig_wrap(sec$root %||% sec$heading, IG_CW - 36, 15, TRUE, 3); rh <- max(40, length(root) * 20 + 18); rc <- ig_acc(th, 2)
+  out <- c(ig_rect(IG_M, y, IG_CW, rh, rc, rh / 2), ig_text(IG_M + IG_CW / 2, y + (rh - length(root) * 20) / 2 + 1, root, 15, ig_on(rc), 800, "middle", lh = 20)$svg)
+  yy <- y + rh + 16
+  for (sd in sides) {
+    its <- items_of(sd$s); if (length(its) == 0) next
+    out <- c(out, ig_badge(IG_M + 18, yy + 18, 16, sd$col, sd$s$icon %||% sd$di, ring = FALSE), ig_text(IG_M + 46, yy + 6, ig_wrap(sd$s$label, IG_CW - 60, 17, TRUE, 1), 17, sd$col, 800)$svg)
+    yy <- yy + 42
+    for (k in seq_along(its)) {
+      it <- its[[k]]; tl <- ig_wrap(it$text, IG_CW - 58, 12.5, FALSE, 4); hh <- max(36, length(tl) * 16.5 + 12)
+      out <- c(out, ig_line(IG_M + 18, yy - 6, IG_M + 18, yy + hh - 6, th$line, 3), ig_circle(IG_M + 18, yy + 10, 13, th$panel, sd$col, 2.5), ig_icon(it$icon %||% sd$di, IG_M + 18, yy + 10, 15, sd$col),
+               ig_text(IG_M + 42, yy + 1, tl, 12.5, th$ink, 400, lh = 16.5)$svg)
+      yy <- yy + hh
+    }
+    yy <- yy + 8
+  }
+  list(svg = paste(out, collapse = ""), h = yy - y)
+}
+ig_block_branch_tree <- function(sec, th, y) if (IG_CW < 640) ig_block_branch_tree_narrow(sec, th, y) else ig_block_branch_tree_wide(sec, th, y)
+
 IG_REGION_TILES <- list(
   north_america = c(0, 0, 2, 2, "North America"), south_america = c(1, 2, 2, 2, "South America"), europe = c(3, 0, 2, 1, "Europe"),
   africa = c(3, 1, 2, 3, "Africa"), middle_east = c(5, 2, 1, 1, "Middle East"), asia = c(5, 0, 2, 2, "Asia"), oceania = c(5, 3, 2, 1, "Oceania"))
@@ -433,7 +471,11 @@ ig_region_id <- function(x) {
 }
 ig_block_region_map <- function(sec, th, y) {
   its <- ig_items(sec, 8); if (length(its) == 0) return(list(svg = "", h = 0))
-  cell <- 112; ch <- 74; gx <- (IG_CW - 7 * cell) / 2 + IG_M; vals <- list(); disp <- list(); srcs <- list()
+  if (IG_CW < 560) {   # too narrow for the tile map: show the same data as ranking bars
+    rk <- sec; rk$items <- lapply(its, function(it) { id <- ig_region_id(it$region %||% it$label); it$label <- if (is.na(id)) as.character(it$region %||% it$label) else IG_REGION_TILES[[id]][5]; it })
+    return(ig_block_ranking(rk, th, y))
+  }
+  cell <- min(112, IG_CW / 7); ch <- cell * 0.66; gx <- (IG_CW - 7 * cell) / 2 + IG_M; vals <- list(); disp <- list(); srcs <- list()
   for (it in its) { id <- ig_region_id(it$region %||% it$label); if (!is.na(id)) { vals[[id]] <- ig_num(it$value); disp[[id]] <- as.character(it$display %||% it$value %||% ""); srcs[[id]] <- it } }
   vmax <- max(unlist(vals), 1e-9); out <- character(0)
   for (id in IG_REGION_IDS) {
@@ -450,11 +492,11 @@ ig_block_region_map <- function(sec, th, y) {
 }
 
 ig_block_callout <- function(sec, th, y) {
-  tl <- ig_wrap(sec$text %||% sec$statement, IG_CW - 170, 25, TRUE, 5); hh <- max(110, length(tl) * 32 + 50)
+  cfs <- if (IG_CW < 600) 20 else 25; tl <- ig_wrap(sec$text %||% sec$statement, IG_CW - 170, cfs, TRUE, 5); hh <- max(110, length(tl) * cfs * 1.28 + 50)
   col <- ig_acc(th, 1)
   svg <- paste0(ig_rect(IG_M - 8, y, IG_CW + 16, hh, th$panel, 22, th$panel_line, 1.5), ig_rect(IG_M - 8, y, 14, hh, col, 7),
                 ig_badge(IG_M + 62, y + hh / 2, 34, col, sec$icon %||% "lightbulb"),
-                ig_text(IG_M + 128, y + (hh - (length(tl) * 32 - 6)) / 2 - 4, tl, 25, th$ink, 800, lh = 32)$svg)
+                ig_text(IG_M + 128, y + (hh - (length(tl) * cfs * 1.28 - 6)) / 2 - 4, tl, cfs, th$ink, 800, lh = cfs * 1.28)$svg)
   list(svg = svg, h = hh)
 }
 
@@ -492,8 +534,7 @@ ig_footer <- function(d, th, y) {
     xx <- IG_M
     for (s in names(cnt)[cnt > 0]) {
       lab <- sprintf("%d %s", cnt[[s]], s)
-      out <- c(out, if (s == "judgment") ig_circle(xx + 5, yy + 8, 4.2, "#FFFFFF", "#94A3B8", 1.4) else ig_circle(xx + 5, yy + 8, 4.6, IG_STATUS_COL[[s]], "#FFFFFF", 1.2),
-               ig_text(xx + 16, yy, lab, 12, th$hero_ink, 400, opacity = 0.9)$svg)
+      out <- c(out, ig_status_dot(s, xx + 5, yy + 8, 4.6), ig_text(xx + 16, yy, lab, 12, th$hero_ink, 400, opacity = 0.9)$svg)
       xx <- xx + 24 + nchar(lab) * 6.6
     }
     yy <- yy + 28
@@ -515,11 +556,21 @@ ig_footer <- function(d, th, y) {
 ig_evidence_counts <- function(d) {
   st <- character(0)
   for (sec in d$sections) for (it in (sec$items %||% list())) if (is.list(it)) { s <- ig_item_status(it); if (nzchar(s)) st <- c(st, s) }
-  vapply(c("verified", "unverified", "contradicted", "judgment"), function(s) sum(st == s), integer(1))
+  vapply(c("verified", "unverified", "contradicted", "applicant", "judgment"), function(s) sum(st == s), integer(1))
 }
 
 # ---- assemble -------------------------------------------------------------------
-ig_theme <- function(d) IG_THEMES[[tolower(as.character(d$meta$theme %||% "sky"))]] %||% IG_THEMES$sky
+ig_custom_theme <- function(p) {
+  navy <- p$navy; teal <- p$teal; mag <- p$magenta; och <- p$ochre; W <- "#FFFFFF"
+  list(label = "Brand colours", hero_from = ig_mix(navy, "#000000", 0.25), hero_to = ig_mix(navy, teal, 0.5), hero_ink = "#FFFFFF",
+       bandA = ig_mix(teal, W, 0.93), bandB = ig_mix(teal, W, 0.85), ink = ig_mix(navy, "#000000", 0.2), muted = ig_mix(navy, W, 0.35), panel = W, panel_line = ig_mix(teal, W, 0.7),
+       track = ig_mix(navy, W, 0.86), line = W, accents = c(teal, mag, och, navy))
+}
+ig_theme <- function(d) {
+  nm <- tolower(as.character(d$meta$theme %||% "sky")); pal <- d$meta$palette
+  if (identical(nm, "custom") && is.list(pal) && length(pal) == 4 && all(nzchar(unlist(pal)))) return(ig_custom_theme(pal))
+  IG_THEMES[[nm]] %||% IG_THEMES$sky
+}
 
 # ---- page formats (poster or fixed-size slides/pages) -------------------------------
 # lw = layout width in drawing units (the page is lw x lw/ar); per = sections per page;
@@ -527,6 +578,8 @@ ig_theme <- function(d) IG_THEMES[[tolower(as.character(d$meta$theme %||% "sky")
 IG_FORMATS <- list(
   poster = list(label = "Long poster (one tall page)", lw = 900, ar = NA, per = NA, cover = FALSE, short = "Poster"),
   `16x9` = list(label = "Presentation 16:9 landscape", lw = 1000, ar = 16 / 9, per = 1, cover = TRUE, short = "16:9"),
+  a4l    = list(label = "A4 landscape (print, one slide per sheet)", lw = 1000, ar = sqrt(2), per = 1, cover = TRUE, short = "A4 landscape"),
+  a5l    = list(label = "A5 landscape (print, 2 slides per A4 sheet)", lw = 1000, ar = sqrt(2), per = 1, cover = TRUE, short = "A5 landscape"),
   `4x3`  = list(label = "Presentation 4:3 landscape", lw = 900, ar = 4 / 3, per = 1, cover = TRUE, short = "4:3"),
   `1x1`  = list(label = "Square 1:1 (LinkedIn / Instagram post)", lw = 900, ar = 1, per = 1, cover = TRUE, short = "1:1"),
   `4x5`  = list(label = "Portrait 4:5 (LinkedIn carousel)", lw = 900, ar = 0.8, per = 1, cover = FALSE, short = "4:5"),
@@ -537,13 +590,24 @@ IG_FORMAT_CHOICES <- setNames(names(IG_FORMATS), vapply(IG_FORMATS, function(f) 
 ig_format_id <- function(x) { x <- tolower(trimws(as.character(if (is.null(x) || length(x) == 0) "" else x[[1]]))); if (x %in% names(IG_FORMATS)) x else "poster" }
 ig_slides_n <- function(x, default = 4L) { v <- suppressWarnings(as.integer(round(as.numeric(if (is.null(x) || length(x) == 0) NA else x[[1]])))); if (is.na(v)) default else as.integer(min(8L, max(1L, v))) }
 # how many sections a deck of n pages needs
-ig_sections_for <- function(fmt, n) {
+ig_cover_on <- function(fmt, n, cover = "auto") {
+  f <- IG_FORMATS[[ig_format_id(fmt)]]; n <- ig_slides_n(n); cover <- tolower(as.character(cover %||% "auto"))
+  if (is.na(f$per)) return(FALSE)
+  n >= 2 && (cover == "yes" || (cover == "auto" && isTRUE(f$cover)))
+}
+ig_sections_for <- function(fmt, n, layout = "stacked", panels = 3L, cover = "auto") {
   f <- IG_FORMATS[[ig_format_id(fmt)]]; if (is.na(f$per)) return(NA_integer_)
-  n <- ig_slides_n(n); as.integer(max(1L, (n - if (isTRUE(f$cover) && n >= 2) 1L else 0L) * f$per))
+  n <- ig_slides_n(n)
+  if (layout %in% c("dashboard", "flow")) { cv <- n >= 2 && identical(tolower(as.character(cover)), "yes"); return(as.integer(max(1L, (n - as.integer(cv)) * min(6L, max(1L, as.integer(panels)))))) }
+  as.integer(max(1L, (n - as.integer(ig_cover_on(fmt, n, cover))) * f$per))
 }
 
 # the layout constants live where the blocks look them up
-ig_set_width <- function(w) { e <- environment(ig_text); assign("IG_W", w, envir = e); assign("IG_CW", w - 2 * get("IG_M", envir = e), envir = e) }
+ig_set_width <- function(w, m = NULL) {
+  e <- environment(ig_text); if (!is.null(m)) assign("IG_M", m, envir = e)
+  assign("IG_W", w, envir = e); assign("IG_CW", w - 2 * get("IG_M", envir = e), envir = e)
+}
+ig_geom <- function() { e <- environment(ig_text); c(w = get("IG_W", envir = e), m = get("IG_M", envir = e)) }
 
 # one section (ribbon heading + intro + block), drawn from y = 0; h includes the padding
 ig_section_parts <- function(sec, th, pad_top = 58, pad_bot = 44) {
@@ -568,7 +632,7 @@ ig_defs_css <- function(th) {
 
 # ---- the long poster ---------------------------------------------------------------
 ig_build_svg <- function(d) {
-  ig_set_width(900); th <- ig_theme(d); m <- d$meta; hero <- ig_hero(m, th)
+  old <- ig_geom(); on.exit(ig_set_width(old[["w"]], old[["m"]]), add = TRUE); ig_set_width(900, 48); th <- ig_theme(d); m <- d$meta; hero <- ig_hero(m, th)
   y <- hero$h; body <- character(0); bands <- list(); slant <- 26
   for (i in seq_along(d$sections)) {
     parts <- ig_section_parts(d$sections[[i]], th); if (is.null(parts)) next
@@ -610,8 +674,7 @@ ig_footer_compact <- function(d, th, W, H, max_src) {
     xx <- IG_M
     for (s in names(cnt)[cnt > 0]) {
       lab <- sprintf("%d %s", cnt[[s]], s)
-      out <- c(out, if (s == "judgment") ig_circle(xx + 5, yy + 7, 4, "#FFFFFF", "#94A3B8", 1.4) else ig_circle(xx + 5, yy + 7, 4.4, IG_STATUS_COL[[s]], "#FFFFFF", 1.2),
-               ig_text(xx + 16, yy, lab, 11.5, th$hero_ink, 400, opacity = 0.9)$svg)
+      out <- c(out, ig_status_dot(s, xx + 5, yy + 7, 4.4), ig_text(xx + 16, yy, lab, 11.5, th$hero_ink, 400, opacity = 0.9)$svg)
       xx <- xx + 24 + nchar(lab) * 6.4
     }
     yy <- yy + 24
@@ -640,20 +703,18 @@ ig_page_chrome <- function(th, W, H, k, n, title, dark) {
 
 ig_build_pages <- function(d, fmt, n) {
   f <- IG_FORMATS[[fmt]]; n <- ig_slides_n(n); LW <- f$lw; W <- LW; H <- round(LW / f$ar)
-  old <- get("IG_W", envir = environment(ig_text)); ig_set_width(LW); on.exit(ig_set_width(old), add = TRUE)
+  old <- ig_geom(); ig_set_width(LW, 48); on.exit(ig_set_width(old[["w"]], old[["m"]]), add = TRUE)
   th <- ig_theme(d); m <- d$meta; notes <- character(0)
   parts <- Filter(Negate(is.null), lapply(d$sections, ig_section_parts, th = th, pad_top = 18, pad_bot = 14))
   K <- length(parts); if (K == 0) stop("Nothing to draw.")
-  cover <- isTRUE(f$cover) && n >= 2
+  cover <- ig_cover_on(fmt, n, d$meta$cover %||% "auto")
   Pc <- min(n - as.integer(cover), K)
   if (Pc < n - as.integer(cover)) notes <- c(notes, sprintf("There are only %d section(s), so the deck has %d page(s) instead of %d. Generate again with more sections, or lower the page count.", K, Pc + as.integer(cover), n))
   groups <- ig_partition(vapply(parts, function(p) p$h, numeric(1)), Pc)
   total <- Pc + as.integer(cover); pages <- character(0); chrome_h <- 34; max_src <- if (W > H) 8 else 14
   secidx <- seq_along(d$sections)[vapply(d$sections, function(s) !is.null(IG_BLOCKS[[s$type %||% ""]]), logical(1))]
   if (cover) {
-    cs <- 1.3; ig_set_width(W / cs); hero <- ig_hero(m, th, fill_h = H / cs, slant = 0); ig_set_width(LW)   # cover: bigger type
-    pages <- c(pages, sprintf('<svg xmlns="http://www.w3.org/2000/svg" class="ig-svg ig-page" data-ig-page="1" viewBox="0 0 %d %d" width="%d" height="%d" style="max-width:100%%;height:auto;display:block"><title>%s</title>%s%s<g transform="scale(%s)">%s</g>%s</svg>',
-                              W, H, W, H, ig_e(m$title), ig_defs_css(th), ig_rect(0, 0, W, H, th$bandB), cs, hero$svg, ig_page_chrome(th, W, H, 1, total, m$title, TRUE)))
+    pages <- c(pages, ig_cover_page(d, th, W, H, total, LW)); ig_set_width(LW, 48)
   }
   for (g in seq_along(groups)) {
     k <- g + as.integer(cover); idx <- groups[[g]]; first <- (g == 1 && !cover); last <- (g == length(groups))
@@ -680,7 +741,11 @@ ig_build_pages <- function(d, fmt, n) {
 
 ig_layout <- function(d) {
   fmt <- ig_format_id(d$meta$format)
-  if (identical(fmt, "poster")) ig_build_svg(d) else ig_build_pages(d, fmt, ig_slides_n(d$meta$slides))
+  ly <- d$meta$layout %||% "stacked"
+  if (identical(ly, "flow")) ig_build_flow(d, fmt, ig_slides_n(d$meta$slides))
+  else if (identical(fmt, "poster")) ig_build_svg(d)
+  else if (identical(ly, "dashboard")) ig_build_dashboard(d, fmt, ig_slides_n(d$meta$slides))
+  else ig_build_pages(d, fmt, ig_slides_n(d$meta$slides))
 }
 
 render_infographic <- function(d, lay = NULL) {
@@ -689,9 +754,10 @@ render_infographic <- function(d, lay = NULL) {
   if (lay$n <= 1 && identical(lay$fmt, "poster")) {
     return(htmltools::tagList(htmltools::HTML(sprintf('<div class="ig-card" id="%s" data-ig-w="%d" data-ig-h="%s" data-ig-pages="1" style="background:#fff;border-radius:12px;box-shadow:0 4px 15px rgba(0,44,60,.15);padding:0;margin:8px 0;overflow:hidden">%s</div>', wid, lay$w, ig_n(lay$h), lay$pages[[1]]))))
   }
-  minw <- if (lay$w >= lay$h) 460 else 300
+  # one page per row, centred, every page the same width (wide slides 1000 px, tall or square pages 810 px; never wider than the window)
+  pw <- if (lay$w > lay$h * 1.15) 1000 else 810
   cards <- vapply(seq_along(lay$pages), function(i)
-    sprintf('<div class="ig-pagewrap" style="background:#fff;border-radius:10px;box-shadow:0 4px 15px rgba(0,44,60,.15);overflow:hidden"><div style="padding:5px 12px;font-size:12px;color:#5b6b7b;background:#f4f7fa;border-bottom:1px solid #e1e8ef">Page %d of %d</div>%s</div>', i, lay$n, lay$pages[[i]]), character(1))
-  htmltools::tagList(htmltools::HTML(sprintf('<div class="ig-card ig-deck" id="%s" data-ig-w="%d" data-ig-h="%d" data-ig-pages="%d" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(%dpx,1fr));gap:16px;margin:8px 0">%s</div>',
-                                             wid, lay$w, lay$h, lay$n, minw, paste(cards, collapse = ""))))
+    sprintf('<div class="ig-pagewrap" style="background:#fff;border-radius:10px;box-shadow:0 4px 15px rgba(0,44,60,.15);overflow:hidden;width:100%%;max-width:%dpx"><div style="padding:5px 12px;font-size:12px;color:#5b6b7b;background:#f4f7fa;border-bottom:1px solid #e1e8ef">Page %d of %d</div>%s</div>', pw, i, lay$n, lay$pages[[i]]), character(1))
+  htmltools::tagList(htmltools::HTML(sprintf('<div class="ig-card ig-deck" id="%s" data-ig-w="%d" data-ig-h="%d" data-ig-pages="%d" data-ig-paper="%s" style="display:flex;flex-direction:column;align-items:center;gap:24px;margin:8px 0">%s</div>',
+                                             wid, lay$w, lay$h, lay$n, if (lay$fmt %in% c("a4l", "a5l", "a4")) lay$fmt else "", paste(cards, collapse = ""))))
 }

@@ -171,7 +171,8 @@ tr_trade_sheet_basic <- function(trade, legs, events, name, charts = list(), fil
     doc <- tr_doc_table(doc, ex)
   } else doc <- officer::body_add_par(doc, "The trade is not closed yet.")
   last <- if (nrow(legs)) legs[which.max(legs$exit_ts), ] else trade
-  fin <- data.frame(Item = c("Reason for Exit", "Lessons learned"), `Your text` = c(tr_txt(last$reason_for_exit), tr_txt(last$lessons_learned)), check.names = FALSE, stringsAsFactors = FALSE)
+  oa <- if ("overall_analysis" %in% names(trade)) tr_txt(trade$overall_analysis[1]) else ""
+  fin <- data.frame(Item = c("Reason for Exit", if (nzchar(oa)) "Overall analysis", "Lessons learned"), `Your text` = c(tr_txt(last$reason_for_exit), if (nzchar(oa)) oa, tr_txt(last$lessons_learned)), check.names = FALSE, stringsAsFactors = FALSE)
   doc <- tr_doc_table(doc, fin)
   doc <- tr_doc_chart(doc, "Exit chart", charts$exit); doc <- tr_doc_chart(doc, "Post Exit", charts$post)
   print(doc, target = file); invisible(file)

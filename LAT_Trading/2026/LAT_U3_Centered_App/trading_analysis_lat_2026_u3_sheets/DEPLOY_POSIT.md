@@ -51,3 +51,10 @@ Trade Journal > **Decision Panel (before a trade)**. No setup needed beyond the 
 - Type the IG price (or read an IG ticket screenshot with Claude) so the Yahoo bars line up with IG points. Without it every level is marked "not aligned".
 - Settings used: `risk_pct`, `combined_cap_pct`, `min_rrr`, `adx_trend_min`, `adx_range_max`, `plan_durations`, `opening_balance` (Trading Records > Setup).
 - An expired order: Decision journal > Mark expired saves `Individual_Trade_Sheet_<Market>_<dd-mm-yyyy>_order_not_filled.docx` (+ PDF) to Individual Trade Sheets.
+
+## Keys from a local folder (27 Oct)
+On Windows the app looks in `C:\111_SecA\_q_api\` when it starts:
+- **BigQuery:** the service-account key, a `.json` file with `"type": "service_account"`. The key for project `atera-2` is used first; otherwise the newest.
+- **Claude:** the key on the single line of `ap_claude_1_line.txt`.
+
+The API Configuration tabs say what was found. If nothing was found, or the app is not on Windows, load or paste the keys there as before; `ATERA_BQ_KEY_FILE` and `ANTHROPIC_API_KEY` still work. Set `LAT_CRED_DIR` to use another folder.

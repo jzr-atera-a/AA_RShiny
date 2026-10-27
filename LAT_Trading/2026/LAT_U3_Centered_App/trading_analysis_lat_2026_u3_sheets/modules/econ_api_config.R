@@ -21,6 +21,7 @@ econ_bigquery_auth_ui <- function(id) {
     )),
     fluidRow(
       box(title = "Connection Settings", status = "primary", solidHeader = TRUE, width = 5,
+          uiOutput(ns("auto_key")),
           textInput(ns("project_id"), "GCP Project ID:", value = "atera-2"),
           textInput(ns("dataset_id"), "BigQuery Dataset:", value = "business_strategy"),
           tags$hr(),
@@ -41,6 +42,12 @@ econ_bigquery_auth_ui <- function(id) {
 
 econ_bigquery_auth_server <- function(id, api_manager) {
   moduleServer(id, function(input, output, session) {
+    output$auto_key <- renderUI({
+      st <- if (exists("u3_cred_status", mode = "function")) u3_cred_status() else list(); txt <- st$bq; d <- if (is.null(st$dir)) "" else st$dir
+      if (!is.null(txt)) tags$div(style = "background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; border-radius:8px; padding:8px 10px; margin-bottom:10px; font-size:12.5px;", icon("key"), " ", txt, " You can still load another key below.")
+      else tags$div(style = "background:#fffbeb; border:1px solid #fde68a; color:#92400e; border-radius:8px; padding:8px 10px; margin-bottom:10px; font-size:12.5px;",
+        if (nzchar(d)) paste0("No service-account .json key found in ", d, ": load the key file or paste it below.") else "This is not Windows, so no local key folder is searched: load the key file or paste it below.")
+    })
 
     observeEvent(input$authenticate, {
       if (trimws(input$project_id) == "" || trimws(input$dataset_id) == "") {
@@ -96,6 +103,7 @@ econ_claude_config_ui <- function(id) {
     ua_callout("Uses a streaming connection (SSE), which keeps small chunks of data flowing continuously and avoids the ~60s idle-connection timeout some corporate networks/VPNs impose on plain long-running requests."),
     fluidRow(
       box(title = "Credentials", status = "primary", solidHeader = TRUE, width = 5,
+          uiOutput(ns("auto_key")),
           passwordInput(ns("api_key"), "Anthropic API Key:", placeholder = "sk-ant-..."),
           selectInput(ns("model"), "Model:", choices = c("claude-sonnet-4-6", "claude-sonnet-5-5", "claude-opus-5-5", "claude-haiku-5-5", "claude-opus-5", "claude-haiku-4-5-20251001"), selected = if (nzchar(Sys.getenv("CLAUDE_MODEL"))) Sys.getenv("CLAUDE_MODEL") else "claude-sonnet-4-6"),
           numericInput(ns("max_tokens"), "Max Tokens:", value = 8000, min = 1000, max = 64000, step = 500),
@@ -115,6 +123,12 @@ econ_claude_config_ui <- function(id) {
 
 econ_claude_config_server <- function(id, api_manager) {
   moduleServer(id, function(input, output, session) {
+    output$auto_key <- renderUI({
+      st <- if (exists("u3_cred_status", mode = "function")) u3_cred_status() else list(); txt <- st$claude; d <- if (is.null(st$dir)) "" else st$dir
+      if (!is.null(txt)) tags$div(style = "background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; border-radius:8px; padding:8px 10px; margin-bottom:10px; font-size:12.5px;", icon("key"), " ", txt, " You can still load another key below.")
+      else tags$div(style = "background:#fffbeb; border:1px solid #fde68a; color:#92400e; border-radius:8px; padding:8px 10px; margin-bottom:10px; font-size:12.5px;",
+        if (nzchar(d)) paste0("No ap_claude_1_line.txt found in ", d, ": paste the key below and press Test Connection.") else "This is not Windows, so no local key folder is searched: paste the key below and press Test Connection.")
+    })
 
     observeEvent(input$test_connection, {
       req(input$api_key)

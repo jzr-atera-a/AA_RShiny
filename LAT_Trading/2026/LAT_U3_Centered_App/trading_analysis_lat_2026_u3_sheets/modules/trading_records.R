@@ -60,7 +60,7 @@ trading_records_ui <- function(id) {
         fluidRow(column(12,
           actionButton(ns("ensureTables"), "Create / verify tables", icon = icon("database"), class = "btn-primary", style = "color:#ffffff; font-weight:700;"),
           actionButton(ns("syncPending"), "Sync pending records", icon = icon("cloud-arrow-up")),
-          actionButton(ns("reload"), "Reload from BigQuery", icon = icon("rotate")),
+          actionButton(ns("reload"), "Reload all records from BigQuery (read only)", icon = icon("rotate")),
           downloadButton(ns("dlBackup"), "Download session backup (.rds)"))),
         tags$br(), uiOutput(ns("setupMsg")),
         tr_h("Period settings"),
@@ -82,16 +82,15 @@ trading_records_ui <- function(id) {
         fluidRow(column(6, textInput(ns("s_dbx"), tr_lab("Dropbox folder on this computer (screenshots, Blotter, Answer Sheet)"), tr_lat_base_local())),
                  column(6, textInput(ns("s_dbxapi"), tr_lab("Dropbox path (API upload)"), tr_lat_base_api()))),
         uiOutput(ns("dbx_status")),
-        actionButton(ns("dbx_test"), "Test Dropbox (write a small file and read it back)", icon = icon("vial")), uiOutput(ns("dbx_test_out")), tags$br(),
+        actionButton(ns("dbx_test"), "Test Dropbox (writes a small test file → Dropbox, reads it back)", icon = icon("vial")), uiOutput(ns("dbx_test_out")), tags$br(),
         tr_h("Automation"),
-        fluidRow(column(6, checkboxInput(ns("s_autosave"), tr_lab("Save the Word + PDF sheets (and the Blotter) to Dropbox automatically after every change"), TRUE)),
-                 column(6, checkboxInput(ns("s_autochart"), tr_lab("When a trade has no entry / post-exit chart, draw one from Yahoo prices (labelled as such)"), TRUE))),
+        fluidRow(column(6, checkboxInput(ns("s_autochart"), tr_lab("When a trade has no entry / post-exit chart, draw one from Yahoo prices (labelled as such)"), TRUE))),
         fluidRow(column(4, numericInput(ns("s_plan_dur"), tr_lab("Expected trade duration (hours) on your Trade Sheets"), NA, min = 0, step = 0.5))),
         tr_note("Your plan's number, for example 10. It fills Expected Trade Duration on every trade where you did not type one."),
-        actionButton(ns("saveSettings"), "Save settings", icon = icon("floppy-disk"), class = "btn-success", style = "color:#ffffff; font-weight:700;"),
+        actionButton(ns("saveSettings"), "Save settings → BigQuery", icon = icon("floppy-disk"), class = "btn-success", style = "color:#ffffff; font-weight:700;"),
         tr_h("Complete past records"),
         tr_note("For every trading day from the period start to today: fills empty Morning Sheet cells from Yahoo (overnight low/high, prices, Dow, Nikkei; a day with no sheet gets one), and gives trades without an expected duration the one from your plan. A sheet already in your Dropbox folder is kept (never replaced by the back-fill); a new one is saved there. Your own text is never touched."),
-        actionButton(ns("backfill"), "Complete past Morning Sheets and trades", icon = icon("clock-rotate-left")), uiOutput(ns("backfill_out"))),
+        actionButton(ns("backfill"), "Complete past Morning Sheets and trades → BigQuery only", icon = icon("clock-rotate-left")), uiOutput(ns("backfill_out"))),
 
       # ------------------------------------------------------- 2 MORNING SHEET
       tabPanel("2. Morning Sheet",
@@ -161,14 +160,34 @@ trading_records_ui <- function(id) {
                  column(8, ta("ms_expo", "Exposure note (correlated markets)", 2))),
         checkboxInput(ns("ms_stand"), tr_lab("Standing aside today"), FALSE),
         conditionalPanel(sprintf("input['%s']", ns("ms_stand")), ta("ms_stand_why", "Reason for standing aside", 2)),
-        actionButton(ns("ms_save"), "Save morning sheet", icon = icon("floppy-disk"), class = "btn-success", style = "color:#ffffff; font-weight:700;"),
-        actionButton(ns("ms_complete"), "Fill every empty cell and save", icon = icon("wand-magic-sparkles"), class = "btn-primary", style = "color:#ffffff; font-weight:700;"),
+        actionButton(ns("ms_save"), "Save Morning Sheet → BigQuery only", icon = icon("floppy-disk"), class = "btn-success", style = "color:#ffffff; font-weight:700;"),
+        actionButton(ns("ms_complete"), "Fill every empty cell + save Morning Sheet → BigQuery only", icon = icon("wand-magic-sparkles"), class = "btn-primary", style = "color:#ffffff; font-weight:700;"),
         checkboxInput(ns("ms_web_fill"), tr_lab("When the news box or the calendar is empty, let Claude find them online (with sources; needs the Claude key)"), TRUE),
         uiOutput(ns("ms_complete_out")),
         tags$hr(), tr_h("Saved sheets"), DT::DTOutput(ns("ms_table"))),
 
       # ------------------------------------------------------------- 3 TRADES
       tabPanel("3. Trades",
+        tags$script(HTML("
+          Shiny.addCustomMessageHandler('tr_req_mark', function(m) {
+            (m.all || []).forEach(function(id) {
+              var el = document.getElementById(id); if (!el) return;
+              var tgt = el; var sz = el.parentElement ? el.parentElement.querySelector('.selectize-input') : null; if (sz) tgt = sz;
+              var miss = (m.missing || []).indexOf(id) >= 0;
+              tgt.style.backgroundColor = miss ? '#ffedd5' : ''; tgt.style.borderColor = miss ? '#f97316' : ''; tgt.style.borderWidth = miss ? '2px' : '';
+            });
+            var b = document.getElementById(m.button); if (b) { b.disabled = (m.missing || []).length > 0; b.title = b.disabled ? 'Fill the orange boxes first' : ''; }
+          });")),
+        tags$div(style = "background:#eef6f5; border:1px solid #b2e0db; border-radius:8px; padding:10px 14px; margin:10px 0 14px 0; color:#2c3e50;",
+          tr_h("Claude trade scenarios (optional, before you open)"),
+          tr_note("Claude reads today's Morning Sheet (as it is in tab 2) and a fresh IG chart screenshot of the asset, then returns one BUY and one SELL scenario with stop, limit, the reasons for each and an estimated success rate. Pick one to copy it into A below (direction, prices, stake and the stop/target reasons); you can still edit A. The success rate is Claude's estimate, not a guarantee."),
+          fluidRow(
+            column(4, fileInput(ns("sc_img"), tr_lab("IG chart screenshot (candles of this asset)"), accept = c("image/png", "image/jpeg", "image/webp"))),
+            column(2, num("sc_price", "Current price (IG)")),
+            column(2, num("sc_size", "Size n (GBP per point)", 2, min = 0)),
+            column(4, textInput(ns("sc_notes"), tr_lab("Notes for Claude (optional)"), ""))),
+          actionButton(ns("sc_go"), "Ask Claude for BUY and SELL scenarios", icon = icon("robot"), class = "btn-primary", style = "color:#ffffff; font-weight:700;"),
+          uiOutput(ns("sc_out"))),
         tr_h("A. Open a trade"),
         tr_note("Fill in at the time you enter, as in the top half of your Trade Sheet. Times are UK time. Sizing is your stake per pip; pip size is the price move that equals one pip on YOUR platform (defaults are only a guide)."),
         fluidRow(
@@ -184,7 +203,7 @@ trading_records_ui <- function(id) {
         fluidRow(
           column(3, num("t_pip", "Pip size (price units)", 1, min = 0)),
           column(3, num("t_stake", "Stake per pip (GBP): the size in \u00a3 per point", 2, min = 0)),
-          column(3, selectInput(ns("t_purpose"), tr_lab("Assessed or practice?"), tr_purpose_choices)),
+          column(3, selectInput(ns("t_purpose"), tr_lab("Assessed or practice?"), tr_purpose_choices, selected = "ASSESSED")),
           column(3, tags$div(style = "margin-top:22px;", uiOutput(ns("t_class_note"))))),
         fluidRow(
           column(3, num("t_entry", "Entry price")), column(3, num("t_stop", "Stop loss")), column(3, num("t_target", "Target"))),
@@ -210,14 +229,15 @@ trading_records_ui <- function(id) {
         fluidRow(column(6, ta("t_trigger", "Trigger", 2)), column(6, ta("t_exec", "Execution", 2))),
         fluidRow(column(6, ta("t_stopwhy", "Reason for stop-loss placement", 2)), column(6, ta("t_tgtwhy", "Reason for target placement", 2))),
         uiOutput(ns("t_preview")),
-        actionButton(ns("t_save"), "Save open trade", icon = icon("floppy-disk"), class = "btn-success", style = "color:#ffffff; font-weight:700;"),
+        uiOutput(ns("t_req_note")),
+        actionButton(ns("t_save"), "Save open trade → BigQuery only", icon = icon("floppy-disk"), class = "btn-success", style = "color:#ffffff; font-weight:700;"),
         tags$hr(),
 
-        tr_h("B. Manage an open trade, or edit any trade (open or closed)"),
-        selectInput(ns("m_trade"), tr_lab("Trade (open trades; closed trades too when you choose Edit)"), choices = c("(no open trades)" = "")),
+        tr_h("B. Manage an open trade, or Load from BigQuery to Edit any trade (open or closed)"),
+        selectInput(ns("m_trade"), tr_lab("Trade (open trades; choose 'Pull trade from BigQuery & edit' to load ANY trade, open or closed, from BigQuery to edit)"), choices = c("(no open trades)" = "")),
         uiOutput(ns("m_summary")),
         radioButtons(ns("m_action"), tr_lab("What happened?"), inline = TRUE,
-                     c("Edit trade" = "edit", "Moved stop" = "stop", "Partial exit" = "partial", "Closed" = "close", "Cancelled (never filled)" = "cancel"), selected = "stop"),
+                     c("Pull trade from BigQuery & edit" = "edit", "Moved stop" = "stop", "Partial exit" = "partial", "Closed" = "close", "Cancelled (never filled)" = "cancel"), selected = "stop"),
         conditionalPanel(sprintf("input['%s'] != 'edit'", ns("m_action")),
           fluidRow(column(3, dateInput(ns("m_date"), tr_lab("Date"), tr_london_today())),
                    column(3, textInput(ns("m_time"), tr_lab("Time (UK, HH:MM)"), tr_uk_now())))),
@@ -256,7 +276,7 @@ trading_records_ui <- function(id) {
                      selectInput(ns("m_devtype"), tr_lab("Deviation type"), tr_deviations)))),
           conditionalPanel(sprintf("input['%s'] == 'N'", ns("m_followed")), ta("m_devnote", "What happened and why (be specific and honest)", 2)),
           fluidRow(column(6, ta("m_why", "Reason for exit", 2)), column(6, ta("m_lessons", "Lessons learned", 2)))),
-        actionButton(ns("m_save"), "Save", icon = icon("floppy-disk"), class = "btn-success", style = "color:#ffffff; font-weight:700;"),
+        actionButton(ns("m_save"), "Save this change → BigQuery only", icon = icon("floppy-disk"), class = "btn-success", style = "color:#ffffff; font-weight:700;"),
         tags$hr(), tr_h("All trades"),
         downloadButton(ns("dlTrades"), "Download trades (CSV)"), tags$br(), tags$br(),
         DT::DTOutput(ns("tr_table"))),
@@ -285,13 +305,10 @@ trading_records_ui <- function(id) {
         selectInput(ns("ex_trade"), tr_lab("Trade"), choices = c("(no trades yet)" = "")),
         tr_note("Pictures are saved ONCE with the trade (Dropbox, path kept in the evidence table) and placed on the sheet every time you export, in this order: entry charts (each with its caption, for example 4 Hour, 1 Hour, 15 Min as in the LAT sample), the IG screenshots you linked in Order Evidence, each in-trade action followed by its own chart, the exit chart, then 'Post Exit'. Crop out account names and numbers."),
         tags$div(style = "background:#f6f8fb; border-radius:8px; padding:8px 12px; margin-bottom:10px;",
-          fluidRow(column(3, selectInput(ns("pic_slot"), tr_lab("Where on the sheet"), tr_picture_slots)),
-                   column(3, selectizeInput(ns("pic_caption"), tr_lab("Caption (timeframe)"), c("(none)" = "", tr_picture_captions), options = list(create = TRUE))),
-                   column(3, conditionalPanel(sprintf("input['%s'] == 'intrade'", ns("pic_slot")), selectInput(ns("pic_event"), tr_lab("For which action"), c("(general)" = "")))),
-                   column(3, fileInput(ns("pic_files"), tr_lab("Picture(s)"), multiple = TRUE, accept = c("image/png", "image/jpeg", ".png", ".jpg", ".jpeg")))),
-          actionButton(ns("pic_add"), "Save picture(s) to this trade", icon = icon("image"), class = "btn-primary", style = "color:#ffffff; font-weight:700;"),
+          fluidRow(column(6, fileInput(ns("pic_files"), tr_lab("Picture(s): choose one or several at once (Ctrl / Shift + click)"), multiple = TRUE, accept = c("image/png", "image/jpeg", ".png", ".jpg", ".jpeg"), width = "100%"))),
+          uiOutput(ns("pic_list")),
           tags$div(style = "margin-top:8px;", DT::DTOutput(ns("pic_table"))),
-          actionButton(ns("pic_remove"), "Remove selected picture(s)", icon = icon("trash"))),
+          actionButton(ns("pic_remove"), "Remove selected picture(s) from this trade → BigQuery (file stays in Dropbox)", icon = icon("trash"))),
         uiOutput(ns("trade_gaps")),
         tags$details(open = NA, style = "background:#eef6ff; border:1px solid #bfdbfe; border-radius:8px; padding:8px 12px; margin-bottom:10px; color:#1e3a5f;",
           tags$summary(style = "font-weight:800; cursor:pointer;", "Complete this sheet: the boxes only you can fill (saved as a new version of the trade)"),
@@ -302,11 +319,21 @@ trading_records_ui <- function(id) {
               textAreaInput(ns("x_fund"), tr_lab("Set-up (fundamental)"), rows = 3, width = "100%"), textAreaInput(ns("x_tech"), tr_lab("Set-up (technical)"), rows = 3, width = "100%"),
               fluidRow(column(6, textAreaInput(ns("x_trigger"), tr_lab("Trigger"), rows = 2, width = "100%")), column(6, textAreaInput(ns("x_exec"), tr_lab("Execution"), rows = 2, width = "100%"))),
               fluidRow(column(6, textAreaInput(ns("x_stopwhy"), tr_lab("Reason for Stop Loss placement"), rows = 2, width = "100%")), column(6, textAreaInput(ns("x_tgtwhy"), tr_lab("Reason for Target Limit placement"), rows = 2, width = "100%"))),
-              fluidRow(column(6, textAreaInput(ns("x_why"), tr_lab("Reason for Exit (after the exit code)"), rows = 2, width = "100%")), column(6, textAreaInput(ns("x_lessons"), tr_lab("Lessons learned"), rows = 3, width = "100%"))),
-              actionButton(ns("x_save"), "Save my text to this trade", icon = icon("floppy-disk"), class = "btn-success", style = "color:#ffffff; font-weight:700;")),
+              tags$div(style = "font-weight:700; color:#2c3e50; margin-top:6px;", "Trade Exit (one row on the sheet; filled by LLM analysis from the Outcome of Trade picture, or typed)"),
+              fluidRow(column(3, dateInput(ns("x_xdate"), tr_lab("Exit date"), value = NA)), column(3, textInput(ns("x_xtime"), tr_lab("Exit time (UK, HH:MM)"), "")),
+                       column(3, numericInput(ns("x_xprice"), tr_lab("Exit price"), NA)), column(3, numericInput(ns("x_xpnl"), tr_lab("P/L shown by IG (GBP)"), NA))),
+              fluidRow(column(6, selectInput(ns("x_xcode"), tr_lab("Exit code"), tr_exit_code_choices, width = "100%")),
+                       column(6, tags$div(style = "font-size:11.5px; color:#475569; margin-top:22px;", "T = target (limit) hit | S1 = initial stop hit | S2+ = moved stop hit | ME = manual exit. With exit date, time, price and code filled, Save closes an open trade in BigQuery."))),
+              fluidRow(column(6, textAreaInput(ns("x_why"), tr_lab("Reason for Exit (after the exit code)"), rows = 3, width = "100%")), column(6, textAreaInput(ns("x_lessons"), tr_lab("Lessons learned"), rows = 3, width = "100%"))),
+              textAreaInput(ns("x_analysis"), tr_lab("Overall analysis (printed on the Individual Trade Sheet before Lessons learned)"), rows = 5, width = "100%"),
+              tags$div(style = "background:#eef6f5; border:1px solid #b2e0db; border-radius:8px; padding:8px 12px; margin:6px 0 10px 0;",
+                tr_note("LLM analysis: Claude reads the Morning Sheet shown in tab 2, this trade's full record and the pictures listed above (new ones with their tags, plus those already saved), then fills Exit code, Reason for Exit and Overall analysis. Lessons learned stays yours. Check the boxes, then save."),
+                actionButton(ns("x_llm"), "LLM analysis", icon = icon("robot"), class = "btn-primary", style = "color:#ffffff; font-weight:700;"),
+                actionButton(ns("x_llm_save"), "Save pictures (files → Dropbox, records → BigQuery) + all text boxes → BigQuery", icon = icon("database"), class = "btn-success", style = "color:#ffffff; font-weight:700;"),
+                uiOutput(ns("x_llm_out")))),
             column(5, uiOutput(ns("x_facts"))))),
         downloadButton(ns("dlTradeSheet"), "Download Trade Sheet (.docx)"), downloadButton(ns("dlTradeSheetPdf"), "Download Trade Sheet (PDF)"),
-        actionButton(ns("sv_trade"), "Save Word + PDF to Dropbox", icon = icon("dropbox")),
+        actionButton(ns("sv_trade"), "Save Trade Sheet Word + PDF and Trade Blotter → Dropbox only", icon = icon("dropbox")),
         tags$hr(), tr_h("Morning Sheet (Word)"),
         selectInput(ns("ex_sheet"), tr_lab("Saved sheet"), choices = c("(no sheets yet)" = "")),
         tr_note("Filled into your LAT Morning Sheet template. The IG calendar screenshots you read on the Morning Sheet tab were saved with that date and are placed automatically under 'Economic Calendar from overnight' and 'Economic Calendar for today'. Pictures added here replace them for this export (and are saved too)."),
@@ -314,7 +341,7 @@ trading_records_ui <- function(id) {
                  column(6, fileInput(ns("cal_t"), tr_lab("Today's calendar pictures"), multiple = TRUE, accept = c("image/png", "image/jpeg")))),
         uiOutput(ns("morning_gaps")),
         downloadButton(ns("dlMorning"), "Download Morning Sheet (.docx)"), downloadButton(ns("dlMorningPdf"), "Download Morning Sheet (PDF)"),
-        actionButton(ns("sv_morning"), "Save Word + PDF to Dropbox", icon = icon("dropbox")),
+        actionButton(ns("sv_morning"), "Save Morning Sheet Word + PDF → Dropbox only", icon = icon("dropbox")),
         tr_note("PDF files are made from the Word file with LibreOffice, which must be installed on the computer running the app. Without it you still get the Word file; open it and use Save as PDF. Files are named like Morning_Sheet_20-10-2026 and Individual_Trade_Sheet_Brent_19-10-2026, and saved again with the same name when you re-export."),
         uiOutput(ns("sv_out")),
         tags$hr(), tr_h("Statistics (Excel)"),
@@ -442,7 +469,7 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
     # ---- picture store (Dropbox folder on this computer and/or the Dropbox API; session cache always) -------------
     dbx_local <- reactive(tr_or(input$s_dbx, tr_or(sv()$dropbox_dir, tr_lat_base_local())))
     dbx_api <- reactive(tr_or(input$s_dbxapi, tr_or(sv()$dropbox_api_path, tr_lat_base_api())))
-    autosave_on <- reactive(if (is.null(input$s_autosave)) !identical(sv()$autosave, "FALSE") else isTRUE(input$s_autosave))
+    autosave_on <- reactive(FALSE)   # no automatic Dropbox saves: every Dropbox write is its own button
     autochart_on <- reactive(if (is.null(input$s_autochart)) !identical(sv()$autochart, "FALSE") else isTRUE(input$s_autochart))
     plan_txt <- reactive(tr_or(sv()$plan_durations, ""))   # only what you SAVED counts as your plan
     output$dbx_fixed <- renderUI({ m <- tr_sheet_targets("morning"); t <- tr_sheet_targets("trade")
@@ -511,7 +538,7 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
       if (!is.null(s$student_id)) updateTextInput(session, "s_id", value = s$student_id)
       if (!is.null(s$dropbox_dir)) updateTextInput(session, "s_dbx", value = s$dropbox_dir)
       if (!is.null(s$dropbox_api_path)) updateTextInput(session, "s_dbxapi", value = s$dropbox_api_path)
-      if (!is.null(s$autosave)) updateCheckboxInput(session, "s_autosave", value = identical(s$autosave, "TRUE"))
+      NULL
       if (!is.null(s$autochart)) updateCheckboxInput(session, "s_autochart", value = identical(s$autochart, "TRUE"))
       if (!is.null(s$plan_durations)) { pdv <- suppressWarnings(as.numeric(s$plan_durations)); if (!is.finite(pdv)) pdv <- unname(tr_parse_plan_durations(s$plan_durations)[1])
         if (length(pdv) && is.finite(pdv)) updateNumericInput(session, "s_plan_dur", value = pdv) }
@@ -663,7 +690,79 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
         sprintf("Risk %.1f pips (GBP %.2f, %.2f%% of equity) | Reward %.1f pips | Planned RRR %.2f", e$risk_pips, e$risk_gbp, rp, e$reward_pips, e$rrr),
         if (length(warn)) tags$div(style = "color:#b91c1c; font-weight:600; margin-top:4px;", paste(warn, collapse = " ")))
     })
+    # ---- Claude trade scenarios (BUY / SELL) -> fill A on request
+    sc_res <- reactiveVal(NULL)
+    observeEvent(input$sc_go, {
+      f <- input$sc_img; price <- tr_num(input$sc_price); size <- tr_num(input$sc_size); asset <- toupper(trimws(tr_or(input$t_asset, "")))
+      if (is.null(f)) { msg("Load an IG chart screenshot first.", "warning"); return() }
+      if (!is.finite(price)) { msg("Type the current IG price.", "warning"); return() }
+      if (!is.finite(size) || size <= 0) { msg("Type the size n (GBP per point).", "warning"); return() }
+      img <- tryCatch(tr_read_image(f$datapath, f$name), error = function(e) { msg(conditionMessage(e), "error"); NULL }); if (is.null(img)) return()
+      x <- ms_collect(); lv <- x$lv
+      if (!is.null(lv) && nrow(lv) == 0) lv <- NULL
+      dur <- tr_num(input$t_dur); if (!is.finite(dur)) dur <- tr_num(input$s_plan_dur)
+      prompt <- tr_scn_prompt(if (nzchar(asset)) asset else "the asset", price, size, tr_scn_morning_text(x$hdr, lv), dur, tr_or(input$sc_notes, ""))
+      cat("[Scenarios] asking Claude:", asset, "price", price, "size", size, "\n")
+      res <- withProgress(message = "Claude is reading the chart and the Morning Sheet...", value = 0.4,
+        tryCatch(vision_fn(list(list(media_type = img$media_type, data = img$data)), prompt), error = function(e) { msg(conditionMessage(e), "error"); NULL }))
+      if (is.null(res)) return()
+      sc <- tr_scn_parse(if (is.list(res)) res$text else res, price, size)
+      if (is.null(sc)) { msg("Claude's reply could not be read. Try again.", "error"); cat("[Scenarios] unreadable reply\n"); return() }
+      sc_res(sc)
+    })
+    output$sc_out <- renderUI({
+      sc <- sc_res(); if (is.null(sc)) return(NULL)
+      card <- function(i) { r <- sc[i, ]; col <- if (r$side == "BUY") "#16a34a" else "#dc2626"
+        tags$div(style = sprintf("flex:1; min-width:260px; border:2px solid %s; border-radius:8px; padding:8px 12px; background:#ffffff;", col),
+          tags$div(style = sprintf("font-weight:800; color:%s; font-size:15px;", col), r$side, sprintf(" - estimated success %s%%", ifelse(is.finite(r$success_pct), r$success_pct, "?"))),
+          tags$div(sprintf("Entry %s | Stop %s | Limit %s", r$entry, r$stop, r$limit)),
+          tags$div(sprintf("Reward:risk %s | Risk GBP %s | Reward GBP %s", r$reward_risk, r$risk_gbp, r$reward_gbp)),
+          if (!isTRUE(r$valid)) tags$div(style = "color:#b45309; font-weight:700;", "Check: stop or limit is on the wrong side of the entry."),
+          tags$div(style = "font-size:12px; color:#334155; margin-top:4px;", tags$b("Basis: "), r$basis),
+          if (nzchar(r$stop_reason)) tags$div(style = "font-size:12px; color:#334155;", tags$b("Stop reason: "), r$stop_reason),
+          if (nzchar(r$target_reason)) tags$div(style = "font-size:12px; color:#334155;", tags$b("Target reason: "), r$target_reason),
+          tags$div(style = "font-size:12px; color:#334155;", tags$b("Risks: "), r$risks)) }
+      ch <- setNames(seq_len(nrow(sc)), sprintf("%s at %s (stop %s, limit %s)", sc$side, sc$entry, sc$stop, sc$limit))
+      tagList(
+        if (nzchar(attr(sc, "chart_read") %||% "")) tags$div(style = "font-size:12px; color:#334155; margin:8px 0;", tags$b("Chart read: "), attr(sc, "chart_read")),
+        tags$div(style = "display:flex; gap:10px; flex-wrap:wrap; margin:8px 0;", lapply(seq_len(nrow(sc)), card)),
+        radioButtons(session$ns("sc_pick"), tr_lab("Choose one scenario"), choices = ch, selected = character(0), inline = TRUE),
+        actionButton(session$ns("sc_use"), "Use this scenario in A. Open a trade", icon = icon("arrow-down"), class = "btn-success", style = "color:#ffffff; font-weight:700;"))
+    })
+    observeEvent(input$sc_use, {
+      sc <- sc_res(); i <- suppressWarnings(as.integer(input$sc_pick))
+      if (is.null(sc) || !length(i) || is.na(i)) { msg("Choose BUY or SELL first.", "warning"); return() }
+      r <- sc[i, ]
+      updateRadioButtons(session, "t_dir", selected = if (r$side == "BUY") "B" else "S")
+      if (is.finite(r$entry)) updateNumericInput(session, "t_entry", value = r$entry)
+      if (is.finite(r$stop)) updateNumericInput(session, "t_stop", value = r$stop)
+      if (is.finite(r$limit)) updateNumericInput(session, "t_target", value = r$limit)
+      sz <- tr_num(input$sc_size); if (is.finite(sz)) updateNumericInput(session, "t_stake", value = sz)
+      if (nzchar(r$stop_reason)) updateTextAreaInput(session, "t_stopwhy", value = r$stop_reason)
+      if (nzchar(r$target_reason)) updateTextAreaInput(session, "t_tgtwhy", value = r$target_reason)
+      cat("[Scenarios] used", r$side, "entry", r$entry, "stop", r$stop, "limit", r$limit, "\n")
+      msg(sprintf("%s scenario copied into A. Open a trade: check it and edit it if needed.", r$side))
+    })
+
+    # required boxes for opening a trade: orange while empty, Save disabled until all are filled (the rest stay optional)
+    t_required <- c(t_asset = "Asset", t_strategy = "Strategy", t_chart = "Chart period", t_time = "Entry time", t_purpose = "Assessed or practice",
+                    t_pip = "Pip size", t_stake = "Stake per pip", t_entry = "Entry price", t_stop = "Stop loss", t_target = "Target",
+                    t_stopwhy = "Reason for stop-loss placement", t_tgtwhy = "Reason for target placement")
+    t_missing <- reactive({
+      miss <- vapply(names(t_required), function(id) { v <- input[[id]]
+        if (id %in% c("t_pip", "t_stake", "t_entry", "t_stop", "t_target")) !is.finite(tr_num(v)) else !nzchar(trimws(tr_or(v, ""))) }, TRUE)
+      if (is.null(input$t_date) || is.na(as.Date(input$t_date))) miss <- c(miss, t_date = TRUE)
+      names(miss)[miss]
+    })
+    observe({ m <- t_missing()
+      session$sendCustomMessage("tr_req_mark", list(all = as.list(session$ns(c(names(t_required), "t_date"))), missing = as.list(session$ns(m)), button = session$ns("t_save"))) })
+    output$t_req_note <- renderUI({ m <- t_missing(); if (!length(m)) return(NULL)
+      lab <- c(t_required, t_date = "Entry date")[m]
+      tags$div(style = "background:#ffedd5; border-left:4px solid #f97316; padding:6px 10px; margin:6px 0; font-size:12.5px; color:#7c2d12;",
+               "Fill these before you can save: ", paste(lab, collapse = ", "), ".") })
+
     observeEvent(input$t_save, {
+      if (length(t_missing())) { msg(paste0("Fill these first: ", paste(c(t_required, t_date = "Entry date")[t_missing()], collapse = ", "), "."), "error"); return() }
       ts <- t_entry_ts(); en <- tr_num(input$t_entry); st <- tr_num(input$t_stop); tg <- tr_num(input$t_target); pip <- tr_num(input$t_pip); stake <- tr_num(input$t_stake)
       errs <- tr_validate_entry(input$t_dir, en, st, tg, pip, stake, input$t_mood, ts)
       if (!nzchar(tr_or(input$t_purpose, ""))) errs <- c(errs, "Choose whether this is an assessed trade or a practice trade.")
@@ -980,6 +1079,7 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
       ev <- tr_read_current(store, "trade_events"); ev <- ev[ev$trade_id == tid, , drop = FALSE]; ev <- ev[order(ev$event_ts), , drop = FALSE]
       if (!is.finite(tr1$expected_duration_hours)) tr1$expected_duration_hours <- tr_plan_duration(tr1$chart_period, plan_txt())   # printed from your plan
       pics <- pictures_of(tid)
+      oa <- tr_trade_analysis_of(tr_read_current(store, "evidence"), tid); tr1$overall_analysis <- if (is.null(oa)) NA_character_ else tr_or(oa$overall_analysis, NA_character_)
       if (isTRUE(autochart_on())) {   # empty chart slots: a chart drawn from Yahoo prices, labelled as such
         dir.create(chart_cache, showWarnings = FALSE)
         add <- function(kind) { g <- tryCatch(tr_trade_chart_png(tr1, legs, ev, kind, file.path(chart_cache, sprintf("%s_%s_v%s.png", tid, kind, tr1$record_version)),
@@ -1057,8 +1157,16 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
       for (p in list(c("x_fund", "setup_fundamental"), c("x_tech", "setup_technical"), c("x_trigger", "trigger_text"), c("x_exec", "execution_text"), c("x_stopwhy", "stop_reason"), c("x_tgtwhy", "target_reason")))
         updateTextAreaInput(session, p[1], value = tx(r[[p[2]]]))
       updateTextAreaInput(session, "x_why", value = tx(last$reason_for_exit)); updateTextAreaInput(session, "x_lessons", value = tx(last$lessons_learned))
+      updateSelectInput(session, "x_xcode", selected = tx(last$exit_code))
+      if (!is.na(last$exit_ts)) { updateDateInput(session, "x_xdate", value = as.Date(format(last$exit_ts, "%Y-%m-%d", tz = "Europe/London"))); updateTextInput(session, "x_xtime", value = format(last$exit_ts, "%H:%M", tz = "Europe/London")) }
+      else { updateDateInput(session, "x_xdate", value = NA); updateTextInput(session, "x_xtime", value = "") }
+      updateNumericInput(session, "x_xprice", value = if (is.finite(last$exit_price)) last$exit_price else NA)
+      updateNumericInput(session, "x_xpnl", value = if (identical(last$pnl_source, "PLATFORM") && is.finite(last$net_pnl_gbp)) last$net_pnl_gbp else NA)
+      oa <- tr_trade_analysis_of(isolate(evidence_df()), r$trade_id); updateTextAreaInput(session, "x_analysis", value = tx(oa$overall_analysis))
+      llm_res(NULL)
     }, ignoreInit = TRUE)
-    observeEvent(input$x_save, {
+    observeEvent(input$x_save, x_save_do())
+    x_save_do <- function() {
       r <- trade_row(); if (nrow(r) != 1) { msg("Choose the trade first.", "warning"); return() }
       nxt <- r; nxt$record_version <- r$record_version + 1L
       nxt$chart_period <- tr_blank_na(input$x_chart); nxt$expected_duration_hours <- { d0 <- tr_num(input$x_dur); if (is.finite(d0)) d0 else tr_plan_duration(input$x_chart, plan_txt()) }
@@ -1066,10 +1174,76 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
       nxt$execution_text <- tr_blank_na(input$x_exec); nxt$stop_reason <- tr_blank_na(input$x_stopwhy); nxt$target_reason <- tr_blank_na(input$x_tgtwhy)
       t <- trades_df(); kids <- t[!is.na(t$parent_trade_id) & t$parent_trade_id == r$trade_id & t$status == "CLOSED", , drop = FALSE]
       if (identical(r$status, "CLOSED") || !nrow(kids)) { nxt$reason_for_exit <- tr_blank_na(input$x_why); nxt$lessons_learned <- tr_blank_na(input$x_lessons) }
-      report(store$write("trades", nxt), "Your text"); queue_save("trade", r$trade_id)
+      xc <- tr_or(input$x_xcode, ""); if (identical(r$status, "CLOSED") && nzchar(xc)) nxt$exit_code <- xc
+      # Trade Exit: a single (not split) trade with exit date, time, price and code -> closed (or its exit corrected)
+      xpx <- tr_num(input$x_xprice); xd <- tryCatch(as.Date(input$x_xdate), error = function(e) NA); xt <- trimws(tr_or(input$x_xtime, ""))
+      xts <- if (!is.na(xd) && grepl("^[0-9]{1,2}:[0-9]{2}$", xt)) as.POSIXct(paste(format(xd), xt), tz = "Europe/London", format = "%Y-%m-%d %H:%M") else NA
+      closing <- FALSE
+      if (!nrow(kids) && is.finite(xpx) && !is.na(xts) && nzchar(xc)) {
+        if (xts <= r$entry_ts) { msg("The exit time is before the entry time: check the exit date and time.", "error"); return() }
+        cc <- tr_close_calc(r$direction, r$entry_price, xpx, r$pip_size, r$stake_per_pip_gbp, r$initial_risk_gbp, tr_num(input$x_xpnl))
+        closing <- !identical(r$status, "CLOSED")
+        nxt$status <- "CLOSED"; nxt$exit_ts <- xts; nxt$exit_price <- xpx; nxt$exit_code <- xc
+        nxt$pips_result <- cc$pips; nxt$net_pnl_gbp <- cc$net; nxt$pnl_source <- cc$source; nxt$real_r <- cc$real_r
+        nxt$duration_hours <- as.numeric(difftime(xts, r$entry_ts, units = "hours"))
+      }
+      report(store$write("trades", nxt), if (closing) "Trade closed with its exit (Trade Exit row)" else "Your text"); queue_save("trade", r$trade_id)
       if (nrow(kids) && !identical(r$status, "CLOSED")) {   # the sheet takes Reason for exit / Lessons from the last closed leg
-        k <- kids[which.max(kids$exit_ts), ]; k$record_version <- k$record_version + 1L; k$reason_for_exit <- tr_blank_na(input$x_why); k$lessons_learned <- tr_blank_na(input$x_lessons); store$write("trades", k) }
+        k <- kids[which.max(kids$exit_ts), ]; k$record_version <- k$record_version + 1L; k$reason_for_exit <- tr_blank_na(input$x_why); k$lessons_learned <- tr_blank_na(input$x_lessons)
+        if (nzchar(xc)) k$exit_code <- xc; store$write("trades", k) }
+      if (nzchar(xc) && !closing && !identical(r$status, "CLOSED") && !nrow(kids)) msg("Not closed: fill exit date, time and price as well to close the trade (or use B. Manage > Closed).", "warning")
+      # Overall analysis: trading_evidence, kind trade_analysis (no new columns)
+      oa <- trimws(tr_or(input$x_analysis, "")); old <- tr_trade_analysis_of(evidence_df(), r$trade_id)
+      if (!identical(oa, tr_or(old$overall_analysis, ""))) {
+        lr <- llm_res(); js <- list(overall_analysis = oa, exit_code = xc, reason_for_exit = tr_or(input$x_why, ""), source = if (!is.null(lr)) "LLM analysis (edited by the user)" else "user",
+                                    model = tr_or(lr$model, ""), saved_uk = format(Sys.time(), "%Y-%m-%d %H:%M", tz = "Europe/London"))
+        tryCatch(store$write("evidence", data.frame(evidence_id = tr_id("EV"), record_version = 1L, kind = "trade_analysis", status = "CONFIRMED", trade_id = r$trade_id,
+                   extracted_json = as.character(jsonlite::toJSON(js, auto_unbox = TRUE)), user_notes = "Overall analysis of the trade", stringsAsFactors = FALSE)),
+                 error = function(e) cat("[Records] overall analysis not saved:", conditionMessage(e), "\n")) }
       bump()
+    }
+    # ---- LLM analysis: Morning Sheet (tab 2) + full trade record + tagged / saved pictures -> exit code, reason for exit, overall analysis
+    llm_res <- reactiveVal(NULL)
+    observeEvent(input$x_llm, {
+      r <- trade_row(); if (nrow(r) != 1) { msg("Choose the trade first.", "warning"); return() }
+      t <- trades_df(); legs <- t[(t$trade_id == r$trade_id | (!is.na(t$parent_trade_id) & t$parent_trade_id == r$trade_id)) & t$status == "CLOSED", , drop = FALSE]
+      ev <- events_df(); ev <- ev[ev$trade_id == r$trade_id, , drop = FALSE]
+      lab <- setNames(names(tr_picture_slots), tr_picture_slots)
+      new <- pic_tags(); old <- tryCatch(pictures_of(r$trade_id), error = function(e) NULL)
+      if (!is.null(new)) old <- old[!(old$file_name %in% new$name), , drop = FALSE]
+      paths <- c(if (!is.null(new)) new$path, if (!is.null(old) && nrow(old)) old$path)
+      names_ <- c(if (!is.null(new)) new$label, if (!is.null(old) && nrow(old)) paste0(vapply(old$slot, function(z) tr_or(lab[[z]], z), ""), ifelse(is.na(old$caption), "", paste0(" - ", old$caption)), " (saved)"))
+      fn <- c(if (!is.null(new)) new$name, if (!is.null(old) && nrow(old)) old$file_name)
+      if (!length(paths)) { msg("Add at least one picture (for example the exit chart and the Outcome of Trade row).", "warning"); return() }
+      if (length(paths) > 12) { paths <- paths[1:12]; names_ <- names_[1:12]; fn <- fn[1:12]; msg("Only the first 12 pictures are sent to Claude.", "warning") }
+      imgs <- list(); for (i in seq_along(paths)) { im <- tryCatch(tr_read_image(paths[i], fn[i]), error = function(e) NULL); if (!is.null(im)) imgs[[length(imgs) + 1]] <- list(media_type = im$media_type, data = im$data) }
+      x <- ms_collect(); lv <- x$lv; if (!is.null(lv) && !nrow(lv)) lv <- NULL
+      prompt <- tr_trade_analysis_prompt(tr_trade_record_text(r, legs, ev), tr_scn_morning_text(x$hdr, lv), names_)
+      cat("[LLM analysis]", r$trade_id, "| pictures:", length(imgs), "\n")
+      res <- withProgress(message = "Claude is analysing the trade...", value = 0.4,
+        tryCatch(vision_fn(imgs, prompt), error = function(e) { msg(conditionMessage(e), "error"); NULL }))
+      if (is.null(res)) return()
+      a <- tr_trade_analysis_parse(if (is.list(res)) res$text else res)
+      if (is.null(a)) { msg("Claude's reply could not be read. Try again.", "error"); return() }
+      a$model <- if (is.list(res)) tr_or(res$model, "") else ""; llm_res(a)
+      if (nzchar(a$exit_code)) updateSelectInput(session, "x_xcode", selected = a$exit_code)
+      if (is.finite(a$exit_price)) updateNumericInput(session, "x_xprice", value = a$exit_price)
+      if (grepl("^[0-9]{1,2}:[0-9]{2}$", a$exit_time_uk)) updateTextInput(session, "x_xtime", value = a$exit_time_uk)
+      if (!is.na(a$exit_date)) updateDateInput(session, "x_xdate", value = a$exit_date)
+      if (is.finite(a$pnl_gbp)) updateNumericInput(session, "x_xpnl", value = a$pnl_gbp)
+      if (nzchar(a$reason_for_exit)) updateTextAreaInput(session, "x_why", value = a$reason_for_exit)
+      if (nzchar(a$overall_analysis)) updateTextAreaInput(session, "x_analysis", value = a$overall_analysis)
+      msg("LLM analysis filled the Trade Exit (date, time, price, P/L, code), Reason for Exit and Overall analysis: check them, then save.")
+    })
+    output$x_llm_out <- renderUI({ a <- llm_res(); if (is.null(a)) return(NULL)
+      tags$div(style = "font-size:12px; color:#334155; margin-top:6px;",
+        tags$b("Claude read: "), sprintf("exit code %s%s%s%s.", if (nzchar(a$exit_code)) tr_exit_code_meanings[[a$exit_code]] else "not set (trade not closed?)",
+          if (is.finite(a$exit_price)) paste0(", exit price ", a$exit_price) else "", if (nzchar(a$exit_time_uk)) paste0(" at ", a$exit_time_uk, " UK") else "",
+          if (is.finite(a$pnl_gbp)) paste0(", P/L GBP ", a$pnl_gbp) else "")) })
+    observeEvent(input$x_llm_save, {
+      r <- trade_row(); if (nrow(r) != 1) { msg("Choose the trade first.", "warning"); return() }
+      n <- save_tagged(); if (n) msg(sprintf("%d picture(s) saved: files → %s, records → BigQuery.", n, if (pic_store()$durable()) "Dropbox" else "this session only (Dropbox not set in Setup)"))
+      x_save_do()
     })
     output$x_facts <- renderUI({
       r <- trade_row(); if (nrow(r) != 1) return(NULL); t <- trades_df()
@@ -1105,22 +1279,53 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
       ch <- c("(general)" = "")
       if (nrow(ev)) ch <- c(ch, setNames(ev$event_id, sprintf("%s %s: %s", format(ev$event_ts, "%d/%m %H:%M", tz = "Europe/London"),
                                                                ifelse(ev$event_type == "STOP_MOVE", "stop moved", "partial exit"), ifelse(ev$event_type == "STOP_MOVE", paste("to", ev$new_stop), paste("at", ev$price)))))
-      updateSelectInput(session, "pic_event", choices = ch)
+      pic_ev_choices(ch); f <- isolate(input$pic_files); if (!is.null(f)) for (i in seq_len(NROW(f))) updateSelectInput(session, paste0("pl_ev_", i), choices = ch)
     })
+    # one row per chosen picture: where on the sheet + caption (+ the action for in-trade, + a text for Other)
+    pic_ev_choices <- reactiveVal(c("(general)" = ""))
+    pic_tags <- function() {   # data.frame(path, name, slot, caption, label) of the pictures chosen with Browse
+      f <- input$pic_files; if (is.null(f) || !NROW(f)) return(NULL)
+      r <- trade_row(); lab <- setNames(names(tr_picture_slots), tr_picture_slots)
+      do.call(rbind, lapply(seq_len(NROW(f)), function(i) {
+        slot <- tr_or(input[[paste0("pl_slot_", i)]], "entry"); cap <- tr_or(input[[paste0("pl_cap_", i)]], "")
+        if (identical(slot, "intrade") && nzchar(tr_or(input[[paste0("pl_ev_", i)]], ""))) slot <- paste0("intrade:", input[[paste0("pl_ev_", i)]])
+        if (identical(slot, "other")) cap <- trimws(tr_or(input[[paste0("pl_other_", i)]], ""))
+        if (!nzchar(cap) && identical(slot, "entry") && nrow(r)) cap <- tr_or(r$chart_period, "")   # default caption: the chart period
+        base <- sub(":.*$", "", slot)
+        data.frame(path = f$datapath[i], name = f$name[i], slot = slot, caption = if (nzchar(cap)) cap else NA_character_,
+                   label = paste0(lab[[base]], if (nzchar(cap)) paste0(" - ", cap) else ""), stringsAsFactors = FALSE) }))
+    }
+    output$pic_list <- renderUI({
+      f <- input$pic_files; if (is.null(f) || !NROW(f)) return(NULL); ns <- session$ns
+      tags$div(style = "margin:4px 0 10px 0;",
+        tags$div(style = "font-weight:700; font-size:12.5px; color:#2c3e50; margin-bottom:4px;", sprintf("%d picture(s) chosen: tag each one", NROW(f))),
+        lapply(seq_len(NROW(f)), function(i) {
+          sl <- ns(paste0("pl_slot_", i))
+          tags$div(style = "display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; border-bottom:1px solid #e2e8f0; padding:4px 0;",
+            tags$div(style = "flex:1 1 220px; font-size:12.5px; padding-bottom:18px; word-break:break-all;", tags$b(i, ". "), f$name[i]),
+            tags$div(style = "flex:1 1 230px;", selectInput(ns(paste0("pl_slot_", i)), tr_lab("Where on the sheet"), tr_picture_slots, width = "100%")),
+            tags$div(style = "flex:1 1 170px;", selectizeInput(ns(paste0("pl_cap_", i)), tr_lab("Caption (timeframe)"), c("(none)" = "", tr_picture_captions), options = list(create = TRUE), width = "100%")),
+            tags$div(style = "flex:1 1 200px;",
+              conditionalPanel(sprintf("input['%s'] == 'intrade'", sl), selectInput(ns(paste0("pl_ev_", i)), tr_lab("For which action"), isolate(pic_ev_choices()), width = "100%")),
+              conditionalPanel(sprintf("input['%s'] == 'other'", sl), textInput(ns(paste0("pl_other_", i)), tr_lab("What is it? (kept as evidence)"), "", width = "100%")))) }))
+    })
+    save_tagged <- function() {   # -> number saved
+      tid <- tr_or(input$ex_trade, ""); pt <- pic_tags(); if (!nzchar(tid) || is.null(pt)) return(0L)
+      r <- trade_row(); day <- if (nrow(r)) as.Date(format(r$entry_ts, "%Y-%m-%d", tz = "Europe/London")) else tr_london_today()
+      n <- 0L; for (i in seq_len(nrow(pt))) n <- n + save_pictures(pt$path[i], pt$name[i], tid, pt$slot[i], pt$caption[i], day)
+      if (n) queue_save("trade", tid); n
+    }
     observeEvent(input$pic_add, {
       tid <- tr_or(input$ex_trade, ""); if (!nzchar(tid)) { msg("Choose the trade first.", "warning"); return() }
-      f <- input$pic_files; if (is.null(f) || !NROW(f)) { msg("Choose the picture file(s) first.", "warning"); return() }
-      slot <- tr_or(input$pic_slot, "entry"); if (identical(slot, "intrade") && nzchar(tr_or(input$pic_event, ""))) slot <- paste0("intrade:", input$pic_event)
-      r <- trade_row(); day <- if (nrow(r)) as.Date(format(r$entry_ts, "%Y-%m-%d", tz = "Europe/London")) else tr_london_today()
-      cap <- tr_or(input$pic_caption, ""); if (!nzchar(cap) && identical(slot, "entry") && nrow(r)) cap <- tr_or(r$chart_period, "")   # default caption: the chart period
-      n <- save_pictures(f$datapath, f$name, tid, slot, if (nzchar(cap)) cap else NA, day); if (n) queue_save("trade", tid)
+      if (is.null(pic_tags())) { msg("Choose the picture file(s) first.", "warning"); return() }
+      n <- save_tagged()
       msg(if (n) sprintf("%d picture(s) saved with the trade%s.", n, if (pic_store()$durable()) " (Dropbox)" else " (this session only: set Dropbox in Setup)") else "Those pictures were already saved for this place on the sheet.", if (n) "message" else "warning")
     })
     pic_rows <- reactive({ tr_pictures_for(evidence_df(), tr_or(input$ex_trade, "")) })
     output$pic_table <- DT::renderDT({
       pf <- pic_rows()
       if (!nrow(pf)) return(DT::datatable(data.frame(Note = "No pictures saved for this trade yet."), rownames = FALSE, options = list(dom = "t")))
-      lab <- c(entry = "Entry chart", entry_platform = "Entry (IG screenshot)", intrade = "In-trade", exit = "Exit", post_exit = "Post exit", other = "Other")
+      lab <- c(entry = "Entry chart", entry_platform = "Entry (IG screenshot)", intrade = "In-trade", exit = "Exit", outcome = "Outcome of Trade", post_exit = "Post exit", other = "Other (evidence only)")
       DT::datatable(data.frame(Where = unname(lab[pf$slot]), Caption = ifelse(is.na(pf$caption), "", pf$caption), File = pf$file_name,
                                Stored = ifelse(startsWith(pf$dropbox_path, "session:"), "this session only", "Dropbox"), stringsAsFactors = FALSE),
                     rownames = FALSE, selection = "multiple", options = list(dom = "t", pageLength = 50, ordering = FALSE))

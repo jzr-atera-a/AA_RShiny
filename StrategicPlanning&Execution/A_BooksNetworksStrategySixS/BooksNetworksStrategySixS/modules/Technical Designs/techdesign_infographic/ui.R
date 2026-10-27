@@ -19,14 +19,37 @@ techdesign_infographic_ui <- function(id) {
           column(4, selectInput(ns("format"), "Page format:", choices = IG_FORMAT_CHOICES, selected = "poster")),
           column(4, conditionalPanel("input.format == 'poster'", ns = ns, sliderInput(ns("n_sections"), "Number of sections:", min = 4, max = 10, value = 8, step = 1)),
                     conditionalPanel("input.format != 'poster'", ns = ns, sliderInput(ns("n_slides"), "Number of slides / pages:", min = 1, max = 8, value = 4, step = 1))),
-          column(4, selectInput(ns("theme"), "Colour theme:", choices = c("Let the Editing Tool choose" = "auto", IG_THEME_CHOICES), selected = "auto"))
+          column(4, selectInput(ns("theme"), "Colour theme:", choices = c("Let the Editing Tool choose" = "auto", IG_THEME_CHOICES[IG_THEME_CHOICES != "custom"]), selected = "auto"))
         ),
         fluidRow(
           column(6, radioButtons(ns("research"), "Evidence:", choices = c("Research the web (sourced)" = "web", "Knowledge only (illustrative)" = "knowledge"), selected = "web", inline = TRUE)),
           column(6, numericInput(ns("max_uses"), "Max web searches per section:", value = 4, min = 1, max = 8, step = 1))
         ),
+        fluidRow(
+          column(4, selectInput(ns("layout"), "Visual style / layout:", choices = c("Illustrated flow: connected, stylised shapes" = "flow", "Dashboard: several panels per slide" = "dashboard", "Stacked: one section per slide or band (classic)" = "stacked"), selected = "flow")),
+          column(8, p(style = "color:#7f8c8d;font-size:12px;margin-top:26px;", "Illustrated flow links the sections with one continuous path, ribbon headings, icon orbs and ribbons. Dashboard shows panels on a grid. Stacked is the classic poster / one block per page. (On a long poster, Dashboard behaves like Stacked.)"))),
+        conditionalPanel("input.format != 'poster'", ns = ns,
+          fluidRow(
+            column(3, conditionalPanel("input.layout != 'stacked'", ns = ns, sliderInput(ns("panels"), "Sections per slide:", min = 2, max = 6, value = 4, step = 1))),
+            column(3, selectInput(ns("cover"), "Title cover slide:", choices = c("Automatic" = "auto", "Yes (first slide is a cover)" = "yes", "No (content only)" = "no"), selected = "auto")),
+            column(3, selectInput(ns("text_size"), "Text size:", choices = c("Small (finer print, room for more detail)" = "small", "Normal" = "normal", "Large (bigger canvas text, fewer details)" = "large"), selected = "normal"))
+          )),
+        tags$details(style = "margin-bottom:10px;",
+          tags$summary(style = "cursor:pointer;font-weight:600;", "Facts, requirements and brand colours (optional, recommended for grant applications)"),
+          textAreaInput(ns("facts"), "Facts supplied by you (the Editing Tool may use these numbers as your data and will not invent others):", rows = 5, width = "100%",
+                        placeholder = "e.g., Detector mAP 0.87 and precision 0.91 on road imagery (CCAV CAM Pathfinder). Telemetry latency under 200 ms. Kalman tracker proven on Jetson. Drone field tests: not done. SAPIENT validation: not done. Build February 2027, independent trials March 2027."),
+          textAreaInput(ns("requirements"), "Requirements the infographic must address (one per line):", rows = 4, width = "100%",
+                        placeholder = "e.g., Detect and track two or more drones at once\nPassive sensing, no RF emissions\nSAPIENT (BSI Flex 335) output\nTRL 6 by the end of the project"),
+          fluidRow(
+            column(3, textInput(ns("pal_navy"), "Brand colour 1 (dark, hex):", placeholder = "#0B2545")),
+            column(3, textInput(ns("pal_teal"), "Brand colour 2 (hex):", placeholder = "#13A0AF")),
+            column(3, textInput(ns("pal_magenta"), "Brand colour 3 (hex):", placeholder = "#C2185B")),
+            column(3, textInput(ns("pal_ochre"), "Brand colour 4 (hex):", placeholder = "#DB9A22"))
+          ),
+          uiOutput(ns("pal_swatch")),
+          p(style = "color:#7f8c8d;font-size:12px;", "Enter all four colours to use them (the theme list then offers 'Your brand colours'). Items taken from your facts show a navy diamond; things the Editing Tool proposes itself are labelled TARGET or SELF-ASSESSED; anything not yet done is shown as [INSERT]. Nothing is invented.")),
         p(style = "color:#7f8c8d;font-size:12px;margin-top:-6px;", "Slide formats (16:9, 4:3, 1:1, 4:5, 9:16, A4) draw each slide as a fixed-size page: a title cover (landscape and square formats, when you ask for 2 or more slides), one section per slide, and the sources on the last slide. ",
-          "You can switch format or slide count at any time without calling the Editing Tool again; the sections are simply re-flowed onto the pages."),
+          "Dashboard layout puts 2-6 panels (pipelines, zone diagrams, gauges, comparison matrices, readiness scales, timelines, charts) on each slide. You can switch format, layout, panels or slide count at any time without calling the Editing Tool again; the sections are simply re-flowed onto the pages."),
         checkboxGroupInput(ns("types"), "Block types the Editing Tool may use:", choiceNames = unname(IG_TYPE_LABELS[IG_ALL_TYPES]), choiceValues = IG_ALL_TYPES, selected = IG_ALL_TYPES, inline = TRUE),
         checkboxInput(ns("verify"), "Fetch cited pages and check the quotes", value = TRUE),
         p(style = "color:#7f8c8d;font-size:12px;", "Web research makes one call per statistics section (about 20-60 seconds each), plus one to plan and one to write the text sections. Web search must be enabled for your organisation in the Anthropic Console."),

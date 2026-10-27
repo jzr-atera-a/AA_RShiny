@@ -79,6 +79,8 @@ source("R/utils_trading_calendar.R")
 source("R/utils_trading_pipeline.R")
 source("R/utils_trading_decision.R")
 source("R/utils_calendar_sources.R")
+source("R/utils_local_creds.R")
+source("R/utils_trade_scenarios.R")
 options(bigrquery.quiet = TRUE)   # no "Job complete / Billed" line for every BigQuery read; errors still show
 source("R/utils_u3_report.R")
 source("R/utils_unit3_rules.R")

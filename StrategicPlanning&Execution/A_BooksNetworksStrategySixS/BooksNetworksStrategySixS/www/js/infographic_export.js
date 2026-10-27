@@ -193,11 +193,24 @@
 
   // ---------------------------------------------------------------- PDF
   function jsPdfCtor() { return (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : window.jsPDF; }
-  function makePdfSlides(cvs, svgs) {   // one PDF page per slide, page size = slide size
+  var PAPER = { a4l: [841.89, 595.28], a5l: [595.28, 419.53], a4: [595.28, 841.89] };
+  function paperOf(svgs) { var n = svgs[0] && svgs[0].closest ? svgs[0].closest("[data-ig-paper]") : null; var k = n ? n.getAttribute("data-ig-paper") : ""; return PAPER[k] || null; }
+  // two landscape slides stacked on each A4 portrait sheet (two A5 slides = one A4 sheet)
+  function makePdf2up(cvs) {
     var Ctor = jsPdfCtor(); if (!Ctor) throw new Error("The PDF library (jsPDF) is not loaded; check the internet connection.");
-    var pdf = null;
+    var W = 595.28, H = 841.89, hh = H / 2, pdf = new Ctor({ orientation: "p", unit: "pt", format: [W, H], compress: true });
     cvs.forEach(function (cv, i) {
-      var sz = svgSize(svgs[i]), pw = sz.w * 0.75, ph = sz.h * 0.75, o = ph > pw ? "p" : "l";
+      if (i > 0 && i % 2 === 0) pdf.addPage([W, H], "p");
+      var r = cv.width / cv.height, w = W, h = W / r; if (h > hh) { h = hh; w = hh * r; }
+      pdf.addImage(cv.toDataURL("image/jpeg", 0.92), "JPEG", (W - w) / 2, (i % 2) * hh + (hh - h) / 2, w, h);
+    });
+    return pdf;
+  }
+  function makePdfSlides(cvs, svgs) {   // one PDF page per slide, page size = slide size (real paper size for A4/A5 formats)
+    var Ctor = jsPdfCtor(); if (!Ctor) throw new Error("The PDF library (jsPDF) is not loaded; check the internet connection.");
+    var pdf = null, paper = paperOf(svgs);
+    cvs.forEach(function (cv, i) {
+      var sz = svgSize(svgs[i]), pw = paper ? paper[0] : sz.w * 0.75, ph = paper ? paper[1] : sz.h * 0.75, o = ph > pw ? "p" : "l";
       if (i === 0) pdf = new Ctor({ orientation: o, unit: "pt", format: [pw, ph], compress: true }); else pdf.addPage([pw, ph], o);
       pdf.addImage(cv.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, pw, ph);
     });
@@ -235,10 +248,13 @@
     var links = []; Array.prototype.forEach.call(svg.querySelectorAll("a[href]"), function (a) { var h = a.getAttribute("href"); if (h && links.indexOf(h) < 0) links.push(h); });
     return "Slide " + k + " of " + n + " - text on this slide:\n" + texts.join("\n") + (links.length ? "\n\nSource links:\n" + links.join("\n") : "");
   }
-  function makePptx(cvs, svgs, title) {
+  // real paper sizes in inches, so a printed slide is exactly A4 / A5 (and 2 A5 slides fill one A4 sheet)
+  var PAPER_IN = { a4l: [11.693, 8.268], a5l: [8.268, 5.827], a4: [8.268, 11.693] };
+  function makePptx(cvs, svgs, title, paperKey) {
     var P = window.PptxGenJS || window.pptxgen; if (!P) throw new Error("The PowerPoint library (pptxgenjs) is not loaded; check the internet connection.");
-    var pptx = new P(), c0 = cvs[0], longest = 13.333, w, h;
-    if (c0.width >= c0.height) { w = longest; h = longest * c0.height / c0.width; } else { h = longest; w = longest * c0.width / c0.height; }
+    var pptx = new P(), c0 = cvs[0], longest = 13.333, w, h, pin = PAPER_IN[paperKey];
+    if (pin) { w = pin[0]; h = pin[1]; }
+    else if (c0.width >= c0.height) { w = longest; h = longest * c0.height / c0.width; } else { h = longest; w = longest * c0.width / c0.height; }
     pptx.defineLayout({ name: "IGLAYOUT", width: w, height: h }); pptx.layout = "IGLAYOUT"; pptx.title = title;
     cvs.forEach(function (cv, i) {
       var slide = pptx.addSlide();
@@ -291,18 +307,31 @@
             var frames = cvs.map(function (cv) { return cv.getContext("2d").getImageData(0, 0, cv.width, cv.height).data; });
             download(encodeGIFAnimated(cv0.width, cv0.height, frames, 300), base + ".gif"); return;
           }
+          if (fmt === "pdf_2up") { makePdf2up(cvs).save(base + ".pdf"); return; }
           if (fmt === "pdf" || fmt === "pdf_a4") {
+            if (!multi && paperOf(svgs)) { makePdfSlides(cvs, svgs).save(base + ".pdf"); return; }
             if (multi) { makePdfSlides(cvs, svgs).save(base + ".pdf"); return; }
             makePdf(cv0, s0, fmt === "pdf_a4").save(base + ".pdf"); return;
           }
           if (fmt === "pptx") {
             var slides = cvs, notes = svgs;
             if (!multi) { slides = sliceCanvas(cv0, 595.28 / 841.89); notes = []; }   // a tall poster is cut into A4-shaped slides
-            return makePptx(slides, notes, title).then(function (b) { download(b, base + ".pptx"); });
+            var pk = ""; (function () { var n = svgs[0] && svgs[0].closest ? svgs[0].closest("[data-ig-paper]") : null; pk = n ? n.getAttribute("data-ig-paper") : ""; })();
+            return makePptx(slides, notes, title, pk).then(function (b) { download(b, base + ".pptx"); });
           }
           throw new Error("Unknown format: " + fmt);
         }).then(function () { done(ind); }).catch(fail);
       }, 60);
     } catch (e) { fail(e); }
   };
+
+  // the server picks the matching download option when the page format changes (A5 landscape -> "2 x A5 on one A4")
+  (function reg() {
+    if (window.Shiny && Shiny.addCustomMessageHandler) {
+      Shiny.addCustomMessageHandler("ig_export_default", function (m) {
+        var el = document.getElementById(m.id); if (!el) return;
+        if (m.fmt === "a5l") el.value = "pdf_2up"; else if (el.value === "pdf_2up") el.value = "pdf";
+      });
+    } else setTimeout(reg, 200);
+  })();
 })();

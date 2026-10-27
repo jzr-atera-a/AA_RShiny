@@ -301,7 +301,8 @@ tr_downscale_image <- function(path, max_px = 1568) {
 # Platform screenshots read in Order Evidence (ticket, positions, history) that are LINKED to the trade are used too:
 # ticket / open -> after the entry charts; close / history -> exit.
 tr_picture_slots <- c("Entry chart (with stop and target)" = "entry", "In-trade management (stop move / partial exit)" = "intrade",
-                      "Exit chart" = "exit", "Post-exit chart" = "post_exit")
+                      "Exit chart" = "exit", "Outcome of Trade (IG history / result row)" = "outcome", "Post-exit chart" = "post_exit",
+                      "Other (evidence only, not printed)" = "other")
 tr_picture_captions <- c("Daily", "4 Hour", "1 Hour", "30 Min", "15 Min", "10 Min", "5 Min", "IG deal ticket", "IG positions", "IG history (closed)")
 
 tr_picture_row <- function(evidence_id, owner_id, slot, caption, path, name, md5 = NA_character_, size = NA_integer_, mime = NA_character_) {
@@ -323,7 +324,7 @@ tr_pictures_for <- function(evidence, owner_id) {
   cap <- ifelse(pic, e$user_notes, ifelse(e$kind == "ticket", "IG deal ticket", ifelse(e$kind == "open", "IG position", ifelse(e$kind %in% c("close", "history"), "IG history (closed)", NA_character_))))
   d <- data.frame(slot = slot, event_id = ev, caption = cap, dropbox_path = e$dropbox_path, file_name = e$file_name, evidence_id = e$evidence_id,
                   saved_at = e$saved_at, stringsAsFactors = FALSE)
-  ord <- c(entry = 1, entry_platform = 2, intrade = 3, exit = 4, post_exit = 5, calendar_o = 6, calendar_t = 7, market = 8, other = 9)
+  ord <- c(entry = 1, entry_platform = 2, intrade = 3, exit = 4, outcome = 4.5, post_exit = 5, calendar_o = 6, calendar_t = 7, market = 8, other = 9)
   d <- d[order(ord[d$slot], d$saved_at), , drop = FALSE]; d$saved_at <- NULL; rownames(d) <- NULL; d
 }
 

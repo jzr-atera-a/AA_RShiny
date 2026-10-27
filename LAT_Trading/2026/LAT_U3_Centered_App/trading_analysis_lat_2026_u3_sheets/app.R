@@ -103,7 +103,11 @@ ui <- dashboardPage(
       selectInput("u3_resolution", NULL, width = "100%", selected = "60m",
                   choices = c("15 minutes (~60 days)" = "15m", "30 minutes (~60 days)" = "30m", "1 hour (~2 years)" = "60m", "Daily" = "1d")),
       tags$p("Yahoo prices differ from IG prices (IG quotes oil in points). Use them for the regime and trigger checks; take your levels from IG.",
-             style = "font-size:10.5px; color:#b2e0db; font-style:italic; line-height:1.4;"))
+             style = "font-size:10.5px; color:#b2e0db; font-style:italic; line-height:1.4;")),
+    tags$style(HTML("#api_status:empty::before { content: 'BigQuery: connecting...   Claude: connecting...'; color:#fbbf24; font-size:11.5px; }")),
+    tags$div(style = "padding:10px; background-color:#2c3e50; margin-top:6px;",
+      tags$div(style = "color:#b2e0db; font-size:11px; font-weight:700; margin-bottom:4px;", "API CONNECTIONS"),
+      uiOutput("api_status"))
   ),
   dashboardBody(
     tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "css/global.css"), tags$meta(charset = "UTF-8"),
@@ -131,6 +135,20 @@ server <- function(input, output, session) {
 
   # credentials from the environment (desktop .Renviron, or the server's variables)
   local({
+    # 1. keys in the local folder (Windows: C:\111_SecA\_q_api\), then 2. the environment, then 3. the API Configuration tabs
+    st <- list(bq = NULL, claude = NULL, dir = tr_cred_dir())
+    lc <- tryCatch(tr_local_credentials(), error = function(e) list(notes = conditionMessage(e)))
+    if (length(lc$notes)) cat("[Keys]", paste(lc$notes, collapse = " "), "\n")
+    if (!is.na(tr_or(lc$json_path, NA)) && !isTRUE(api_manager$bq_authenticated)) {
+      ok <- tryCatch({ api_manager$authenticate_bigquery(json_path = lc$json_path); TRUE }, error = function(e) { cat("[BigQuery] key from", lc$json_path, "failed:", conditionMessage(e), "\n"); FALSE })
+      st$bq <- if (ok) sprintf("Connected automatically with %s (found in %s).", basename(lc$json_path), lc$dir) else sprintf("A key was found (%s) but the connection failed: see the Debug Console.", basename(lc$json_path))
+    }
+    if (!is.na(tr_or(lc$claude_key, NA)) && !isTRUE(api_manager$claude_authenticated)) {
+      m <- Sys.getenv("CLAUDE_MODEL", ""); api_manager$set_claude_credentials(lc$claude_key, model = if (nzchar(m)) m else NULL)
+      cat("[Claude] API key taken from", file.path(lc$dir, "ap_claude_1_line.txt"), "\n")
+      st$claude <- sprintf("Key loaded automatically from %s (%s). Press Test Connection to check it.", file.path(lc$dir, "ap_claude_1_line.txt"), tr_mask_key(lc$claude_key))
+    }
+    assign(".u3_cred_status", st, envir = .GlobalEnv)
     key <- Sys.getenv("ATERA_BQ_KEY_FILE", Sys.getenv("GOOGLE_APPLICATION_CREDENTIALS", ""))
     if (nzchar(key) && file.exists(key) && !isTRUE(api_manager$bq_authenticated))
       tryCatch(api_manager$authenticate_bigquery(json_path = key), error = function(e) cat("[BigQuery] automatic sign-in failed:", conditionMessage(e), "\n"))
@@ -139,6 +157,22 @@ server <- function(input, output, session) {
       m <- Sys.getenv("CLAUDE_MODEL", ""); api_manager$set_claude_credentials(k, model = if (nzchar(m)) m else NULL)
       cat("[Claude] API key taken from ANTHROPIC_API_KEY\n")
     }
+  })
+
+  # sidebar lights: BigQuery / Claude readiness (re-checked every 3 s, so a key loaded later in API Configuration shows too)
+  output$api_status <- renderUI({
+    invalidateLater(3000)
+    st <- u3_cred_status()
+    light <- function(name, ok, wait, txt) {
+      col <- if (ok) "#22c55e" else if (wait) "#fbbf24" else "#ef4444"
+      tags$div(style = "display:flex; align-items:flex-start; gap:6px; margin:3px 0; font-size:11.5px; color:#ecf0f1;",
+        tags$span(style = sprintf("display:inline-block; width:10px; height:10px; border-radius:50%%; background:%s; margin-top:3px; flex:none;", col)),
+        tags$span(tags$b(name, ": "), txt)) }
+    bq <- isTRUE(api_manager$bq_authenticated); cl <- isTRUE(api_manager$claude_authenticated)
+    bq_fail <- !bq && !is.null(st$bq)
+    tagList(
+      light("BigQuery", bq, FALSE, if (bq) "ready" else if (bq_fail) "key found, connection failed (see Debug Console)" else "not connected: API Configuration > BigQuery"),
+      light("Claude", cl, FALSE, if (cl) "ready (key loaded)" else "no key: API Configuration > Claude API"))
   })
 
   econ_bigquery_auth_server("econ_bigquery_auth", api_manager)

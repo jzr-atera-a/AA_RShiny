@@ -12,6 +12,7 @@ claude_api_config_ui <- function(id) {
         solidHeader = TRUE,
         width = 12,
 
+        app_cred_box_ui(ns, "Claude key file ap_claude_1_line.txt"),
         h4("Configure Editing Tool API for Table Generation"),
         p("Enter your Anthropic API credentials to enable AI-powered comparison table generation."),
 

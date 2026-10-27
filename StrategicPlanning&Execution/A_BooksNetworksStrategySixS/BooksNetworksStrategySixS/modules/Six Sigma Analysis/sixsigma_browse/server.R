@@ -45,7 +45,7 @@ sixsigma_browse_server <- function(id, api_manager) {
     }
 
     observeEvent(input$refresh, load_data())
-    observeEvent(input$filter_diagram_id, load_data())
+    observeEvent(input$filter_diagram_id, load_data(), ignoreInit = TRUE)
 
     output$download_catalog <- downloadHandler(
       filename = function() paste0("sixsigma_catalog_", format(Sys.Date(), "%Y%m%d"), ".csv"),

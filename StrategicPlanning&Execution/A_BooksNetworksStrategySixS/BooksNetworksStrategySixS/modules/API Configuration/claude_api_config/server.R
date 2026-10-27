@@ -4,6 +4,13 @@
 claude_api_config_server <- function(id, api_manager) {
   moduleServer(id, function(input, output, session) {
 
+    cred_tick <- reactiveVal(0)
+    output$auto_key <- renderUI(app_cred_banner("claude", cred_tick))
+    observeEvent(input$cred_load, {
+      d <- trimws(input$cred_dir %||% ""); if (!nzchar(d)) { showNotification("Type the folder first.", type = "warning"); return() }
+      app_cred_autoload(api_manager, dir = d, which = "claude", force = TRUE); cred_tick(cred_tick() + 1)
+    })
+
     observeEvent(input$test_connection, {
       req(input$api_key)
 

@@ -11,6 +11,7 @@ bigquery_auth_ui <- function(id) {
         solidHeader = TRUE,
         width = 12,
 
+        app_cred_box_ui(ns, "BigQuery service-account key (*.json)"),
         h4("BigQuery Configuration - shared by all eight suites"),
         p("Connect ONCE here. This authenticates Book Summary, Flex Table, Mind Map, Knowledge Graph, ",
           "Sankey Graph, Strategic Analysis, AND Six Sigma Analysis together - they share the same ",

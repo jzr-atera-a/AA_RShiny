@@ -32,6 +32,18 @@ shinyApp(
       }
     })
 
+    # keys from the local folder (Windows: C:/111_SecA/_q_api), then environment variables; the API tabs stay available.
+    # Connecting only signs in: each suite's table is checked and its lists loaded when its tab is first opened (bottom-right messages).
+    # isolate(): connecting touches reactive values, which need a reactive context
+    shiny::isolate({
+      api_manager$bq_session_reset()   # a new browser session starts with nothing loaded
+      tryCatch(app_cred_autoload(api_manager), error = function(e) cat("[Keys] auto-load failed:", conditionMessage(e), "\n"))
+      tryCatch(app_cred_env_fallback(api_manager), error = function(e) NULL)
+    })
+    tryCatch(app_cred_toasts(api_manager), error = function(e) NULL)
+    output$api_status <- renderUI(app_api_status_render(api_manager))
+    app_bq_lazy_observer(input, module_loader, api_manager)
+
     create_server(module_loader, api_manager, session)
   }
 )

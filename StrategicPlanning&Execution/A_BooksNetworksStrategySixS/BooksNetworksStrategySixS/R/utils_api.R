@@ -56,7 +56,13 @@ APIManager <- R6::R6Class(
     bq_full_table_diagram = NULL,
     bq_full_table_sixsigma = NULL,
     bq_full_table_techdesign = NULL,
-    bq_authenticated = FALSE,
+    bq_authenticated = FALSE,     # TRUE once at least one suite has been opened (its table checked and its lists loaded)
+    bq_connected = FALSE,         # signed in to BigQuery; suites load lazily when their tab is opened
+    bq_groups_loaded = character(0),
+    bq_schema_done = character(0),
+    bq_schema_cache = NULL,
+    bq_conn_tick = NULL,
+    techdesign_list_cache = NULL,
     bq_temp_file = NULL,
 
     # ⭐ Reactive triggers for cross-module updates - deliberately SCOPED
@@ -137,6 +143,7 @@ APIManager <- R6::R6Class(
     pending_techdesign_load = NULL,
 
     initialize = function() {
+      self$bq_conn_tick <- shiny::reactiveVal(0)
       self$state_trigger_books <- shiny::reactiveVal(0)
       self$state_trigger_flex <- shiny::reactiveVal(0)
       self$state_trigger_mindmap <- shiny::reactiveVal(0)
@@ -207,6 +214,7 @@ APIManager <- R6::R6Class(
     trigger_state_update_techdesign = function() {
       current <- self$state_trigger_techdesign()
       self$state_trigger_techdesign(current + 1)
+      self$techdesign_list_cache <- NULL
       cat("🔔 [Technical Designs] State trigger fired:", current + 1, "\n")
     },
 
@@ -598,7 +606,7 @@ APIManager <- R6::R6Class(
       private$recompute_full_table_ids()
     },
 
-    authenticate_bigquery = function(json_path = NULL, json_text = NULL) {
+    authenticate_bigquery = function(json_path = NULL, json_text = NULL, lazy = TRUE) {
       tryCatch({
         tryCatch({ bq_deauth() }, error = function(e) {})
         Sys.unsetenv("GOOGLE_APPLICATION_CREDENTIALS")
@@ -627,6 +635,41 @@ APIManager <- R6::R6Class(
 
         datasets <- bq_project_datasets(self$bq_project_id)
 
+        # ---- Tables: the statements are built in bq_ddl(). ----
+        if (isTRUE(lazy)) {
+          # LAZY (default): signed in and reachable; each suite's table is checked and its lists are loaded only
+          # when its tab is first opened (see bq_open_group()). Nothing else is queried here.
+          self$bq_reset_lazy_state()
+          self$bq_connected <- TRUE
+          self$bq_conn_tick(shiny::isolate(self$bq_conn_tick()) + 1)
+          cat("[BigQuery] connected to", self$bq_project_id, "/", self$bq_dataset_id, "- tables are checked and loaded when each tab is opened\n")
+          return(TRUE)
+        }
+        for (q in unlist(lapply(self$bq_ddl(), function(x) c(x$create, x$alter)), use.names = FALSE)) {
+          tryCatch({ bq_project_query(self$bq_project_id, q) }, error = function(e) {})
+        }
+        self$bq_connected <- TRUE
+        self$bq_groups_loaded <- names(self$bq_ddl()); self$bq_schema_done <- names(self$bq_ddl())
+
+        self$bq_authenticated <- TRUE
+        self$trigger_state_update_books()
+        self$trigger_state_update_flex()
+        self$trigger_state_update_mindmap()
+        self$trigger_state_update_kg()
+        self$trigger_state_update_sankey()
+        self$trigger_state_update_diagram()
+        self$trigger_state_update_sixsigma()
+        self$trigger_state_update_techdesign()
+        return(TRUE)
+
+      }, error = function(e) {
+        self$bq_authenticated <- FALSE; self$bq_connected <- FALSE
+        stop(paste("BigQuery authentication failed:", e$message))
+      })
+    },
+
+    # CREATE TABLE statements for every suite (built from the table ids; nothing is run here).
+    bq_ddl = function() {
         # ---- Create ALL FOUR tables (one per sub-app) if missing ----
         books_create <- sprintf("
           CREATE TABLE IF NOT EXISTS `%s` (
@@ -806,26 +849,95 @@ APIManager <- R6::R6Class(
             tradeoffs_json STRING, references_json STRING, extras_json STRING,
             schema_version INTEGER, change_type STRING, created_by STRING
           )", self$bq_full_table_techdesign)
+        list(
+          books = list(create = books_create),
+          flex = list(create = flex_create),
+          mindmap = list(create = mindmap_create),
+          kg = list(create = kg_create),
+          sankey = list(create = sankey_create),
+          diagram = list(create = diagram_create, alter = c(diagram_alter_add_domain, diagram_alter_add_group)),
+          sixsigma = list(create = sixsigma_create),
+          techdesign = list(create = techdesign_create)
+        )
+    },
 
-        for (q in list(books_create, flex_create, mindmap_create, kg_create, sankey_create, diagram_create, diagram_alter_add_domain, diagram_alter_add_group, sixsigma_create, techdesign_create)) {
-          tryCatch({ bq_project_query(self$bq_project_id, q) }, error = function(e) {})
+    # ------------------------------------------------------------------
+    # LAZY LOADING. Connecting only signs in. A suite's table is checked, and its lists are loaded,
+    # the first time one of its tabs is opened (bq_open_group, called from app.R with a toast).
+    # ------------------------------------------------------------------
+    bq_group_names = function() c("books", "flex", "mindmap", "kg", "sankey", "diagram", "sixsigma", "techdesign"),
+
+    bq_group_table = function(group) switch(group, books = self$bq_table_books, flex = self$bq_table_flex, mindmap = self$bq_table_mindmap, kg = self$bq_table_kg,
+                                            sankey = self$bq_table_sankey, diagram = self$bq_table_diagram, sixsigma = self$bq_table_sixsigma, techdesign = self$bq_table_techdesign),
+
+    # new browser session: connection kept, but nothing is considered loaded until a tab is opened again
+    bq_reset_lazy_state = function() {
+      self$bq_groups_loaded <- character(0); self$bq_schema_done <- character(0); self$bq_schema_cache <- NULL
+      self$bq_authenticated <- FALSE
+      self$books_taxonomy_cache <- NULL; self$flex_taxonomy_cache <- NULL; self$mindmap_taxonomy_cache <- NULL; self$kg_taxonomy_cache <- NULL
+      self$mindmap_ids_for_topic_cache <- NULL; self$kg_ids_for_topic_cache <- NULL
+      self$sankey_taxonomy_cache <- NULL; self$diagram_taxonomy_cache <- NULL; self$sixsigma_taxonomy_cache <- NULL; self$techdesign_list_cache <- NULL
+      invisible(TRUE)
+    },
+    bq_session_reset = function() { if (isTRUE(self$bq_connected)) self$bq_reset_lazy_state(); invisible(TRUE) },
+
+    # ONE query lists every table and column of the dataset (cached for the session)
+    bq_schema_info = function(refresh = FALSE) {
+      if (!refresh && !is.null(self$bq_schema_cache)) return(self$bq_schema_cache)
+      info <- tryCatch({
+        job <- bq_project_query(self$bq_project_id, sprintf("SELECT table_name, column_name FROM `%s.%s.INFORMATION_SCHEMA.COLUMNS`", self$bq_project_id, self$bq_dataset_id))
+        bq_table_download(job)
+      }, error = function(e) { cat("[BigQuery] schema check unavailable (", conditionMessage(e), ") - falling back to CREATE TABLE IF NOT EXISTS\n"); NULL })
+      self$bq_schema_cache <- info
+      info
+    },
+
+    # Makes sure one suite's table exists with every column the app expects; runs CREATE / ALTER only when something is missing.
+    bq_ensure_schema = function(group) {
+      if (group %in% self$bq_schema_done) return(invisible(TRUE))
+      if (!(isTRUE(self$bq_connected) || isTRUE(self$bq_authenticated))) stop("Not authenticated to BigQuery")
+      ddl <- self$bq_ddl()[[group]]; tbl <- self$bq_group_table(group)
+      run <- function(q) tryCatch({ bq_project_query(self$bq_project_id, q); TRUE }, error = function(e) { cat("[BigQuery] setup statement failed:", conditionMessage(e), "\n"); FALSE })
+      info <- self$bq_schema_info()
+      if (is.null(info)) {
+        for (q in c(ddl$create, ddl$alter)) run(q)
+      } else {
+        have <- info$column_name[info$table_name == tbl]
+        if (length(have) == 0) {
+          cat("[BigQuery] table", tbl, "not found - creating it\n"); run(ddl$create)
+          self$bq_schema_cache <- NULL
+        } else {
+          body <- sub("\\)\\s*$", "", sub("(?s)^.*?IF NOT EXISTS `[^`]+`\\s*\\(", "", ddl$create, perl = TRUE))
+          cols <- trimws(strsplit(body, ",", fixed = TRUE)[[1]]); cols <- cols[nzchar(cols)]
+          nm <- sub("\\s.*$", "", cols); ty <- vapply(strsplit(cols, "\\s+"), function(z) if (length(z) >= 2) z[2] else "STRING", "")
+          for (i in which(!nm %in% have)) {
+            cat("[BigQuery] adding column", nm[i], "to", tbl, "\n")
+            run(sprintf("ALTER TABLE `%s.%s.%s` ADD COLUMN IF NOT EXISTS %s %s", self$bq_project_id, self$bq_dataset_id, tbl, nm[i], ty[i]))
+            self$bq_schema_cache <- NULL
+          }
         }
+      }
+      self$bq_schema_done <- unique(c(self$bq_schema_done, group))
+      invisible(TRUE)
+    },
 
-        self$bq_authenticated <- TRUE
-        self$trigger_state_update_books()
-        self$trigger_state_update_flex()
-        self$trigger_state_update_mindmap()
-        self$trigger_state_update_kg()
-        self$trigger_state_update_sankey()
-        self$trigger_state_update_diagram()
-        self$trigger_state_update_sixsigma()
-        self$trigger_state_update_techdesign()
-        return(TRUE)
-
-      }, error = function(e) {
-        self$bq_authenticated <- FALSE
-        stop(paste("BigQuery authentication failed:", e$message))
-      })
+    # Opens one suite: schema check, then fires its trigger (its modules refresh) and primes its list cache.
+    # Returns list(group, rows, seconds, first) - the app shows this in a toast.
+    bq_open_group = function(group) {
+      if (!isTRUE(self$bq_connected) && !isTRUE(self$bq_authenticated)) stop("Not connected to BigQuery")
+      if (group %in% self$bq_groups_loaded) return(list(group = group, rows = NA_integer_, seconds = 0, first = FALSE))
+      t0 <- Sys.time()
+      self$bq_ensure_schema(group)
+      self$bq_authenticated <- TRUE
+      trig <- switch(group, books = self$trigger_state_update_books, flex = self$trigger_state_update_flex, mindmap = self$trigger_state_update_mindmap,
+                     kg = self$trigger_state_update_kg, sankey = self$trigger_state_update_sankey, diagram = self$trigger_state_update_diagram,
+                     sixsigma = self$trigger_state_update_sixsigma, techdesign = self$trigger_state_update_techdesign)
+      trig()
+      d <- tryCatch(switch(group, books = self$bq_get_books_taxonomy(), flex = self$bq_get_flex_taxonomy(), mindmap = self$bq_get_mindmap_taxonomy(),
+                           kg = self$bq_get_kg_taxonomy(), sankey = self$bq_get_sankey_taxonomy(), diagram = self$bq_get_diagram_taxonomy(),
+                           sixsigma = self$bq_get_sixsigma_taxonomy(), techdesign = self$bq_get_techdesign_list()), error = function(e) NULL)
+      self$bq_groups_loaded <- unique(c(self$bq_groups_loaded, group))
+      list(group = group, rows = if (is.data.frame(d)) nrow(d) else NA_integer_, seconds = as.numeric(difftime(Sys.time(), t0, units = "secs")), first = TRUE)
     },
 
     # Generic query runner - table-agnostic. Times every call and logs
@@ -833,7 +945,7 @@ APIManager <- R6::R6Class(
     # be diagnosed from hard evidence (which specific query, how long)
     # instead of guessing.
     bq_query = function(query) {
-      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      if (!(isTRUE(self$bq_authenticated) || isTRUE(self$bq_connected))) stop("Not authenticated to BigQuery")
 
       start_time <- Sys.time()
       query_preview <- if (nchar(query) > 100) paste0(substr(query, 1, 100), "...") else query
@@ -876,6 +988,7 @@ APIManager <- R6::R6Class(
 
     bq_insert_books = function(data_frame, table_name = NULL) {
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      self$bq_ensure_schema("books")   # creates the table first if it does not exist yet
 
       max_id_query <- sprintf("SELECT COALESCE(MAX(id), 0) as max_id FROM `%s`", self$bq_full_table_books)
       start_id <- tryCatch({
@@ -920,6 +1033,7 @@ APIManager <- R6::R6Class(
 
     bq_insert_flex = function(data_frame, table_name = NULL, source = "claude") {
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      self$bq_ensure_schema("flex")   # creates the table first if it does not exist yet
 
       max_id_query <- sprintf("SELECT COALESCE(MAX(id), 0) as max_id FROM `%s`", self$bq_full_table_flex)
       start_id <- tryCatch({
@@ -1024,6 +1138,7 @@ APIManager <- R6::R6Class(
 
     bq_insert_mindmap = function(data_frame, source = "claude") {
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      self$bq_ensure_schema("mindmap")   # creates the table first if it does not exist yet
 
       max_id_query <- sprintf("SELECT COALESCE(MAX(id), 0) as max_id FROM `%s`", self$bq_full_table_mindmap)
       start_id <- tryCatch({
@@ -1142,6 +1257,7 @@ APIManager <- R6::R6Class(
 
     bq_insert_kg = function(data_frame, source = "claude") {
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      self$bq_ensure_schema("kg")   # creates the table first if it does not exist yet
 
       max_id_query <- sprintf("SELECT COALESCE(MAX(id), 0) as max_id FROM `%s`", self$bq_full_table_kg)
       start_id <- tryCatch({
@@ -1223,6 +1339,7 @@ APIManager <- R6::R6Class(
 
     bq_insert_diagram = function(data_frame) {
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      self$bq_ensure_schema("diagram")   # creates the table first if it does not exist yet
 
       required_cols <- c("id", "created_at", "diagram_id", "diagram_name", "diagram_type", "diagram_group",
                         "category", "domain", "topic", "title", "is_template", "source_diagram_id",
@@ -1324,6 +1441,7 @@ APIManager <- R6::R6Class(
 
     bq_insert_sixsigma = function(data_frame) {
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      self$bq_ensure_schema("sixsigma")   # creates the table first if it does not exist yet
 
       required_cols <- c("id", "created_at", "diagram_id", "diagram_name", "diagram_type", "diagram_group",
                         "category", "domain", "topic", "title", "is_template", "source_diagram_id",
@@ -1379,21 +1497,28 @@ APIManager <- R6::R6Class(
     # Latest, non-deleted version of every design in one group (or all groups).
     bq_get_techdesign_list = function(group = NULL) {
       if (!self$bq_authenticated) return(data.frame())
-      where <- if (!is.null(group) && nzchar(group)) sprintf("WHERE design_group = '%s'", safe_sql_escape(group)) else "WHERE design_group NOT IN ('market_matrix', 'infographic')"
-      tryCatch({
-        self$bq_query(sprintf("
-          SELECT * FROM (
-            SELECT design_id, design_group, design_type, name, variant, title, summary,
-                   complexity_level, tags, diagram_kind, change_type, created_at, id
-            FROM `%s` %s
-            QUALIFY ROW_NUMBER() OVER (PARTITION BY design_id ORDER BY id DESC) = 1
-          ) WHERE change_type != 'delete'
-          ORDER BY created_at DESC
-        ", self$bq_full_table_techdesign, where))
-      }, error = function(e) {
-        cat("⚠️  [bq_get_techdesign_list] Query failed:", e$message, "\n")
-        data.frame()
-      })
+      # ONE query for every group (cached until the next save); each tab then filters its own group in R
+      all <- self$techdesign_list_cache
+      if (is.null(all)) {
+        all <- tryCatch({
+          self$bq_query(sprintf("
+            SELECT * FROM (
+              SELECT design_id, design_group, design_type, name, variant, title, summary,
+                     complexity_level, tags, diagram_kind, change_type, created_at, id
+              FROM `%s`
+              QUALIFY ROW_NUMBER() OVER (PARTITION BY design_id ORDER BY id DESC) = 1
+            ) WHERE change_type != 'delete'
+            ORDER BY created_at DESC
+          ", self$bq_full_table_techdesign))
+        }, error = function(e) {
+          cat("⚠️  [bq_get_techdesign_list] Query failed:", e$message, "\n")
+          NULL
+        })
+        if (is.null(all)) return(data.frame())
+        self$techdesign_list_cache <- all
+      }
+      if (!is.null(group) && nzchar(group)) all[all$design_group %in% group, , drop = FALSE]
+      else all[!all$design_group %in% c("market_matrix", "infographic"), , drop = FALSE]
     },
 
     bq_get_techdesign = function(design_id) {
@@ -1433,6 +1558,7 @@ APIManager <- R6::R6Class(
 
     bq_insert_techdesign = function(data_frame) {
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      self$bq_ensure_schema("techdesign")   # creates the table first if it does not exist yet
       required_cols <- c("id", "created_at", "design_id", "design_group", "design_type", "name", "variant", "title",
                          "summary", "when_to_use", "when_not_to_use", "complexity_level", "tags", "diagram_kind",
                          "components_json", "connections_json", "flow_steps_json", "tradeoffs_json",
@@ -1511,6 +1637,7 @@ APIManager <- R6::R6Class(
 
     bq_insert_sankey = function(data_frame) {
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      self$bq_ensure_schema("sankey")   # creates the table first if it does not exist yet
 
       required_cols <- c("id", "created_at", "sankey_id", "title", "category", "domain", "topic",
                         "is_template", "source_sankey_id", "num_columns", "num_initial_rows",
