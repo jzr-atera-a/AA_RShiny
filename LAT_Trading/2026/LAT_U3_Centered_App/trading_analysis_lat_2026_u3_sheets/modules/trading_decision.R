@@ -101,7 +101,7 @@ trading_decision_server <- function(id, api_manager = NULL, store = NULL, bus = 
     if (is.null(vision_fn)) vision_fn <- function(images, prompt) api_manager$call_claude_vision(images, prompt)
     msg <- function(text, type = "message") if (!isTRUE(quiet)) showNotification(text, type = type, duration = 7)
     refresh <- reactiveVal(0); bump <- function() refresh(isolate(refresh()) + 1)
-    observeEvent(input$reload, bump())
+    observeEvent(input$reload, { if (!is.null(store$invalidate)) store$invalidate(); bump() })
     rd <- function(name) reactive({ refresh(); if (!is.null(bus)) bus$ts; tr_read_current(store, name) })
     settings_df <- rd("settings"); sheets_df <- rd("morning_sheets"); mlevels_df <- rd("morning_levels"); trades_df <- rd("trades"); evidence_df <- rd("evidence")
     sv <- reactive({ s <- settings_df(); setNames(as.list(s$setting_value), s$setting_key) })

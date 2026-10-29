@@ -133,13 +133,15 @@ tr_tpl_picture_run <- function(tp, path, width_in = 6.2, max_h_in = 5.6) {
 # list(type = "text" | "caption" | "pic", value = text or file path). Captions are bold; pictures are centred.
 tr_tpl_fill_items <- function(tp, p, items, width_in = 6.2) {
   if (is.null(p)) return(FALSE)
-  items <- Filter(function(it) !is.null(it$value) && length(it$value) == 1 && !is.na(it$value) && nzchar(it$value) && (it$type != "pic" || file.exists(it$value)), items)
+  items <- Filter(function(it) if (identical(it$type, "table")) is.data.frame(it$value) && nrow(it$value) > 0 else
+                                 !is.null(it$value) && length(it$value) == 1 && !is.na(it$value) && nzchar(it$value) && (it$type != "pic" || file.exists(it$value)), items)
   if (!length(items)) return(FALSE)
   tr_tpl_clear_par(p)
   paras <- list(p); cur <- p
   for (k in seq_len(max(0, length(items) - 1))) { xml2::xml_add_sibling(cur, p, .where = "after", .copy = TRUE); cur <- xml2::xml_find_first(cur, "following-sibling::w:p[1]", tr_tpl_ns); paras[[length(paras) + 1]] <- cur }
   for (k in seq_along(items)) { it <- items[[k]]
-    if (it$type == "pic") { xml2::xml_add_child(paras[[k]], tr_tpl_picture_run(tp, it$value, width_in)); tr_tpl_centre(paras[[k]]) }
+    if (it$type == "table") { xml2::xml_add_sibling(paras[[k]], tr_tpl_cal_table_xml(it$value), .where = "after"); xml2::xml_remove(paras[[k]]) }
+    else if (it$type == "pic") { xml2::xml_add_child(paras[[k]], tr_tpl_picture_run(tp, it$value, width_in)); tr_tpl_centre(paras[[k]]) }
     else if (it$type == "text" && grepl("https?://", it$value)) tr_tpl_add_linked_text(tp, paras[[k]], it$value)
     else { xml2::xml_add_child(paras[[k]], tr_tpl_run(it$value, if (it$type == "caption") "<w:rPr><w:b/></w:rPr>" else NULL))
            if (it$type == "caption") tr_tpl_keep_next(paras[[k]]) } }
@@ -161,7 +163,35 @@ tr_tpl_fill_par <- function(tp, p, lines = character(0), pics = character(0), wi
   if (is.null(p)) return(FALSE)
   lines <- lines[!is.na(lines) & nzchar(lines)]; pics <- pics[!is.na(pics) & file.exists(pics)]
   if (!length(lines) && !length(pics)) { if (is.null(empty_text)) return(FALSE); lines <- empty_text }
-  tr_tpl_fill_items(tp, p, c(lapply(lines, function(l) list(type = "text", value = l)), lapply(pics, function(f) list(type = "pic", value = f))), width_in)
+  tr_tpl_fill_items(tp, p, c(tr_cal_line_items(lines), lapply(pics, function(f) list(type = "pic", value = f))), width_in)
+}
+# ---- economic calendar lines ("HH:MM | Country | High | Event | Actual x | Forecast y | Previous z") -> a real Word table
+tr_cal_parse_line <- function(l) {
+  x <- trimws(l); mark <- grepl("^\u25C6", x); x <- trimws(sub("^\u25C6", "", x))
+  pt <- trimws(strsplit(x, "|", fixed = TRUE)[[1]])
+  if (length(pt) < 6 || !grepl("^([A-Z][a-z]{2} )?([0-9]{1,2}:[0-9]{2}|All Day|Tentative|-)", pt[1])) return(NULL)
+  val <- function(key) { h <- grep(paste0("^", key, "\\b"), pt, ignore.case = TRUE, value = TRUE); if (!length(h)) return("-")
+    v <- trimws(sub(paste0("^", key, ":?"), "", h[1], ignore.case = TRUE)); if (nzchar(v)) v else "-" }
+  data.frame(mark = if (mark) "\u25C6" else "", time = pt[1], country = pt[2], importance = pt[3], event = pt[4],
+             actual = val("Actual"), forecast = val("Forecast"), previous = val("Previous"), stringsAsFactors = FALSE)
+}
+tr_cal_line_items <- function(lines) {
+  items <- list(); buf <- NULL
+  flush <- function() { if (!is.null(buf)) items[[length(items) + 1]] <<- list(type = "table", value = buf); buf <<- NULL }
+  for (l in lines) { r <- tr_cal_parse_line(l)
+    if (is.null(r)) { flush(); items[[length(items) + 1]] <- list(type = "text", value = l) } else buf <- rbind(buf, r) }
+  flush(); items
+}
+tr_tpl_cal_table_xml <- function(df) {
+  w <- c(260, 640, 1300, 700, 3010, 930, 1000, 1000); hd <- c("\u25C6", "Time", "Country", "Impact", "Event", "Actual", "Forecast", "Previous")
+  cell <- function(txt, wd, head = FALSE) sprintf(paste0('<w:tc><w:tcPr><w:tcW w:w="%d" w:type="dxa"/>%s</w:tcPr><w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="240" w:lineRule="auto"/></w:pPr>',
+    '<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>%s<w:sz w:val="16"/><w:szCs w:val="16"/></w:rPr><w:t xml:space="preserve">%s</w:t></w:r></w:p></w:tc>'),
+    wd, if (head) '<w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/>' else "", if (head) "<w:b/>" else "", tr_tpl_esc(ifelse(is.na(txt), "", txt)))
+  row <- function(v, head = FALSE) paste0("<w:tr>", if (head) "<w:trPr><w:tblHeader/></w:trPr>" else "<w:trPr><w:cantSplit/></w:trPr>", paste(mapply(cell, v, w, MoreArgs = list(head = head)), collapse = ""), "</w:tr>")
+  b <- '<w:top w:val="single" w:sz="4" w:color="A6A6A6"/><w:left w:val="single" w:sz="4" w:color="A6A6A6"/><w:bottom w:val="single" w:sz="4" w:color="A6A6A6"/><w:right w:val="single" w:sz="4" w:color="A6A6A6"/><w:insideH w:val="single" w:sz="4" w:color="A6A6A6"/><w:insideV w:val="single" w:sz="4" w:color="A6A6A6"/>'
+  xml2::read_xml(paste0('<w:tbl xmlns:w="', tr_tpl_ns[["w"]], '"><w:tblPr><w:tblW w:w="', sum(w), '" w:type="dxa"/><w:tblLayout w:type="fixed"/><w:tblBorders>', b,
+    '</w:tblBorders><w:tblCellMar><w:left w:w="50" w:type="dxa"/><w:right w:w="50" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>', paste(sprintf('<w:gridCol w:w="%d"/>', w), collapse = ""),
+    '</w:tblGrid>', row(hd, TRUE), paste(vapply(seq_len(nrow(df)), function(i) row(unlist(df[i, c("mark", "time", "country", "importance", "event", "actual", "forecast", "previous")])), ""), collapse = ""), '</w:tbl>'))
 }
 # Pictures (data.frame slot / event_id / caption / path) -> items: caption line (when there is one) then the picture
 tr_tpl_pic_items <- function(pics) {

@@ -20,15 +20,23 @@ tr_scn_morning_text <- function(hdr, lv) {
   paste(out, collapse = "\n")
 }
 
-tr_scn_prompt <- function(asset, price, size, morning_txt, duration_h = NA, notes = "") {
+tr_scn_prompt <- function(asset, price, size, morning_txt, duration_h = NA, notes = "", chart = NULL, has_image = TRUE, risk = NULL) {
+  rg <- if (!is.null(risk) && is.finite(risk$pct %||% NA) && is.finite(risk$equity %||% NA)) risk$equity * risk$pct / 100 else NA
   paste0(
     "You are helping a trading student on an IG DEMO spread-bet account prepare two alternative trade scenarios. ",
-    "The image is the student's current IG candle chart of ", asset, ". Prices are IG points.\n\n",
-    "Current price (given by the student): ", price, "\nSize: GBP ", size, " per point\n",
+    if (has_image) paste0("The image is the student's current IG candle chart of ", asset, ". ") else "", "Prices are IG points.\n\n",
+    if (!is.null(chart)) paste0("Recent price candles of ", asset, " (", chart$what, "), oldest first:\n", chart$bars, "\n\n",
+                                "Chart patterns found by the app's rules: only multi-candle structures that run up to the last candle (trend by Dow Theory, support/resistance ",
+                                "and role reversals, trend lines, channels, Fibonacci, triangles, wedges, flags, double tops/bottoms, head & shoulders), judged with the course rules, ",
+                                "Bulkowski and TrendSpider guidelines; each with its bias, the level whose close beyond it cancels it, and its measured target:\n",
+                                chart$patterns, "\n", if (!is.null(chart$decision)) paste0("App's chart bias (score-weighted vote of the patterns): ", chart$decision, "\n"), "\n") else "",
+    "Current price (given by the student): ", price, "\n",
+    if (is.finite(size)) paste0("Size: GBP ", size, " per point\n") else if (is.finite(rg)) paste0("Size: not fixed; the student risks GBP ", round(rg, 2), " per trade (", risk$pct, "% of equity GBP ", round(risk$equity), "). Give risk_gbp and reward_gbp at the size that risks that amount (size = GBP risk / stop distance in points).\n") else "",
     if (is.finite(duration_h)) paste0("Planned holding time: about ", duration_h, " hours\n") else "",
     if (nzchar(notes)) paste0("Student notes: ", notes, "\n") else "",
     "\nThe student's Morning Sheet for today:\n", morning_txt, "\n\n",
-    "Read the chart (timeframe, recent swing highs/lows, trend, support and resistance) and use the Morning Sheet levels ",
+    "Read the chart (", if (has_image) "the image" else "", if (has_image && !is.null(chart)) " and " else "", if (!is.null(chart)) "the candles above" else "", ": recent swing highs/lows, trend, support and resistance), weigh the patterns listed ",
+    "(the side they agree on, and where they conflict), put each stop beyond the cancelling level of the pattern(s) the scenario follows and each limit at or before their target or the next level, and use the Morning Sheet levels ",
     "(pivots, prior high/low/close, overnight range, ADX regime, releases in the window).\n",
     "Return ONE BUY scenario and ONE SELL scenario, both entered at the current price. For each give a stop and a limit at ",
     "real chart or sheet levels (a stop is beyond a level, not at it), the reward:risk, the GBP risk and reward at the given size, and an ",
@@ -41,7 +49,7 @@ tr_scn_prompt <- function(asset, price, size, morning_txt, duration_h = NA, note
 }
 
 # reply text -> data.frame(side, entry, stop, limit, reward_risk, risk_gbp, reward_gbp, success_pct, basis, risks) + attr chart_read
-tr_scn_parse <- function(txt, price = NA, size = NA) {
+tr_scn_parse <- function(txt, price = NA, size = NA, risk_gbp = NA) {
   j <- tr_parse_vision_json(txt); if (is.null(j) || !length(j$scenarios)) return(NULL)
   n <- function(x) suppressWarnings(as.numeric(if (is.null(x)) NA else x))
   s <- function(x) if (is.null(x)) "" else as.character(x)
@@ -50,10 +58,12 @@ tr_scn_parse <- function(txt, price = NA, size = NA) {
     en <- n(z$entry); if (!is.finite(en) || en == 0) en <- n(price)
     st <- n(z$stop); lm <- n(z$limit)
     risk <- abs(en - st); rew <- abs(lm - en)
-    data.frame(side = side, entry = en, stop = st, limit = lm,
+    sp <- if (is.finite(risk_gbp) && is.finite(risk) && risk > 0) floor(risk_gbp / risk * 10) / 10 else NA_real_   # size that risks the plan's GBP (rounded down to 0.1)
+    sz <- if (is.finite(size)) size else sp
+    data.frame(side = side, entry = en, stop = st, limit = lm, size = sz, size_plan = sp,
                reward_risk = if (is.finite(risk) && risk > 0) round(rew / risk, 2) else n(z$reward_risk),
-               risk_gbp = if (is.finite(size)) round(risk * size, 2) else n(z$risk_gbp),
-               reward_gbp = if (is.finite(size)) round(rew * size, 2) else n(z$reward_gbp),
+               risk_gbp = if (is.finite(sz)) round(risk * sz, 2) else n(z$risk_gbp),
+               reward_gbp = if (is.finite(sz)) round(rew * sz, 2) else n(z$reward_gbp),
                success_pct = n(z$success_pct), basis = s(z$basis), stop_reason = s(z$stop_reason), target_reason = s(z$target_reason), risks = s(z$risks), stringsAsFactors = FALSE)
   })
   out <- do.call(rbind, rows); out <- out[!is.na(out$side), , drop = FALSE]

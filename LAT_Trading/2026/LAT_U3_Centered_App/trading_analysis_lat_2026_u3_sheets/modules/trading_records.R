@@ -176,15 +176,34 @@ trading_records_ui <- function(id) {
               var miss = (m.missing || []).indexOf(id) >= 0;
               tgt.style.backgroundColor = miss ? '#ffedd5' : ''; tgt.style.borderColor = miss ? '#f97316' : ''; tgt.style.borderWidth = miss ? '2px' : '';
             });
-            var b = document.getElementById(m.button); if (b) { b.disabled = (m.missing || []).length > 0; b.title = b.disabled ? 'Fill the orange boxes first' : ''; }
+            var real = (m.missing || []).filter(function(x) { return !!document.getElementById(x); }); var b = document.getElementById(m.button); if (b) { b.disabled = real.length > 0; b.title = b.disabled ? 'Fill the orange boxes first' : ''; }
           });")),
+        tags$div(style = "background:#f5f3ff; border:1px solid #ddd6fe; border-radius:8px; padding:10px 14px; margin:10px 0 14px 0; color:#2c3e50;",
+          tr_h("Price chart & patterns (Yahoo prices on your IG price level)"),
+          tr_note("Candles of the asset chosen in A below, with your entry / stop / target, today's Morning Sheet levels and the releases in your trading window. Only multi-candle patterns that run up to the LAST candle are listed, each drawn from where it began to the right-hand edge: the trend by Dow Theory, support / resistance (incl. old support now resistance), trend lines, channels, Fibonacci, triangles, wedges, flags, pennants, double tops / bottoms and head & shoulders. Rules (Pattern Rulebook v2: course + Dow Theory, Bulkowski, TrendSpider): significant swings only (1.5 ATR); S/R 3+ separate bounces; trend lines 3+ separate touches, not overly steep; triangles 5+ turning points; flags a steep straight pole then 5-15 candles. Single candles (hammer, doji...) are left out: they do not decide a side. Every pattern shows the level that cancels it (stop side) and its target (limit side); the score-weighted vote of the top 5 gives the chart's bias."),
+          fluidRow(
+            column(3, selectInput(ns("pc_hours"), tr_lab("Chart window"), tr_pat_windows, selected = 48)),
+            column(3, selectInput(ns("pc_mins"), tr_lab("Candle size"), tr_pat_intervals, selected = 15)),
+            column(3, numericInput(ns("pc_ref"), tr_lab("IG price now (aligns Yahoo to IG; empty = Morning Sheet / entry price)"), NA)),
+            column(3, tags$div(style = "margin-top:24px;", actionButton(ns("pc_load"), "Load chart & find patterns", icon = icon("chart-line"), class = "btn-primary", style = "color:#ffffff; font-weight:700;")))),
+          fluidRow(column(8, selectInput(ns("pc_saved"), tr_lab("Or open a chart saved with a trade (BigQuery): candles and patterns exactly as they were at entry"), c("(no saved charts yet)" = ""), width = "100%")),
+                   column(4, tags$div(style = "margin-top:24px;", actionButton(ns("pc_restore"), "Load saved chart from BigQuery", icon = icon("database"))))),
+          uiOutput(ns("pc_info")),
+          fluidRow(column(6, selectInput(ns("pc_pick"), tr_lab("Pattern shown on the chart (top 5 multi-candle patterns reaching the last candle)"), c("(load the chart first)" = ""), width = "100%")),
+                   column(6, uiOutput(ns("pc_note")))),
+          checkboxGroupInput(ns("pc_send"), tr_lab("Patterns sent to Claude with the Morning Sheet (scenarios below)"), choices = character(0), inline = TRUE),
+          plotly::plotlyOutput(ns("pc_chart"), height = "470px"),
+          tags$div(style = "margin-top:8px;",
+            checkboxInput(ns("pc_entry"), tr_lab("Use this chart (with the pattern shown) as the trade's Entry chart: saved when you press 'Save open trade' (picture file → Dropbox, record → BigQuery). The chart's candles and top 5 patterns are always saved with the trade too (→ BigQuery), so it can be opened again later with 'Load saved chart from BigQuery'."), TRUE),
+            checkboxInput(ns("pc_sheet"), tr_lab("After 'Save open trade', also save the Individual Trade Sheet Word + PDF → Dropbox"), FALSE),
+            actionButton(ns("pc_png"), "Save this chart image now → Dropbox only", icon = icon("image")), uiOutput(ns("pc_png_out")))),
         tags$div(style = "background:#eef6f5; border:1px solid #b2e0db; border-radius:8px; padding:10px 14px; margin:10px 0 14px 0; color:#2c3e50;",
           tr_h("Claude trade scenarios (optional, before you open)"),
-          tr_note("Claude reads today's Morning Sheet (as it is in tab 2) and a fresh IG chart screenshot of the asset, then returns one BUY and one SELL scenario with stop, limit, the reasons for each and an estimated success rate. Pick one to copy it into A below (direction, prices, stake and the stop/target reasons); you can still edit A. The success rate is Claude's estimate, not a guarantee."),
+          tr_note("Claude reads today's Morning Sheet (as it is in tab 2), the chart above (its candles as numbers, the chart bias and the patterns ticked above, each with the level that cancels it and its target) and/or an IG chart screenshot, then returns one BUY and one SELL scenario with stop, limit, the reasons for each and an estimated success rate. Pick one to copy it into A below (direction, prices, stake and the stop/target reasons); you can still edit A. The success rate is Claude's estimate, not a guarantee."),
           fluidRow(
-            column(4, fileInput(ns("sc_img"), tr_lab("IG chart screenshot (candles of this asset)"), accept = c("image/png", "image/jpeg", "image/webp"))),
+            column(4, fileInput(ns("sc_img"), tr_lab("IG chart screenshot (optional when the chart above is loaded: its prices and patterns are sent)"), accept = c("image/png", "image/jpeg", "image/webp"))),
             column(2, num("sc_price", "Current price (IG)")),
-            column(2, num("sc_size", "Size n (GBP per point)", 2, min = 0)),
+            column(2, num("sc_size", "Size n (GBP per point; empty = from your risk per trade)", NA, min = 0)),
             column(4, textInput(ns("sc_notes"), tr_lab("Notes for Claude (optional)"), ""))),
           actionButton(ns("sc_go"), "Ask Claude for BUY and SELL scenarios", icon = icon("robot"), class = "btn-primary", style = "color:#ffffff; font-weight:700;"),
           uiOutput(ns("sc_out"))),
@@ -362,6 +381,12 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
                                    pictures = NULL, yahoo_fn = NULL, image_store_fn = NULL, http_fn = NULL) {
   moduleServer(id, function(input, output, session) {
     if (is.null(store)) store <- tr_make_store(tr_bq_backend(api_manager))
+    # every BigQuery write shows "Saving to BigQuery..." while it runs (the app is busy until it returns)
+    local({ w0 <- store$write
+      store$write <<- function(name, df) {
+        pg <- tryCatch({ p <- shiny::Progress$new(session, min = 0, max = 1); p$set(value = 0.5, message = sprintf("Saving to BigQuery (%s)...", name)); p }, error = function(e) NULL)
+        on.exit(if (!is.null(pg)) pg$close())
+        w0(name, df) } })
     refresh <- reactiveVal(0); bump <- function() refresh(isolate(refresh()) + 1)
     msg <- function(text, type = "message") if (!quiet) showNotification(text, type = type, duration = 6)
     report <- function(res, what) {
@@ -516,7 +541,7 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
       tryCatch({ n <- store$sync(); bump(); msg(sprintf("Synced %d record(s) to BigQuery.", n)) },
                error = function(e) msg(paste("Sync failed:", conditionMessage(e)), "error"))
     })
-    observeEvent(input$reload, { bump(); msg("Reloaded.") })
+    observeEvent(input$reload, { if (!is.null(store$invalidate)) store$invalidate(); bump(); msg("Reloaded from BigQuery.") })
     output$dlBackup <- downloadHandler(filename = function() paste0("trading_records_session_", format(Sys.Date()), ".rds"),
                                        content = function(file) saveRDS(store$pending_data(), file))
     output$setupMsg <- renderUI(NULL)
@@ -690,23 +715,145 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
         sprintf("Risk %.1f pips (GBP %.2f, %.2f%% of equity) | Reward %.1f pips | Planned RRR %.2f", e$risk_pips, e$risk_gbp, rp, e$reward_pips, e$rrr),
         if (length(warn)) tags$div(style = "color:#b91c1c; font-weight:600; margin-top:4px;", paste(warn, collapse = " ")))
     })
+    # ---- price chart & patterns (Yahoo on the IG level) -------------------------------------------------
+    pc_res <- reactiveVal(NULL)
+    pc_ref_price <- function(asset) {   # an IG price to align Yahoo to: typed here > scenario price > Morning Sheet current > entry in A
+      for (v in list(tr_num(input$pc_ref), tr_num(input$sc_price))) if (is.finite(v)) return(v)
+      lv <- tryCatch(ms_collect()$lv, error = function(e) NULL)
+      if (!is.null(lv) && nrow(lv)) { r <- lv[lv$instrument == asset, , drop = FALSE]; if (nrow(r) && is.finite(r$current_price[1])) return(r$current_price[1]) }
+      v <- tr_num(input$t_entry); if (is.finite(v)) v else NA_real_
+    }
+    pc_load <- function() {
+      asset <- toupper(trimws(tr_or(input$t_asset, ""))); h <- as.numeric(input$pc_hours); m <- as.numeric(input$pc_mins)
+      if (!nzchar(asset)) { msg("Choose the asset in A first.", "warning"); return() }
+      res <- withProgress(message = "Loading prices and finding patterns...", value = 0.4, tryCatch({
+        x <- tr_pat_bars(asset, h, m, ref_ig = pc_ref_price(asset), fetch = if (is.null(yahoo_fn)) tr_yahoo_fetch else yahoo_fn)
+        d <- tr_pat_detect(x$bars); c(x, list(det = d, asset = asset, hours = h, mins = m, at = Sys.time())) },
+        error = function(e) { msg(conditionMessage(e), "warning"); NULL }))
+      pc_res(res); if (is.null(res)) return()
+      top <- res$det$top
+      ch <- if (length(top)) setNames(as.character(seq_along(top)), vapply(seq_along(top), function(k) sprintf("%d. %s (%s) - score %d", k, top[[k]]$label, top[[k]]$status, top[[k]]$score), "")) else c("(no pattern found)" = "")
+      updateSelectInput(session, "pc_pick", choices = c(ch, "Candles only (no pattern)" = "0"), selected = if (length(top)) "1" else "0")
+      updateCheckboxGroupInput(session, "pc_send", choices = if (length(top)) setNames(as.character(seq_along(top)), sprintf("%d. %s", seq_along(top), vapply(top, function(p) p$label, ""))) else character(0),
+                               selected = as.character(seq_along(top)), inline = TRUE)
+      cat(sprintf("[Chart] %s %sh x %s min: %d candles, top: %s\n", asset, h, m, nrow(res$bars), paste(vapply(top, function(p) p$label, ""), collapse = " | ")))
+    }
+    observeEvent(input$pc_load, pc_load())
+    observeEvent(list(input$pc_hours, input$pc_mins), { r <- isolate(pc_res()); if (!is.null(r) && !isTRUE(r$restored)) pc_load() }, ignoreInit = TRUE)
+    # ---- charts saved with trades (evidence kind "patterns"): newest first
+    pc_saved_rows <- reactive({
+      e <- evidence_df(); if (is.null(e) || !nrow(e)) return(NULL)
+      e <- e[!is.na(e$kind) & e$kind == "patterns" & !(e$status %in% "DISCARDED"), , drop = FALSE]; if (!nrow(e)) return(NULL)
+      if ("created_at" %in% names(e)) e <- e[order(e$created_at, decreasing = TRUE), , drop = FALSE] else e <- e[rev(seq_len(nrow(e))), , drop = FALSE]
+      e[!duplicated(e$trade_id), , drop = FALSE]
+    })
+    observe({
+      e <- pc_saved_rows(); if (is.null(e)) { updateSelectInput(session, "pc_saved", choices = c("(no saved charts yet)" = "")); return() }
+      t <- isolate(trades_df())
+      lab <- vapply(seq_len(nrow(e)), function(k) { x <- tryCatch(jsonlite::fromJSON(e$extracted_json[k], simplifyVector = FALSE), error = function(z) list())
+        tr <- if (!is.null(t) && nrow(t)) t[t$trade_id == e$trade_id[k], , drop = FALSE] else NULL
+        who <- if (!is.null(tr) && nrow(tr)) sprintf("%s %s, entry %s UK", tr$asset[1], if (identical(tr$direction[1], "S")) "SELL" else "BUY", format(tr$entry_ts[1], "%d/%m %H:%M", tz = "Europe/London")) else tr_or(e$asset_code[k], "")
+        sprintf("%s | %s | %s", who, if (length(x$bars$t)) sprintf("%d candles of %s min to %s UK", length(x$bars$t), x$candle_minutes, format(as.POSIXct(tr_or(x$last_candle_uk, NA), tz = "Europe/London", format = "%Y-%m-%d %H:%M"), "%d/%m %H:%M")) else "pattern list only (saved before candles were kept)", e$trade_id[k]) }, "")
+      cur <- isolate(input$pc_saved); updateSelectInput(session, "pc_saved", choices = setNames(e$evidence_id, lab), selected = if (!is.null(cur) && cur %in% e$evidence_id) cur else e$evidence_id[1])
+    })
+    observeEvent(input$pc_restore, {
+      e <- pc_saved_rows(); id <- tr_or(input$pc_saved, ""); row <- if (is.null(e)) NULL else e[e$evidence_id == id, , drop = FALSE]
+      if (is.null(row) || !nrow(row)) { msg("No saved chart chosen (charts are saved with 'Save open trade' when the chart is loaded).", "warning"); return() }
+      r <- tr_pat_unpack(row$extracted_json[1])
+      if (is.null(r)) { x <- tryCatch(jsonlite::fromJSON(row$extracted_json[1]), error = function(z) NULL)
+        msg(paste("This trade was saved before the candles were kept, so its chart cannot be redrawn. Patterns saved:", if (!is.null(x$top$label)) paste(x$top$label, collapse = "; ") else "-"), "warning"); return() }
+      r$restored <- TRUE; r$trade_id <- row$trade_id[1]; r$at <- Sys.time()
+      pc_res(r); top <- r$det$top
+      ch <- if (length(top)) setNames(as.character(seq_along(top)), vapply(seq_along(top), function(k) sprintf("%d. %s (%s) - score %d", k, top[[k]]$label, top[[k]]$status, top[[k]]$score), "")) else c("(no pattern found)" = "")
+      sel <- which(vapply(top, function(p) identical(p$key, r$shown), TRUE)); sel <- if (length(sel)) as.character(sel[1]) else if (length(top)) "1" else "0"
+      updateSelectInput(session, "pc_pick", choices = c(ch, "Candles only (no pattern)" = "0"), selected = sel)
+      updateCheckboxGroupInput(session, "pc_send", choices = character(0), selected = character(0))
+      cat(sprintf("[Chart] restored the chart saved with %s: %d candles, %d patterns\n", r$trade_id, nrow(r$bars), length(top)))
+      msg("Saved chart loaded from BigQuery (view only: press 'Load chart & find patterns' for live prices).")
+    })
+    pc_pat <- reactive({ r <- pc_res(); k <- suppressWarnings(as.integer(tr_or(input$pc_pick, "0"))); if (is.null(r) || is.na(k) || k < 1 || k > length(r$det$top)) NULL else r$det$top[[k]] })
+    pc_levels <- reactive({   # entry / stop / target from A + today's Morning Sheet levels of this asset
+      r <- pc_res(); if (is.null(r)) return(NULL); out <- list()
+      add <- function(nm, v, col, dash) if (length(v) && is.finite(v)) out[[length(out) + 1]] <<- data.frame(name = sprintf("%s %s", nm, tr_pat_fmt(v)), price = v, color = col, dash = dash, stringsAsFactors = FALSE)
+      if (isTRUE(r$restored)) {   # a saved chart: the levels of ITS trade, as saved
+        t <- trades_df(); tr <- if (is.null(t)) NULL else t[t$trade_id == r$trade_id, , drop = FALSE]
+        if (!is.null(tr) && nrow(tr)) { add("Entry", tr$entry_price[1], "#1d4ed8", "solid"); add("Stop", tr$stop1[1], "#dc2626", "dash"); add("Target", tr$target[1], "#16a34a", "dash") }
+        return(if (length(out)) do.call(rbind, out) else NULL) }
+      add("Entry", tr_num(input$t_entry), "#1d4ed8", "solid"); add("Stop", tr_num(input$t_stop), "#dc2626", "dash"); add("Target", tr_num(input$t_target), "#16a34a", "dash")
+      lv <- tryCatch(ms_collect()$lv, error = function(e) NULL)
+      if (!is.null(lv) && nrow(lv)) { z <- lv[lv$instrument == r$asset, , drop = FALSE]
+        if (nrow(z)) { z <- z[1, ]; rng <- range(c(r$bars$low, r$bars$high)); pad <- diff(rng) * 0.6
+          for (q in list(c("PP", "pivot_pp"), c("R1", "pivot_r1"), c("S1", "pivot_s1"), c("R2", "pivot_r2"), c("S2", "pivot_s2"), c("Prior H", "prior_high"), c("Prior L", "prior_low"),
+                         c("O/N H", "overnight_high"), c("O/N L", "overnight_low"))) { v <- z[[q[2]]]
+            if (is.finite(v) && v >= rng[1] - pad && v <= rng[2] + pad) add(q[1], v, "#64748b", "dot") } } }
+      if (length(out)) do.call(rbind, out) else NULL
+    })
+    pc_vlines <- reactive({   # releases inside the trading window (today, UK time) at their candle
+      r <- pc_res(); if (is.null(r) || isTRUE(r$restored)) return(NULL)
+      tx <- unlist(strsplit(tr_or(input$ms_win, ""), "\r?\n")); tm <- regmatches(tx, regexpr("^\\s*[\u25C6 ]*([0-9]{1,2}:[0-9]{2})", tx))
+      if (!length(tm)) return(NULL); tm <- gsub("[^0-9:]", "", tm); d <- format(as.Date(tr_or(input$ms_date, tr_london_today())))
+      ts <- as.POSIXct(paste(d, tm), tz = "Europe/London", format = "%Y-%m-%d %H:%M"); ev <- sub("^[^|]*\\|[^|]*\\|[^|]*\\|\\s*([^|]*).*$", "\\1", tx[grepl("^\\s*[\u25C6 ]*[0-9]{1,2}:[0-9]{2}", tx)])
+      ix <- vapply(ts, function(t) { if (is.na(t) || t < min(r$bars$time) || t > max(r$bars$time) + r$mins * 60) return(NA_integer_); which.min(abs(as.numeric(r$bars$time) - as.numeric(t))) }, 0L)
+      ok <- !is.na(ix); if (!any(ok)) NULL else setNames(ix[ok], paste(tm[ok], trimws(substr(ev[ok], 1, 22))))
+    })
+    output$pc_info <- renderUI({ r <- pc_res(); if (is.null(r)) return(tags$div(style = "font-size:12px; color:#64748b;", "Press 'Load chart & find patterns'."))
+      dc <- r$det$decision; col <- switch(tr_or(dc$side, "NONE"), SELL = "#b91c1c", BUY = "#15803d", "#475569")
+      tagList(if (isTRUE(r$restored)) tags$div(style = "font-size:12.5px; font-weight:700; color:#1d4ed8; margin-bottom:4px;", sprintf("Saved chart of trade %s (from BigQuery), exactly as at entry: view only. 'Load chart & find patterns' brings back live prices.", r$trade_id)),
+        tags$div(style = "font-size:12px; color:#475569; margin-bottom:4px;", sprintf("%s (%s): %d candles of %s, last at %s UK. %s. ATR (median candle range) %s points.", tr_asset_label(r$asset), r$asset, nrow(r$bars),
+        names(tr_pat_intervals)[tr_pat_intervals == r$mins], format(max(r$bars$time), "%d/%m %H:%M", tz = "Europe/London"), r$note, tr_pat_fmt(r$det$atr))),
+        if (!is.null(dc)) tags$div(style = sprintf("font-size:13px; font-weight:700; color:%s; border-left:4px solid %s; padding:4px 10px; margin-bottom:6px; background:#ffffff;", col, col), "Chart: ", dc$text)) })
+    output$pc_note <- renderUI({ p <- pc_pat(); if (is.null(p)) return(NULL)
+      col <- if (p$bias == "bullish") "#15803d" else if (p$bias == "bearish") "#b91c1c" else "#475569"
+      tags$div(style = "font-size:12.5px; margin-top:22px;", tags$span(style = sprintf("font-weight:800; color:%s;", col), sprintf("%s (%s). ", p$group, if (p$bias == "trend") "follows the trend" else paste(p$bias, "bias"))), p$note, ".",
+        if (is.finite(p$invalid %||% NA)) tags$div(tags$b("Cancelled by a close beyond: "), tr_pat_fmt(p$invalid), " (stop side)"),
+        if (is.finite(p$target %||% NA)) tags$div(tags$b("Target: "), tr_pat_fmt(p$target), " (limit side)")) })
+    output$pc_chart <- plotly::renderPlotly({ r <- pc_res(); if (is.null(r)) return(plotly::plotly_empty(type = "scatter", mode = "markers"))
+      tr_pat_plotly(r$bars, pc_pat(), pc_levels(), pc_vlines(), title = pc_title(r)) })
+    pc_title <- function(r) sprintf("%s (Yahoo %s) - %s candles, last %s", tr_asset_label(r$asset), r$symbol, names(tr_pat_intervals)[tr_pat_intervals == r$mins], names(tr_pat_windows)[tr_pat_windows == r$hours])
+    pc_png_file <- function() { r <- pc_res(); if (is.null(r)) return(NULL); p <- pc_pat()
+      f <- file.path(tempdir(), sprintf("chart_%s_%s_%smin_%s.png", r$asset, format(max(r$bars$time), "%Y%m%d_%H%M", tz = "Europe/London"), r$mins, if (is.null(p)) "candles" else p$key))
+      tr_pat_png(r$bars, p, pc_levels(), f, sprintf("%s to %s UK, %s", pc_title(r), format(max(r$bars$time), "%d/%m/%Y %H:%M", tz = "Europe/London"), r$note)); f }
+    pc_evidence <- function(tid) {   # the chart at the time of the trade: its candles + the top 5 patterns -> trading_evidence (kind patterns)
+      r <- pc_res(); if (is.null(r) || isTRUE(r$restored)) return(invisible(FALSE))
+      ok <- tryCatch({ store$write("evidence", data.frame(evidence_id = tr_id("EV"), record_version = 1L, kind = "patterns", status = "CONFIRMED", trade_id = tid, asset_code = r$asset,
+                 screen_type = "entry", extracted_json = tr_pat_pack_json(r, tr_or(pc_pat()$key, "")),
+                 user_notes = sprintf("Chart at entry: %d candles of %s min + top %d patterns (rule-based, Yahoo prices on the IG level)", nrow(r$bars), r$mins, length(r$det$top)), stringsAsFactors = FALSE)); TRUE },
+               error = function(e) { cat("[Records] patterns not saved:", conditionMessage(e), "\n"); FALSE })
+      if (ok) bump(); invisible(ok)
+    }
+    pc_png_res <- reactiveVal(NULL)
+    observeEvent(input$pc_png, {
+      f <- pc_png_file(); if (is.null(f)) { msg("Load the chart first.", "warning"); return() }
+      put <- tryCatch(pic_store()$put(f, tr_picture_rel(tr_id("CH"), basename(f), tr_london_today())), error = function(e) { msg(conditionMessage(e), "error"); NULL })
+      if (!is.null(put)) { pc_png_res(sprintf("Saved: %s → %s", basename(f), if (pic_store()$durable()) paste("Dropbox:", put$path) else "this session only (Dropbox not set in Setup)")); msg(pc_png_res()) }
+    })
+    output$pc_png_out <- renderUI({ x <- pc_png_res(); if (is.null(x)) NULL else tags$div(style = "font-size:12px; color:#475569; margin-top:4px;", x) })
+
     # ---- Claude trade scenarios (BUY / SELL) -> fill A on request
     sc_res <- reactiveVal(NULL)
+    plan_risk_pct <- function() { v <- tr_num(limits()$risk_pct); if (!is.finite(v)) v <- tr_num(input$s_risk); v }   # saved Setup value, else the box in Setup
     observeEvent(input$sc_go, {
       f <- input$sc_img; price <- tr_num(input$sc_price); size <- tr_num(input$sc_size); asset <- toupper(trimws(tr_or(input$t_asset, "")))
-      if (is.null(f)) { msg("Load an IG chart screenshot first.", "warning"); return() }
+      pcr <- pc_res(); if (!is.null(pcr) && (!identical(pcr$asset, asset) || isTRUE(pcr$restored))) pcr <- NULL   # a saved (old) chart is not today's chart
+      if (is.null(f) && is.null(pcr)) { msg("Load the chart above (or an IG chart screenshot) first.", "warning"); return() }
       if (!is.finite(price)) { msg("Type the current IG price.", "warning"); return() }
-      if (!is.finite(size) || size <= 0) { msg("Type the size n (GBP per point).", "warning"); return() }
-      img <- tryCatch(tr_read_image(f$datapath, f$name), error = function(e) { msg(conditionMessage(e), "error"); NULL }); if (is.null(img)) return()
+      if (is.finite(size) && size <= 0) { msg("The size must be above 0 (or leave it empty to size from your risk per trade).", "warning"); return() }
+      img <- NULL
+      if (!is.null(f)) { img <- tryCatch(tr_read_image(f$datapath, f$name), error = function(e) { msg(conditionMessage(e), "error"); NULL }); if (is.null(img)) return() }
       x <- ms_collect(); lv <- x$lv
       if (!is.null(lv) && nrow(lv) == 0) lv <- NULL
       dur <- tr_num(input$t_dur); if (!is.finite(dur)) dur <- tr_num(input$s_plan_dur)
-      prompt <- tr_scn_prompt(if (nzchar(asset)) asset else "the asset", price, size, tr_scn_morning_text(x$hdr, lv), dur, tr_or(input$sc_notes, ""))
+      prompt <- tr_scn_prompt(if (nzchar(asset)) asset else "the asset", price, size, tr_scn_morning_text(x$hdr, lv), dur, tr_or(input$sc_notes, ""),
+                              risk = list(pct = plan_risk_pct(), equity = equity_now()),
+                              chart = if (is.null(pcr)) NULL else list(bars = tr_pat_bars_text(pcr$bars), decision = pcr$det$decision$text,
+                                                                         patterns = tr_pat_summary(pcr$det$top[intersect(seq_along(pcr$det$top), suppressWarnings(as.integer(input$pc_send)))], pcr$bars),
+                                                                         what = sprintf("%s candles of %s over the last %s hours (%s)", nrow(pcr$bars), names(tr_pat_intervals)[tr_pat_intervals == pcr$mins], pcr$hours, pcr$note)),
+                              has_image = !is.null(img))
       cat("[Scenarios] asking Claude:", asset, "price", price, "size", size, "\n")
       res <- withProgress(message = "Claude is reading the chart and the Morning Sheet...", value = 0.4,
-        tryCatch(vision_fn(list(list(media_type = img$media_type, data = img$data)), prompt), error = function(e) { msg(conditionMessage(e), "error"); NULL }))
+        tryCatch(vision_fn(if (is.null(img)) list() else list(list(media_type = img$media_type, data = img$data)), prompt), error = function(e) { msg(conditionMessage(e), "error"); NULL }))
       if (is.null(res)) return()
-      sc <- tr_scn_parse(if (is.list(res)) res$text else res, price, size)
+      sc <- tr_scn_parse(if (is.list(res)) res$text else res, price, size, risk_gbp = equity_now() * plan_risk_pct() / 100)
       if (is.null(sc)) { msg("Claude's reply could not be read. Try again.", "error"); cat("[Scenarios] unreadable reply\n"); return() }
       sc_res(sc)
     })
@@ -716,7 +863,9 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
         tags$div(style = sprintf("flex:1; min-width:260px; border:2px solid %s; border-radius:8px; padding:8px 12px; background:#ffffff;", col),
           tags$div(style = sprintf("font-weight:800; color:%s; font-size:15px;", col), r$side, sprintf(" - estimated success %s%%", ifelse(is.finite(r$success_pct), r$success_pct, "?"))),
           tags$div(sprintf("Entry %s | Stop %s | Limit %s", r$entry, r$stop, r$limit)),
-          tags$div(sprintf("Reward:risk %s | Risk GBP %s | Reward GBP %s", r$reward_risk, r$risk_gbp, r$reward_gbp)),
+          tags$div(sprintf("Reward:risk %s | Risk GBP %s | Reward GBP %s%s", r$reward_risk, r$risk_gbp, r$reward_gbp, if (is.finite(r$size)) sprintf(" at GBP %s per point", r$size) else "")),
+          if (is.finite(r$size_plan)) tags$div(style = "font-size:12px; color:#334155;", tags$b("Size for your plan: "), sprintf("GBP %s per point = GBP %s at risk (%s%% of equity GBP %s; size = GBP risk / stop points)",
+            r$size_plan, round(r$size_plan * abs(r$entry - r$stop), 2), plan_risk_pct(), format(round(equity_now()), big.mark = ","))),
           if (!isTRUE(r$valid)) tags$div(style = "color:#b45309; font-weight:700;", "Check: stop or limit is on the wrong side of the entry."),
           tags$div(style = "font-size:12px; color:#334155; margin-top:4px;", tags$b("Basis: "), r$basis),
           if (nzchar(r$stop_reason)) tags$div(style = "font-size:12px; color:#334155;", tags$b("Stop reason: "), r$stop_reason),
@@ -737,7 +886,7 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
       if (is.finite(r$entry)) updateNumericInput(session, "t_entry", value = r$entry)
       if (is.finite(r$stop)) updateNumericInput(session, "t_stop", value = r$stop)
       if (is.finite(r$limit)) updateNumericInput(session, "t_target", value = r$limit)
-      sz <- tr_num(input$sc_size); if (is.finite(sz)) updateNumericInput(session, "t_stake", value = sz)
+      sz <- tr_num(input$sc_size); if (!is.finite(sz)) sz <- r$size_plan; if (is.finite(sz)) updateNumericInput(session, "t_stake", value = sz)
       if (nzchar(r$stop_reason)) updateTextAreaInput(session, "t_stopwhy", value = r$stop_reason)
       if (nzchar(r$target_reason)) updateTextAreaInput(session, "t_tgtwhy", value = r$target_reason)
       cat("[Scenarios] used", r$side, "entry", r$entry, "stop", r$stop, "limit", r$limit, "\n")
@@ -755,7 +904,7 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
       names(miss)[miss]
     })
     observe({ m <- t_missing()
-      session$sendCustomMessage("tr_req_mark", list(all = as.list(session$ns(c(names(t_required), "t_date"))), missing = as.list(session$ns(m)), button = session$ns("t_save"))) })
+      session$sendCustomMessage("tr_req_mark", list(all = as.list(session$ns(c(names(t_required), "t_date"))), missing = if (length(m)) as.list(session$ns(m)) else list(), button = session$ns("t_save"))) })
     output$t_req_note <- renderUI({ m <- t_missing(); if (!length(m)) return(NULL)
       lab <- c(t_required, t_date = "Entry date")[m]
       tags$div(style = "background:#ffedd5; border-left:4px solid #f97316; padding:6px 10px; margin:6px 0; font-size:12.5px; color:#7c2d12;",
@@ -798,6 +947,19 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
       if (!is.null(d0)) { tryCatch(tr_dec_link(store, d0, row$trade_id, fill = FALSE), error = function(e) cat("[Records] decision link failed:", conditionMessage(e), "\n"))
         msg(sprintf("Linked to your decision saved at %s UK: its words fill the empty boxes.", substr(tr_or(d0$first_saved_uk, ""), 12, 16))) }
       if (length(ev_open())) { link_all(ev_open(), row$trade_id); ev_open(character(0)) }
+      if (!is.null(pc_res()) && identical(pc_res()$asset, asset) && !isTRUE(pc_res()$restored)) {   # the chart box: candles + patterns always kept with the trade; the picture as Entry chart when ticked
+        pc_evidence(row$trade_id)
+        if (isTRUE(input$pc_entry)) { f <- tryCatch(pc_png_file(), error = function(e) NULL)
+          if (!is.null(f)) { r0 <- pc_res(); p0 <- pc_pat()
+            cap <- sprintf("%s candles, Yahoo prices on the IG level.%s%s", names(tr_pat_intervals)[tr_pat_intervals == r0$mins],
+                           if (!is.null(p0)) sprintf(" Pattern shown: %s (%s)%s%s.", p0$label, p0$status, if (is.finite(p0$invalid %||% NA)) sprintf(", cancelled beyond %s", tr_pat_fmt(p0$invalid)) else "",
+                                                     if (is.finite(p0$target %||% NA)) sprintf(", target %s", tr_pat_fmt(p0$target)) else "") else "",
+                           if (!is.null(r0$det$decision$text)) paste0(" Chart: ", r0$det$decision$text) else "")
+            n0 <- save_pictures(f, basename(f), row$trade_id, "entry", cap,
+                                                                 as.Date(format(ts, "%Y-%m-%d", tz = "Europe/London")))
+            if (n0) msg(sprintf("Entry chart saved with the trade (picture → %s, record → BigQuery).", if (pic_store()$durable()) "Dropbox" else "this session only")) } } }
+      else if (!is.null(pc_res()) && isTRUE(pc_res()$restored)) msg("The chart box shows a SAVED chart of another trade: it was not attached to this trade. Load the live chart first to keep a chart with this trade.", "warning")
+      if (isTRUE(input$pc_sheet)) { tid0 <- row$trade_id; tryCatch(save_dbx(function(f) build_trade(f, tid0), trade_name("docx", tid0), "trade"), error = function(e) msg(paste("Trade Sheet not saved to Dropbox:", conditionMessage(e)), "warning")) }
       bp <- build_pending(); build_pending(NULL)
       if (!is.null(bp)) {   # screenshots combined in Order Evidence: chart / ticket pictures go on the sheet, and the exit form is filled in
         if (!is.null(bp$pics)) for (i in seq_len(nrow(bp$pics))) store$write("evidence", tr_picture_row(tr_id("EV"), row$trade_id, bp$pics$slot[i], bp$pics$caption[i], bp$pics$path[i], bp$pics$name[i]))

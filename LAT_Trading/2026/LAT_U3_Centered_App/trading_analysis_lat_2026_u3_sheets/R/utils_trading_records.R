@@ -248,6 +248,7 @@ tr_stats <- function(closed, opening_balance = 10000) {
 # ---- Storage layer ------------------------------------------------------------------------
 # backend: list(connected(), ensure(), write(name, df), read(name))
 tr_bq_backend <- function(api) {
+  checked <- new.env(parent = emptyenv())
   list(
     connected = function() isTRUE(api$bq_authenticated),
     ensure = function() {
@@ -260,7 +261,8 @@ tr_bq_backend <- function(api) {
     write = function(name, df) {
       tb <- tr_tables[[name]]
       ref <- bigrquery::bq_table(api$bq_project_id, api$bq_dataset_id, tb$table)
-      existing <- tryCatch(bigrquery::bq_table_fields(ref), error = function(e) NULL)
+      # the column check is done once per table per session (it is a BigQuery round trip of its own)
+      existing <- if (isTRUE(checked[[name]])) NULL else tryCatch(bigrquery::bq_table_fields(ref), error = function(e) NULL)
       if (!is.null(existing)) {
         en <- vapply(existing, function(f) f$name, character(1))
         if (!setequal(en, names(tb$cols)))
@@ -268,13 +270,17 @@ tr_bq_backend <- function(api) {
                " | App: ", paste(names(tb$cols), collapse = ", "), ". Run 'Create / verify tables' or fix the table.")
       }
       cat("[Records] Uploading", nrow(df), "row(s) ->", tb$table, "\n")
+      t0 <- Sys.time()
       bigrquery::bq_table_upload(ref, df, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
+      checked[[name]] <- TRUE
+      cat(sprintf("[Records] %s saved in %.1f s\n", tb$table, as.numeric(difftime(Sys.time(), t0, units = "secs"))))
       invisible(nrow(df))
     },
     read = function(name) {
       tb <- tr_tables[[name]]
       q <- sprintf("SELECT * FROM `%s.%s.%s`", api$bq_project_id, api$bq_dataset_id, tb$table)
-      bigrquery::bq_table_download(bigrquery::bq_project_query(api$bq_project_id, q))
+      t0 <- Sys.time(); out <- bigrquery::bq_table_download(bigrquery::bq_project_query(api$bq_project_id, q))
+      cat(sprintf("[Records] read %s from BigQuery: %d row(s) in %.1f s\n", tb$table, nrow(out), as.numeric(difftime(Sys.time(), t0, units = "secs")))); out
     })
 }
 
@@ -282,6 +288,10 @@ tr_make_store <- function(backend) {
   pending <- new.env(parent = emptyenv()); pending$data <- list()
   add_pending <- function(name, df) pending$data[[name]] <- rbind(pending$data[[name]], df)
   store <- list()
+  # rows read from BigQuery are kept in memory: a save appends its rows to this copy, so the screens update at once and
+  # BigQuery is read again only for a table never read in this session, or after "Reload ... from BigQuery" (store$invalidate)
+  cache <- new.env(parent = emptyenv())
+  store$invalidate <- function(name = NULL) { if (is.null(name)) rm(list = ls(cache), envir = cache) else for (n in name) if (exists(n, envir = cache, inherits = FALSE)) rm(list = n, envir = cache) }
   store$connected <- function() isTRUE(backend$connected())
   store$ensure <- function() backend$ensure()
   store$write <- function(name, df) {
@@ -291,15 +301,21 @@ tr_make_store <- function(backend) {
     df$saved_at <- rep(tr_now(), nrow(df)) + seq_len(nrow(df)) * 1e-6
     attr(df$saved_at, "tzone") <- "UTC"
     if (store$connected()) {
-      tryCatch({ backend$write(name, df); invisible("bigquery") },
+      tryCatch({ backend$write(name, df)
+                 if (exists(name, envir = cache, inherits = FALSE)) assign(name, rbind(get(name, envir = cache), tr_coerce(name, df)), envir = cache)
+                 invisible("bigquery") },
                error = function(e) { cat("[Records] BigQuery write failed, queued locally:", conditionMessage(e), "\n")
                                     add_pending(name, df); invisible(paste("queued:", conditionMessage(e))) })
     } else { add_pending(name, df); invisible("pending") }
   }
   store$read <- function(name) {
     remote <- NULL
-    if (store$connected()) remote <- tryCatch(tr_coerce(name, backend$read(name)), error = function(e) {
-      cat("[Records] BigQuery read failed for", name, ":", conditionMessage(e), "\n"); NULL })
+    if (store$connected()) {
+      if (exists(name, envir = cache, inherits = FALSE)) remote <- get(name, envir = cache)
+      else { remote <- tryCatch(tr_coerce(name, backend$read(name)), error = function(e) {
+               cat("[Records] BigQuery read failed for", name, ":", conditionMessage(e), "\n"); NULL })
+             if (!is.null(remote)) assign(name, remote, envir = cache) }
+    }
     out <- rbind(if (is.null(remote)) tr_coerce(name, NULL) else remote,
                  if (is.null(pending$data[[name]])) tr_coerce(name, NULL) else pending$data[[name]])
     out
@@ -311,7 +327,7 @@ tr_make_store <- function(backend) {
     n <- 0L
     for (name in names(pending$data)) {
       d <- pending$data[[name]]
-      if (!is.null(d) && nrow(d) > 0) { backend$write(name, d); n <- n + nrow(d); pending$data[[name]] <- NULL }
+      if (!is.null(d) && nrow(d) > 0) { backend$write(name, d); n <- n + nrow(d); pending$data[[name]] <- NULL; store$invalidate(name) }
     }
     n
   }

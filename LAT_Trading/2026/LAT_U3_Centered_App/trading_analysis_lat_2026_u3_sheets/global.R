@@ -34,13 +34,29 @@
 # this app is routinely restarted this way during development without
 # restarting R — an unguarded sink() would stack a new diversion on top of
 # the previous one every time, degrading output over a long session).
+# A log connection left open by an earlier run (for example after rm(list = ls()) or another app in the same R session)
+# keeps 'debug_log_buffer' locked: find it and reuse it instead of failing with "cannot change value of locked binding".
+.u3_find_log_conn <- function() {
+  cs <- tryCatch(showConnections(all = TRUE), error = function(e) NULL); if (is.null(cs) || !nrow(cs)) return(NULL)
+  hit <- which(cs[, "description"] == "debug_log_buffer" & cs[, "class"] == "textConnection" & cs[, "isopen"] == "opened")
+  if (!length(hit)) return(NULL)
+  tryCatch(getConnection(as.integer(rownames(cs)[hit[length(hit)]])), error = function(e) NULL)
+}
 if (!exists(".debug_log_conn", envir = .GlobalEnv) ||
     !isTRUE(tryCatch(isOpen(get(".debug_log_conn", envir = .GlobalEnv)), error = function(e) FALSE))) {
-
-  assign("debug_log_buffer", character(0), envir = .GlobalEnv)
-  .debug_log_conn <- textConnection("debug_log_buffer", open = "w", local = FALSE)
-  sink(.debug_log_conn, type = "output", split = TRUE)
-  cat("\u2713 [Debug Console] Log capture initialized\n")
+  old <- .u3_find_log_conn()
+  if (!is.null(old)) {
+    assign(".debug_log_conn", old, envir = .GlobalEnv)
+    if (sink.number() == 0) sink(old, type = "output", split = TRUE)
+    cat("\u2713 [Debug Console] Reusing the log capture left open by an earlier run\n")
+  } else {
+    if (exists("debug_log_buffer", envir = .GlobalEnv) && bindingIsLocked("debug_log_buffer", .GlobalEnv)) unlockBinding("debug_log_buffer", .GlobalEnv)
+    assign("debug_log_buffer", character(0), envir = .GlobalEnv)
+    assign(".debug_log_conn", textConnection("debug_log_buffer", open = "w", local = FALSE), envir = .GlobalEnv)
+    sink(get(".debug_log_conn", envir = .GlobalEnv), type = "output", split = TRUE)
+    cat("\u2713 [Debug Console] Log capture initialized\n")
+  }
+  rm(old)
 } else {
   # Existing debug_log_buffer / .debug_log_conn in .GlobalEnv are still
   # valid and already wired to the active sink — leave them untouched.
@@ -61,11 +77,12 @@ get_debug_log_lines <- function() {
 clear_debug_log <- function() {
   # textConnection's bound variable can't be reset in place without closing
   # and reopening the connection, so swap in a fresh one.
-  sink(type = "output")
-  close(.debug_log_conn)
+  if (sink.number() > 0) sink(type = "output")
+  tryCatch(close(get(".debug_log_conn", envir = .GlobalEnv)), error = function(e) NULL)
+  if (bindingIsLocked("debug_log_buffer", .GlobalEnv)) unlockBinding("debug_log_buffer", .GlobalEnv)
   assign("debug_log_buffer", character(0), envir = .GlobalEnv); assign(".u3_log_start", 0L, envir = .GlobalEnv)
-  .debug_log_conn <<- textConnection("debug_log_buffer", open = "w", local = FALSE)
-  sink(.debug_log_conn, type = "output", split = TRUE)
+  assign(".debug_log_conn", textConnection("debug_log_buffer", open = "w", local = FALSE), envir = .GlobalEnv)
+  sink(get(".debug_log_conn", envir = .GlobalEnv), type = "output", split = TRUE)
   invisible(TRUE)
 }
 
@@ -81,6 +98,7 @@ source("R/utils_trading_decision.R")
 source("R/utils_calendar_sources.R")
 source("R/utils_local_creds.R")
 source("R/utils_trade_scenarios.R")
+source("R/utils_patterns.R")
 options(bigrquery.quiet = TRUE)   # no "Job complete / Billed" line for every BigQuery read; errors still show
 source("R/utils_u3_report.R")
 source("R/utils_unit3_rules.R")
