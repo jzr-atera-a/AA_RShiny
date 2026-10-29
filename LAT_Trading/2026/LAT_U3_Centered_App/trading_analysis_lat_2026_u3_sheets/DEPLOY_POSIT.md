@@ -18,7 +18,7 @@ Desktop: put them in `~/.Renviron` (Windows: `Documents/.Renviron`). Shiny Serve
 | Variable | What for |
 |---|---|
 | `ANTHROPIC_API_KEY` | Claude (screenshots, calendar, web search) |
-| `CLAUDE_MODEL` | optional, for example `claude-sonnet-4-6` |
+| `CLAUDE_MODEL` | optional, default `claude-sonnet-5-5` (second option: `claude-haiku-5-5`) |
 | `ATERA_BQ_KEY_FILE` | path to the BigQuery service-account JSON |
 | `DROPBOX_APP_KEY`, `DROPBOX_APP_SECRET`, `DROPBOX_REFRESH_TOKEN` | Dropbox API **(recommended: the refresh token does not expire)** |
 | `DROPBOX_ACCESS_TOKEN` | alternative to the three above; expires after about 4 hours |

@@ -52,7 +52,7 @@ ApiManager <- R6::R6Class(
 
     # ---- Claude: shared connection --------------------------------------
     claude_api_key       = NULL,
-    claude_model          = "claude-sonnet-4-6",
+    claude_model          = "claude-sonnet-5-5",
     claude_max_tokens     = 8000,
     claude_timeout        = 3000,
     claude_authenticated  = FALSE,

@@ -120,6 +120,114 @@ tr_trade_analysis_parse <- function(txt) {
        pnl_gbp = { v <- suppressWarnings(as.numeric(s(j$pnl_gbp))); if (length(v) == 1) v else NA_real_ }, reason_for_exit = s(j$reason_for_exit), overall_analysis = s(j$overall_analysis))
 }
 
+# ---- Outcome of a trade read from IG screenshots (History rows), leg by leg -------------------
+# One screenshot can hold several deals: each row that belongs to THIS trade becomes a leg
+# (part close or final close). The GBP amount is taken from IG, never recomputed, because a daily
+# funded bet (DFB) held overnight is charged funding and then pips x size no longer matches.
+
+# deterministic exit code, used to fill a leg Claude left blank and to check what it returned
+tr_outcome_code <- function(direction, close_px, stop1, stops_later = numeric(0), target = NA, tol = 1) {
+  d <- if (identical(direction, "S") || identical(toupper(tr_or_s(direction)), "SELL")) -1 else 1
+  beyond <- function(level) is.finite(level) && is.finite(close_px) && d * (close_px - level) >= -tol
+  short <- function(level) is.finite(level) && is.finite(close_px) && d * (close_px - level) <= tol
+  if (beyond(target)) return("T")
+  if (short(stop1)) return("S1")
+  later <- stops_later[is.finite(stops_later)]
+  if (length(later) && any(vapply(later, short, TRUE))) return("S2+")
+  "ME"
+}
+tr_or_s <- function(x) if (is.null(x) || !length(x) || is.na(x[1])) "" else as.character(x[1])
+
+tr_outcome_prompt <- function(trade, trade_txt, pic_list, morning_txt = "", open_size = NA) {
+  f <- function(x) if (is.null(x) || !length(x) || is.na(x[1]) || !nzchar(as.character(x[1]))) "-" else as.character(x[1])
+  tm <- function(x) if (is.null(x) || !length(x) || is.na(x[1])) "-" else format(x[1], "%Y-%m-%d %H:%M", tz = "Europe/London")
+  st_later <- na.omit(c(trade$stop2, trade$stop3, trade$stop4))
+  sz <- if (is.finite(suppressWarnings(as.numeric(open_size)))) open_size else trade$stake_per_pip_gbp
+  paste0(
+    "You are reading screenshots from a trading student's IG DEMO spread-bet account to record how one trade ended. ",
+    "All prices are IG points. The images, in this order:\n",
+    paste(sprintf("Image %d: %s", seq_along(pic_list), pic_list), collapse = "\n"), "\n\n",
+    "THE TRADE YOU MUST MATCH:\n",
+    sprintf("- Market: %s (%s)\n", f(trade$asset), f(trade$market_name_raw)),
+    sprintf("- Direction: %s (a %s position is closed by the opposite deal)\n", if (identical(trade$direction, "S")) "SELL" else "BUY", if (identical(trade$direction, "S")) "sell" else "buy"),
+    sprintf("- Opened: %s UK at price %s\n", tm(trade$entry_ts), f(trade$entry_price)),
+    sprintf("- Size still open: %s GBP per point\n", f(sz)),
+    sprintf("- Initial stop: %s. Stops moved to afterwards: %s. Target (limit): %s\n", f(trade$stop1), if (length(st_later)) paste(st_later, collapse = ", ") else "none", f(trade$target)),
+    sprintf("- Deal reference recorded when it was opened: %s\n", f(trade$deal_reference)),
+    "\nTHE FULL TRADE RECORD:\n", trade_txt, "\n",
+    if (nzchar(morning_txt)) paste0("\nThe Morning Sheet of the day it was opened:\n", morning_txt, "\n") else "",
+    "\nHOW TO READ AN IG HISTORY TABLE\n",
+    "Columns are usually Date, Type, Description (the market), Period (DFB = daily funded bet, or a futures month), Size, Opening, Closing, Ccy, Amount, Ref.\n",
+    "- Read EVERY row in every image, then decide row by row whether it belongs to the trade above.\n",
+    "- Size is signed: -1 means a SELL of 1 GBP per point, +1 a BUY of 1. Its absolute value is how much was closed by that row.\n",
+    "- Opening is the price the position was opened at; Closing the price it was closed at.\n",
+    "- THE STUDENT UPLOADED THESE SCREENSHOTS FOR THE TRADE ABOVE, so assume they are that trade and link them to it. Your job is to read the figures, not to audit whether the trade is the right one.\n",
+    "- Treat a row as this trade when the market matches and the sign of Size fits the direction. The Opening price and the size will often differ by a few points or a small amount: the price recorded by the student is a typed note taken at a different moment, and IG shows the dealt price with the spread. A difference of tens of points is normal and is NOT a reason to reject a row.\n",
+    "- Only put a row in \"ignored\" when it plainly cannot be this trade: a different market, or not a deal at all (overnight funding, interest, dividend, cash adjustment).\n",
+    "- If the market matches but something else looks odd, still return it as a matching row and say what looked odd in match_reason. Returning nothing is the worst outcome: the student then has no figures at all.\n",
+    "- If several rows of this market could be the trade, return them all as legs, oldest first, and explain in match_reason.\n",
+    "- Amount is the money IG credited or debited, with its sign. Report it exactly as shown. Do NOT recompute it from points and size: a DFB held overnight is charged funding, so the two can differ.\n",
+    "- If a Funds, Balance or Available figure is visible anywhere, return it as account_balance_gbp (the balance AFTER these deals). If several are visible, use the most recent one, and say in balance_label which label it carried.\n",
+    "- Dates: return YYYY-MM-DD. Times: IG History often shows no time. If the time of a row is not visible, return \"\" for its time_uk; NEVER guess a time.\n",
+    "\nPART CLOSES\n",
+    "The student may have closed the trade in steps. Order the matching rows oldest first. If the sizes add up to less than the size still open, the rest of the position is still running: say so in still_open_size.\n",
+    "\nWHY EACH LEG ENDED\n",
+    "For every matching row give exit_code, comparing its Closing price with the stops and the target above and allowing for the spread:\n",
+    "- T: the target (limit) was reached\n- S1: the initial stop was reached\n- S2+: a stop the student had moved was reached\n- ME: closed by hand, before either\n",
+    "Say in exit_code_reason which level you compared it with and by how many points it missed or passed it.\n",
+    "\nWrite reason_for_exit as 1 to 3 factual sentences (what closed the trade, at what price and time, and for a part close what was left running), and overall_analysis as 5 to 8 neutral sentences: whether the set-up held against the Morning Sheet, how price behaved after entry, whether the stop and target placement worked, the result in points and GBP, and the main reason for the outcome. Use only what is in the record, the Morning Sheet and the images. Never invent a figure; use null where you cannot read one.\n",
+    "\nReply with JSON only, no other text:\n",
+    '{"rows":[{"date_uk":"YYYY-MM-DD","time_uk":"HH:MM or empty","market":"","size_closed":0,"direction":"BUY|SELL",',
+    '"opening_price":0,"closing_price":0,"amount_gbp":0,"points":0,"deal_reference":"","exit_code":"T|S1|S2+|ME",',
+    '"exit_code_reason":"","match_reason":"why this row is this trade"}],',
+    '"ignored":[{"row":"what the row said","why":"why it is not this trade"}],',
+    '"still_open_size":0,"account_balance_gbp":null,"balance_label":"",',
+    '"reason_for_exit":"","overall_analysis":"","notes":null}')
+}
+
+# -> list(rows = data.frame(...), ignored = data.frame(row, why), balance, balance_label,
+#         still_open, reason_for_exit, overall_analysis, notes)
+tr_outcome_parse <- function(txt, trade = NULL) {
+  j <- tr_parse_vision_json(txt); if (is.null(j)) return(NULL)
+  s <- function(x) if (is.null(x) || !length(x)) "" else trimws(as.character(x)[1])
+  n <- function(x) { v <- suppressWarnings(as.numeric(gsub("[^0-9eE.+-]", "", s(x)))); if (length(v) != 1 || !is.finite(v)) NA_real_ else v }
+  rl <- j$rows; if (is.null(rl) || !length(rl)) rl <- list()
+  if (is.data.frame(rl)) rl <- split(rl, seq_len(nrow(rl)))
+  rows <- lapply(rl, function(z) {
+    code <- toupper(s(z$exit_code)); if (!code %in% names(tr_exit_code_meanings)) code <- ""
+    d <- toupper(s(z$direction)); d <- if (grepl("^S", d)) "SELL" else if (grepl("^B", d)) "BUY" else ""
+    data.frame(date_uk = s(z$date_uk), time_uk = { t0 <- s(z$time_uk); if (grepl("^[0-9]{1,2}:[0-9]{2}$", t0)) t0 else "" },
+               market = s(z$market), size_closed = abs(n(z$size_closed)), direction = d,
+               opening_price = n(z$opening_price), closing_price = n(z$closing_price),
+               amount_gbp = n(z$amount_gbp), points = n(z$points), deal_reference = s(z$deal_reference),
+               exit_code = code, exit_code_reason = s(z$exit_code_reason), match_reason = s(z$match_reason),
+               stringsAsFactors = FALSE) })
+  rows <- if (length(rows)) do.call(rbind, rows) else NULL
+  if (!is.null(rows)) {
+    rows <- rows[is.finite(rows$closing_price), , drop = FALSE]
+    if (nrow(rows)) {
+      ord <- order(paste(rows$date_uk, ifelse(nzchar(rows$time_uk), rows$time_uk, "00:00")))
+      rows <- rows[ord, , drop = FALSE]
+      if (!is.null(trade)) {   # fill a blank code, and work out the points IG did not show
+        later <- suppressWarnings(as.numeric(na.omit(c(trade$stop2, trade$stop3, trade$stop4))))
+        for (i in seq_len(nrow(rows))) {
+          if (!nzchar(rows$exit_code[i]))
+            rows$exit_code[i] <- tr_outcome_code(trade$direction, rows$closing_price[i], trade$stop1, later, trade$target)
+          if (!is.finite(rows$points[i]) && is.finite(rows$opening_price[i]))
+            rows$points[i] <- (rows$closing_price[i] - rows$opening_price[i]) * (if (identical(trade$direction, "S")) -1 else 1)
+        }
+      }
+      rownames(rows) <- NULL
+    } else rows <- NULL
+  }
+  ig <- j$ignored; if (is.data.frame(ig)) ig <- split(ig, seq_len(nrow(ig)))
+  ign <- if (is.null(ig) || !length(ig)) NULL else do.call(rbind, lapply(ig, function(z)
+    data.frame(row = s(z$row), why = s(z$why), stringsAsFactors = FALSE)))
+  list(rows = rows, ignored = ign, balance = n(j$account_balance_gbp), balance_label = s(j$balance_label),
+       still_open = n(j$still_open_size), reason_for_exit = s(j$reason_for_exit),
+       overall_analysis = s(j$overall_analysis), notes = s(j$notes))
+}
+
 # latest saved overall analysis of a trade (trading_evidence, kind trade_analysis)
 tr_trade_analysis_of <- function(evidence, trade_id) {
   if (is.null(evidence) || !nrow(evidence) || !"kind" %in% names(evidence)) return(NULL)

@@ -53,12 +53,15 @@ tr_tables <- list(
              is_demo = "BOOL", source_device = "STRING", deal_reference = "STRING", size_unit = "STRING", price_basis = "STRING",
              spread_pts = "FLOAT64", margin_gbp = "FLOAT64", notional_gbp = "FLOAT64", costs_gbp = "FLOAT64",
              me_then_hit_stop = "BOOL", me_then_hit_target = "BOOL", trade_purpose = "STRING", charts_dropbox_path = "STRING",
-             score_patterns = "INT64", score_sr = "INT64", score_candles = "INT64", score_rsi = "INT64", score_fibs = "INT64")),
+             score_patterns = "INT64", score_sr = "INT64", score_candles = "INT64", score_rsi = "INT64", score_fibs = "INT64",
+             account_balance_gbp = "FLOAT64"),
+    added = c("account_balance_gbp")),
 
   trade_events = list(table = "trading_trade_events", key = "event_id",
     cols = c(event_id = "STRING", trade_id = "STRING", saved_at = "TIMESTAMP", event_ts = "TIMESTAMP",
              event_type = "STRING", old_stop = "FLOAT64", new_stop = "FLOAT64", size_closed_per_pip = "FLOAT64",
-             price = "FLOAT64", reason = "STRING", permitted_by_spec = "BOOL")),
+             price = "FLOAT64", reason = "STRING", permitted_by_spec = "BOOL", account_balance_gbp = "FLOAT64"),
+    added = c("account_balance_gbp")),
 
   evidence = list(table = "trading_evidence", key = "evidence_id",
     cols = c(evidence_id = "STRING", record_version = "INT64", saved_at = "TIMESTAMP", kind = "STRING", status = "STRING",
@@ -265,9 +268,18 @@ tr_bq_backend <- function(api) {
       existing <- if (isTRUE(checked[[name]])) NULL else tryCatch(bigrquery::bq_table_fields(ref), error = function(e) NULL)
       if (!is.null(existing)) {
         en <- vapply(existing, function(f) f$name, character(1))
-        if (!setequal(en, names(tb$cols)))
-          stop("Table ", tb$table, " exists with different columns. Table: ", paste(en, collapse = ", "),
-               " | App: ", paste(names(tb$cols), collapse = ", "), ". Run 'Create / verify tables' or fix the table.")
+        # a table made by an earlier version simply lacks the newer columns: add them here instead of
+        # refusing to write (which used to queue every trade locally and save nothing)
+        for (cn in setdiff(names(tb$cols), en)) {
+          cat("[Records] adding missing column", cn, "to", tb$table, "\n")
+          added_ok <- tryCatch({ bigrquery::bq_project_query(api$bq_project_id, sprintf(
+            "ALTER TABLE `%s.%s.%s` ADD COLUMN IF NOT EXISTS %s %s", api$bq_project_id, api$bq_dataset_id,
+            tb$table, cn, tr_bq_type(tb$cols[[cn]]))); TRUE },
+            error = function(e) { cat("[Records] could not add", cn, ":", conditionMessage(e), "\n"); FALSE })
+          if (!added_ok) df[[cn]] <- NULL   # send the row without it rather than losing the whole write
+        }
+        ex <- setdiff(en, names(tb$cols))
+        if (length(ex)) cat("[Records]", tb$table, "has columns this app does not use (left alone):", paste(ex, collapse = ", "), "\n")
       }
       cat("[Records] Uploading", nrow(df), "row(s) ->", tb$table, "\n")
       t0 <- Sys.time()
@@ -454,8 +466,20 @@ tr_build_vision_body <- function(model, system, text, images, max_tokens = 1500)
   content <- lapply(images, function(im) list(type = "image",
     source = list(type = "base64", media_type = im$media_type, data = gsub("[[:space:]]", "", im$data))))
   content[[length(content) + 1]] <- list(type = "text", text = text)
-  list(model = model, max_tokens = max_tokens, temperature = 0, system = system,
-       messages = list(list(role = "user", content = content)))
+  b <- list(model = model, max_tokens = max_tokens, system = system,
+            messages = list(list(role = "user", content = content)))
+  # temperature 0 keeps screenshot reading literal, but newer models reject the parameter outright
+  if (!tr_model_drops_temperature(model)) b$temperature <- 0
+  b
+}
+# Models from Sonnet/Opus/Haiku 5 onwards (and Fable/Mythos) refuse `temperature`: HTTP 400
+# "`temperature` is deprecated for this model". Older ones still accept it.
+tr_model_drops_temperature <- function(model) {
+  m <- tolower(tr_or_s(model)); if (!nzchar(m)) return(TRUE)
+  if (grepl("fable|mythos", m)) return(TRUE)
+  v <- regmatches(m, regexpr("(sonnet|opus|haiku)-([0-9]+)", m))
+  if (!length(v)) return(FALSE)
+  suppressWarnings(as.integer(sub(".*-", "", v))) >= 5
 }
 
 tr_media_type <- function(path_or_name) {
