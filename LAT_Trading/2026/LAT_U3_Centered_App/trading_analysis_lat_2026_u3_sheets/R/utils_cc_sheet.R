@@ -80,7 +80,7 @@ cc_trade_sheet <- function(tr, sm, name, pics, file, context = list()) {
   ent <- if (is.finite(tr$entry_level %||% NA)) tr$entry_level else tr$order_level %||% NA
   d <- if (toupper(tr$direction) %in% c("BUY", "B")) "B" else "S"; ppa <- sm$value_per_point_account
   trade <- data.frame(chart_period = tr$chart_period, expected_duration_hours = tr$expected_hours, initial_risk_pips = sm$risk_points, initial_risk_gbp = sm$risk_account,
-                      initial_reward_pips = sm$reward_points, stake_per_pip_gbp = ppa, initial_rrr = sm$planned_rrr, entry_ts = sm$open_ts, direction = d,
+                      initial_reward_pips = sm$reward_points, stake_per_pip_gbp = ppa, lot_units = suppressWarnings(as.numeric(tr$size)), initial_rrr = sm$planned_rrr, entry_ts = sm$open_ts, direction = d,
                       asset = tr$market_name %||% tr$epic, entry_price = ent, stop1 = tr$stop_initial, target = tr$target_level,
                       setup_fundamental = tr$setup_fund, setup_technical = tr$setup_tech, trigger_text = tr$trigger_text, execution_text = tr$execution_text,
                       stop_reason = tr$stop_reason, target_reason = tr$target_reason,
@@ -88,7 +88,7 @@ cc_trade_sheet <- function(tr, sm, name, pics, file, context = list()) {
                       exit_code = if (closed) NA else tr$exit_code %||% NA, exit_price = NA, exit_ts = NA, reason_for_exit = tr$exit_reason %||% NA, lessons_learned = tr$lessons %||% NA,
                       stringsAsFactors = FALSE)
   if (!closed) { tr_trade_sheet_template(trade, data.frame(), NULL, name, charts = pics, file = file, context = context); return(file) }
-  legs <- data.frame(exit_ts = sm$close_ts, direction = d, asset = trade$asset, stake_per_pip_gbp = ppa, entry_price = tr$entry_level, exit_price = tr$exit_level,
+  legs <- data.frame(exit_ts = sm$close_ts, direction = d, asset = trade$asset, stake_per_pip_gbp = ppa, lot_units = suppressWarnings(as.numeric(tr$size)), entry_price = tr$entry_level, exit_price = tr$exit_level,
                      pips_result = sm$result_points, net_pnl_gbp = sm$result_account, duration_hours = sm$duration_h, exit_code = tr$exit_code,
                      reason_for_exit = tr$exit_reason, lessons_learned = tr$lessons, stringsAsFactors = FALSE)
   tr_trade_sheet_template(trade, legs, NULL, name, charts = pics, file = file, context = context)
@@ -117,20 +117,24 @@ cc_scenario_read <- function(js) {
   out
 }
 cc_scen_val <- function(s, k) { v <- s[[k]]; if (is.null(v) || !length(v) || is.na(v[1])) NA else v[1] }
-# one line per fact, for the sheet and for Claude's prompt
+# ****** the worksheet never names the AI model: only the platform (Capital.com data, the app's analysis)
+cc_no_ai_name <- function(x) { if (is.null(x) || !length(x) || is.na(x[1])) return(x)
+  x <- gsub("\\bC \\(Claude\\)|\\bClaude's\\b", "the platform's", x, perl = TRUE); x <- gsub("^(Claude|C): ", "", x, perl = TRUE)
+  x <- gsub("\\bCLAUDE\\b", "PLATFORM", x, perl = TRUE); x <- gsub("\\bClaude\\b", "the platform", x, perl = TRUE); gsub("\\bC (estimate|analysis|view)\\b", "platform \\1", x, perl = TRUE) }
+# one line per fact, for the sheet and for the AI prompt
 cc_scenario_lines <- function(sr, d = 4) {
   s <- sr$scenario; if (is.null(s)) return(character(0)); d <- if (is.finite(suppressWarnings(as.numeric(sr$d)))) as.numeric(sr$d) else d
   px <- function(k) { v <- suppressWarnings(as.numeric(cc_scen_val(s, k))); if (is.finite(v)) formatC(v, format = "f", digits = d) else "-" }
   nm <- function(k) suppressWarnings(as.numeric(cc_scen_val(s, k)))
-  src <- cc_scen_val(s, "source"); who <- if (identical(src, "Claude")) "C (Claude)" else if (identical(src, "Rules")) "the app's rules" else "-"
-  c(sprintf("Scenario chosen: %s, suggested by %s: %s %s.", cc_scen_val(s, "id"), who, cc_scen_val(s, "side") %||% "", tolower(cc_scen_val(s, "type") %||% "")),
+  src <- cc_scen_val(s, "source"); who <- if (identical(src, "Claude")) "the platform's chart analysis (Capital.com data)" else if (identical(src, "Rules")) "the app's rules" else "-"
+  c(sprintf("Scenario chosen: %s, suggested by %s: %s %s.", cc_no_ai_name(cc_scen_val(s, "id")), who, cc_scen_val(s, "side") %||% "", tolower(cc_scen_val(s, "type") %||% "")),
     sprintf("Entry %s, stop %s, target %s%s; R:R %s.", px("entry"), px("stop"), px("target"), if (is.finite(nm("now_px"))) sprintf(" (price when worked out %s)", px("now_px")) else "",
             if (is.finite(nm("rrr"))) formatC(nm("rrr"), format = "f", digits = 2) else "-"),
-    sprintf("Chance of success (target before stop), measured: %s. C estimate: %s.",
+    sprintf("Chance of success (target before stop), measured: %s. Platform estimate: %s.",
             if (is.finite(nm("meas_p"))) sprintf("%.0f%% (n=%d; %.0f%% reached neither within %s h)", nm("meas_p"), as.integer(nm("meas_n")), nm("meas_und"), format(round(as.numeric(sr$hold_h), 1))) else "not measured",
             if (is.finite(nm("claude_p"))) sprintf("%.0f%% (estimate, not measured)", nm("claude_p")) else "-"),
-    if (!is.na(cc_scen_val(s, "note")) && nzchar(cc_scen_val(s, "note"))) paste("How / why:", sub("^Claude: ", "C: ", cc_scen_val(s, "note"))) else NULL,
-    if (!is.na(cc_scen_val(s, "basis")) && nzchar(cc_scen_val(s, "basis"))) paste("Patterns / reasons:", cc_scen_val(s, "basis")) else NULL)
+    if (!is.na(cc_scen_val(s, "note")) && nzchar(cc_scen_val(s, "note"))) paste("How / why:", cc_no_ai_name(cc_scen_val(s, "note"))) else NULL,
+    if (!is.na(cc_scen_val(s, "basis")) && nzchar(cc_scen_val(s, "basis"))) paste("Patterns / reasons:", cc_no_ai_name(cc_scen_val(s, "basis"))) else NULL)
 }
 # patterns found on the chart at order (scan saved with the order: cc_scans.current_json)
 cc_scan_patterns <- function(current_json) {
@@ -147,7 +151,8 @@ cc_c_prompt <- function(tr, sm, sr, pats, ms_text = NULL) {
   paste0("You are C, the analyst in a trading-education app (Capital.com DEMO account). Write the 'C analysis' for this trade's Individual Trade Sheet: ",
          "a short, plain-English analysis (120-220 words, no headings, no bullet symbols) of (1) what was recommended and why, (2) what actually happened, ",
          "(3) whether the reasoning held or failed and why, (4) one or two concrete lessons. Be factual; do not invent prices or times that are not given. ",
-         "If the order was never filled or was cancelled, say so and analyse that instead.\n\n",
+         "If the order was never filled or was cancelled, say so and analyse that instead. ",
+         "This text goes into a course worksheet: never mention C, Claude, AI or a model; write in the first person as the trader, and when a source is needed name only the platform (Capital.com) or 'the app'.\n\n",
          sprintf("Market: %s. Direction %s, size %s, order type %s. Status now: %s.\n", tr$market_name %||% tr$epic, tr$direction, tr$size, tr$order_type, st),
          sprintf("Order levels: entry %s, stop %s, target %s; exit %s; exit code %s.\n", tr$order_level %||% tr$entry_level, tr$stop_initial, tr$target_level, tr$exit_level %||% "-", tr$exit_code %||% "-"),
          if (!is.null(sm)) paste0("Trade data from Capital.com: ", paste(cc_summary_lines(sm), collapse = " "), "\n") else "",
@@ -167,6 +172,6 @@ cc_context_items <- function(sr, pats, c_text = "", include_c = TRUE, chart = NA
   sl <- cc_scenario_lines(sr)
   items <- c(items, list(it("caption", "The recommended trade that was placed")),
              if (length(sl)) lapply(sl, function(x) it("text", x)) else list(it("text", "No scenario was chosen in the app for this order.")))
-  if (isTRUE(include_c) && nzchar(trimws(c_text %||% ""))) items <- c(items, list(it("caption", "C analysis (C = Claude)")), lapply(strsplit(trimws(c_text), "\n+")[[1]], function(x) it("text", x)))
+  if (isTRUE(include_c) && nzchar(trimws(c_text %||% ""))) items <- c(items, list(it("caption", "Analysis")), lapply(strsplit(cc_no_ai_name(trimws(c_text)), "\n+")[[1]], function(x) it("text", x)))
   items
 }

@@ -219,7 +219,7 @@ ok(is.na(r0$updated$exit_level) && !isTRUE(r0$updated$pnl_account_est < -50), "a
 cat("Store and tables\n")
 s <- cc_make_store(cc_mem_backend()); s$write("trades", tr); s$write("trades", u)
 cur <- s$current("trades"); ok(nrow(cur) == 2 && all(cur$record_version == 2L), "latest version per trade is current")
-ok(length(cc_ddl("p", "d")) == 2 * length(cc_tables) && all(grepl("cc_", names(unlist(lapply(cc_tables, `[[`, "table"))) ) | TRUE), "DDL: a table and a _current view for each cc_ table")
+ok(length(cc_ddl("p", "d")) == 2 * length(cc_tables) + sum(vapply(cc_tables, function(t) length(t$added) > 0, TRUE)) && any(grepl("ADD COLUMN IF NOT EXISTS history_asked", cc_ddl("p", "d"))) && all(grepl("cc_", names(unlist(lapply(cc_tables, `[[`, "table"))) ) | TRUE), "DDL: a table and a _current view for each cc_ table, plus ALTER for columns added later ******")
 ok(all(grepl("^cc_", vapply(cc_tables, `[[`, "", "table"))), "every table is prefixed cc_ (the IG tables are separate)")
 off <- cc_make_store(list(connected = function() FALSE, ensure = function() NULL, write = function(...) stop("x"), read = function(...) stop("x")))
 off$write("events", data.frame(event_id = "E1", event_type = "X")); ok(off$pending_count() == 1 && nrow(off$read("events")) == 1, "without BigQuery a record is kept in the session and queued")

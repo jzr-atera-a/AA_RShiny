@@ -65,12 +65,19 @@ cc_plan_check <- function(p) {
   ml <- p$max_loss_pct; lim <- if (is.finite(ml) && is.finite(p$balance)) ml / 100 * p$balance else NA
   out[[4]] <- row("Daily loss limit", if (!is.finite(lim)) NA else -min(0, p$pnl_today) < lim, if (!is.finite(lim)) "no limit set" else sprintf("today %s, limit -%s", format(round(p$pnl_today, 2), nsmall = 2), format(round(lim, 2), nsmall = 2)))
   ctr <- identical(p$fit, "against"); need <- p$min_rrr + (if (is.finite(p$ctr_extra)) p$ctr_extra else 0.5)
-  half <- is.finite(p$plan_size) && is.finite(p$size) && p$size <= 0.5 * p$plan_size + 1e-9
+  for (k in c("max_size", "stop_dist", "atr", "min_stop_atr")) p[[k]] <- cc_n1(p[[k]])
+  base <- if (is.finite(p$max_size)) p$max_size else p$plan_size   # ****** half = half of the size YOU set, not of the plan-risk size
+  half <- is.finite(base) && is.finite(p$size) && p$size <= 0.5 * base + 1e-9
   out[[5]] <- row("Higher time-frame trend (daily / 4-hour)", if (!ctr) TRUE else (is.finite(p$rrr) && p$rrr >= need - 1e-9) || half,
                   if (!ctr) sprintf("daily %s, 4-hour %s: %s the trend", p$d %||% "?", p$h4 %||% "?", if (identical(p$fit, "with")) "with" else "not against")
-                  else sprintf("AGAINST the trend (daily %s, 4-hour %s): needs R:R %.2f or more, or half size (%s or less)", p$d, p$h4, need, if (is.finite(p$plan_size)) format(round(0.5 * p$plan_size, 2)) else "-"))
+                  else sprintf("AGAINST the trend (daily %s, 4-hour %s): needs R:R %.2f or more, or half size (%s or less)", p$d, p$h4, need, if (is.finite(base)) format(round(0.5 * base, 2)) else "-"))
   nw <- p$news; hit <- if (is.null(nw) || !nrow(nw)) nw else nw[nw$in_window, , drop = FALSE]
   out[[6]] <- row("High-impact news in the holding time", if (is.null(nw)) NA else !nrow(hit), if (is.null(nw)) "no Morning Sheet releases for today" else if (!nrow(hit)) "none" else paste(sprintf("%s %s", hit$time, hit$event), collapse = "; "))
+  out[[length(out) + 1]] <- row("Size not above the size you set ******", if (!is.finite(p$max_size) || !is.finite(p$size)) NA else p$size <= p$max_size + 1e-9,
+    if (!is.finite(p$max_size)) "no size set in box 1" else sprintf("this deal %s, your size %s", format(round(p$size, 2)), format(round(p$max_size, 2))))
+  ms <- if (is.finite(p$min_stop_atr)) p$min_stop_atr else NA_real_
+  out[[length(out) + 1]] <- row("Stop far enough from the entry (x ATR) ******", if (!is.finite(ms) || ms <= 0 || !is.finite(p$stop_dist) || !is.finite(p$atr) || p$atr <= 0) NA else p$stop_dist >= ms * p$atr - 1e-9,
+    if (!is.finite(ms) || ms <= 0) "no minimum set" else if (!is.finite(p$stop_dist) || !is.finite(p$atr)) "stop or ATR not known yet" else sprintf("stop %.3f from the entry = %.2f ATR; plan minimum %.2f ATR (ATR %.3f)", p$stop_dist, p$stop_dist / p$atr, ms, p$atr))
   st <- p$setups %||% character(0); st <- st[nzchar(st)]
   out[[length(out) + 1]] <- row("Set-up allowed by the plan *", if (!length(st)) NA else (p$strategy %||% "") %in% st, if (!length(st)) "no list set (any set-up)" else sprintf("this deal: %s; allowed: %s", p$strategy_label %||% p$strategy %||% "-", paste(p$setup_labels %||% st, collapse = ", ")))
   mr <- cc_n1(p$max_loss_row); lr <- cc_n1(p$loss_row); if (!is.finite(lr)) lr <- 0

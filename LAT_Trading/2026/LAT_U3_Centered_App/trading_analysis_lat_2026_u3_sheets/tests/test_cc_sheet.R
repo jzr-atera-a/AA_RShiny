@@ -24,6 +24,7 @@ if (file.exists(docx)) { x <- utils::unzip(docx, "word/document.xml", exdir = d)
   ok(grepl("my technical words", txt) && grepl("my lessons", txt), "your own words are on the sheet")
   ok(grepl("108.596", txt) && grepl("S1 hit", txt) && grepl("109.756", txt), "entry 109.756, exit 108.596 and S1 are on the sheet")
   ok(grepl("-9.50", txt), "the GBP result -9.50 is on the sheet")
+  ok(grepl(sprintf(">%s<", tr_ntrim(tr$size, 2)), txt), sprintf("****** Lot Size on the sheet is the deal size in units (%s), not the GBP value per point", tr$size))
   ok(grepl("Trade data \\(from Capital.com\\)", txt), "the trade data summary is on the sheet") }
 
 cat("Journal: separate buttons (BigQuery / Dropbox / Download), sheet built on demand\n")
@@ -66,20 +67,21 @@ testServer(cc_trading_records_server, args = list(client = cc_new_client(http_fn
   ok(grepl("Download Word", paste(as.character(output$j_where_sheet), collapse = "")), "the panel says what each button does")
   # the unfilled limit order: recommendation, C analysis, context at the bottom
   session$setInputs(j_trade = "CC_LIM"); session$flushReact()
-  ok(grepl("CLAUDE 1", paste(as.character(output$j_rec), collapse = "")) && grepl("not been filled", paste(as.character(output$j_rec), collapse = "")), "the Journal shows the recommended trade saved with the order and that it is not filled")
+  ok(grepl("PLATFORM 1", paste(as.character(output$j_rec), collapse = "")) && grepl("not been filled", paste(as.character(output$j_rec), collapse = "")), "the Journal shows the recommended trade saved with the order and that it is not filled")
   session$setInputs(j_c_write = 1); session$flushReact()
   cm <- paste(as.character(output$j_c_msg), collapse = ""); ok(grepl("Written", cm), "C analysis written (prose call)")
   session$setInputs(j_c = "C says: the limit at 102.600 was not reached. Prompt had the scenario.", j_c_incl = TRUE)
   session$setInputs(j_save = 3); e <- st$current("events"); ce <- e[e$event_type %in% "C_ANALYSIS" & e$trade_id %in% "CC_LIM", ]
   ok(nrow(ce) == 1 && grepl("102.600", ce$note), "C analysis saved to BigQuery (cc_events, C_ANALYSIS)")
   f2 <- output$j_dl_docx; dx <- tempfile(); xx <- utils::unzip(f2, "word/document.xml", exdir = dx); tt <- paste(readLines(xx, warn = FALSE), collapse = "")
-  ok(grepl("Context \\(from the app", tt) && grepl("CLAUDE 1", tt) && grepl("36%", tt) && grepl("38%", tt) && grepl("Double bottom", tt), "unfilled order sheet: context with the scenario, both chances and the patterns table")
-  ok(grepl("C analysis \\(C = Claude\\)", tt) && grepl("was not reached", tt), "the C analysis is at the bottom when ticked")
+  ok(grepl("Context \\(from the app", tt) && grepl("PLATFORM 1", tt) && grepl("36%", tt) && grepl("38%", tt) && grepl("Double bottom", tt), "unfilled order sheet: context with the scenario, both chances and the patterns table")
+  ok(grepl("Analysis", tt) && grepl("was not reached", tt), "the analysis is at the bottom when ticked")
+  ok(!grepl("Claude|CLAUDE|C estimate|C analysis", tt), "****** the worksheet never names Claude: only the platform")
   ok(grepl("has not been filled", tt), "the sheet says the order was not filled")
   ok(grepl("Chart and patterns at the order", tt) && length(grep("^word/media/", utils::unzip(f2, list = TRUE)$Name)) >= 1, "the chart saved at the order is in the context block")
   ok(regexpr("Context \\(from the app", tt) > regexpr("Lessons", tt), "the context block is at the bottom, after the LAT fields")
   session$setInputs(j_c_incl = FALSE); f3 <- output$j_dl_docx; dx <- tempfile(); xx <- utils::unzip(f3, "word/document.xml", exdir = dx); tt <- paste(readLines(xx, warn = FALSE), collapse = "")
-  ok(!grepl("C analysis \\(C = Claude\\)", tt) && grepl("CLAUDE 1", tt), "unticked: no C analysis, the recommendation stays")
+  ok(!grepl("C analysis \\(C = Claude\\)", tt) && grepl("PLATFORM 1", tt), "unticked: no C analysis, the recommendation stays")
   if (!is.na(tr_find_soffice())) { fp <- output$j_dl_pdf; ok(file.exists(fp) && identical(readBin(fp, "raw", 4), charToRaw("%PDF")), "Download PDF gives a real PDF") }
 })
 cat("Your 5 Nov trade: a stop order that filled and closed between syncs, repaired, then its sheet with the C analysis\n")
@@ -115,7 +117,7 @@ testServer(cc_trading_records_server, args = list(client = cc_new_client(http_fn
   f5 <- output$j_dl_docx; ok(file.exists(f5) && identical(readBin(f5, "raw", 2), charToRaw("PK")), "Download Word gives the sheet for the repaired trade")
   dx <- tempfile(); xx <- utils::unzip(f5, "word/document.xml", exdir = dx); tt <- paste(readLines(xx, warn = FALSE), collapse = "")
   ok(grepl("93.598", tt) && grepl("94.987", tt), "the sheet has the real entry 93.598 and exit 94.987")
-  ok(grepl("BUY STOP", tt) && grepl("31%", tt) && grepl("34%", tt) && grepl("C analysis \\(C = Claude\\)", tt) && grepl("prompt had the scenario and the exit", tt), "the context: the recommended trade, both chances, and the C analysis (written from the scenario and the real exit)")
+  ok(grepl("BUY STOP", tt) && grepl("31%", tt) && grepl("34%", tt) && grepl("Analysis", tt) && !grepl("Claude", tt) && grepl("prompt had the scenario and the exit", tt), "the context: the recommended trade, both chances, and the C analysis (written from the scenario and the real exit)")
   if (!is.na(tr_find_soffice())) { fp <- output$j_dl_pdf; ok(identical(readBin(fp, "raw", 4), charToRaw("%PDF")), "Download PDF gives the PDF") ; file.copy(fp, "/tmp/sheet_5nov.pdf", overwrite = TRUE) }
 })
 cat(sprintf("\n%d passed, %d failed\n", pass, fail)); if (fail) quit(status = 1)

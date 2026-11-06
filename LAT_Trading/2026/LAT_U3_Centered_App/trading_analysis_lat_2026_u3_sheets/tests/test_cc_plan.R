@@ -85,4 +85,15 @@ bc <- cc_bias_checks(tb); ok(nrow(bc) == 4 && bc$flag[grepl("Disposition", bc$bi
 sc <- cc_attitude_score(c(5, 5, 5, 5, 5, 5, 5, 5, 5, 1)); ok(sc$pct == 92 && sc$band == "disciplined" && grepl("higher time-frame", sc$weakest), "attitude survey score, band and weakest answer")
 ok(nrow(cc_course_coverage) >= 30 && all(c("Week", "Topic", "Where in the app", "Status") %in% names(cc_course_coverage)) && any(grepl("Rule of Five", cc_course_coverage$Topic)), "course coverage map lists every topic")
 x <- base; x$r5 <- list(ok = FALSE, text = "major up"); ok(any(grepl("Rule of Five time-frames", cc_plan_check(x)$rule) & cc_plan_check(x)$ok %in% FALSE), "plan check: against the major time-frame fails")
+
+# ****** size and stop distance
+rw <- function(pc, k) pc[grepl(k, pc$rule, fixed = TRUE), , drop = FALSE]
+x <- base; x$max_size <- 1; x$size <- 104.3; ok(isFALSE(rw(cc_plan_check(x), "Size not above")$ok), "plan check: a size above the size you set fails (104.3 vs 1)")
+x$size <- 0.5; ok(isTRUE(rw(cc_plan_check(x), "Size not above")$ok), "plan check: half your size passes")
+x <- base; x$fit <- "against"; x$d <- "UP"; x$h4 <- "UP"; x$rrr <- 1.6; x$max_size <- 1; x$plan_size <- 208.7; x$size <- 104.3
+ok(isFALSE(rw(cc_plan_check(x), "Higher time-frame")$ok), "counter-trend half size is half of YOUR size, not of the plan-risk size")
+x$size <- 0.5; ok(isTRUE(rw(cc_plan_check(x), "Higher time-frame")$ok), "counter-trend: 0.5 of size 1 passes")
+x <- base; x$stop_dist <- 0.17; x$atr <- 0.4; x$min_stop_atr <- 1; ok(isFALSE(rw(cc_plan_check(x), "Stop far enough")$ok), "plan check: stop 0.17 with ATR 0.4 fails (03/11 trade)")
+x$stop_dist <- 0.7; ok(isTRUE(rw(cc_plan_check(x), "Stop far enough")$ok), "plan check: stop 0.7 with ATR 0.4 passes")
+x$min_stop_atr <- 0; ok(is.na(rw(cc_plan_check(x), "Stop far enough")$ok), "plan check: minimum 0 = not set")
 cat(sprintf("\n%d passed, %d failed\n", pass, fail)); if (fail) quit(status = 1)

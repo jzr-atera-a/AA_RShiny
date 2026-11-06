@@ -101,7 +101,7 @@ cc_morning_sheet <- function(sheets, levels, day) {
 }
 
 # ---- Claude's suggested trades ----------------------------------------------------------------------------------
-cc_suggest_prompt <- function(scan, f, scen, plan, morning = NULL, now = Sys.time()) {
+cc_suggest_prompt <- function(scan, f, scen, plan, morning = NULL, now = Sys.time(), history = NULL) {
   ctx <- scan$ctx; n <- ctx$n; d <- cc_px_decimals(f); k <- max(1, n - 39):n
   bars <- paste(sprintf("%s %s %s %s %s", format(ctx$b$time[k], "%d/%m %H:%M", tz = "Europe/London"), cc_fmt_px(ctx$o[k], d), cc_fmt_px(ctx$h[k], d), cc_fmt_px(ctx$l[k], d), cc_fmt_px(ctx$c[k], d)), collapse = "\n")
   cd <- scan$current_df
@@ -120,6 +120,9 @@ cc_suggest_prompt <- function(scan, f, scen, plan, morning = NULL, now = Sys.tim
     "The app's rule-based scenarios (all are deals at the market):\n", sc, "\n",
     "Last 40 candles (UK time, open high low close):\n", bars, "\n",
     if (!is.null(morning)) paste0("\n", morning, "\n") else "\nNo Morning Sheet is included.\n",
+    if (!is.null(history) && nzchar(history)) paste0("\nTHE STUDENT'S OWN TRADES OF THE PREVIOUS 4 WORKING DAYS AND TODAY (from BigQuery):\n", history,
+      "\nFIRST evaluate these trades: what repeated mistake made them lose (for example stops inside normal noise or below 1 ATR, a stop on an obvious level such as the overnight low, R:R below the plan, trading against the higher time-frame or the Morning Sheet bias, size), ",
+      "and what would have turned them into winners (for example moving the stop to break-even at +1R, a wider stop with a smaller size). Then make sure every trade you suggest avoids those mistakes. Put the evaluation in past_trades_review (3-6 short sentences, facts from the list only).\n") else "",
     "\nTASK: propose up to 3 trades that make sense NOW, using the price action, the patterns",
     if (!is.null(morning)) " AND the Morning Sheet (news direction, releases inside the holding window, levels; respect STAND ASIDE)" else "", ". ",
     "RULES: every trade is a DEAL opened NOW at the market (BUY at the offer ", cc_fmt_px(f$offer, d), ", SELL at the bid ", cc_fmt_px(f$bid, d), "): no limit or stop entries, no waiting orders. ",
@@ -131,7 +134,7 @@ cc_suggest_prompt <- function(scan, f, scen, plan, morning = NULL, now = Sys.tim
     "Also give probability_pct for each of the app's scenarios. If no trade makes sense, return an empty list and say why in summary. ",
     "Reply with ONE JSON object only: {\"summary\":\"1-2 sentences\",\"morning_sheet_used\":true|false,\"stand_aside_reason\":\"\",",
     "\"suggestions\":[{\"side\":\"SELL\",\"type\":\"MARKET\",\"entry\":0,\"stop\":0,\"target\":0,\"probability_pct\":0,\"horizon_hours\":0,\"why\":\"\",\"main_risk\":\"\"}],",
-    "\"scenario_estimates\":[{\"id\":\"BUY MARKET\",\"probability_pct\":0}]}")
+    "\"scenario_estimates\":[{\"id\":\"BUY MARKET\",\"probability_pct\":0}]", if (!is.null(history) && nzchar(history)) ",\"past_trades_review\":\"\"" else "", "}")
 }
 # parse Claude's reply into rows like cc_scenarios(); levels rounded; problems listed (not removed: the student sees why)
 cc_suggest_parse <- function(txt, f, min_rrr = NA) {
@@ -155,7 +158,7 @@ cc_suggest_parse <- function(txt, f, min_rrr = NA) {
         rows$note[low] <- paste0(rows$note[low], sprintf(" (Target moved out to your minimum Reward:Risk %.2f.)", min_rrr)) } }
   }
   est <- j$scenario_estimates; est <- if (is.data.frame(est) && nrow(est) && all(c("id", "probability_pct") %in% names(est))) data.frame(id = as.character(est$id), claude_p = suppressWarnings(as.numeric(est$probability_pct)), stringsAsFactors = FALSE) else NULL
-  list(ok = TRUE, rows = rows, estimates = est, summary = as.character(j$summary %||% ""), used_sheet = isTRUE(j$morning_sheet_used), stand_aside = as.character(j$stand_aside_reason %||% ""))
+  list(ok = TRUE, rows = rows, estimates = est, summary = as.character(j$summary %||% ""), used_sheet = isTRUE(j$morning_sheet_used), stand_aside = as.character(j$stand_aside_reason %||% ""), past_review = paste(as.character(unlist(j$past_trades_review %||% "")), collapse = " "))
 }
 
 # ---- Yahoo as an alternative source of candles (futures / FX quotes; shifted onto Capital.com's price) -------------
@@ -173,3 +176,31 @@ cc_yahoo_bars <- function(fetch, symbol, res, hist_days = 20) {
   if (is.null(b) || !nrow(b)) stop("Yahoo returned no candles for ", symbol, ".")
   b <- b[is.finite(b$open) & is.finite(b$high) & is.finite(b$low) & is.finite(b$close), , drop = FALSE]
   b <- b[b$time >= max(b$time) - max(3, hist_days) * 86400, , drop = FALSE]; b[order(b$time), c("time", "open", "high", "low", "close")] }
+
+# ---- ****** the trades of the previous working days (from BigQuery), for the AI to evaluate before suggesting ----------
+cc_prev_workdays <- function(now, n = 4) { d <- as.Date(format(now, "%Y-%m-%d", tz = "Europe/London")); out <- as.Date(character(0)); k <- d
+  while (length(out) < n) { k <- k - 1; if (!format(k, "%u") %in% c("6", "7")) out <- c(out, k) }; out }
+cc_recent_trades <- function(trades, now, n_days = 4) {
+  if (is.null(trades) || !nrow(trades)) return(trades[0, , drop = FALSE])
+  t <- trades[!(trades$status %in% c("DUPLICATE", "CANCELLED", "REJECTED")) & !is.na(trades$status), , drop = FALSE]
+  t0 <- ifelse(!is.na(t$entry_ts), as.numeric(t$entry_ts), as.numeric(t$placed_ts)); day <- as.Date(format(as.POSIXct(t0, origin = "1970-01-01", tz = "UTC"), "%Y-%m-%d", tz = "Europe/London"))
+  keep <- !is.na(day) & (day %in% cc_prev_workdays(now, n_days) | day == as.Date(format(now, "%Y-%m-%d", tz = "Europe/London")))
+  t <- t[keep, , drop = FALSE]; t[order(t0[keep]), , drop = FALSE]
+}
+cc_recent_trades_text <- function(t, atr = NA_real_) {
+  if (is.null(t) || !nrow(t)) return("")
+  num <- function(x) suppressWarnings(as.numeric(x)); g <- function(k) if (k %in% names(t)) t[[k]] else rep(NA, nrow(t))
+  d <- ifelse(toupper(g("direction")) %in% c("BUY", "B"), 1, -1); en <- num(g("entry_level")); st <- num(g("stop_initial")); tg <- num(g("target_level")); ex <- num(g("exit_level"))
+  risk <- d * (en - st); rew <- d * (tg - en); res <- d * (ex - en); r <- ifelse(is.finite(res) & risk > 0, res / risk, NA)
+  pl <- ifelse(is.finite(num(g("pnl_account_booked"))), num(g("pnl_account_booked")), num(g("pnl_account_est")))
+  t0 <- ifelse(!is.na(g("entry_ts")), as.numeric(g("entry_ts")), as.numeric(g("placed_ts"))); tt <- format(as.POSIXct(t0, origin = "1970-01-01", tz = "UTC"), "%a %d/%m %H:%M", tz = "Europe/London")
+  dur <- ifelse(!is.na(g("exit_ts")) & is.finite(t0), round((as.numeric(g("exit_ts")) - t0) / 60), NA)
+  cut <- function(x, n = 160) { x <- gsub("\\s+", " ", as.character(x)); ifelse(is.na(x) | !nzchar(x), "-", ifelse(nchar(x) > n, paste0(substr(x, 1, n), "..."), x)) }
+  lines <- sprintf("- %s UK %s %s size %s: entry %s, stop %s (%.3f pts%s), target %s (R:R %s); %s%s; result %s R, %s acc; held %s min. Exit reason: %s. Lessons: %s",
+    tt, ifelse(is.na(g("market_name")), g("epic"), g("market_name")), g("direction"), g("size"), en, st, risk, if (is.finite(atr) && atr > 0) sprintf(" = %.2f ATR now", risk / atr) else "", tg,
+    ifelse(risk > 0, sprintf("%.2f", rew / risk), "-"), g("status"), ifelse(is.na(g("exit_code")), "", paste0(", exit ", g("exit_code"), " at ", ex)),
+    ifelse(is.finite(r), sprintf("%.2f", r), "-"), ifelse(is.finite(pl), sprintf("%.2f", pl), "-"), ifelse(is.na(dur), "-", dur), cut(g("exit_reason")), cut(g("lessons")))
+  cl <- is.finite(r); w <- sum(r[cl] > 0)
+  paste0(sprintf("Totals: %d trade(s), %d closed, %d won, %d lost; total %.2f R; stops hit %d times.", nrow(t), sum(cl), w, sum(r[cl] <= 0), sum(r[cl]), sum(g("exit_code") %in% c("S1", "S2+"), na.rm = TRUE)),
+         "\n", paste(lines, collapse = "\n"))
+}

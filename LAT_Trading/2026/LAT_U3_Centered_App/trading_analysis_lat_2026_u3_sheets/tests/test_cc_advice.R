@@ -99,6 +99,16 @@ testServer(cc_trading_records_server, args = list(client = cl, store = store, fe
   ok(nrow(cr) == 1 && cr$type == "MARKET" && cr$entry == mkt()$bid && cr$stop == 66.12 && cr$claude_p == 41 && is.finite(cr$meas_p) && cr$rrr >= 1.5 - 1e-6, "Claude's trade added as a deal at the bid, meeting the minimum R:R, with Claude's and the measured chance")
   ok(sc2$claude_p[sc2$id == "BUY MARKET"] == 52, "Claude's estimate added to the rule scenario")
   session$setInputs(p_ms_use = "no", p_claude = 2); ok(grepl("No Morning Sheet is included", tail(prompts, 1)), "with No, the sheet is not sent")
+  # ****** the previous 4 working days' trades from BigQuery go to Claude for a review
+  store$write("trades", data.frame(trade_id = c("CC_OLD1", "CC_OLD2", "CC_OLDX"), status = "CLOSED", epic = "OIL_BRENT", market_name = "Brent Oil Spot", direction = "BUY", size = 1,
+    entry_level = 65, stop_initial = 64.8, target_level = 65.5, exit_level = 64.79, exit_code = "S1", pnl_account_est = -0.2, lessons = c("stop too tight", "again tight", "too old"),
+    entry_ts = as.POSIXct(c("2026-10-19 08:00", "2026-10-14 09:00", "2026-10-13 09:00"), tz = "UTC"), exit_ts = as.POSIXct(c("2026-10-19 08:20", "2026-10-14 09:30", "2026-10-13 09:30"), tz = "UTC"), stringsAsFactors = FALSE))
+  ok(identical(format(cc_prev_workdays(as.POSIXct("2026-10-20 10:00", tz = "UTC"), 4)), c("2026-10-19", "2026-10-16", "2026-10-15", "2026-10-14")), "previous 4 working days skip the weekend")
+  session$setInputs(p_hist_use = TRUE, p_claude = 3); pr <- tail(prompts, 1)
+  ok(grepl("PREVIOUS 4 WORKING DAYS", pr) && grepl("stop too tight", pr) && grepl("again tight", pr) && !grepl("too old", pr) && grepl("past_trades_review", pr), "with the option ticked, the trades of the previous 4 working days (not older) are sent with the review task")
+  cs <- store$current("claude_suggestions"); cs <- cs[order(cs$saved_at), ]; ok(isTRUE(tail(cs$history_asked, 1)) && tail(cs$history_n, 1) == 2L, "the call is saved with how many past trades were sent")
+  ok(grepl("2 trade\\(s\\) found", paste(as.character(output$p_hist_info), collapse = "")), "the option says how many trades it found")
+  session$setInputs(p_hist_use = FALSE, p_claude = 4); ok(!grepl("PREVIOUS 4 WORKING DAYS", tail(prompts, 1)), "unticked: no past trades sent")
   have_sheet <<- FALSE; session$setInputs(p_ms_reload = 1); ui2 <- paste(as.character(output$p_ms_ui), collapse = "")
   ok(grepl("not available", ui2) && grepl("No Morning Sheet", ui2), "no sheet today: the option says it is not available")
   # market order: the ticket was worked out at an older price; it is sent at the price of the moment, distances kept
@@ -107,6 +117,8 @@ testServer(cc_trading_records_server, args = list(client = cl, store = store, fe
   session$setInputs(o_dir = "BUY", o_type = "MARKET", o_size = 2, o_stop = 63.70, o_target = 65.70, o_level = NA, o_good_h = NA, o_purpose = "PRACTICE", o_strategy = "OTHER",
                     o_chart = "15 Min", o_hours = 10, o_mood = 3, o_ok = TRUE)
   ok(grepl("Price now 64.50", paste(as.character(output$o_checks), collapse = "")) && grepl("-0.80", paste(as.character(output$o_checks), collapse = "")), "the ticket shows the price now and each level's distance from it")
+  session$setInputs(o_size = 104.3); ok(any(grepl("bigger than the size you set", ticket()$errors)), "****** a size above the size you set (box 1) is refused: 104.3 vs 2")
+  session$setInputs(o_size = 2)
   fake$clear(); session$setInputs(o_send = 1, o_confirm = 1)
   pb <- jsonlite::fromJSON(Filter(function(z) z$method == "POST" && grepl("/positions$", z$url), fake$calls())[[1]]$body)
   ok(abs(pb$stopLevel - 64.24) < 1e-9 && abs(pb$profitLevel - 66.24) < 1e-9, sprintf("price moved 64.50 -> 65.04: stop sent %s, target %s (distances 0.80 / 1.20 kept)", pb$stopLevel, pb$profitLevel))

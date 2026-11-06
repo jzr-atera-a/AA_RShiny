@@ -232,7 +232,7 @@ tr_trade_sheet_template <- function(trade, legs, events, name, charts = list(), 
   tr_tpl_set(tr_tpl_cell(tb[[1]], 1, 2), name)
   vals <- c(tr_txt(trade$chart_period), tr_duration_text(trade$expected_duration_hours), tr_pips_text(trade$initial_risk_pips, trade$initial_risk_gbp), tr_pips_text(trade$initial_reward_pips, trade$initial_reward_pips * trade$stake_per_pip_gbp), tr_numtxt(trade$initial_rrr, 2))
   for (i in 1:5) tr_tpl_set(tr_tpl_cell(tb[[2]], i, 2), vals[i])
-  ent <- c(tr_ddmmyyyy(trade$entry_ts), tr_hhmm(trade$entry_ts), trade$direction, tr_asset_label(trade$asset), tr_ntrim(trade$stake_per_pip_gbp, 2), tr_ntrim(trade$entry_price), tr_ntrim(trade$stop1), tr_ntrim(trade$target))
+  ent <- c(tr_ddmmyyyy(trade$entry_ts), tr_hhmm(trade$entry_ts), trade$direction, tr_asset_label(trade$asset), tr_ntrim(if (!is.null(trade$lot_units) && is.finite(trade$lot_units)) trade$lot_units else trade$stake_per_pip_gbp, 2), tr_ntrim(trade$entry_price), tr_ntrim(trade$stop1), tr_ntrim(trade$target))
   for (j in seq_along(ent)) tr_tpl_set(tr_tpl_cell(tb[[3]], 2, j), ent[j], size = if (j == 1) 9 else NULL)
   txt <- c(trade$setup_fundamental, trade$setup_technical, trade$trigger_text, trade$execution_text, trade$stop_reason, trade$target_reason)
   for (i in 1:6) tr_tpl_set(tr_tpl_cell(tb[[4]], i, 2), tr_txt(txt[i]))
@@ -255,7 +255,7 @@ tr_trade_sheet_template <- function(trade, legs, events, name, charts = list(), 
   tr_tpl_set(tr_tpl_cell(tb[[5]], 1, 2), if (is.finite(dur)) tr_duration_text(dur) else "")
   if (nrow(legs)) {
     opp <- ifelse(legs$direction == "B", "S", "B")
-    ex <- data.frame(tr_ddmmyyyy(legs$exit_ts), tr_hhmm(legs$exit_ts), opp, tr_asset_label(legs$asset[1]), tr_ntrim(legs$stake_per_pip_gbp, 2), tr_ntrim(legs$entry_price), tr_ntrim(legs$exit_price),
+    ex <- data.frame(tr_ddmmyyyy(legs$exit_ts), tr_hhmm(legs$exit_ts), opp, tr_asset_label(legs$asset[1]), tr_ntrim(if (!is.null(legs$lot_units)) ifelse(is.finite(legs$lot_units), legs$lot_units, legs$stake_per_pip_gbp) else legs$stake_per_pip_gbp, 2), tr_ntrim(legs$entry_price), tr_ntrim(legs$exit_price),
                      tr_numtxt(legs$pips_result, 1), tr_numtxt(legs$net_pnl_gbp, 2), stringsAsFactors = FALSE)
     tr_tpl_fill_df(tb[[5]], ex, first = 4)
     for (i in seq_len(nrow(ex))) tr_tpl_set(tr_tpl_cell(tb[[5]], 3 + i, 1), ex[i, 1], size = 9)

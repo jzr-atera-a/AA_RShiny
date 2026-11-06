@@ -43,7 +43,8 @@ cc_tables <- list(
   claude_suggestions = list(table = "cc_claude_suggestions", key = "call_id",
     cols = c(call_id = "STRING", saved_at = "TIMESTAMP", epic = "STRING", morning_sheet_asked = "BOOL", morning_sheet_used = "BOOL", morning_sheet_note = "STRING",
              ok = "BOOL", seconds = "FLOAT64", n_suggested = "INT64", n_fit_plan = "INT64", summary = "STRING", stand_aside_reason = "STRING", error = "STRING",
-             prompt_chars = "INT64", rows_json = "STRING", reply_text = "STRING")),
+             prompt_chars = "INT64", rows_json = "STRING", reply_text = "STRING",
+             history_asked = "BOOL", history_n = "INT64", past_trades_review = "STRING"), added = c("history_asked", "history_n", "past_trades_review")),
   scenarios = list(table = "cc_scenarios", key = "row_id",
     cols = c(row_id = "STRING", saved_at = "TIMESTAMP", build_id = "STRING", build_type = "STRING", epic = "STRING", source = "STRING", scenario_id = "STRING", side = "STRING",
              entry = "FLOAT64", stop = "FLOAT64", target = "FLOAT64", rrr = "FLOAT64", size = "FLOAT64", risk_account = "FLOAT64", reward_account = "FLOAT64",
@@ -55,6 +56,8 @@ cc_ddl <- function(project, dataset) {
   out <- character(0)
   for (nm in names(cc_tables)) { tb <- cc_tables[[nm]]; full <- sprintf("%s.%s.%s", project, dataset, tb$table)
     out <- c(out, sprintf("CREATE TABLE IF NOT EXISTS `%s` (\n%s\n)", full, paste(sprintf("  %s %s", names(tb$cols), vapply(tb$cols, cc_bq_type, "")), collapse = ",\n"))) }
+  for (nm in names(cc_tables)) { tb <- cc_tables[[nm]]; if (!length(tb$added)) next; full <- sprintf("%s.%s.%s", project, dataset, tb$table)   # ****** columns added later
+    out <- c(out, sprintf("ALTER TABLE `%s`\n%s", full, paste(sprintf("  ADD COLUMN IF NOT EXISTS %s %s", tb$added, vapply(tb$cols[tb$added], cc_bq_type, "")), collapse = ",\n"))) }
   for (nm in names(cc_tables)) { tb <- cc_tables[[nm]]; full <- sprintf("%s.%s.%s", project, dataset, tb$table)
     ob <- if ("record_version" %in% names(tb$cols)) "saved_at DESC, record_version DESC" else "saved_at DESC"
     out <- c(out, sprintf("CREATE OR REPLACE VIEW `%s_current` AS\nSELECT * EXCEPT(rn) FROM (\n  SELECT *, ROW_NUMBER() OVER (PARTITION BY %s ORDER BY %s) AS rn\n  FROM `%s`\n) WHERE rn = 1", full, tb$key, ob, full)) }
@@ -78,7 +81,11 @@ cc_bq_backend <- function(api) list(
   ensure = function() { for (s in cc_ddl(api$bq_project_id, api$bq_dataset_id)) { cat("[C.C] DDL:", substr(gsub("\\s+", " ", s), 1, 100), "...\n"); bigrquery::bq_project_query(api$bq_project_id, s) }; invisible(TRUE) },
   write = function(name, df) { tb <- cc_tables[[name]]; ref <- bigrquery::bq_table(api$bq_project_id, api$bq_dataset_id, tb$table)
     cat("[C.C] Uploading", nrow(df), "row(s) ->", tb$table, "\n")
-    bigrquery::bq_table_upload(ref, df, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND"); invisible(nrow(df)) },
+    up <- function() bigrquery::bq_table_upload(ref, df, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
+    if (length(tb$added)) tryCatch(up(), error = function(e) { cat("[C.C] upload failed (", conditionMessage(e), "): adding new columns and trying again\n")   # ****** older table
+      full <- sprintf("%s.%s.%s", api$bq_project_id, api$bq_dataset_id, tb$table)
+      bigrquery::bq_project_query(api$bq_project_id, sprintf("ALTER TABLE `%s` %s", full, paste(sprintf("ADD COLUMN IF NOT EXISTS %s %s", tb$added, vapply(tb$cols[tb$added], cc_bq_type, "")), collapse = ", "))); up() }) else up()
+    invisible(nrow(df)) },
   read = function(name) { tb <- cc_tables[[name]]
     bigrquery::bq_table_download(bigrquery::bq_project_query(api$bq_project_id, sprintf("SELECT * FROM `%s.%s.%s`", api$bq_project_id, api$bq_dataset_id, tb$table))) })
 cc_mem_backend <- function() { db <- new.env(parent = emptyenv())   # tests and "no BigQuery yet"
