@@ -108,6 +108,9 @@ source("R/api_manager.R")
 source("R/utils_export.R")            # generic HTML/PDF export (Funding Programmes > Visualizations)
 source("R/utils_calendar_export.R")   # .ics calendar export (Funding Programmes > Browse)
 source("R/module_loader.R")
+source("R/utils_nav.R")               # sidebar = tab group > topic section; modules of a section = horizontal tabs
+source("R/utils_local_creds.R")       # Windows key-folder auto-load + the API CONNECTIONS lights
+source("R/utils_tables.R")            # on-demand table loading per tab group + the TABLES indicator
 
 # Source utility modules that don't appear in the sidebar but are used by other modules
 source("modules/API Settings/openai_base.R")
@@ -118,36 +121,23 @@ loader$load_all()
 app_css <- paste(readLines("www/css/global.css", warn = FALSE), collapse = "\n")
 
 # -----------------------------------------------------------------------
-# UI factory - builds a grouped sidebar (main tab = group, subtab = module)
+# UI factory - sidebar = tab group > topic section (R/utils_nav.R); the modules
+# of a section are horizontal tabs in the page. The API CONNECTIONS lights and the
+# TABLES indicator are docked at the bottom of the sidebar so they stay visible
+# while the menu scrolls.
 # -----------------------------------------------------------------------
 
 create_ui <- function() {
-  groups <- loader$get_groups()
-
-  menu_items <- lapply(groups, function(g) {
-    subitems <- lapply(g$modules, function(mod_id) {
-      meta <- loader$get_module_meta(mod_id)
-      if (is.null(meta) || !isTRUE(meta$enabled)) return(NULL)
-      menuSubItem(meta$label, tabName = mod_id, icon = icon(meta$icon))
-    })
-    subitems <- Filter(Negate(is.null), subitems)
-    do.call(menuItem, c(
-      list(text = g$label, icon = icon(g$icon), startExpanded = isTRUE(g$expanded)),
-      subitems
-    ))
-  })
-
-  all_ids <- loader$get_all_module_ids()
-  tab_item_list <- lapply(all_ids, function(mod_id) {
-    ui_fn <- loader$get_ui_function(mod_id)
-    tabItem(tabName = mod_id, ui_fn(mod_id))
-  })
+  layout <- nav_register(nav_layout(loader$registry, loader$get_all_module_ids()))
+  menu_items <- nav_sidebar_items(layout)
+  tab_item_list <- nav_tab_items(layout, loader$registry, function(mid) loader$get_ui_function(mid))
 
   dashboardPage(
     skin = "blue",
     dashboardHeader(title = "Business Operations Suite"),
     dashboardSidebar(
-      sidebarMenu(id = "sidebar_menu", do.call(tagList, menu_items))
+      sidebarMenu(id = "sidebar_menu", do.call(tagList, menu_items)),
+      tags$div(id = "sidebar_status_dock", keys_status_box("keys_status"), tables_status_box())
     ),
     dashboardBody(
       useShinyjs(),
@@ -166,10 +156,26 @@ create_server <- function() {
   function(input, output, session) {
     api_manager <- APIManager$new()
 
+    # sidebar: connection lights + on-demand table checks (one tab group at a time, when it is opened)
+    layout <- nav_register(nav_layout(loader$registry, loader$get_all_module_ids()))
+    keys_status_wire("keys_status", api_manager)
+    tables_wire(api_manager, session, layout, loader$registry)
+
     all_ids <- loader$get_all_module_ids()
     for (mod_id in all_ids) {
       server_fn <- loader$get_server_function(mod_id)
       server_fn(mod_id, api_manager)
     }
+
+    # LAST, and after the page has been sent: connect Claude + BigQuery from the local key folder / environment
+    # (on Windows: C:/111_SecA/_q_api). Connecting only AUTHENTICATES - the tables of each tab group are checked
+    # and read later, when that group is opened. Otherwise the user connects by hand in API Settings.
+    session$onFlushed(function() {
+      shiny::withReactiveDomain(session, shiny::isolate(
+        tryCatch(cred_startup(api_manager), error = function(e) {
+          cat("[Keys] start-up check failed:", conditionMessage(e), "\n")
+          api_manager$cred_status <- list(done = TRUE, dir = cred_dir())
+        })))
+    }, once = TRUE)
   }
 }

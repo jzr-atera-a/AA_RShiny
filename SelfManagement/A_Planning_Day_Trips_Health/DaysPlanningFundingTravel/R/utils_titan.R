@@ -677,7 +677,7 @@ titan_viz_hook <- function(input, output, session, api_manager, ics_result, cal_
 
   go_to <- function(subtab) {
     api_manager$titan_goto(subtab)
-    tryCatch(updateTabItems(session$rootScope(), "sidebar_menu", selected = "events_to_calendar"),
+    tryCatch(nav_goto(session, "events_to_calendar"),
              error = function(e) cat("[Titan] could not switch tab:", conditionMessage(e), "\n"))
   }
 

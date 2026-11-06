@@ -153,7 +153,7 @@ techdesign_to_flex_text <- function(d, which = c("components", "tradeoffs", "con
 
 # ---- Recommender -------------------------------------------------------
 td_catalog_listing <- function() {
-  paste(unlist(lapply(TD_GROUPS, function(g) {
+  paste(unlist(lapply(setdiff(TD_GROUPS, c("algorithms", "social_dynamics")), function(g) {
     e <- TD_CATALOG[[g]]
     vapply(names(e), function(id) sprintf("- group=%s | design_type=%s | %s", g, id, e[[id]]$label), "")
   })), collapse = "\n")
@@ -168,7 +168,7 @@ generate_td_recommend_prompt <- function(problem, n = 3, constraints = "") {
     "\nRank the ", n, " best-fitting designs. A recommendation may combine layers (for example a data architecture feeding an ML architecture), ",
     "in which case list each separately with its own rank. Be honest: if a design fits only partly, say so.\n\n",
     "OUTPUT FORMAT (plain text, no markdown, every value on ONE line, no square brackets or double quotes):\n",
-    "@recommendation\nrank: <1, 2, 3>\ndesign_group: <ml_genai|data_processing|software_patterns>\ndesign_type: <exact design_type from the catalog>\n",
+    "@recommendation\nrank: <1, 2, 3>\ndesign_group: <ml_genai|data_processing|software_patterns|algorithms>\ndesign_type: <exact design_type from the catalog>\n",
     "fit: <High|Medium|Low>\nreasoning: <2-3 sentences on why it fits THIS problem>\n",
     "drawbacks: <1-2 sentences on what to watch out for>\n",
     "tailored_context: <1-2 sentences that restate the problem as a context for generating this design>\n\n",
@@ -310,12 +310,12 @@ TD_INFO <- list(
 )
 
 # Jump targets: which tabname shows which group
-TD_GROUP_TAB <- c(ml_genai = "techdesign_ml", data_processing = "techdesign_data", software_patterns = "techdesign_patterns")
+TD_GROUP_TAB <- c(ml_genai = "techdesign_ml", data_processing = "techdesign_data", software_patterns = "techdesign_patterns", algorithms = "techdesign_algorithm", social_dynamics = "techdesign_soc_influence")
 
 # ---- Jump to a generate subtab with a design preselected --------------
 td_goto_generate <- function(api_manager, session, group, design_type, context = "") {
   api_manager$set_pending_techdesign_selection(list(group = group, design_type = design_type, context = context))
-  updateTabItems(session$rootScope(), "sidebar_menu", selected = TD_GROUP_TAB[[group]])
+  td_nav(session, TD_GROUP_TAB[[group]])
 }
 
 # ---- Design pickers (starter library + saved designs) ------------------
@@ -354,7 +354,7 @@ td_load_design <- function(api_manager, key) {
 }
 
 td_group_badge <- function(group) {
-  col <- c(ml_genai = "#8E44AD", data_processing = "#2980B9", software_patterns = "#27AE60")[[group]]
+  col <- c(ml_genai = "#8E44AD", data_processing = "#2980B9", software_patterns = "#27AE60", algorithms = "#D35400", social_dynamics = "#C2185B")[[group]]
   tags$span(style = sprintf("background:%s;color:#fff;border-radius:10px;padding:2px 9px;font-size:11px;", col), TD_GROUP_LABELS[[group]])
 }
 

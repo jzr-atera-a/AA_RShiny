@@ -15,7 +15,10 @@ bq_config_ui <- function(id) {
         width = 12,
 
         h4("BigQuery Configuration"),
-        p("Connect once to enable every BigQuery-backed tab: Communications, Funding Programmes and Strategy Canvases."),
+        uiOutput(ns("auto_note")),
+        p("Connect once to enable every BigQuery-backed tab: Communications, Funding Programmes and Strategy Canvases. ",
+          "Connecting only logs in (one quick check). Each of those tab groups then reads its own tables the first time ",
+          "you open it - watch the TABLES box at the bottom of the sidebar."),
 
         div(class = "alert alert-info",
             tags$strong("Note:"),
@@ -46,7 +49,7 @@ bq_config_ui <- function(id) {
                    )
                  ),
                  p(style = "color: #7f8c8d; font-size: 12px;",
-                   "Table names are fixed per suite. Connecting creates any that don't exist yet",
+                   "Table names are fixed per suite. When you open a tab group, any of its tables that don't exist yet are created",
                    " (CREATE TABLE IF NOT EXISTS - never alters or drops an existing table).")
           )
         ),
@@ -89,6 +92,13 @@ bq_config_ui <- function(id) {
 bq_config_server <- function(id, api_manager) {
   moduleServer(id, function(input, output, session) {
 
+    # where the current connection came from (local key folder / environment / by hand)
+    output$auto_note <- renderUI({
+      invalidateLater(3000); st <- api_manager$cred_status
+      if (!is.null(st$bq)) cred_banner(!isTRUE(st$bq_failed), st$bq, " You can still load another key below.")
+      else if (isTRUE(st$done)) cred_banner(FALSE, cred_not_found_text(api_manager, "service-account .json key"))
+    })
+
     observeEvent(input$authenticate, {
 
       if (trimws(input$project_id) == "" || trimws(input$dataset_id) == "") {
@@ -116,7 +126,9 @@ bq_config_server <- function(id, api_manager) {
         output$auth_status <- renderUI({
           tags$div(class = "status-success",
                    tags$i(class = "fa fa-check-circle"),
-                   " ✓ Successfully authenticated! Tables are ready:",
+                   " ✓ Successfully authenticated!",
+                   tags$br(),
+                   tags$small("Each tab group checks and loads its own tables the first time you open it (see TABLES in the sidebar)."),
                    tags$br(),
                    tags$small("Funding Programmes: ", api_manager$bq_full_table_funding),
                    tags$br(),
@@ -126,8 +138,8 @@ bq_config_server <- function(id, api_manager) {
                               api_manager$bq_full_table_de_canvas, ", ", api_manager$bq_full_table_de_roadmap))
         })
 
-        tryCatch(api_manager$bq_load_contacts(), error = function(e) NULL)
-        showNotification("✓ BigQuery connected - all tabs ready!", type = "message")
+        cred_set_status(api_manager, bq = "Connected by hand in this tab.", bq_failed = FALSE, done = TRUE)
+        showNotification("✓ BigQuery connected. Tables are loaded when you open each tab group.", type = "message")
 
       }, error = function(e) {
         output$auth_status <- renderUI({

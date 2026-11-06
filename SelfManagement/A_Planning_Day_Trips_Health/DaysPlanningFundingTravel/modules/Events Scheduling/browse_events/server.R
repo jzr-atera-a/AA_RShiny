@@ -91,8 +91,8 @@ browse_events_server <- function(id, api_manager) {
 
     observeEvent(input$refresh, { load_data() })
 
-    observeEvent(api_manager$state_trigger_events(), {
-      if (api_manager$bq_authenticated) load_data()
+    observeEvent(list(api_manager$state_trigger_events(), api_manager$tab_open("browse_events")), {
+      if (api_manager$tab_open("browse_events") && api_manager$bq_authenticated) load_data()   # on first open + on refresh triggers
     }, ignoreInit = TRUE)
 
     observeEvent(input$filter_city,     { apply_filters() }, ignoreInit = TRUE)

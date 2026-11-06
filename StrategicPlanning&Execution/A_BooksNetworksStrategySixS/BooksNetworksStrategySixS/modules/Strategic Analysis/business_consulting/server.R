@@ -307,7 +307,7 @@ business_consulting_server <- function(id, api_manager) {
       current_text <- input$case_text_edit
       if (nchar(trimws(current_text %||% "")) == 0) { showNotification("Nothing to send - generate a case first.", type = "warning"); return() }
       api_manager$set_pending_bulk_text_flex(current_text)
-      updateTabItems(session$rootScope(), "sidebar_menu", selected = "bulk_import")
+      td_nav(session, "bulk_import")
       showNotification("✓ Case sent to Flex Table's Bulk Import tab!", type = "message")
     })
 

@@ -1,0 +1,190 @@
+gen_version	example_id	fingerprint
+v2-4373e267122a	dow_up||0|	ca700c05f2828172
+v2-4373e267122a	dow_down||0|	d163390ba792d16e
+v2-4373e267122a	support||0|	89576873bfb69ccd
+v2-4373e267122a	resistance||0|	9466afab7117c9b6
+v2-4373e267122a	sup_to_res||0|	f1443e72bcb54ba8
+v2-4373e267122a	res_to_sup||0|	0eb4c946666f01b2
+v2-4373e267122a	uptrend_line||0|	7af1e2e1ddb044b0
+v2-4373e267122a	downtrend_line||0|	f365708689830e8d
+v2-4373e267122a	broken_uptrend||0|	1e78aac1347420a7
+v2-4373e267122a	broken_downtrend||0|	6a9fec38b98ae16d
+v2-4373e267122a	ctr_break_up||0|	4f7f2f48255ae6ae
+v2-4373e267122a	ctr_break_down||0|	d673eb241a0a4689
+v2-4373e267122a	bull_channel||0|	ab3fd83664fa0942
+v2-4373e267122a	bear_channel||0|	e4b0b286caeba048
+v2-4373e267122a	bull_engulfing||0|	e29bc8aa330c828d
+v2-4373e267122a	bear_engulfing||0|	b912241c093945d3
+v2-4373e267122a	piercing||0|	62189c2876f0697c
+v2-4373e267122a	dark_cloud||0|	baa29ca3451acaf9
+v2-4373e267122a	bull_harami||0|	6ba498ced76dfc9f
+v2-4373e267122a	bear_harami||0|	26a742eb10a73b9d
+v2-4373e267122a	harami_cross||0|	0c13efecaeefae05
+v2-4373e267122a	morning_star||0|	ed67bc846ddf0532
+v2-4373e267122a	evening_star||0|	ee9cc25cbeaaa483
+v2-4373e267122a	three_white_soldiers||0|	399aae1d57aa0def
+v2-4373e267122a	three_black_crows||0|	114aebaf3b7ad18c
+v2-4373e267122a	tweezer_top||0|	92298e97e00809eb
+v2-4373e267122a	tweezer_bottom||0|	2424b13a36d840d0
+v2-4373e267122a	rising_three||0|	d77d19bdb30660d4
+v2-4373e267122a	falling_three||0|	c51a2b1d5e89cf9b
+v2-4373e267122a	three_inside_up||0|	37c7d2cfa0c0e505
+v2-4373e267122a	three_inside_down||0|	d051c1b41956df5d
+v2-4373e267122a	three_outside_up||0|	7f92478a3e06b2c6
+v2-4373e267122a	three_outside_down||0|	8f73273073a51f9e
+v2-4373e267122a	bull_kicker||0|	31de03d62d6ed335
+v2-4373e267122a	bear_kicker||0|	bc7106205a12ceda
+v2-4373e267122a	stick_sandwich||0|	7858c101f4b27eb2
+v2-4373e267122a	matching_low||0|	2f65c0d6ee636db6
+v2-4373e267122a	sep_lines_bull||0|	f0fa633ed3a93a60
+v2-4373e267122a	sep_lines_bear||0|	3e2800b7478b057f
+v2-4373e267122a	fib_retracement||0|	533ec0cec18fb9b3
+v2-4373e267122a	fib_expansion||0|	ac78ca0add7ee7e1
+v2-4373e267122a	sym_triangle||0|	8208f9f8aa0d9600
+v2-4373e267122a	asc_triangle||0|	d61460b9852c1298
+v2-4373e267122a	desc_triangle||0|	8a0f282753047289
+v2-4373e267122a	rising_wedge||0|	18a2ac0f2224031a
+v2-4373e267122a	falling_wedge||0|	fb0a2f245ec25ca0
+v2-4373e267122a	bull_flag||0|	bad51ba9227ace2d
+v2-4373e267122a	bear_flag||0|	a63849cff78c1ea9
+v2-4373e267122a	pennant||0|	e04a521fc2932613
+v2-4373e267122a	double_top||0|	dc3c8b27d056f68b
+v2-4373e267122a	double_bottom||0|	c0b076980c1dfe0f
+v2-4373e267122a	head_shoulders||0|	f4f0040884f9a215
+v2-4373e267122a	inv_head_shoulders||0|	dd0c72f4ad1a69e9
+v2-4373e267122a	triple_top||0|	7e0ad4106d88162c
+v2-4373e267122a	triple_bottom||0|	2dc5311029c0c09e
+v2-4373e267122a	rectangle||0|	fb6614d088fa910b
+v2-4373e267122a	cup_handle||0|	c052421dcdeb6a2b
+v2-4373e267122a	inv_cup_handle||0|	a99edf8429d08f27
+v2-4373e267122a	rounding_bottom||0|	bb4c6c091490cc80
+v2-4373e267122a	rounding_top||0|	070cc27d6b1c7f82
+v2-4373e267122a	diamond_top||0|	85829233f2f6f2fb
+v2-4373e267122a	diamond_bottom||0|	58a9adcc671eec22
+v2-4373e267122a	broadening_top||0|	65f1966d8370b70d
+v2-4373e267122a	broadening_bottom||0|	539ef1b5dee17aed
+v2-4373e267122a	island_top||0|	8fa5804d507d5782
+v2-4373e267122a	island_bottom||0|	1941d006a5142e1f
+v2-4373e267122a	measured_up||0|	c6fd5baf03f070b7
+v2-4373e267122a	measured_down||0|	a88908a7887d94f3
+v2-4373e267122a	round_number||0|	a4e30edc83ba131b
+v2-4373e267122a	vol_squeeze||0|	832c8f6a430315d2
+v2-4373e267122a	failed_breakout||0|	a70a1602f8aaef2f
+v2-4373e267122a	failed_breakdown||0|	4ff0b3a69ebac124
+v2-4373e267122a	throwback||0|	51f61f7f1923e930
+v2-4373e267122a	pullback_breakout||0|	51f61f7f1923e930
+v2-4373e267122a	breakaway_gap_up||0|	f59caa37d8bad13e
+v2-4373e267122a	breakaway_gap_down||0|	fa7f32cc5a1a8511
+v2-4373e267122a	runaway_gap_up||0|	c1b256f6ffd609a1
+v2-4373e267122a	runaway_gap_down||0|	f8e366efb86ebbc2
+v2-4373e267122a	exhaustion_gap_up||0|	4e8a07a5f82a2831
+v2-4373e267122a	exhaustion_gap_down||0|	f30290a78e2e32f4
+v2-4373e267122a	spike_top||0|	9d02cfb249329fb2
+v2-4373e267122a	spike_bottom||0|	4f896357ce4b19ea
+v2-4373e267122a	abcd_bull||0|	20c52f5a4d5ffd94
+v2-4373e267122a	abcd_bear||0|	7610dc5fa0462bf6
+v2-4373e267122a	three_drives_up||0|	fc622210b29603a7
+v2-4373e267122a	three_drives_down||0|	a25c8f948e3afd4a
+v2-4373e267122a	wolfe_bull||0|	1529493253be993e
+v2-4373e267122a	wolfe_bear||0|	668c457ba502f8f7
+v2-4373e267122a	elliott_up||0|	f6126d1d50ec8a66
+v2-4373e267122a	elliott_down||0|	3127e786a1e2a9ef
+v2-4373e267122a	elliott_abc||0|	ab64e2841c22ceff
+v2-4373e267122a	golden_cross||0|	bcf91072a99b0c72
+v2-4373e267122a	death_cross||0|	862876fca0277cce
+v2-4373e267122a	ma_pullback_up||0|	b1bb4db72e30da7f
+v2-4373e267122a	ma_pullback_down||0|	38282863a9467393
+v2-4373e267122a	ma_stack_bull||0|	013e3adbb8cdbcb6
+v2-4373e267122a	ma_stack_bear||0|	7a0ad5d09399f60c
+v2-4373e267122a	ma_ribbon_squeeze||0|	7d43b96031197d24
+v2-4373e267122a	price_x_ma_up||0|	fa49727fcda2381b
+v2-4373e267122a	price_x_ma_down||0|	2ba9f54e24fd9c67
+v2-4373e267122a	holy_grail_long||0|	59e3bbdbfafec513
+v2-4373e267122a	holy_grail_short||0|	e4c49a84ee169a74
+v2-4373e267122a	macd_x_signal_up||0|	980bf66321d2d920
+v2-4373e267122a	macd_x_signal_down||0|	c5d5f5274f6de1eb
+v2-4373e267122a	macd_x_zero_up||0|	3acef7e7f86a06d5
+v2-4373e267122a	macd_x_zero_down||0|	d9f72ff0c4523b23
+v2-4373e267122a	macd_div_bull||0|	5b20bed5045484d2
+v2-4373e267122a	macd_div_bear||0|	de65c34a1ce5bdb8
+v2-4373e267122a	rsi_ob||0|	58ab63cc74263dec
+v2-4373e267122a	rsi_os||0|	eb534c983c81818f
+v2-4373e267122a	rsi_div_bull||0|	5b20bed5045484d2
+v2-4373e267122a	rsi_div_bear||0|	de65c34a1ce5bdb8
+v2-4373e267122a	rsi_fail_bull||0|	00882de53ade55f0
+v2-4373e267122a	rsi_fail_bear||0|	b53708426e9eafc6
+v2-4373e267122a	rsi_x50_up||0|	727831bda4187073
+v2-4373e267122a	rsi_x50_down||0|	b07515c2d621a02f
+v2-4373e267122a	stoch_x_up_os||0|	d901058fb81de52b
+v2-4373e267122a	stoch_x_down_ob||0|	7f8229d7a49e585c
+v2-4373e267122a	stoch_div_bull||0|	5b20bed5045484d2
+v2-4373e267122a	stoch_div_bear||0|	de65c34a1ce5bdb8
+v2-4373e267122a	momentum_exhaustion||0|	5debb41b27744c3b
+v2-4373e267122a	bb_squeeze||0|	2432bc238fced46d
+v2-4373e267122a	bb_break_up||0|	062d9e4c11e61680
+v2-4373e267122a	bb_break_down||0|	2b12f6524ad109ba
+v2-4373e267122a	bb_walk_up||0|	b392c710e5fea257
+v2-4373e267122a	bb_walk_down||0|	539971c9b18efb20
+v2-4373e267122a	bb_snap_lower||0|	b1f1537b0e3dce70
+v2-4373e267122a	bb_snap_upper||0|	f07b53e0f89652a9
+v2-4373e267122a	keltner_squeeze||0|	165d0d954ea6616f
+v2-4373e267122a	atr_rising||0|	b2a4fd93d491862a
+v2-4373e267122a	atr_falling||0|	c11f60f78bbb7213
+v2-4373e267122a	adx_strong||0|	03eb8402ae902e74
+v2-4373e267122a	adx_weak||0|	57eecdcd0bbd40dc
+v2-4373e267122a	di_x_up||0|	780288ea6f92b7bc
+v2-4373e267122a	di_x_down||0|	12e47a226b357330
+v2-4373e267122a	pivot_bounce_long||0|	58450116afca8ed4
+v2-4373e267122a	pivot_bounce_short||0|	a545a36373105227
+v2-4373e267122a	on_straddle_up||0|	fb440691721d20ba
+v2-4373e267122a	on_straddle_down||0|	da01dd375905f89e
+v2-4373e267122a	orb_up||0|	5b418bd8a5c105ad
+v2-4373e267122a	orb_down||0|	e69c1bf5d631d4d7
+v2-4373e267122a	uptrend_line||3|	a9b52b0c53675c78
+v2-4373e267122a	downtrend_line||3|	b0dbcec87ca72f96
+v2-4373e267122a	dark_cloud||0|hit	74444e79ca9f1435
+v2-4373e267122a	dark_cloud||5|miss	928c36759234aa7f
+v2-4373e267122a	bear_engulfing||0|hit	381ffa6695c8de7a
+v2-4373e267122a	bear_engulfing||5|miss	e6ef24f828e6207f
+v2-4373e267122a	piercing||0|hit	adba5a15eb00e7aa
+v2-4373e267122a	piercing||5|miss	454f06537ca7457f
+v2-4373e267122a	fib_retracement|s -1,r 0.5|0|	bc3e0f1d80e6bdba
+v2-4373e267122a	fib_retracement|s -1,r 0.618|0|	9f00475dbd26ef78
+v2-4373e267122a	fib_retracement|s 1,r 0.5|0|	533ec0cec18fb9b3
+v2-4373e267122a	fib_retracement|s 1,r 0.618|0|	27b6dfd9adbefb9c
+v2-4373e267122a	fib_expansion|s -1|0|	62b8e78b540377ff
+v2-4373e267122a	fib_expansion|s -1|3|	f5c1896f01cbc73e
+v2-4373e267122a	fib_expansion|s 1|0|	ac78ca0add7ee7e1
+v2-4373e267122a	fib_expansion|s 1|3|	a51bcb32a8e7204a
+v2-4373e267122a	sym_triangle|ctx -1|0|hit	a0b32df001a12414
+v2-4373e267122a	sym_triangle|ctx -1|5|miss	35d24b58b672e395
+v2-4373e267122a	sym_triangle|ctx 1|0|hit	9b3d679612430f53
+v2-4373e267122a	sym_triangle|ctx 1|5|miss	7a75cc249dd2b5c9
+v2-4373e267122a	asc_triangle||0|hit	15fceccaf7ac1c87
+v2-4373e267122a	asc_triangle||5|miss	57df729109e0185c
+v2-4373e267122a	inv_head_shoulders||0|hit	555ffb418db44c82
+v2-4373e267122a	inv_head_shoulders||5|miss	a5988e657103c2e9
+v2-4373e267122a	double_top||0|hit	16ebf5a6488e9231
+v2-4373e267122a	double_top||5|miss	6bf9e48d7604c034
+v2-4373e267122a	bear_flag||0|hit	0c491faa83b7e252
+v2-4373e267122a	bear_flag||5|miss	18b4e5bc417785ea
+v2-4373e267122a	bull_flag||0|hit	076154753c6516a6
+v2-4373e267122a	bull_flag||5|miss	be9300b132f2da5f
+v2-4373e267122a	pennant|s -1|0|hit	4a5f2371b3ee4576
+v2-4373e267122a	pennant|s -1|5|miss	4d66c037fa159a80
+v2-4373e267122a	rising_wedge|ctx -1|0|hit	c5f94438e24634f0
+v2-4373e267122a	rising_wedge|ctx -1|5|miss	5f5da9c32cb37259
+v2-4373e267122a	rising_wedge|ctx 1|0|hit	809779d7f51b95a7
+v2-4373e267122a	rising_wedge|ctx 1|5|miss	af1c96204d9ae639
+v2-4373e267122a	falling_wedge|ctx -1|0|hit	5640d272a447f246
+v2-4373e267122a	falling_wedge|ctx -1|5|miss	38cf5b2dfd9996d3
+v2-4373e267122a	falling_wedge|ctx 1|0|hit	23bb444f3a1f572e
+v2-4373e267122a	falling_wedge|ctx 1|5|miss	b3e25b1d4ee934a6
+v2-4373e267122a	head_shoulders||0|hit	53edeb426715e45f
+v2-4373e267122a	head_shoulders||5|miss	b583189807776ad1
+v2-4373e267122a	double_bottom||0|hit	d3ab6643bc38523a
+v2-4373e267122a	double_bottom||5|miss	5aabf266c5bbb5f1
+v2-4373e267122a	on_straddle_down||0|hit	26b2f406b074d6f5
+v2-4373e267122a	on_straddle_up||0|hit	66688bc406c0c62c
+v2-4373e267122a	pivot_bounce_long||0|hit	180f1af9733a3729
+v2-4373e267122a	pivot_bounce_short||0|hit	e2af463f1a78001b

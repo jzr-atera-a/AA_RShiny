@@ -284,6 +284,7 @@ schedule_daytype_dropdown_ui <- function(ns) {
 
 setup_schedule_daytype_cascade <- function(input, output, session, api_manager) {
   taxonomy <- reactive({
+    api_manager$keys_gate("schedule")     # loads when a tab that uses this table is first opened, not before
     api_manager$state_trigger_schedule()
     if (!api_manager$bq_authenticated) return(data.frame(day_type = character(), stringsAsFactors = FALSE))
     tryCatch(api_manager$bq_get_schedule_taxonomy(), error = function(e) data.frame(day_type = character(), stringsAsFactors = FALSE))
@@ -328,6 +329,7 @@ schedule_country_city_dropdown_ui <- function(ns) {
 
 setup_schedule_country_city_cascade <- function(input, output, session, api_manager) {
   taxonomy <- reactive({
+    api_manager$keys_gate("schedule")     # loads when a tab that uses this table is first opened, not before
     api_manager$state_trigger_schedule()
     if (!api_manager$bq_authenticated) return(data.frame(country = character(), city = character(), stringsAsFactors = FALSE))
     tryCatch(api_manager$bq_get_schedule_taxonomy(), error = function(e) data.frame(country = character(), city = character(), stringsAsFactors = FALSE))
@@ -440,6 +442,7 @@ prep_category_dropdown_ui <- function(ns) {
 
 setup_prep_category_cascade <- function(input, output, session, api_manager) {
   taxonomy <- reactive({
+    api_manager$keys_gate("prep")     # loads when a tab that uses this table is first opened, not before
     api_manager$state_trigger_schedule()
     if (!api_manager$bq_authenticated) return(data.frame(category = character(), stringsAsFactors = FALSE))
     tryCatch(api_manager$bq_get_prep_taxonomy(), error = function(e) data.frame(category = character(), stringsAsFactors = FALSE))
@@ -479,6 +482,7 @@ prep_location_dropdown_ui <- function(ns) {
 
 setup_prep_location_cascade <- function(input, output, session, api_manager) {
   taxonomy <- reactive({
+    api_manager$keys_gate("prep")     # loads when a tab that uses this table is first opened, not before
     api_manager$state_trigger_schedule()
     if (!api_manager$bq_authenticated) return(data.frame(location = character(), stringsAsFactors = FALSE))
     tryCatch(api_manager$bq_get_prep_taxonomy(), error = function(e) data.frame(location = character(), stringsAsFactors = FALSE))
@@ -520,6 +524,7 @@ commitment_category_dropdown_ui <- function(ns) {
 
 setup_commitment_category_cascade <- function(input, output, session, api_manager) {
   taxonomy <- reactive({
+    api_manager$keys_gate("commitments")     # loads when a tab that uses this table is first opened, not before
     api_manager$state_trigger_schedule()
     if (!api_manager$bq_authenticated) return(data.frame(category = character(), stringsAsFactors = FALSE))
     tryCatch(api_manager$bq_get_commitments_taxonomy(), error = function(e) data.frame(category = character(), stringsAsFactors = FALSE))
@@ -558,6 +563,7 @@ commitment_sector_dropdown_ui <- function(ns) {
 
 setup_commitment_sector_cascade <- function(input, output, session, api_manager) {
   taxonomy <- reactive({
+    api_manager$keys_gate("commitments")     # loads when a tab that uses this table is first opened, not before
     api_manager$state_trigger_schedule()
     if (!api_manager$bq_authenticated) return(data.frame(sector = character(), stringsAsFactors = FALSE))
     tryCatch(api_manager$bq_get_commitments_taxonomy(), error = function(e) data.frame(sector = character(), stringsAsFactors = FALSE))
@@ -596,6 +602,7 @@ commitment_topic_dropdown_ui <- function(ns) {
 
 setup_commitment_topic_cascade <- function(input, output, session, api_manager) {
   taxonomy <- reactive({
+    api_manager$keys_gate("commitments")     # loads when a tab that uses this table is first opened, not before
     api_manager$state_trigger_schedule()
     if (!api_manager$bq_authenticated) return(data.frame(topic = character(), stringsAsFactors = FALSE))
     tryCatch(api_manager$bq_get_commitments_taxonomy(), error = function(e) data.frame(topic = character(), stringsAsFactors = FALSE))
@@ -761,6 +768,7 @@ events_category_dropdown_ui <- function(ns) {
 
 setup_events_category_cascade <- function(input, output, session, api_manager) {
   taxonomy <- reactive({
+    api_manager$keys_gate("events")     # loads when a tab that uses this table is first opened, not before
     api_manager$state_trigger_events()
     if (!api_manager$bq_authenticated) return(data.frame(category = character(), subcategory = character(), stringsAsFactors = FALSE))
     tryCatch(api_manager$bq_get_events_taxonomy(), error = function(e) data.frame(category = character(), subcategory = character(), stringsAsFactors = FALSE))
@@ -1019,6 +1027,7 @@ funding_category_dropdown_ui <- function(ns) {
 
 setup_funding_category_cascade <- function(input, output, session, api_manager) {
   taxonomy <- reactive({
+    api_manager$keys_gate("funding")     # loads when a tab that uses this table is first opened, not before
     api_manager$state_trigger_funding()
     if (!api_manager$bq_authenticated) return(data.frame(category = character(), stringsAsFactors = FALSE))
     tryCatch(api_manager$bq_get_funding_taxonomy(), error = function(e) data.frame(category = character(), stringsAsFactors = FALSE))
@@ -1065,6 +1074,7 @@ funding_country_cityregion_dropdown_ui <- function(ns) {
 
 setup_funding_country_cityregion_cascade <- function(input, output, session, api_manager) {
   taxonomy <- reactive({
+    api_manager$keys_gate("funding")     # loads when a tab that uses this table is first opened, not before
     api_manager$state_trigger_funding()
     if (!api_manager$bq_authenticated) return(data.frame(country = character(), city_region = character(), stringsAsFactors = FALSE))
     tryCatch(api_manager$bq_get_funding_taxonomy(), error = function(e) data.frame(country = character(), city_region = character(), stringsAsFactors = FALSE))
@@ -1294,6 +1304,7 @@ diet_type_dropdown_ui <- function(ns) {
 
 setup_diet_type_cascade <- function(input, output, session, api_manager) {
   taxonomy <- reactive({
+    api_manager$keys_gate("diet")     # loads when a tab that uses this table is first opened, not before
     api_manager$state_trigger_diet()
     if (!api_manager$bq_authenticated) return(data.frame(diet_type = character(), stringsAsFactors = FALSE))
     tryCatch(api_manager$bq_get_diet_taxonomy(), error = function(e) data.frame(diet_type = character(), stringsAsFactors = FALSE))
@@ -1513,6 +1524,7 @@ session_type_dropdown_ui <- function(ns) {
 
 setup_session_type_cascade <- function(input, output, session, api_manager) {
   taxonomy <- reactive({
+    api_manager$keys_gate("exercise")     # loads when a tab that uses this table is first opened, not before
     api_manager$state_trigger_exercise()
     if (!api_manager$bq_authenticated) return(data.frame(session_type = character(), stringsAsFactors = FALSE))
     tryCatch(api_manager$bq_get_exercise_taxonomy(), error = function(e) data.frame(session_type = character(), stringsAsFactors = FALSE))
@@ -1574,6 +1586,7 @@ exercise_category_dropdown_ui <- function(ns) {
 
 setup_exercise_category_cascade <- function(input, output, session, api_manager) {
   taxonomy <- reactive({
+    api_manager$keys_gate("exercise")     # loads when a tab that uses this table is first opened, not before
     api_manager$state_trigger_exercise()
     if (!api_manager$bq_authenticated) return(data.frame(exercise_category = character(), exercise_name = character(), stringsAsFactors = FALSE))
     tryCatch(api_manager$bq_get_exercise_taxonomy(), error = function(e) data.frame(exercise_category = character(), exercise_name = character(), stringsAsFactors = FALSE))

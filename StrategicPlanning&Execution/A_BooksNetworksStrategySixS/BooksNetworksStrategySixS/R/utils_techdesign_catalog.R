@@ -8,14 +8,16 @@
 # later = adding one entry to TD_CATALOG below (or using "Custom design" in
 # the UI, which needs no code at all). No schema change, ever.
 
-TD_GROUPS <- c("ml_genai", "data_processing", "software_patterns")
+TD_GROUPS <- c("ml_genai", "data_processing", "software_patterns", "algorithms", "social_dynamics")
 TD_GROUP_LABELS <- c(
   ml_genai = "Machine Learning / GenAI Architectures",
   data_processing = "Data Processing Architectures",
-  software_patterns = "Software Design Patterns"
+  software_patterns = "Software Design Patterns",
+  algorithms = "Algorithms (LeetCode / Meta interview)",
+  social_dynamics = "Social Dynamics Algorithms (Top 36)"
 )
 # Which renderer draws each group by default: swimlane architecture or UML class diagram.
-TD_GROUP_DIAGRAM_KIND <- c(ml_genai = "layered", data_processing = "layered", software_patterns = "class")
+TD_GROUP_DIAGRAM_KIND <- c(ml_genai = "layered", data_processing = "layered", software_patterns = "class", algorithms = "layered", social_dynamics = "layered")
 
 TD_CUSTOM_VALUE <- "__custom_design__"
 

@@ -143,3 +143,16 @@ tr_news_lines <- function(items) {
   vapply(it, function(x) trimws(sprintf("- %s %s (%s%s) %s", x$headline, x$context, if (nzchar(x$source)) x$source else "source",
                                         if (nzchar(x$time)) paste0(", ", x$time) else "", x$url)), "")
 }
+
+
+# Overnight levels that cannot be right are left empty, with a note (2 Nov 2026: a Brent high of 313.2 with the price at
+# 110.2). Rules: low <= price <= high, and low / high within 15% of the price. Units are not changed: IG quotes oil in
+# cents (Brent 10579 = 105.79 USD), web sources in dollars; both are kept as read.
+tr_ms_check_levels <- function(all) {
+  notes <- character(0); if (is.null(all) || !NROW(all)) return(list(levels = all, notes = notes))
+  for (k in seq_len(nrow(all))) { cur <- all$cur[k]; lo <- all$low[k]; hi <- all$high[k]; nm <- all$name[k] %||% all$code[k]
+    if (!is.finite(cur) || cur <= 0) next
+    if (is.finite(hi) && (hi < cur * (1 - 1e-9) || hi > cur * 1.15)) { notes <- c(notes, sprintf("%s high %s (price %s).", nm, format(hi), format(cur))); all$high[k] <- NA }
+    if (is.finite(lo) && (lo > cur * (1 + 1e-9) || lo < cur * 0.85)) { notes <- c(notes, sprintf("%s low %s (price %s).", nm, format(lo), format(cur))); all$low[k] <- NA } }
+  list(levels = all, notes = notes)
+}

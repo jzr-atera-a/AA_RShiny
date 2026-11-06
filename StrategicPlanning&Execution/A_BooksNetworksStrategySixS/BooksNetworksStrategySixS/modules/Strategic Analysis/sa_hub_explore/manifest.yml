@@ -1,0 +1,33 @@
+module:
+  id: "sa_hub_explore"
+  name: "Browse and Visualise"
+  description: "Hub: Browse and Visualise"
+  version: "1.0.0"
+  author: "Strategic Analysis Suite"
+
+  enabled: true
+
+  menu:
+    label: "Browse and Visualise"
+    icon: "chess"
+    tabname: "sa_hub_explore"
+    group: "Strategic Analysis"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinyjs
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: ["claude", "bigquery"]
+
+  data:
+    required: []
+    optional: []

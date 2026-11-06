@@ -19,7 +19,7 @@ zoom_schedule_server <- function(id, api_manager) {
       inv$raw_ics <- res$raw_ics
       api_manager$zoom_invite(inv)
       api_manager$titan_goto("new")
-      tryCatch(updateTabItems(session$rootScope(), "sidebar_menu", selected = "events_to_calendar"),
+      tryCatch(nav_goto(session, "events_to_calendar"),
                error = function(e) cat("[Zoom] could not switch tab:", conditionMessage(e), "\n"))
     }
 

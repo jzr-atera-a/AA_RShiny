@@ -123,6 +123,11 @@ source("R/utils_ics.R")
 source("R/utils_titan.R")
 source("R/utils_slack.R")
 source("R/utils_zoom.R")
+source("R/utils_muscle_body.R")
+source("R/utils_muscle.R")
+source("R/utils_local_creds.R")
+source("R/utils_nav.R")
+source("R/utils_tables.R")
 
 api_manager <- APIManager$new()
 
@@ -133,63 +138,25 @@ create_ui <- function(module_loader) {
   enabled_modules <- module_loader$get_enabled_modules()
   registry <- module_loader$registry
 
-  # ---- Build tab items (flat, unaffected by grouping) ----
-  all_tabs <- list()
-  for (module in enabled_modules) {
-    module_id <- module$module$id
-    ui_function_name <- paste0(module_id, "_ui")
-    tabname <- module$module$menu$tabname %||% module_id
-
-    if (exists(ui_function_name, envir = .GlobalEnv)) {
-      ui_function <- get(ui_function_name, envir = .GlobalEnv)
-      all_tabs[[length(all_tabs) + 1]] <- tabItem(tabName = tabname, ui_function(module_id))
-    } else {
-      all_tabs[[length(all_tabs) + 1]] <- tabItem(
-        tabName = tabname,
-        fluidRow(box(title = paste("Module:", module$module$name), status = "warning", solidHeader = TRUE, width = 12,
-                    h4("This module is enabled but not yet implemented"),
-                    p("Module ID:", module_id), p("Expected UI function:", ui_function_name)))
-      )
-    }
-  }
-
-  # ---- Build GROUPED, COLLAPSIBLE sidebar menu ----
-  # Groups are defined as a top-level `groups:` list in the registry (each
-  # with an explicit `modules: [id, id, ...]` member list). For each group,
-  # filter its declared member ids against the currently-enabled modules,
-  # build one menuSubItem() per surviving member, then build the group's
-  # menuItem() via do.call() splicing those sub-items in as `...`.
-  groups <- registry$groups
-  enabled_ids <- sapply(enabled_modules, function(m) m$module$id)
-
-  if (!is.null(groups)) {
-    menu_items <- lapply(groups, function(g) {
-      group_mods <- g$modules[g$modules %in% enabled_ids]
-      if (length(group_mods) == 0) return(NULL)
-
-      sub_items <- lapply(group_mods, function(mid) {
-        m <- enabled_modules[[which(enabled_ids == mid)]]
-        menuSubItem(m$module$menu$label, tabName = m$module$menu$tabname, icon = icon(m$module$menu$icon))
-      })
-
-      do.call(menuItem, c(
-        list(text = g$label, icon = icon(g$icon %||% DEFAULT_GROUP_ICON),
-             startExpanded = isTRUE(g$expanded)),
-        sub_items
-      ))
-    })
-    menu_items <- menu_items[!sapply(menu_items, is.null)]
-  } else {
-    menu_items <- lapply(enabled_modules, function(m) {
-      menuItem(m$module$menu$label, tabName = m$module$menu$tabname, icon = icon(m$module$menu$icon))
-    })
-  }
+  # ---- Navigation: sidebar = tab group > topic section; the modules of a section are horizontal tabs in the page ----
+  # (see R/utils_nav.R and the `sections:` lists in modules/_module_registry.yml)
+  layout <- nav_register(nav_layout(registry, enabled_modules))
+  all_tabs <- nav_tab_items(layout, enabled_modules)
+  menu_items <- nav_sidebar_items(layout)
 
   dashboardPage(
     dashboardHeader(title = module_loader$registry$app$name %||% "Business Operations Suite"),
 
     dashboardSidebar(
-      sidebarMenu(id = "sidebar_menu", do.call(tagList, menu_items))
+      sidebarMenu(id = "sidebar_menu", do.call(tagList, menu_items)),
+      # docked at the bottom of the sidebar so the connection lights and the table checks stay visible while the menu scrolls
+      tags$style(HTML("
+        #sidebar_status_dock { position: fixed; bottom: 0; left: 0; width: 230px; z-index: 1040; padding-top: 4px;
+                               background: linear-gradient(rgba(0,95,100,.94), rgb(0,110,108)); box-shadow: 0 -4px 10px rgba(0,0,0,.25); }
+        .main-sidebar .sidebar-menu { padding-bottom: 250px; }
+        @media (min-width: 768px) { .sidebar-collapse #sidebar_status_dock { display: none; } }
+        @media (max-width: 767px) { body:not(.sidebar-open) #sidebar_status_dock { display: none; } }")),
+      tags$div(id = "sidebar_status_dock", keys_status_box("keys_status"), tables_status_box(unname(layout$tabname_of[names(layout$tabname_of) %in% names(TABLE_MODULE_KEYS)])))
     ),
 
     dashboardBody(
@@ -209,6 +176,16 @@ create_ui <- function(module_loader) {
 create_server <- function(module_loader, api_manager, session) {
   enabled_modules <- module_loader$get_enabled_modules()
 
+  # Per-session record of the tabs the user has opened. Each module's data loaders wait behind api_manager$tab_gate("<tab>"),
+  # so a page reload (or a second browser tab) loads nothing until its own tabs are opened.
+  session$userData$tabs_opened <- shiny::reactiveVal(character())
+  session$userData$keys_opened <- shiny::reactiveVal(character())   # table keys used by the opened tabs (for the shared taxonomy loaders)
+
+  # sidebar: connection lights + on-demand table checks (one tab group at a time, when it is opened)
+  keys_status_wire("keys_status", api_manager)
+  layout <- nav_register(nav_layout(module_loader$registry, enabled_modules))
+  tables_wire(api_manager, session, layout)
+
   for (module in enabled_modules) {
     module_id <- module$module$id
     server_function_name <- paste0(module_id, "_server")
@@ -218,6 +195,14 @@ create_server <- function(module_loader, api_manager, session) {
       server_function(module_id, api_manager)
     }
   }
+
+  # LAST, and after the page has been sent: connect Claude + BigQuery from the local key folder / environment
+  # (skipped when already connected; otherwise the user configures them by hand in API Configuration).
+  # Connecting only authenticates; tables are checked later, per tab group, when it is opened.
+  session$onFlushed(function() {
+    shiny::withReactiveDomain(session, shiny::isolate(
+      tryCatch(cred_startup(api_manager), error = function(e) cat("[Keys] start-up check failed:", conditionMessage(e), "\n"))))
+  }, once = TRUE)
 }
 
 `%||%` <- function(x, y) if (is.null(x)) y else x

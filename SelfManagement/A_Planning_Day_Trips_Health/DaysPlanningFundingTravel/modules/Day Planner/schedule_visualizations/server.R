@@ -7,6 +7,7 @@ schedule_visualizations_server <- function(id, api_manager) {
     viz_data <- reactiveVal(NULL)
 
     viz_taxonomy <- reactive({
+      api_manager$tab_gate("schedule_visualizations")     # loads when this tab is first opened, not before
       api_manager$state_trigger_schedule()
       if (!api_manager$bq_authenticated) return(data.frame(day_type = character(), country = character(), city = character(), stringsAsFactors = FALSE))
       tryCatch(api_manager$bq_get_schedule_taxonomy(), error = function(e) data.frame(day_type = character(), country = character(), city = character(), stringsAsFactors = FALSE))

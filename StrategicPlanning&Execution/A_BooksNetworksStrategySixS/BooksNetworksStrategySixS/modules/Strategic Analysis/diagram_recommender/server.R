@@ -113,7 +113,7 @@ diagram_recommender_server <- function(id, api_manager) {
 
       cat(sprintf("🖱️  [Strategy Recommender][DEBUG] Recommended tool clicked: %s -> jumping to Generate Diagram\n", dtype))
       api_manager$set_pending_diagram_selection(dtype)
-      updateTabItems(session$rootScope(), "sidebar_menu", selected = "generate_diagram")
+      td_nav(session, "generate_diagram")
       showNotification(sprintf("✓ %s selected - jumping to Generate Diagram", DIAGRAM_TYPE_LABELS[[dtype]]), type = "message")
     })
 

@@ -222,7 +222,7 @@ generate_diagram_server <- function(id, api_manager) {
       current_text <- input$diagram_text_edit
       if (nchar(trimws(current_text %||% "")) > 0) {
         api_manager$set_pending_bulk_text_diagram(current_text)
-        updateTabItems(session$rootScope(), "sidebar_menu", selected = "diagram_bulk_import")
+        td_nav(session, "diagram_bulk_import")
         showNotification("✓ Diagram copied to Bulk Import tab!", type = "message")
       } else {
         showNotification("No diagram to copy. Generate one first.", type = "warning")

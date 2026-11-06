@@ -42,6 +42,19 @@ exercise_about_ui <- function(id) {
           "cascade in this suite."),
 
         hr(),
+        h4("Muscle-building programme (new tabs)"),
+        p("Muscle Programme, Muscle Log, Muscle Map and Muscle Progress add a male muscle-building plan with a weekly split, ",
+          "three options per day (gym, no equipment, home kit), loads and week-over-week progression. They use four new tables and never touch ",
+          tags$code("exercise_log"), ":"),
+        tags$ul(
+          tags$li(tags$code("muscle_programmes"), " - one row per exercise per option per day (programme_id such as W03-D2-gym): muscles, sets, reps, RIR, target load."),
+          tags$li(tags$code("muscle_diagrams"), " - one row per diagram: spec_json holds muscle ids, roles, sets and callouts; the picture is redrawn from it."),
+          tags$li(tags$code("muscle_set_log"), " - one row per logged set: date, exercise, load_kg, reps, rir."),
+          tags$li(tags$code("muscle_targets"), " - your edited MEV / MRV weekly set targets per muscle (latest row wins).")
+        ),
+        p("A set counts 1 for each primary muscle and 0.5 for each secondary muscle. Targets ramp over a 5-week block ",
+          "(build weeks 1-4 with RIR 4,3,2,1; week 5 deload), the load for the next session is suggested by double progression."),
+        hr(),
         p("Part of the Business Operations Suite: Day Planner + Diet Planner + Exercise Tracker + Events Scheduling + Funding Programmes",
           style = "text-align: center; color: #999; font-size: 12px;")
       )

@@ -15,7 +15,10 @@ schedule_prep_checklist_server <- function(id, api_manager) {
       }, error = function(e) { showNotification(paste("Error:", e$message), type = "error") })
     }
 
-    observeEvent(input$select_date, { load_steps() })
+    observeEvent(list(input$select_date, api_manager$tab_open("schedule_prep_checklist")), {
+      if (!isTRUE(api_manager$tab_open("schedule_prep_checklist"))) return()   # loads when this tab is first opened, not at start-up
+      load_steps()
+    })
     observeEvent(input$btn_refresh, { load_steps(); showNotification("✓ Progress refreshed!", type = "message") })
 
     output$progress_stats <- renderUI({

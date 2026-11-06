@@ -125,7 +125,7 @@ generate_programme_server <- function(id, api_manager) {
       current_text <- input$programme_text_edit
       if (nchar(trimws(current_text %||% "")) > 0) {
         api_manager$set_pending_bulk_text_funding(current_text)
-        updateTabItems(session$rootScope(), "sidebar_menu", selected = "funding_bulk_import")
+        nav_goto(session, "funding_bulk_import")
         showNotification("✓ Programmes copied to Bulk Import tab!", type = "message")
       } else {
         showNotification("No programmes to copy. Find some first.", type = "warning")

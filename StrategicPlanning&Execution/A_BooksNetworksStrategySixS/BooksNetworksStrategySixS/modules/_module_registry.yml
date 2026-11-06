@@ -14,55 +14,55 @@ groups:
     label: "API Configuration"
     icon: "key"
     expanded: true
-    modules: [bigquery_auth, claude_api_config, debug_console]
+    modules: [api_hub_conn]
 
   - id: book_summary
     label: "Book Summary"
     icon: "book"
     expanded: false
-    modules: [generate_summary, books_bulk_import, add_single, books_browse, visualizations, books_about]
+    modules: [bk_hub_create, bk_hub_explore, books_about]
 
   - id: flex_table
     label: "Flex Table"
     icon: "table"
     expanded: false
-    modules: [generate_table, bulk_import, add_entry, table_viewer, flex_table_browse, flex_table_about]
+    modules: [fx_hub_create, fx_hub_explore, flex_table_about]
 
   - id: mind_map
     label: "Mind Map"
     icon: "share-nodes"
     expanded: false
-    modules: [generate_mindmap, edit_mindmap, visualize_mindmap, message_hierarchy, mindmap_browse, mindmap_about]
+    modules: [mm_hub_create, mm_hub_explore, mindmap_about]
 
   - id: knowledge_graph
     label: "Knowledge Graph"
     icon: "diagram-project"
     expanded: false
-    modules: [generate_kg, edit_kg, visualize_kg_d3, visualize_kg_cytoscape, kg_browse, kg_about]
+    modules: [kg_hub_create, kg_hub_explore, kg_about]
 
   - id: sankey_graph
     label: "Sankey Graph"
     icon: "water"
     expanded: false
-    modules: [generate_sankey, sankey_bulk_import, sankey_visualizations, sankey_browse, sankey_about]
+    modules: [sk_hub_create, sk_hub_explore, sankey_about]
 
   - id: strategic_analysis
     label: "Strategic Analysis"
     icon: "chess"
     expanded: false
-    modules: [diagram_tool_guide, diagram_recommender, generate_diagram, diagram_bulk_import, diagram_add_single, diagram_browse, diagram_visualizations, business_consulting, diagram_about]
+    modules: [sa_hub_learn, sa_hub_create, sa_hub_explore, business_consulting, diagram_about]
 
   - id: six_sigma_analysis
     label: "Six Sigma Analysis"
     icon: "microscope"
     expanded: false
-    modules: [sixsigma_tool_guide, sixsigma_recommender, generate_sixsigma, sixsigma_bulk_import, sixsigma_add_single, sixsigma_browse, sixsigma_visualizations, sixsigma_about]
+    modules: [ss_hub_learn, ss_hub_create, ss_hub_explore, sixsigma_about]
 
   - id: technical_designs
     label: "Technical Designs"
     icon: "sitemap"
     expanded: false
-    modules: [techdesign_guide, techdesign_recommender, techdesign_ml, techdesign_data, techdesign_patterns, techdesign_bulk_import, techdesign_library, techdesign_editor, techdesign_compare, techdesign_matrix, techdesign_infographic, techdesign_about]
+    modules: [td_hub_arch, td_hub_algo, td_hub_social, td_hub_manage, td_hub_studio, techdesign_about]
 
 modules:
   # ---- API Configuration (shared by all three suites) ----
@@ -319,6 +319,36 @@ modules:
     description: "Schema documentation for six_sigma_diagrams and the delimiter convention"
 
   # ---- Technical Designs (one table, one row per design) ----
+  td_hub_arch:
+    enabled: true
+    priority: 70
+    description: "Hub: architectures and patterns"
+
+  td_hub_algo:
+    enabled: true
+    priority: 71
+    description: "Hub: algorithms"
+
+  td_hub_social:
+    enabled: true
+    priority: 72
+    description: "Hub: social dynamics"
+
+  td_hub_manage:
+    enabled: true
+    priority: 73
+    description: "Hub: library and editing"
+
+  td_hub_studio:
+    enabled: true
+    priority: 74
+    description: "Hub: studios"
+
+  techdesign_algo_handbook:
+    enabled: true
+    priority: 75
+    description: "Algorithm handbook (child of the algorithms hub)"
+
   techdesign_ml:
     enabled: true
     priority: 80
@@ -333,6 +363,46 @@ modules:
     enabled: true
     priority: 82
     description: "Software design pattern class diagrams"
+
+  techdesign_algorithm:
+    enabled: true
+    priority: 79
+    description: "Algorithm Selector: LeetCode patterns for the Meta interview, drawn as interactive networks"
+
+  techdesign_soc_guide:
+    enabled: true
+    priority: 83
+    description: "Social dynamics algorithms"
+
+  techdesign_soc_handbook:
+    enabled: true
+    priority: 89
+    description: "Social dynamics handbook"
+
+  techdesign_soc_influence:
+    enabled: true
+    priority: 84
+    description: "Social dynamics algorithms"
+
+  techdesign_soc_romantic:
+    enabled: true
+    priority: 85
+    description: "Social dynamics algorithms"
+
+  techdesign_soc_business:
+    enabled: true
+    priority: 86
+    description: "Social dynamics algorithms"
+
+  techdesign_soc_investors:
+    enabled: true
+    priority: 87
+    description: "Social dynamics algorithms"
+
+  techdesign_soc_collab:
+    enabled: true
+    priority: 88
+    description: "Social dynamics algorithms"
 
   techdesign_guide:
     enabled: true
@@ -378,6 +448,92 @@ modules:
     enabled: true
     priority: 87
     description: "About Technical Designs"
+
+  api_hub_conn:
+    enabled: true
+    priority: 0.5
+    description: "Hub: API connections"
+
+  # ---- Hubs of the other suites (related tabs as horizontal sub-tabs) ----
+  bk_hub_create:
+    enabled: true
+    priority: 101
+    description: "Hub: Create and Add (Book Summary)"
+
+  bk_hub_explore:
+    enabled: true
+    priority: 102
+    description: "Hub: Browse and Visualise (Book Summary)"
+
+  fx_hub_create:
+    enabled: true
+    priority: 103
+    description: "Hub: Create and Add (Flex Table)"
+
+  fx_hub_explore:
+    enabled: true
+    priority: 104
+    description: "Hub: View and Browse (Flex Table)"
+
+  mm_hub_create:
+    enabled: true
+    priority: 105
+    description: "Hub: Create and Edit (Mind Map)"
+
+  mm_hub_explore:
+    enabled: true
+    priority: 106
+    description: "Hub: Visualise and Browse (Mind Map)"
+
+  kg_hub_create:
+    enabled: true
+    priority: 107
+    description: "Hub: Create and Edit (Knowledge Graph)"
+
+  kg_hub_explore:
+    enabled: true
+    priority: 108
+    description: "Hub: Visualise and Browse (Knowledge Graph)"
+
+  sk_hub_create:
+    enabled: true
+    priority: 109
+    description: "Hub: Create and Import (Sankey Graph)"
+
+  sk_hub_explore:
+    enabled: true
+    priority: 110
+    description: "Hub: Visualise and Browse (Sankey Graph)"
+
+  sa_hub_learn:
+    enabled: true
+    priority: 111
+    description: "Hub: Learn and Choose (Strategic Analysis)"
+
+  sa_hub_create:
+    enabled: true
+    priority: 112
+    description: "Hub: Create and Add (Strategic Analysis)"
+
+  sa_hub_explore:
+    enabled: true
+    priority: 113
+    description: "Hub: Browse and Visualise (Strategic Analysis)"
+
+  ss_hub_learn:
+    enabled: true
+    priority: 114
+    description: "Hub: Learn and Choose (Six Sigma Analysis)"
+
+  ss_hub_create:
+    enabled: true
+    priority: 115
+    description: "Hub: Create and Add (Six Sigma Analysis)"
+
+  ss_hub_explore:
+    enabled: true
+    priority: 116
+    description: "Hub: Browse and Visualise (Six Sigma Analysis)"
 
 settings:
   auto_install: false

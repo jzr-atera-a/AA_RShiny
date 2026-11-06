@@ -3,6 +3,10 @@
 # Change 'enabled: false' to disable any module. Priority controls ordering
 # WITHIN each sidebar group. Group membership/order/expanded state is
 # controlled by the top-level `groups:` list below.
+#
+# SIDEBAR SECTIONS: inside a group, `sections:` bundles modules by topic. Each section is ONE sidebar item and its
+# modules appear as horizontal tabs in the page. To regroup, move a module id between `sections:` lists (keep it in the
+# group's `modules:` list too). A module no section lists keeps its own sidebar item. See R/utils_nav.R.
 
 groups:
   - id: api_config
@@ -10,48 +14,156 @@ groups:
     icon: "key"
     expanded: true
     modules: [bigquery_auth, claude_api_config, titan_auth, debug_console]
+    sections:
+      - id: sec_connections
+        label: "API Configuration"
+        icon: "key"
+        modules: [bigquery_auth, claude_api_config, titan_auth, debug_console]
+        tab_labels: {bigquery_auth: "BigQuery", claude_api_config: "Claude", titan_auth: "Titan Calendar", debug_console: "Debug Console"}
 
   - id: day_planner
     label: "Day Planner"
     icon: "route"
     expanded: false
     modules: [generate_schedule, schedule_generate_prep, schedule_prep_checklist, schedule_bulk_import, schedule_add_single, schedule_browse, schedule_visualizations, schedule_commitment_config, schedule_add_commitment, schedule_commitments_browse, schedule_about]
+    sections:
+      - id: sec_dp_plan
+        label: "Plan the Day"
+        icon: "route"
+        modules: [generate_schedule, schedule_bulk_import, schedule_add_single]
+        tab_labels: {generate_schedule: "Generate Schedule", schedule_bulk_import: "Bulk Import", schedule_add_single: "Add Entry"}
+      - id: sec_dp_prep
+        label: "Day Preparation"
+        icon: "clipboard-check"
+        modules: [schedule_generate_prep, schedule_prep_checklist]
+        tab_labels: {schedule_generate_prep: "Generate Prep Steps", schedule_prep_checklist: "Checklist"}
+      - id: sec_dp_commit
+        label: "Commitments"
+        icon: "handshake"
+        modules: [schedule_add_commitment, schedule_commitments_browse, schedule_commitment_config]
+        tab_labels: {schedule_add_commitment: "Add", schedule_commitments_browse: "Browse", schedule_commitment_config: "Trello Config"}
+      - id: sec_dp_review
+        label: "Review"
+        icon: "table"
+        modules: [schedule_browse, schedule_visualizations, schedule_about]
+        tab_labels: {schedule_browse: "Browse Data", schedule_visualizations: "Visualizations", schedule_about: "About"}
 
   - id: diet_planner
     label: "Diet Planner"
     icon: "utensils"
     expanded: false
     modules: [generate_diet, diet_bulk_import, diet_add_single, diet_browse, diet_visualizations, diet_about]
+    sections:
+      - id: sec_diet_log
+        label: "Plan & Log"
+        icon: "utensils"
+        modules: [generate_diet, diet_bulk_import, diet_add_single]
+        tab_labels: {generate_diet: "Generate Diet", diet_bulk_import: "Bulk Import", diet_add_single: "Add Entry"}
+      - id: sec_diet_review
+        label: "Review"
+        icon: "table"
+        modules: [diet_browse, diet_visualizations, diet_about]
+        tab_labels: {diet_browse: "Browse Data", diet_visualizations: "Visualizations", diet_about: "About"}
 
   - id: exercise_tracker
     label: "Exercise Tracker"
     icon: "dumbbell"
     expanded: false
-    modules: [generate_workout, exercise_bulk_import, exercise_add_single, exercise_browse, exercise_visualizations, exercise_about]
+    modules: [generate_workout, muscle_programme, muscle_log, muscle_map, muscle_progress, exercise_bulk_import, exercise_add_single, exercise_browse, exercise_visualizations, exercise_about]
+    sections:
+      - id: sec_ex_log
+        label: "Workouts"
+        icon: "dumbbell"
+        modules: [generate_workout, exercise_bulk_import, exercise_add_single]
+        tab_labels: {generate_workout: "Generate Workout", exercise_bulk_import: "Bulk Import", exercise_add_single: "Add Entry"}
+      - id: sec_ex_muscle
+        label: "Muscle Building"
+        icon: "child"
+        modules: [muscle_programme, muscle_log, muscle_map, muscle_progress]
+        tab_labels: {muscle_programme: "Programme", muscle_log: "Log Sets", muscle_map: "Muscle Map", muscle_progress: "Progress"}
+      - id: sec_ex_review
+        label: "Workout Review"
+        icon: "table"
+        modules: [exercise_browse, exercise_visualizations, exercise_about]
+        tab_labels: {exercise_browse: "Browse Data", exercise_visualizations: "Visualizations", exercise_about: "About"}
 
   - id: events_scheduling
     label: "Events Scheduling"
     icon: "calendar-alt"
     expanded: false
     modules: [scan_events, zoom_schedule, bulk_import_events, browse_events, visualizations_events, events_to_calendar, events_about]
+    sections:
+      - id: sec_ev_find
+        label: "Find & Save Events"
+        icon: "magnifying-glass"
+        modules: [scan_events, bulk_import_events]
+        tab_labels: {scan_events: "Scan Events", bulk_import_events: "Bulk Import"}
+      - id: sec_ev_calendar
+        label: "Calendar & Invites"
+        icon: "calendar-alt"
+        modules: [events_to_calendar, zoom_schedule]
+        tab_labels: {events_to_calendar: "Events to Calendar", zoom_schedule: "Zoom Schedule"}
+      - id: sec_ev_review
+        label: "Review"
+        icon: "table"
+        modules: [browse_events, visualizations_events, events_about]
+        tab_labels: {browse_events: "Browse Events", visualizations_events: "Visualizations", events_about: "About"}
 
   - id: funding_programmes
     label: "Funding Programmes"
     icon: "hand-holding-usd"
     expanded: false
     modules: [generate_programme, funding_bulk_import, funding_add_single, funding_browse, funding_visualizations, funding_about]
+    sections:
+      - id: sec_fund_find
+        label: "Find & Add"
+        icon: "hand-holding-usd"
+        modules: [generate_programme, funding_bulk_import, funding_add_single]
+        tab_labels: {generate_programme: "Find Programmes", funding_bulk_import: "Bulk Import", funding_add_single: "Add Entry"}
+      - id: sec_fund_review
+        label: "Review"
+        icon: "table"
+        modules: [funding_browse, funding_visualizations, funding_about]
+        tab_labels: {funding_browse: "Browse Data", funding_visualizations: "Visualizations", funding_about: "About"}
 
   - id: gantt_tickets
     label: "Gantt to Tickets"
     icon: "tasks"
     expanded: false
     modules: [gantt_api_config, gantt_email_config, gantt_upload, gantt_review_edit, gantt_submit_boards, gantt_email_send, gantt_manage_contacts, gantt_email_contacts]
+    sections:
+      - id: sec_gantt_tasks
+        label: "Tasks"
+        icon: "tasks"
+        modules: [gantt_upload, gantt_review_edit, gantt_submit_boards]
+        tab_labels: {gantt_upload: "Upload Gantt", gantt_review_edit: "Review & Edit", gantt_submit_boards: "Submit to Boards"}
+      - id: sec_gantt_people
+        label: "Contacts & Email"
+        icon: "envelope"
+        modules: [gantt_manage_contacts, gantt_email_send, gantt_email_contacts]
+        tab_labels: {gantt_manage_contacts: "Manage Contacts", gantt_email_send: "Email Notifications", gantt_email_contacts: "Bulk Email"}
+      - id: sec_gantt_settings
+        label: "Settings"
+        icon: "gear"
+        modules: [gantt_api_config, gantt_email_config]
+        tab_labels: {gantt_api_config: "Trello & Jira", gantt_email_config: "Email (SMTP)"}
 
   - id: contact_manager
     label: "Contact Manager"
     icon: "address-book"
     expanded: false
     modules: [contacts_api_config, contacts_process, contacts_explore, contacts_customise_communication, contacts_send_email]
+    sections:
+      - id: sec_ct_contacts
+        label: "Contacts"
+        icon: "address-book"
+        modules: [contacts_process, contacts_explore, contacts_api_config]
+        tab_labels: {contacts_process: "Process Contact", contacts_explore: "Explore Contacts", contacts_api_config: "OpenAI Config"}
+      - id: sec_ct_outreach
+        label: "Outreach"
+        icon: "paper-plane"
+        modules: [contacts_customise_communication, contacts_send_email]
+        tab_labels: {contacts_customise_communication: "Customise Message", contacts_send_email: "Send Email"}
 
   - id: travel_planning
     label: "Travel Planning"
@@ -64,6 +176,12 @@ groups:
     icon: "comments"
     expanded: false
     modules: [slack_connection, slack_channels]
+    sections:
+      - id: sec_collab
+        label: "Online Collaboration"
+        icon: "comments"
+        modules: [slack_connection, slack_channels]
+        tab_labels: {slack_connection: "Slack Connection", slack_channels: "Channels"}
 
 modules:
   # ---- API Configuration (shared by all three suites) ----
@@ -174,6 +292,26 @@ modules:
     enabled: true
     priority: 15
     description: "AI-generated workout plan"
+
+  muscle_programme:
+    enabled: true
+    priority: 15.1
+    description: "Weekly muscle-building split; three options per day (gym / no equipment / home kit); Claude plans, app drives progression"
+
+  muscle_log:
+    enabled: true
+    priority: 15.2
+    description: "Log sets, loads, reps and RIR for a planned muscle workout"
+
+  muscle_map:
+    enabled: true
+    priority: 15.3
+    description: "Interactive anatomy diagram with weekly set gaps per muscle"
+
+  muscle_progress:
+    enabled: true
+    priority: 15.4
+    description: "Week-over-week volume, load progression and editable weekly set targets"
 
   exercise_bulk_import:
     enabled: true

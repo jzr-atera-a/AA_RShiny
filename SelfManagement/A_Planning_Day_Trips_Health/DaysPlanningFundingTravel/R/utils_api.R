@@ -25,6 +25,7 @@ APIManager <- R6::R6Class(
     claude_max_tokens   = 8000,
     claude_timeout      = 180,
     claude_authenticated = FALSE,
+    claude_tested       = NA,        # NA = key loaded but never tested; TRUE/FALSE after Test Connection
 
     # ── BigQuery credentials (shared project/dataset, nine tables) ──────────
     bq_project_id      = "atera-2",
@@ -58,6 +59,10 @@ APIManager <- R6::R6Class(
     #    on check_events_table_compatibility below) ─────────────────────────
     events_schema_warning = NULL,
     bq_setup_key = NULL,
+    bq_units_opened = list(),     # tab groups the user has opened this session (only these are refreshed/loaded)
+    bq_keys_ready = list(),       # table key -> TRUE once verified (once per connection)
+    bq_units_ready = list(),      # tab group -> TRUE once its tables are verified (on demand)
+    bq_unit_status = list(),      # tab group -> list(label, state, detail, at) for the sidebar
 
     # ── Suite-scoped reactive triggers ──────────────────────────────────────
     state_trigger_schedule = NULL,
@@ -146,6 +151,10 @@ APIManager <- R6::R6Class(
     titan_log = NULL,            # reactiveVal: character vector, newest first
     zoom_invite = NULL,          # reactiveVal: invite read from a screenshot (Zoom Schedule -> Events to Calendar)
     mail_drafts = NULL,          # reactiveVal: list of invite emails waiting in Send Email
+    muscle_tick = NULL,          # reactiveVal counter: bumps when muscle_* data changes
+    muscle_goto = NULL,          # reactiveVal: list(programme_id, option_key) handed to Muscle Log
+    muscle_cache = NULL,         # environment: cached muscle_* tables
+    muscle_tables_key = NULL,    # project|dataset the muscle tables were ensured for
     titan_smtp = NULL,           # reactiveVal: list(host, port) used for sending email
     titan_smtp_ok = NULL,        # reactiveVal: TRUE after a successful SMTP login test
     # ---- Slack (Online Collaboration group) ----
@@ -162,6 +171,9 @@ APIManager <- R6::R6Class(
       self$titan_log         <- shiny::reactiveVal(character())
       self$zoom_invite       <- shiny::reactiveVal(NULL)
       self$mail_drafts       <- shiny::reactiveVal(list())
+      self$muscle_tick       <- shiny::reactiveVal(0L)
+      self$muscle_goto       <- shiny::reactiveVal(NULL)
+      self$muscle_cache      <- new.env(parent = emptyenv())
       self$titan_smtp        <- shiny::reactiveVal(list(host = "", port = 465))
       self$titan_smtp_ok     <- shiny::reactiveVal(FALSE)
       self$slack_state       <- shiny::reactiveVal(list(ok = FALSE))
@@ -209,37 +221,37 @@ APIManager <- R6::R6Class(
     #    cache only — an upload in one suite never re-fires another suite's
     #    dropdown-populating reactives) ──────────────────────────────────────
     trigger_state_update_schedule = function() {
-      self$state_trigger_schedule(self$state_trigger_schedule() + 1)
+      self$state_trigger_schedule(shiny::isolate(self$state_trigger_schedule()) + 1)
       self$schedule_taxonomy_cache <- NULL
       self$prep_taxonomy_cache <- NULL
       self$commitments_taxonomy_cache <- NULL
       cat("🔔 [Day Planner] state trigger fired\n")
     },
     trigger_state_update_diet = function() {
-      self$state_trigger_diet(self$state_trigger_diet() + 1)
+      self$state_trigger_diet(shiny::isolate(self$state_trigger_diet()) + 1)
       self$diet_taxonomy_cache <- NULL
       cat("🔔 [Diet Planner] state trigger fired\n")
     },
     trigger_state_update_exercise = function() {
-      self$state_trigger_exercise(self$state_trigger_exercise() + 1)
+      self$state_trigger_exercise(shiny::isolate(self$state_trigger_exercise()) + 1)
       self$exercise_taxonomy_cache <- NULL
       cat("🔔 [Exercise Tracker] state trigger fired\n")
     },
     trigger_state_update_events = function() {
-      self$state_trigger_events(self$state_trigger_events() + 1)
+      self$state_trigger_events(shiny::isolate(self$state_trigger_events()) + 1)
       self$events_taxonomy_cache <- NULL
       cat("🔔 [Events Scheduling] state trigger fired\n")
     },
     trigger_state_update_gantt = function() {
-      self$state_trigger_gantt(self$state_trigger_gantt() + 1)
+      self$state_trigger_gantt(shiny::isolate(self$state_trigger_gantt()) + 1)
       cat("🔔 [Gantt to Tickets] state trigger fired\n")
     },
     trigger_state_update_contacts = function() {
-      self$state_trigger_contacts(self$state_trigger_contacts() + 1)
+      self$state_trigger_contacts(shiny::isolate(self$state_trigger_contacts()) + 1)
       cat("🔔 [Contact Manager] state trigger fired\n")
     },
     trigger_state_update_funding = function() {
-      self$state_trigger_funding(self$state_trigger_funding() + 1)
+      self$state_trigger_funding(shiny::isolate(self$state_trigger_funding()) + 1)
       self$funding_taxonomy_cache <- NULL
       cat("🔔 [Funding Programmes] state trigger fired\n")
     },
@@ -262,11 +274,11 @@ APIManager <- R6::R6Class(
     },
     titan_log_add = function(msg) {
       line <- sprintf("[%s] %s", format(Sys.time(), "%H:%M:%S"), paste0(msg, collapse = ""))
-      self$titan_log(head(c(line, self$titan_log()), 500))
+      self$titan_log(head(c(line, shiny::isolate(self$titan_log())), 500))
     },
     # Adds items (by UID, skipping ones already queued); returns how many were new.
     titan_queue_add = function(items) {
-      q <- self$titan_queue()
+      q <- shiny::isolate(self$titan_queue())
       have <- vapply(q, function(x) as.character(x$uid), "")
       fresh <- Filter(function(x) !(as.character(x$uid) %in% have), items)
       if (length(fresh)) self$titan_queue(c(q, fresh))
@@ -309,7 +321,8 @@ APIManager <- R6::R6Class(
     # ============================================================
 
     set_claude_credentials = function(api_key, model = NULL, max_tokens = NULL, timeout = NULL) {
-      self$claude_api_key <- api_key
+      self$claude_api_key <- trimws(api_key)
+      self$claude_tested <- NA
       if (!is.null(model)) self$claude_model <- model
       if (!is.null(max_tokens)) self$claude_max_tokens <- max_tokens
       if (!is.null(timeout)) self$claude_timeout <- timeout
@@ -336,9 +349,9 @@ APIManager <- R6::R6Class(
 
         if (status_code(response) == 200) {
           self$claude_authenticated <- TRUE
-          self$trigger_state_update_schedule()
-          self$trigger_state_update_events()
-          self$trigger_state_update_funding()
+          self$claude_tested <- TRUE
+          # refresh the status text of the modules (their data loaders are gated per tab, so this loads nothing for unopened tabs)
+          tryCatch({ self$trigger_state_update_schedule(); self$trigger_state_update_events(); self$trigger_state_update_funding() }, error = function(e) NULL)
           return(TRUE)
         } else {
           status <- status_code(response)
@@ -351,6 +364,7 @@ APIManager <- R6::R6Class(
         }
       }, error = function(e) {
         self$claude_authenticated <- FALSE
+        self$claude_tested <- FALSE
         stop(paste("Connection failed:", e$message))
       })
     },
@@ -644,71 +658,48 @@ APIManager <- R6::R6Class(
           stop("Provide JSON file path or text")
         }
 
-        # Quick connection check
+        # Quick connection check ONLY. Tables are no longer verified here: each tab group
+        # checks its own tables the first time it is opened (see bq_ensure_unit / bq_need),
+        # so start-up is one fast round trip instead of ~20.
         bq_project_datasets(self$bq_project_id)
 
-        # Table set-up is done ONCE per project+dataset per R process. Reconnecting
-        # (or a second click) skips straight to "authenticated".
-        setup_key <- paste(self$bq_project_id, self$bq_dataset_id, sep = "|")
-        if (identical(self$bq_setup_key, setup_key)) {
-          cat("\u2713 [BigQuery] tables already verified this session - skipping checks\n")
-          self$bq_authenticated <- TRUE
-          return(TRUE)
-        }
+        self$bq_setup_key <- paste(self$bq_project_id, self$bq_dataset_id, sep = "|")
+        self$bq_units_ready <- list(); self$bq_keys_ready <- list()    # a new connection / project: nothing verified yet
+        self$muscle_tables_key <- NULL
+        self$bq_authenticated <- TRUE
+        cat("\u2713 [BigQuery] connected - each tab verifies its tables the first time it is opened\n")
+        # refresh the modules' status text (their data loaders are gated per tab, so unopened tabs load nothing)
+        tryCatch({ self$trigger_state_update_schedule(); self$trigger_state_update_events(); self$trigger_state_update_funding() },
+                 error = function(e) cat("[BigQuery] note: refresh trigger skipped:", conditionMessage(e), "\n"))
 
-        # ONE metadata query tells us which tables/columns already exist; only
-        # what is genuinely missing is created/altered afterwards.
-        schema_cols <- tryCatch({
-          bq_table_download(bq_project_query(self$bq_project_id, sprintf(
-            "SELECT table_name, column_name FROM `%s.%s.INFORMATION_SCHEMA.COLUMNS`",
-            self$bq_project_id, self$bq_dataset_id)))
-        }, error = function(e) {
-          cat("\u26a0\ufe0f  [BigQuery] could not read INFORMATION_SCHEMA - falling back to CREATE IF NOT EXISTS:", e$message, "\n")
-          NULL
-        })
-        known_tables <- if (is.null(schema_cols)) character() else unique(schema_cols$table_name)
-        bq_known <- function(t) t %in% known_tables
+        # the refresh triggers are cosmetic: a failure here must never undo a good connection
 
-        # ── Day Planner: CREATE TABLE IF NOT EXISTS — safe no-op if it
-        #    already exists, never alters or drops anything. ──────────────
-        tryCatch({
-          if (!bq_known(self$bq_table_schedule)) bq_project_query(self$bq_project_id, sprintf("
+        return(TRUE)
+      }, error = function(e) {
+        self$bq_authenticated <- FALSE
+        stop(paste("BigQuery authentication failed:", e$message))
+      })
+    },
+
+    # CREATE TABLE IF NOT EXISTS text for one app table (safe no-op if it exists; never alters or drops anything)
+    bq_table_ddl = function(key) {
+      switch(key,
+        schedule = sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
               schedule_date STRING, day_type STRING, country STRING, city STRING,
               trip_details STRING, row_type STRING, row_sequence INTEGER,
               location_name STRING, location_details STRING, opening_hours STRING,
               recommended_time STRING, observations STRING
-            )", self$bq_full_table_schedule))
-          cat("✓ [BigQuery] day_scheduler table ready\n")
-        }, error = function(e) { cat("⚠️  [BigQuery] day_scheduler CREATE TABLE check failed:", e$message, "\n") })
-
-        # ── Day Planner: prep-steps checklist, tied to a day_scheduler date.
-        #    Unlike day_scheduler, is_completed is genuinely mutable (a
-        #    checkbox toggled live in Prep Checklist) - this is the second
-        #    deliberate exception to the app's append-only pattern (the
-        #    first being Contact Manager's business_contacts). See
-        #    bq_update_prep_completion()/bq_delete_prep_steps_for_date()
-        #    below for the real UPDATE/DELETE DML this requires. ──────────
-        tryCatch({
-          if (!bq_known(self$bq_table_prep)) bq_project_query(self$bq_project_id, sprintf("
+            )", self$bq_full_table_schedule),
+        prep = sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
               schedule_date STRING, category STRING, location STRING,
               additional_context STRING, step_sequence INTEGER, step_text STRING,
               is_completed BOOL
-            )", self$bq_full_table_prep))
-          cat("✓ [BigQuery] day_prep_steps table ready\n")
-        }, error = function(e) { cat("⚠️  [BigQuery] day_prep_steps CREATE TABLE check failed:", e$message, "\n") })
-
-        # ── Day Planner: monthly_commitments. Like day_prep_steps, this is
-        #    genuinely mutable - status changes over the month, and
-        #    trello_card_id/trello_card_url get filled in after a push to
-        #    Trello - so it gets real UPDATE support (see
-        #    bq_update_commitment() below), a deliberate exception to the
-        #    append-only pattern used elsewhere. ───────────────────────────
-        tryCatch({
-          if (!bq_known(self$bq_table_commitments)) bq_project_query(self$bq_project_id, sprintf("
+            )", self$bq_full_table_prep),
+        commitments = sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
               category STRING, sector STRING, topic STRING,
@@ -716,27 +707,16 @@ APIManager <- R6::R6Class(
               description STRING, stakeholders STRING,
               value_of_delivery STRING, consequences_of_failure STRING,
               trello_card_id STRING, trello_card_url STRING
-            )", self$bq_full_table_commitments))
-          cat("✓ [BigQuery] monthly_commitments table ready\n")
-        }, error = function(e) { cat("⚠️  [BigQuery] monthly_commitments CREATE TABLE check failed:", e$message, "\n") })
-
-        # ── Diet Planner: CREATE TABLE IF NOT EXISTS — same safe pattern,
-        #    same architecture as day_scheduler (day-level metadata + rows). ─
-        tryCatch({
-          if (!bq_known(self$bq_table_diet)) bq_project_query(self$bq_project_id, sprintf("
+            )", self$bq_full_table_commitments),
+        diet = sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
               log_date STRING, diet_type STRING, dietary_restrictions STRING,
               row_type STRING, row_sequence INTEGER,
               meal_name STRING, meal_details STRING, meal_time STRING,
               calories_macros STRING, observations STRING
-            )", self$bq_full_table_diet))
-          cat("✓ [BigQuery] diet_log table ready\n")
-        }, error = function(e) { cat("⚠️  [BigQuery] diet_log CREATE TABLE check failed:", e$message, "\n") })
-
-        # ── Exercise Tracker: CREATE TABLE IF NOT EXISTS — same safe pattern. ─
-        tryCatch({
-          if (!bq_known(self$bq_table_exercise)) bq_project_query(self$bq_project_id, sprintf("
+            )", self$bq_full_table_diet),
+        exercise = sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
               workout_date STRING, session_type STRING, session_notes STRING,
@@ -744,14 +724,8 @@ APIManager <- R6::R6Class(
               exercise_category STRING, exercise_name STRING, exercise_details STRING,
               metric_primary STRING, metric_secondary STRING,
               calories_burned STRING, observations STRING
-            )", self$bq_full_table_exercise))
-          cat("✓ [BigQuery] exercise_log table ready\n")
-        }, error = function(e) { cat("⚠️  [BigQuery] exercise_log CREATE TABLE check failed:", e$message, "\n") })
-
-        # ── Funding Programmes: CREATE TABLE IF NOT EXISTS — same safe
-        #    pattern. ─────────────────────────────────────────────────────
-        tryCatch({
-          if (!bq_known(self$bq_table_funding)) bq_project_query(self$bq_project_id, sprintf("
+            )", self$bq_full_table_exercise),
+        funding = sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
               category STRING, country STRING, city_region STRING,
@@ -759,75 +733,36 @@ APIManager <- R6::R6Class(
               key_sponsors STRING, key_organiser_profiles STRING, areas_of_application STRING,
               start_date_for_applying STRING, deadline STRING,
               recommendations_for_applying STRING, verified_urls STRING
-            )", self$bq_full_table_funding))
-          cat("✓ [BigQuery] funding_programmes table ready\n")
-        }, error = function(e) { cat("⚠️  [BigQuery] funding_programmes CREATE TABLE check failed:", e$message, "\n") })
-
-        # ── Gantt to Tickets: task log (append-only, mirrors every other
-        #    suite - one row per task per stage: "Saved" after Review & Edit,
-        #    "Submitted_Trello"/"Submitted_Jira" after a submit action). ────
-        tryCatch({
-          if (!bq_known(self$bq_table_gantt_tasks)) bq_project_query(self$bq_project_id, sprintf("
+            )", self$bq_full_table_funding),
+        gantt_tasks = sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
               upload_batch STRING, log_stage STRING,
               task_name STRING, description STRING, start_date STRING, end_date STRING,
               duration_days STRING, assignee STRING, priority STRING, status STRING,
               labels STRING, additional_notes STRING, submission_result STRING
-            )", self$bq_full_table_gantt_tasks))
-          cat("✓ [BigQuery] gantt_tasks table ready\n")
-        }, error = function(e) { cat("⚠️  [BigQuery] gantt_tasks CREATE TABLE check failed:", e$message, "\n") })
-
-        # ── Gantt to Tickets: assignee contact list. ─────────────────────
-        tryCatch({
-          if (!bq_known(self$bq_table_gantt_contacts)) bq_project_query(self$bq_project_id, sprintf("
+            )", self$bq_full_table_gantt_tasks),
+        gantt_contacts = sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
               country STRING, city STRING, organization STRING, full_name STRING,
               linkedin STRING, email STRING, phone STRING, date_added STRING
-            )", self$bq_full_table_gantt_contacts))
-          cat("✓ [BigQuery] gantt_contacts table ready\n")
-        }, error = function(e) { cat("⚠️  [BigQuery] gantt_contacts CREATE TABLE check failed:", e$message, "\n") })
-
-        # ── Contact Manager: business_contacts. Unlike every other table in
-        #    this app, this one is genuinely mutable (Explore Contacts can
-        #    update or delete an individual contact) - contact_id (a UUID,
-        #    not an auto-increment id) is the natural key, matching the
-        #    original app's design. See bq_update_contact/bq_delete_contact
-        #    below for the real UPDATE/DELETE DML this requires. ──────────
-        tryCatch({
-          if (!bq_known(self$bq_table_contacts)) bq_project_query(self$bq_project_id, sprintf("
+            )", self$bq_full_table_gantt_contacts),
+        contacts = sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               contact_id STRING, full_name STRING, industry STRING, company STRING,
               job_title STRING, location STRING, country STRING, email STRING,
               phone STRING, linkedin STRING, areas_of_interest STRING, university STRING,
               academic_background STRING, user_notes STRING, last_interaction_date STRING,
               created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(), updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP()
-            )", self$bq_full_table_contacts))
-          cat("✓ [BigQuery] business_contacts table ready\n")
-        }, error = function(e) { cat("⚠️  [BigQuery] business_contacts CREATE TABLE check failed:", e$message, "\n") })
-
-        # ── Contact Manager: contact_communications (append-only history,
-        #    same insert-only pattern as everything else). ────────────────
-        tryCatch({
-          if (!bq_known(self$bq_table_communications)) bq_project_query(self$bq_project_id, sprintf("
+            )", self$bq_full_table_contacts),
+        communications = sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               message_id STRING, contact_id STRING, channel_type STRING,
               communication_purpose STRING, language STRING, message_length STRING,
               message_content STRING, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP()
-            )", self$bq_full_table_communications))
-          cat("✓ [BigQuery] contact_communications table ready\n")
-        }, error = function(e) { cat("⚠️  [BigQuery] contact_communications CREATE TABLE check failed:", e$message, "\n") })
-
-        # ── Events Scheduling: city_events is expected to ALREADY EXIST
-        #    (created previously outside this app). CREATE TABLE IF NOT
-        #    EXISTS is still safe to run - if the table is already there
-        #    (with real data), it is a guaranteed no-op; if it does NOT
-        #    exist yet in this project/dataset, this creates it fresh using
-        #    the schema inferred from the original app's insert code. Either
-        #    way, nothing already in the table is ever touched. ───────────
-        tryCatch({
-          if (!bq_known(self$bq_table_events)) bq_project_query(self$bq_project_id, sprintf("
+            )", self$bq_full_table_communications),
+        events = sprintf("
             CREATE TABLE IF NOT EXISTS `%s` (
               id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
               event_name STRING, organiser STRING, city STRING, country STRING,
@@ -835,43 +770,138 @@ APIManager <- R6::R6Class(
               venue_name STRING, address STRING, latitude STRING, longitude STRING,
               description STRING, ticket_url STRING, price_range STRING,
               source_url STRING, scan_date STRING, extra_info STRING
-            )", self$bq_full_table_events))
-          cat("✓ [BigQuery] city_events table ready\n")
-        }, error = function(e) { cat("⚠️  [BigQuery] city_events CREATE TABLE check failed:", e$message, "\n") })
+            )", self$bq_full_table_events),
+        NULL)
+    },
 
-        # After ensuring city_events exists (either it already did, or was
-        # just created fresh), check that its ACTUAL columns cover every
-        # column this app needs to write. This is deliberately a WARNING,
-        # not a blocking error: an existing table with all required columns
-        # plus extras, or with compatible-but-differently-ordered columns,
-        # is completely fine to write to. It only surfaces something
-        # concrete for you to look at if a column this app depends on is
-        # genuinely missing from the real table.
-        self$events_schema_warning <- self$check_events_table_compatibility(schema_cols)
+    # ============================================================
+    # ON-DEMAND TABLE CHECKS (one "unit" per tab group)
+    # ============================================================
+    # unit -> the table keys it owns (keys match bq_table_<key> / bq_full_table_<key>)
+    bq_unit_tables = function(unit) switch(unit,
+      planner  = c("schedule", "prep", "commitments"),
+      diet     = "diet",
+      exercise = "exercise",
+      events   = "events",
+      funding  = "funding",
+      gantt    = c("gantt_tasks", "gantt_contacts"),
+      contacts = c("contacts", "communications"),
+      character()),
+    bq_unit_label = function(unit) switch(unit, planner = "Day Planner", diet = "Diet Planner", exercise = "Exercise Tracker",
+      events = "Events Scheduling", funding = "Funding Programmes", gantt = "Gantt to Tickets", contacts = "Contact Manager",
+      muscle = "Muscle Programme", unit),
+    # which unit owns a table key (used to find what a query or insert needs)
+    bq_unit_of_key = function(key) {
+      for (u in c("planner", "diet", "exercise", "events", "funding", "gantt", "contacts"))
+        if (key %in% self$bq_unit_tables(u)) return(u)
+      NULL
+    },
 
-        # time_zone column on every table that stores times/dates generated by
-        # Claude - ALTER only where the metadata shows it is missing.
-        tz_tables <- c(schedule = self$bq_table_schedule, diet = self$bq_table_diet,
-                       exercise = self$bq_table_exercise, events = self$bq_table_events,
-                       funding = self$bq_table_funding, gantt_tasks = self$bq_table_gantt_tasks)
-        for (k in names(tz_tables)) {
-          has_tz <- !is.null(schema_cols) &&
-            any(schema_cols$table_name == tz_tables[[k]] & schema_cols$column_name == "time_zone")
-          if (has_tz) self$bq_time_zone_ready[[k]] <- TRUE
+    # Verifies the given tables (keys like "schedule", "prep"; "muscle" = the four muscle tables): ONE INFORMATION_SCHEMA
+    # query limited to the tables not verified yet, then creates only what is missing, checks city_events compatibility
+    # (events) and adds time_zone only where absent. Each table is verified ONCE per connection, so reopening a tab or opening
+    # another tab that shares a table costs nothing. `label` names the tab in the sidebar. Never raises; a failed check is retried.
+    bq_ensure_keys = function(keys, label = NULL) {
+      keys <- unique(keys); if (!length(keys)) return(TRUE)
+      if (!isTRUE(self$bq_authenticated)) return(FALSE)
+      label <- label %||% paste(keys, collapse = ", ")
+      ok_all <- TRUE
+      if ("muscle" %in% keys) {
+        if (!isTRUE(self$bq_keys_ready[["muscle"]])) ok_all <- isTRUE(tryCatch(self$bq_muscle_ensure(label), error = function(e) FALSE))
+        keys <- setdiff(keys, "muscle")
+      }
+      todo <- keys[!vapply(keys, function(k) isTRUE(self$bq_keys_ready[[k]]), TRUE)]
+      if (!length(todo)) return(ok_all)
+      t0 <- Sys.time(); self$bq_note_status(label, "checking", sprintf("checking %d table(s)...", length(todo)))
+      ok <- tryCatch({
+        names_sql <- paste0("'", vapply(todo, function(k) self[[paste0("bq_table_", k)]], ""), "'", collapse = ",")
+        schema_cols <- tryCatch(bq_table_download(bq_project_query(self$bq_project_id, sprintf(
+          "SELECT table_name, column_name FROM `%s.%s.INFORMATION_SCHEMA.COLUMNS` WHERE table_name IN (%s)",
+          self$bq_project_id, self$bq_dataset_id, names_sql))), error = function(e) {
+            cat("\u26a0\ufe0f  [BigQuery] could not read INFORMATION_SCHEMA - falling back to CREATE IF NOT EXISTS:", conditionMessage(e), "\n"); NULL })
+        known <- if (is.null(schema_cols)) character() else unique(schema_cols$table_name)
+        for (k in todo) {
+          tn <- self[[paste0("bq_table_", k)]]
+          tryCatch({
+            if (!tn %in% known) bq_project_query(self$bq_project_id, self$bq_table_ddl(k))
+            cat(sprintf("\u2713 [BigQuery] %s table ready (%s)\n", tn, label))
+          }, error = function(e) { cat("\u26a0\ufe0f  [BigQuery]", tn, "CREATE TABLE check failed:", conditionMessage(e), "\n"); stop(conditionMessage(e)) })
+        }
+        if ("events" %in% todo) self$events_schema_warning <- self$check_events_table_compatibility(schema_cols)
+        for (k in intersect(todo, c("schedule", "diet", "exercise", "events", "funding", "gantt_tasks"))) {
+          tn <- self[[paste0("bq_table_", k)]]
+          if (!is.null(schema_cols) && any(schema_cols$table_name == tn & schema_cols$column_name == "time_zone")) self$bq_time_zone_ready[[k]] <- TRUE
           else self$bq_ensure_time_zone_column(k)
         }
-
-        self$bq_setup_key <- setup_key
-        self$bq_authenticated <- TRUE
-        self$trigger_state_update_schedule()
-        self$trigger_state_update_events()
-        self$trigger_state_update_funding()
-
-        return(TRUE)
-      }, error = function(e) {
-        self$bq_authenticated <- FALSE
-        stop(paste("BigQuery authentication failed:", e$message))
-      })
+        TRUE
+      }, error = function(e) { self$bq_note_status(label, "failed", conditionMessage(e)); FALSE })
+      if (isTRUE(ok)) {
+        for (k in todo) self$bq_keys_ready[[k]] <- TRUE
+        for (u in c("planner", "diet", "exercise", "events", "funding", "gantt", "contacts"))
+          if (all(vapply(self$bq_unit_tables(u), function(k) isTRUE(self$bq_keys_ready[[k]]), TRUE))) self$bq_units_ready[[u]] <- TRUE
+        self$bq_note_status(label, "ready", sprintf("%d table(s) ready in %.1f s", length(todo), as.numeric(difftime(Sys.time(), t0, units = "secs"))))
+      }
+      isTRUE(ok) && ok_all
+    },
+    # a whole tab group's tables (used by tests and by code that needs the full set)
+    bq_ensure_unit = function(unit) {
+      if (identical(unit, "muscle")) return(self$bq_ensure_keys("muscle", self$bq_unit_label(unit)))
+      self$bq_ensure_keys(self$bq_unit_tables(unit), self$bq_unit_label(unit))
+    },
+    # ---- per-tab lazy loading ------------------------------------------------------------------
+    # A module's data loaders call tab_gate("<its tab name>") first: inside a reactive/observer it stops silently until
+    # that tab has been opened (and its tables verified) in THIS browser session, then runs once and again only when
+    # its own refresh trigger fires. Opened tabs live in session$userData$tabs_opened (set up in create_server); without
+    # a session (unit tests) nothing is gated.
+    tabs_opened_rv = function() {
+      dom <- shiny::getDefaultReactiveDomain(); if (is.null(dom)) return(NULL)
+      root <- tryCatch(dom$rootScope(), error = function(e) dom)
+      tryCatch(root$userData$tabs_opened, error = function(e) NULL)
+    },
+    keys_opened_rv = function() {
+      dom <- shiny::getDefaultReactiveDomain(); if (is.null(dom)) return(NULL)
+      root <- tryCatch(dom$rootScope(), error = function(e) dom)
+      tryCatch(root$userData$keys_opened, error = function(e) NULL)
+    },
+    # shared dropdown/taxonomy loaders wait until ANY opened tab uses their table (then the result is cached for the other tabs)
+    keys_gate = function(keys) { rv <- self$keys_opened_rv(); if (!is.null(rv)) shiny::req(any(keys %in% rv())); invisible(TRUE) },
+    tab_open = function(tab) { rv <- self$tabs_opened_rv(); if (is.null(rv)) TRUE else tab %in% rv() },
+    tab_gate = function(tab) { shiny::req(self$tab_open(tab)); invisible(TRUE) },
+    # Called when the user opens a tab group (or a tab in it): verify its tables, then refresh its modules.
+    bq_open_unit = function(unit, fire = TRUE) {
+      self$bq_units_opened[[unit]] <- TRUE
+      if (!isTRUE(self$bq_authenticated)) return(invisible(FALSE))
+      ok <- self$bq_ensure_unit(unit)
+      if (isTRUE(ok) && fire) self$bq_fire_unit(unit)
+      invisible(ok)
+    },
+    bq_fire_unit = function(unit) switch(unit,
+      planner = self$trigger_state_update_schedule(), diet = self$trigger_state_update_diet(),
+      exercise = self$trigger_state_update_exercise(), events = self$trigger_state_update_events(),
+      funding = self$trigger_state_update_funding(), gantt = self$trigger_state_update_gantt(),
+      contacts = self$trigger_state_update_contacts(), muscle = self$muscle_changed(), NULL),
+    bq_fire_opened = function() {
+      for (u in names(self$bq_units_opened)) if (isTRUE(self$bq_units_opened[[u]])) self$bq_fire_unit(u)
+      invisible(TRUE)
+    },
+    # shorthand used at the top of data methods: make sure the table (key) or the whole unit is verified
+    bq_need = function(key_or_unit) {
+      keys <- if (key_or_unit %in% c("schedule", "prep", "commitments", "diet", "exercise", "events", "funding", "gantt_tasks",
+                                     "gantt_contacts", "contacts", "communications", "muscle")) key_or_unit else self$bq_unit_tables(key_or_unit)
+      invisible(self$bq_ensure_keys(keys, self$bq_unit_label(self$bq_unit_of_key(key_or_unit) %||% key_or_unit)))
+    },
+    # finds which app tables a SQL text mentions and ensures their units (safety net for direct queries)
+    bq_need_for_query = function(query) {
+      for (k in c("schedule", "prep", "commitments", "diet", "exercise", "events", "funding", "gantt_tasks", "gantt_contacts", "contacts", "communications")) {
+        tn <- self[[paste0("bq_table_", k)]]
+        if (!is.null(tn) && grepl(sprintf("%s`", tn), query, fixed = TRUE)) self$bq_need(k)
+      }
+      invisible(TRUE)
+    },
+    # status notes for the sidebar (plain list; the sidebar polls and the click handler also pushes updates)
+    bq_note_status = function(unit, state, detail = "") {
+      self$bq_unit_status[[unit]] <- list(label = self$bq_unit_label(unit), state = state, detail = detail, at = Sys.time())
+      invisible(NULL)
     },
 
     # Compares city_events' ACTUAL columns (queried from
@@ -924,8 +954,73 @@ APIManager <- R6::R6Class(
       warning_msg
     },
 
+    # ============================================================
+    # MUSCLE PROGRAMME (new tables: muscle_programmes / _diagrams / _set_log / _targets)
+    # ============================================================
+    bq_muscle_full = function(key) paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", MUSCLE_TABLES[[key]]),
+
+    # creates any missing muscle_* table (checked once per connection, on demand: only when a Muscle tab is used)
+    bq_muscle_ensure = function(label = "Muscle Programme") {
+      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      k <- paste(self$bq_project_id, self$bq_dataset_id, sep = "|")
+      if (identical(self$muscle_tables_key, k)) return(invisible(TRUE))
+      t0 <- Sys.time(); self$bq_note_status(label, "checking", "checking 4 table(s)...")
+      tryCatch({
+        have <- tryCatch(unique(bq_table_download(bq_project_query(self$bq_project_id, sprintf(
+          "SELECT table_name FROM `%s.%s.INFORMATION_SCHEMA.TABLES` WHERE table_name IN (%s)", self$bq_project_id, self$bq_dataset_id,
+          paste0("'", unname(MUSCLE_TABLES), "'", collapse = ","))))$table_name), error = function(e) character())
+        for (key in names(MUSCLE_TABLES)) {
+          if (MUSCLE_TABLES[[key]] %in% have) next
+          cat("[Muscle] creating table", self$bq_muscle_full(key), "\n")
+          bq_project_query(self$bq_project_id, muscle_ddl(self$bq_muscle_full(key), MUSCLE_SCHEMAS[[key]]))
+        }
+        self$muscle_tables_key <- k; self$bq_keys_ready[["muscle"]] <- TRUE; self$bq_units_ready[["muscle"]] <- TRUE
+        self$bq_note_status(label, "ready", sprintf("4 table(s) ready in %.1f s", as.numeric(difftime(Sys.time(), t0, units = "secs"))))
+      }, error = function(e) { self$bq_note_status(label, "failed", conditionMessage(e)); stop(e) })
+      invisible(TRUE)
+    },
+
+    bq_muscle_read = function(key, force = FALSE) {
+      if (!self$bq_authenticated) return(muscle_empty(key))
+      ck <- paste(self$bq_project_id, self$bq_dataset_id, key, sep = "|")
+      if (!force && !is.null(self$muscle_cache[[ck]])) return(self$muscle_cache[[ck]])
+      self$bq_muscle_ensure()
+      df <- self$bq_query(sprintf("SELECT * FROM `%s` ORDER BY id", self$bq_muscle_full(key)))
+      cat(sprintf("[Muscle] read %d row(s) from %s\n", nrow(df), MUSCLE_TABLES[[key]]))
+      self$muscle_cache[[ck]] <- df
+      df
+    },
+
+    bq_muscle_insert = function(key, df) {
+      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      if (!nrow(df)) return(0L)
+      self$bq_muscle_ensure()
+      start_id <- tryCatch(as.integer(self$bq_query(sprintf("SELECT COALESCE(MAX(id), 0) AS m FROM `%s`", self$bq_muscle_full(key)))$m) + 1L,
+                           error = function(e) 1L)
+      df$id <- seq(start_id, length.out = nrow(df)); df$created_at <- Sys.time()
+      df <- muscle_conform(df, MUSCLE_SCHEMAS[[key]])
+      bq_table_upload(bq_table(self$bq_project_id, self$bq_dataset_id, MUSCLE_TABLES[[key]]), df,
+                      create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
+      cat(sprintf("[Muscle] inserted %d row(s) -> %s\n", nrow(df), self$bq_muscle_full(key)))
+      self$muscle_cache <- new.env(parent = emptyenv())
+      invisible(nrow(df))
+    },
+
+    # removes rows whose `col` is in `values` (used to replace a regenerated programme day)
+    bq_muscle_delete = function(key, col, values) {
+      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      values <- unique(as.character(values)); if (!length(values)) return(invisible(0L))
+      self$bq_muscle_ensure()
+      lit <- paste0("'", gsub("'", "\\\\'", values), "'", collapse = ",")
+      bq_project_query(self$bq_project_id, sprintf("DELETE FROM `%s` WHERE %s IN (%s)", self$bq_muscle_full(key), col, lit))
+      self$muscle_cache <- new.env(parent = emptyenv())
+      invisible(length(values))
+    },
+    muscle_changed = function() self$muscle_tick(shiny::isolate(self$muscle_tick()) + 1L),
+
     bq_query = function(query) {
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      self$bq_need_for_query(query)      # make sure the tab group that owns the queried table is verified
       job <- bq_project_query(self$bq_project_id, query)
       bq_table_download(job)
     },
@@ -939,6 +1034,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_get_schedule_taxonomy = function() {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("schedule")
       if (!is.null(self$schedule_taxonomy_cache)) return(self$schedule_taxonomy_cache)
       if (!self$bq_authenticated) return(self$empty_schedule_taxonomy())
 
@@ -987,6 +1083,7 @@ APIManager <- R6::R6Class(
     # Adds the time_zone column to an upload only when the table is known to
     # have it, so a failed ALTER can never break saving.
     bq_attach_time_zone = function(data_frame, tz_vec, key) {
+      self$bq_need(key)
       if (isTRUE(self$bq_time_zone_ready[[key]])) data_frame$time_zone <- tz_vec
       data_frame
     },
@@ -995,6 +1092,7 @@ APIManager <- R6::R6Class(
     # DAY PLANNER
     # ============================================================
     bq_insert_schedule = function(data_frame) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("schedule")
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
 
       required_cols <- c("id", "created_at", "schedule_date", "day_type", "country", "city",
@@ -1028,6 +1126,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_get_prep_taxonomy = function() {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("prep")
       if (!is.null(self$prep_taxonomy_cache)) return(self$prep_taxonomy_cache)
       if (!self$bq_authenticated) return(self$empty_prep_taxonomy())
 
@@ -1050,6 +1149,7 @@ APIManager <- R6::R6Class(
     # in place - call bq_delete_prep_steps_for_date() first if you want the
     # "replace this day's steps" behavior the source app used.
     bq_insert_prep_steps = function(data_frame) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("prep")
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
 
       required_cols <- c("id", "created_at", "schedule_date", "category", "location",
@@ -1076,6 +1176,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_get_prep_steps_for_date = function(schedule_date) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("prep")
       if (!self$bq_authenticated) return(data.frame())
       tryCatch({
         self$bq_query(sprintf(
@@ -1088,6 +1189,7 @@ APIManager <- R6::R6Class(
     # Genuine UPDATE - is_completed is toggled live from a checkbox, the
     # same deliberate exception class as Contact Manager's bq_update_contact.
     bq_update_prep_completion = function(step_id, is_completed) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("prep")
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
       query <- sprintf("UPDATE `%s` SET is_completed = %s WHERE id = %d",
                        self$bq_full_table_prep, if (isTRUE(is_completed)) "TRUE" else "FALSE", as.integer(step_id))
@@ -1100,6 +1202,7 @@ APIManager <- R6::R6Class(
     # steps for a date they've already saved (mirrors the source app's
     # "delete existing steps for this day before saving new ones").
     bq_delete_prep_steps_for_date = function(schedule_date) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("prep")
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
       query <- sprintf("DELETE FROM `%s` WHERE schedule_date = '%s'",
                        self$bq_full_table_prep, safe_sql_escape(schedule_date))
@@ -1168,6 +1271,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_get_commitments_taxonomy = function() {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("commitments")
       if (!is.null(self$commitments_taxonomy_cache)) return(self$commitments_taxonomy_cache)
       if (!self$bq_authenticated) return(self$empty_commitments_taxonomy())
 
@@ -1186,6 +1290,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_insert_commitment = function(data_frame) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("commitments")
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
 
       required_cols <- c("id", "created_at", "category", "sector", "topic",
@@ -1212,6 +1317,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_get_commitments = function(limit = 500) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("commitments")
       if (!self$bq_authenticated) return(data.frame())
       tryCatch({
         self$bq_query(sprintf("SELECT * FROM `%s` ORDER BY deadline ASC LIMIT %d", self$bq_full_table_commitments, limit))
@@ -1219,6 +1325,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_get_commitment_by_id = function(commitment_id) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("commitments")
       if (!self$bq_authenticated) return(data.frame())
       tryCatch({
         self$bq_query(sprintf("SELECT * FROM `%s` WHERE id = %d", self$bq_full_table_commitments, as.integer(commitment_id)))
@@ -1229,6 +1336,7 @@ APIManager <- R6::R6Class(
     # CREATE TABLE comment above). `updates` is a named list of columns to
     # set; only those columns are touched.
     bq_update_commitment = function(commitment_id, updates) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("commitments")
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
       if (length(updates) == 0) stop("No fields to update")
 
@@ -1252,6 +1360,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_get_diet_taxonomy = function() {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("diet")
       if (!is.null(self$diet_taxonomy_cache)) return(self$diet_taxonomy_cache)
       if (!self$bq_authenticated) return(self$empty_diet_taxonomy())
 
@@ -1270,6 +1379,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_insert_diet = function(data_frame) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("diet")
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
 
       required_cols <- c("id", "created_at", "log_date", "diet_type", "dietary_restrictions",
@@ -1306,6 +1416,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_get_exercise_taxonomy = function() {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("exercise")
       if (!is.null(self$exercise_taxonomy_cache)) return(self$exercise_taxonomy_cache)
       if (!self$bq_authenticated) return(self$empty_exercise_taxonomy())
 
@@ -1325,6 +1436,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_insert_exercise = function(data_frame) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("exercise")
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
 
       required_cols <- c("id", "created_at", "workout_date", "session_type", "session_notes",
@@ -1362,6 +1474,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_get_events_taxonomy = function() {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("events")
       if (!is.null(self$events_taxonomy_cache)) return(self$events_taxonomy_cache)
       if (!self$bq_authenticated) return(self$empty_events_taxonomy())
 
@@ -1381,6 +1494,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_insert_events = function(data_frame) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("events")
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
 
       required_cols <- c("id", "created_at", "event_name", "organiser",
@@ -1423,6 +1537,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_get_funding_taxonomy = function() {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("funding")
       if (!is.null(self$funding_taxonomy_cache)) return(self$funding_taxonomy_cache)
       if (!self$bq_authenticated) return(self$empty_funding_taxonomy())
 
@@ -1441,6 +1556,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_insert_funding = function(data_frame) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("funding")
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
 
       required_cols <- c("id", "created_at", "category", "country", "city_region",
@@ -1669,6 +1785,7 @@ APIManager <- R6::R6Class(
     # Append-only task log - one row per task per stage event (see
     # CREATE TABLE comment above for why this is log-style, not CRUD).
     bq_insert_gantt_tasks = function(data_frame, log_stage, upload_batch) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("gantt_tasks")
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
 
       required_cols <- c("id", "created_at", "upload_batch", "log_stage",
@@ -1700,6 +1817,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_get_gantt_tasks = function(limit = 500) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("gantt_tasks")
       if (!self$bq_authenticated) return(data.frame())
       tryCatch({
         self$bq_query(sprintf("SELECT * FROM `%s` ORDER BY created_at DESC LIMIT %d", self$bq_full_table_gantt_tasks, limit))
@@ -1707,6 +1825,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_insert_gantt_contact = function(data_frame) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("gantt_contacts")
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
 
       required_cols <- c("id", "created_at", "country", "city", "organization",
@@ -1731,6 +1850,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_get_gantt_contacts = function(limit = 1000) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("gantt_contacts")
       if (!self$bq_authenticated) return(data.frame())
       tryCatch({
         self$bq_query(sprintf("SELECT * FROM `%s` ORDER BY created_at DESC LIMIT %d", self$bq_full_table_gantt_contacts, limit))
@@ -1825,6 +1945,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_insert_contact = function(data_frame) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("contacts")
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
 
       required_cols <- c("contact_id", "full_name", "industry", "company", "job_title",
@@ -1848,6 +1969,7 @@ APIManager <- R6::R6Class(
     # (see CREATE TABLE comment above). Only updates the columns provided
     # in `updates` (a named list), always bumping updated_at.
     bq_update_contact = function(contact_id, updates) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("contacts")
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
       if (length(updates) == 0) stop("No fields to update")
 
@@ -1867,6 +1989,7 @@ APIManager <- R6::R6Class(
 
     # Genuine DELETE - see note on bq_update_contact above.
     bq_delete_contact = function(contact_id) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("contacts")
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
       query <- sprintf("DELETE FROM `%s` WHERE contact_id = '%s'",
                        self$bq_full_table_contacts, safe_sql_escape(contact_id))
@@ -1877,6 +2000,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_get_contacts = function(limit = 2000) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("contacts")
       if (!self$bq_authenticated) return(data.frame())
       tryCatch({
         self$bq_query(sprintf("SELECT * FROM `%s` ORDER BY updated_at DESC LIMIT %d", self$bq_full_table_contacts, limit))
@@ -1884,6 +2008,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_insert_communication = function(data_frame) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("communications")
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
 
       required_cols <- c("message_id", "contact_id", "channel_type", "communication_purpose",
@@ -1901,6 +2026,7 @@ APIManager <- R6::R6Class(
     },
 
     bq_get_recent_communications = function(contact_id, limit = 3) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("communications")
       if (!self$bq_authenticated) return(data.frame())
       tryCatch({
         self$bq_query(sprintf(

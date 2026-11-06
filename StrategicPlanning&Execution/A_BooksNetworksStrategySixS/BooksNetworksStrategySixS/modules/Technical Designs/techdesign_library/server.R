@@ -74,7 +74,7 @@ techdesign_library_server <- function(id, api_manager) {
     observeEvent(input$open_editor, {
       did <- selected_id(); if (is.null(did)) return()
       api_manager$set_pending_techdesign_load(list(key = paste0("db:", did)))
-      updateTabItems(session$rootScope(), "sidebar_menu", selected = "techdesign_editor")
+      td_nav(session, "techdesign_editor")
     })
 
     observeEvent(input$generate_similar, {

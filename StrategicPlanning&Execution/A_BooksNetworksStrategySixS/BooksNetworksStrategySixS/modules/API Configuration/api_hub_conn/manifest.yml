@@ -1,0 +1,33 @@
+module:
+  id: "api_hub_conn"
+  name: "API Configuration"
+  description: "Hub: API Configuration"
+  version: "1.0.0"
+  author: "API Configuration"
+
+  enabled: true
+
+  menu:
+    label: "API Configuration"
+    icon: "key"
+    tabname: "api_hub_conn"
+    group: "API Configuration"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinyjs
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: ["claude", "bigquery"]
+
+  data:
+    required: []
+    optional: []

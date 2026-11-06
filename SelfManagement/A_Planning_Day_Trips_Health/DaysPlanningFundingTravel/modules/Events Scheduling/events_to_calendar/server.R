@@ -178,7 +178,7 @@ events_to_calendar_server <- function(id, api_manager) {
       api_manager$mail_drafts(drafts)
       log_msg("Invite email prepared for ", length(inv_items), " event(s): opening Send Email.")
       showNotification("Saved. The invite email is ready in Send Email.", type = "message", duration = 8)
-      tryCatch(updateTabItems(session$rootScope(), "sidebar_menu", selected = "contacts_send_email"),
+      tryCatch(nav_goto(session, "contacts_send_email"),
                error = function(e) cat("[Zoom] could not switch tab:", conditionMessage(e), "\n"))
       invisible(TRUE)
     }

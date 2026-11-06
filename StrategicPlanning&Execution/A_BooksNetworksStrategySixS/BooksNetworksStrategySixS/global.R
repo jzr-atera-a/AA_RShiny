@@ -101,10 +101,16 @@ source("R/utils_api.R")
 source("R/utils_local_creds.R")
 source("R/utils_bq_lazy.R")
 source("R/utils_techdesign_catalog.R")
+source("R/utils_techdesign_catalog_zalgo.R")
+source("R/utils_techdesign_catalog_zsocial.R")
 source("R/utils_techdesign_parse.R")
 source("R/utils_techdesign_render.R")
 source("R/utils_techdesign_module.R")
 source("R/utils_techdesign_actions.R")
+source("R/utils_td_hubs.R")
+source("R/utils_techdesign_social_module.R")
+source("R/utils_techdesign_social_handbook.R")
+source("R/utils_techdesign_algo_handbook.R")
 source("R/utils_claude_stream.R")
 source("R/utils_techdesign_matrix.R")
 source("R/utils_techdesign_matrix_render.R")
@@ -133,6 +139,7 @@ create_ui <- function(module_loader) {
     module_id <- module$module$id
     ui_function_name <- paste0(module_id, "_ui")
     tabname <- module$module$menu$tabname %||% module_id
+    if (module_id %in% TD_HUB_CHILD_IDS) next   # shown inside its hub (R/utils_td_hubs.R)
 
     if (exists(ui_function_name, envir = .GlobalEnv)) {
       ui_function <- get(ui_function_name, envir = .GlobalEnv)
@@ -165,6 +172,10 @@ create_ui <- function(module_loader) {
       group_mods <- g$modules[g$modules %in% enabled_ids]
       if (length(group_mods) == 0) return(NULL)
 
+      if (length(group_mods) == 1 && group_mods %in% names(TD_HUBS)) {   # a group with one hub is a plain sidebar item
+        m1 <- enabled_modules[[which(enabled_ids == group_mods)]]
+        return(menuItem(g$label, tabName = m1$module$menu$tabname, icon = icon(g$icon %||% DEFAULT_GROUP_ICON)))
+      }
       sub_items <- lapply(group_mods, function(mid) {
         m <- enabled_modules[[which(enabled_ids == mid)]]
         menuSubItem(m$module$menu$label, tabName = m$module$menu$tabname, icon = icon(m$module$menu$icon))
@@ -190,14 +201,14 @@ create_ui <- function(module_loader) {
 
     dashboardSidebar(
       sidebarMenu(id = "sidebar_menu", do.call(tagList, menu_items)),
-      app_api_status_ui()
+      tags$div(id = "sidebar_status_dock", app_api_status_ui(), app_bq_checks_ui())
     ),
 
     dashboardBody(
       shinyjs::useShinyjs(),
 
       tags$head(
-        tags$link(rel = "stylesheet", type = "text/css", href = "css/global.css"),
+        tags$link(rel = "stylesheet", type = "text/css", href = paste0("css/global.css?v=", tryCatch(format(file.mtime("www/css/global.css"), "%Y%m%d%H%M%S"), error = function(e) "1"))),
         tags$meta(charset = "UTF-8"),
         tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0"),
 
@@ -222,6 +233,7 @@ create_ui <- function(module_loader) {
         # pptxgenjs isn't distributed via cdnjs; jsDelivr (pointed at its
         # GitHub releases) is its own official CDN distribution channel.
         tags$script(src = "https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"),
+        tags$script(src = paste0("js/app_boot.js?v=", tryCatch(format(file.mtime("www/js/app_boot.js"), "%Y%m%d%H%M%S"), error = function(e) "1"))),
         tags$script(src = "js/diagram_export.js"),
         # version tag = file time, so a browser never keeps an old copy of the export code
         tags$script(src = paste0("js/infographic_export.js?v=", tryCatch(format(file.mtime("www/js/infographic_export.js"), "%Y%m%d%H%M%S"), error = function(e) "1"))),
@@ -246,18 +258,39 @@ create_ui <- function(module_loader) {
   )
 }
 
+# Module servers are built ON DEMAND: only the API tabs and the Debug Console at start-up; every other module's server is built the first
+# time its tab is opened (or when its tab group is clicked, which builds the whole group). Building all 69 at start cost several seconds.
+APP_EAGER_MODULES <- c("bigquery_auth", "claude_api_config", "debug_console")
+
 create_server <- function(module_loader, api_manager, session) {
-  enabled_modules <- module_loader$get_enabled_modules()
+  enabled <- module_loader$get_enabled_modules()
+  ids <- vapply(enabled, function(m) m$module$id, "")
+  built <- new.env()
+  groups <- list()   # group label -> module ids (registry order)
+  for (g in (module_loader$registry$groups %||% list())) groups[[as.character(g$label)]] <- intersect(unlist(g$modules), ids)
 
-  for (module in enabled_modules) {
-    module_id <- module$module$id
-    server_function_name <- paste0(module_id, "_server")
-
-    if (exists(server_function_name, envir = .GlobalEnv)) {
-      server_function <- get(server_function_name, envir = .GlobalEnv)
-      server_function(module_id, api_manager)
+  build <- function(id) {
+    if (is.null(id) || !nzchar(id) || !(id %in% ids) || exists(id, envir = built, inherits = FALSE)) return(invisible(FALSE))
+    assign(id, TRUE, envir = built)
+    fn <- paste0(id, "_server")
+    if (exists(fn, envir = .GlobalEnv)) {
+      t0 <- Sys.time()
+      tryCatch(get(fn, envir = .GlobalEnv)(id, api_manager), error = function(e) cat("[Startup] module", id, "failed to start:", conditionMessage(e), "\n"))
+      dt <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
+      if (dt > 0.5) cat(sprintf("[Startup] module %s built in %.1f s\n", id, dt))
     }
+    for (kid in vapply(TD_HUBS[[id]]$children %||% list(), function(x) x$id, "")) build(kid)   # a hub builds its sub-tabs too
+    invisible(TRUE)
   }
+
+  t_all <- Sys.time()
+  for (id in intersect(APP_EAGER_MODULES, ids)) build(id)
+  cat(sprintf("[Startup] %d of %d module servers built at start-up (%.2f s); the rest are built when their tab group or tab is opened\n",
+              length(intersect(APP_EAGER_MODULES, ids)), length(ids), as.numeric(difftime(Sys.time(), t_all, units = "secs"))))
+
+  group_built <- function(label) all(vapply(groups[[label]] %||% character(0), function(id) exists(id, envir = built, inherits = FALSE), TRUE))
+  list(build = build, group_built = group_built, build_group = function(label) { n <- 0L; for (id in groups[[label]] %||% character(0)) if (isTRUE(build(id))) n <- n + 1L; n },
+       group_labels = names(groups))
 }
 
 `%||%` <- function(x, y) if (is.null(x)) y else x

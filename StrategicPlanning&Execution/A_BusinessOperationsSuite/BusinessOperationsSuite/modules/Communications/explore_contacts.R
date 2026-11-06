@@ -160,7 +160,7 @@ explore_contacts_server <- function(id, api_manager) {
         showNotification("Please select a contact first!", type = "warning", duration = 3)
         return()
       }
-      updateTabItems(session$rootScope(), "sidebar_menu", "customise_communication")
+      nav_goto(session, "customise_communication")
       showNotification("Switched to Customise Communication tab", type = "message", duration = 2)
     })
 

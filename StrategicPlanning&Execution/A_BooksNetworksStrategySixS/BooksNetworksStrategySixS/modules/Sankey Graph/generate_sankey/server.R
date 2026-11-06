@@ -162,7 +162,7 @@ generate_sankey_server <- function(id, api_manager) {
       current_text <- input$sankey_text_edit
       if (nchar(trimws(current_text %||% "")) > 0) {
         api_manager$set_pending_bulk_text_sankey(current_text)
-        updateTabItems(session$rootScope(), "sidebar_menu", selected = "sankey_bulk_import")
+        td_nav(session, "sankey_bulk_import")
         showNotification("✓ Sankey copied to Bulk Import tab!", type = "message")
       } else {
         showNotification("No Sankey to copy. Generate one first.", type = "warning")

@@ -11,6 +11,7 @@ claude_api_config_ui <- function(id) {
         solidHeader = TRUE,
         width = 12,
 
+        uiOutput(ns("auto_note")),
         h4("Configure Claude API — shared by every suite"),
         p("One connection powers Day Planner's schedule generation, Events Scheduling's event search, ",
           "and Funding Programmes' programme discovery."),

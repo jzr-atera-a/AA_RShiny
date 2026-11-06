@@ -271,7 +271,7 @@ customise_communication_server <- function(id, api_manager) {
 
       # send_email module reads to/body/subject directly off api_manager
       api_manager$pending_email_subject(paste("Re:", input$comm_purpose))
-      updateTabItems(session$rootScope(), "sidebar_menu", "send_email")
+      nav_goto(session, "send_email")
       showNotification("Email tab loaded with generated message!", type = "message", duration = 3)
     })
 

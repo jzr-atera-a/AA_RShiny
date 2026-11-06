@@ -36,6 +36,7 @@ APIManager <- R6::R6Class(
     claude_max_tokens = 16000,
     claude_timeout = 300,
     claude_authenticated = FALSE,
+    claude_tested = NA,   # NA = key loaded but never used; TRUE = a call worked; FALSE = a call was refused (401/403)
 
     # ---- BigQuery credentials (shared project/dataset, 4 tables) ----
     bq_project_id = "atera-2",
@@ -289,6 +290,7 @@ APIManager <- R6::R6Class(
     # ============================================================
 
     set_claude_credentials = function(api_key, model = NULL, max_tokens = NULL, timeout = NULL) {
+      if (!identical(self$claude_api_key, api_key)) self$claude_tested <- NA
       self$claude_api_key <- api_key
       if (!is.null(model)) self$claude_model <- model
       if (!is.null(max_tokens)) self$claude_max_tokens <- max_tokens
@@ -316,6 +318,7 @@ APIManager <- R6::R6Class(
 
         if (status_code(response) == 200) {
           self$claude_authenticated <- TRUE
+          self$claude_tested <- TRUE
           # NOTE: deliberately NOT firing any trigger_state_update_*() calls
           # here. Those triggers exist to tell each suite's Generate/
           # Visualize dropdowns "BigQuery data may have changed, requery" -
@@ -340,6 +343,7 @@ APIManager <- R6::R6Class(
         }
       }, error = function(e) {
         self$claude_authenticated <- FALSE
+        self$claude_tested <- FALSE
         stop(paste("Connection failed:", e$message))
       })
     },
@@ -378,7 +382,17 @@ APIManager <- R6::R6Class(
       return(lines)
     },
 
+    # wrapper: records whether the key actually worked (drives the amber / green / red light in the sidebar)
     call_claude = function(prompt, max_tokens = NULL, progress_callback = NULL, attachments = NULL, tools = NULL) {
+      res <- tryCatch(self$call_claude_raw(prompt, max_tokens, progress_callback, attachments, tools), error = function(e) {
+        if (grepl("401|403|authentication|invalid x-api-key|permission", conditionMessage(e), ignore.case = TRUE)) self$claude_tested <- FALSE
+        stop(e)
+      })
+      self$claude_tested <- TRUE
+      res
+    },
+
+    call_claude_raw = function(prompt, max_tokens = NULL, progress_callback = NULL, attachments = NULL, tools = NULL) {
       if (!self$claude_authenticated) stop("Not authenticated to Editing Tool API. Please save credentials first.")
       if (is.null(self$claude_api_key) || nchar(self$claude_api_key) == 0) stop("Editing Tool API key is empty. Please configure credentials.")
 
@@ -882,13 +896,16 @@ APIManager <- R6::R6Class(
     bq_session_reset = function() { if (isTRUE(self$bq_connected)) self$bq_reset_lazy_state(); invisible(TRUE) },
 
     # ONE query lists every table and column of the dataset (cached for the session)
-    bq_schema_info = function(refresh = FALSE) {
-      if (!refresh && !is.null(self$bq_schema_cache)) return(self$bq_schema_cache)
+    # Column list of ONE suite's table (a small, targeted query; cached per table)
+    bq_schema_info = function(group, refresh = FALSE) {
+      tbl <- self$bq_group_table(group)
+      if (is.null(self$bq_schema_cache) || !is.list(self$bq_schema_cache)) self$bq_schema_cache <- list()
+      if (!refresh && !is.null(self$bq_schema_cache[[tbl]])) return(self$bq_schema_cache[[tbl]])
       info <- tryCatch({
-        job <- bq_project_query(self$bq_project_id, sprintf("SELECT table_name, column_name FROM `%s.%s.INFORMATION_SCHEMA.COLUMNS`", self$bq_project_id, self$bq_dataset_id))
-        bq_table_download(job)
+        job <- bq_project_query(self$bq_project_id, sprintf("SELECT column_name FROM `%s.%s.INFORMATION_SCHEMA.COLUMNS` WHERE table_name = '%s'", self$bq_project_id, self$bq_dataset_id, tbl))
+        d <- bq_table_download(job); d$table_name <- rep(tbl, nrow(d)); d
       }, error = function(e) { cat("[BigQuery] schema check unavailable (", conditionMessage(e), ") - falling back to CREATE TABLE IF NOT EXISTS\n"); NULL })
-      self$bq_schema_cache <- info
+      if (!is.null(info)) self$bq_schema_cache[[tbl]] <- info
       info
     },
 
@@ -898,14 +915,14 @@ APIManager <- R6::R6Class(
       if (!(isTRUE(self$bq_connected) || isTRUE(self$bq_authenticated))) stop("Not authenticated to BigQuery")
       ddl <- self$bq_ddl()[[group]]; tbl <- self$bq_group_table(group)
       run <- function(q) tryCatch({ bq_project_query(self$bq_project_id, q); TRUE }, error = function(e) { cat("[BigQuery] setup statement failed:", conditionMessage(e), "\n"); FALSE })
-      info <- self$bq_schema_info()
+      info <- self$bq_schema_info(group)
       if (is.null(info)) {
         for (q in c(ddl$create, ddl$alter)) run(q)
       } else {
         have <- info$column_name[info$table_name == tbl]
         if (length(have) == 0) {
           cat("[BigQuery] table", tbl, "not found - creating it\n"); run(ddl$create)
-          self$bq_schema_cache <- NULL
+          self$bq_schema_cache[[tbl]] <- NULL
         } else {
           body <- sub("\\)\\s*$", "", sub("(?s)^.*?IF NOT EXISTS `[^`]+`\\s*\\(", "", ddl$create, perl = TRUE))
           cols <- trimws(strsplit(body, ",", fixed = TRUE)[[1]]); cols <- cols[nzchar(cols)]
@@ -913,7 +930,7 @@ APIManager <- R6::R6Class(
           for (i in which(!nm %in% have)) {
             cat("[BigQuery] adding column", nm[i], "to", tbl, "\n")
             run(sprintf("ALTER TABLE `%s.%s.%s` ADD COLUMN IF NOT EXISTS %s %s", self$bq_project_id, self$bq_dataset_id, tbl, nm[i], ty[i]))
-            self$bq_schema_cache <- NULL
+            self$bq_schema_cache[[tbl]] <- NULL
           }
         }
       }

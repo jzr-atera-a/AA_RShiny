@@ -1,0 +1,17 @@
+module:
+  id: "muscle_progress"
+  name: "Muscle Progress"
+  description: "Week-over-week volume, load progression and weekly set targets per muscle"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "Muscle Progress"
+    icon: "chart-line"
+    tabname: "muscle_progress"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, jsonlite, DT, plotly]
+    package_versions: {}
+  api: {required: [], optional: ["bigquery"]}
+  data: {required: [], optional: []}

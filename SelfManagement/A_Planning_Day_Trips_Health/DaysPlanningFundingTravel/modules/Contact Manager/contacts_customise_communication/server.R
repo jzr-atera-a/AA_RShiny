@@ -96,7 +96,7 @@ contacts_customise_communication_server <- function(id, api_manager) {
       req(generated_text())
       api_manager$contacts_generated_message <- generated_text()
       api_manager$trigger_state_update_contacts()
-      updateTabItems(session$rootScope(), "sidebar_menu", selected = "contacts_send_email")
+      nav_goto(session, "contacts_send_email")
       showNotification("✓ Message sent to Send Email tab!", type = "message")
     })
 

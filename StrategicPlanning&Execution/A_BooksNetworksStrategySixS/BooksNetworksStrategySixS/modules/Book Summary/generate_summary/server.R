@@ -225,7 +225,7 @@ generate_summary_server <- function(id, api_manager) {
         api_manager$set_pending_bulk_text_books(summary_data())
         # session is namespaced to this module; rootScope() is needed to
         # update the sidebarMenu input, which lives outside any module
-        updateTabItems(session$rootScope(), "sidebar_menu", selected = "books_bulk_import")
+        td_nav(session, "books_bulk_import")
         showNotification("✓ Summary copied to Bulk Import tab!", type = "message")
       } else {
         showNotification("No summary to copy. Generate first.", type = "warning")

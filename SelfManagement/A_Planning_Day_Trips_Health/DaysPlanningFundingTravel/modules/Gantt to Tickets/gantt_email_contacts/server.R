@@ -17,7 +17,7 @@ gantt_email_contacts_server <- function(id, api_manager) {
       }
     }
 
-    observe({ api_manager$state_trigger_gantt(); load_contacts() })
+    observe({ api_manager$tab_gate("gantt_email_contacts"); api_manager$state_trigger_gantt(); load_contacts() })
 
     filtered <- reactive({
       d <- all_contacts()

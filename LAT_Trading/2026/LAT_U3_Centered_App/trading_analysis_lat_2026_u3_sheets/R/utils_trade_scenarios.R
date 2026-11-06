@@ -20,7 +20,8 @@ tr_scn_morning_text <- function(hdr, lv) {
   paste(out, collapse = "\n")
 }
 
-tr_scn_prompt <- function(asset, price, size, morning_txt, duration_h = NA, notes = "", chart = NULL, has_image = TRUE, risk = NULL) {
+tr_scn_prompt <- function(asset, price, size, morning_txt, duration_h = NA, notes = "", chart = NULL, has_image = TRUE, risk = NULL,
+                          force = "", as_of = NULL) {
   rg <- if (!is.null(risk) && is.finite(risk$pct %||% NA) && is.finite(risk$equity %||% NA)) risk$equity * risk$pct / 100 else NA
   paste0(
     "You are helping a trading student on an IG DEMO spread-bet account prepare two alternative trade scenarios. ",
@@ -31,6 +32,8 @@ tr_scn_prompt <- function(asset, price, size, morning_txt, duration_h = NA, note
                                 "Bulkowski and TrendSpider guidelines; each with its bias, the level whose close beyond it cancels it, and its measured target:\n",
                                 chart$patterns, "\n", if (!is.null(chart$decision)) paste0("App's chart bias (score-weighted vote of the patterns): ", chart$decision, "\n"), "\n") else "",
     "Current price (given by the student): ", price, "\n",
+    if (!is.null(as_of) && !any(is.na(as_of))) paste0("The moment being planned is ", format(as.POSIXct(as_of[1]), "%d/%m/%Y %H:%M", tz = "Europe/London"),
+      " UK, NOT now: the student is writing up a trade taken at that time. The candles above end there. Judge everything as it stood at that moment and never mention later prices.\n") else "",
     if (is.finite(size)) paste0("Size: GBP ", size, " per point\n") else if (is.finite(rg)) paste0("Size: not fixed; the student risks GBP ", round(rg, 2), " per trade (", risk$pct, "% of equity GBP ", round(risk$equity), "). Give risk_gbp and reward_gbp at the size that risks that amount (size = GBP risk / stop distance in points).\n") else "",
     if (is.finite(duration_h)) paste0("Planned holding time: about ", duration_h, " hours\n") else "",
     if (nzchar(notes)) paste0("Student notes: ", notes, "\n") else "",
@@ -38,6 +41,11 @@ tr_scn_prompt <- function(asset, price, size, morning_txt, duration_h = NA, note
     "Read the chart (", if (has_image) "the image" else "", if (has_image && !is.null(chart)) " and " else "", if (!is.null(chart)) "the candles above" else "", ": recent swing highs/lows, trend, support and resistance), weigh the patterns listed ",
     "(the side they agree on, and where they conflict), put each stop beyond the cancelling level of the pattern(s) the scenario follows and each limit at or before their target or the next level, and use the Morning Sheet levels ",
     "(pivots, prior high/low/close, overnight range, ADX regime, releases in the window).\n",
+    if (nzchar(trimws(force))) paste0(
+      "\nLEVELS THE STUDENT REQUIRES (these come first, before your own choice of levels):\n", trimws(force), "\n",
+      "Use each level exactly as given, for the side it belongs to, instead of a level you would have picked. Say in stop_reason and target_reason ",
+      "what that exact level sits beyond or targets on the chart and on the Morning Sheet. If a required level looks wrong to you, still use it, and say plainly ",
+      "in `risks` why it is risky and what you would have used instead. Choose freely only the levels the student has not fixed.\n") else "",
     "Return ONE BUY scenario and ONE SELL scenario, both entered at the current price. For each give a stop and a limit at ",
     "real chart or sheet levels (a stop is beyond a level, not at it), the reward:risk, the GBP risk and reward at the given size, and an ",
     "estimated probability (0-100) that the limit is hit before the stop. Be honest: the two probabilities may both be low, and say ",
@@ -57,10 +65,11 @@ tr_scn_parse <- function(txt, price = NA, size = NA, risk_gbp = NA) {
     side <- toupper(s(z$side)); side <- if (grepl("^B", side)) "BUY" else if (grepl("^S", side)) "SELL" else NA
     en <- n(z$entry); if (!is.finite(en) || en == 0) en <- n(price)
     st <- n(z$stop); lm <- n(z$limit)
+    ref <- if (is.finite(price)) n(price) else en   # the actual IG price the student gave: the IG form's "pts away" is measured from it
     risk <- abs(en - st); rew <- abs(lm - en)
     sp <- if (is.finite(risk_gbp) && is.finite(risk) && risk > 0) floor(risk_gbp / risk * 10) / 10 else NA_real_   # size that risks the plan's GBP (rounded down to 0.1)
     sz <- if (is.finite(size)) size else sp
-    data.frame(side = side, entry = en, stop = st, limit = lm, size = sz, size_plan = sp,
+    data.frame(side = side, entry = en, stop = st, limit = lm, stop_pts = round(abs(st - ref), 1), limit_pts = round(abs(lm - ref), 1), size = sz, size_plan = sp,
                reward_risk = if (is.finite(risk) && risk > 0) round(rew / risk, 2) else n(z$reward_risk),
                risk_gbp = if (is.finite(sz)) round(risk * sz, 2) else n(z$risk_gbp),
                reward_gbp = if (is.finite(sz)) round(rew * sz, 2) else n(z$reward_gbp),

@@ -1,0 +1,33 @@
+module:
+  id: "sk_hub_explore"
+  name: "Visualise and Browse"
+  description: "Hub: Visualise and Browse"
+  version: "1.0.0"
+  author: "Sankey Graph Suite"
+
+  enabled: true
+
+  menu:
+    label: "Visualise and Browse"
+    icon: "water"
+    tabname: "sk_hub_explore"
+    group: "Sankey Graph"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinyjs
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: ["claude", "bigquery"]
+
+  data:
+    required: []
+    optional: []

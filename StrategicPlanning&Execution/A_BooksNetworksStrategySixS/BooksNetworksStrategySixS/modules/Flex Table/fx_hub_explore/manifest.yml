@@ -1,0 +1,33 @@
+module:
+  id: "fx_hub_explore"
+  name: "View and Browse"
+  description: "Hub: View and Browse"
+  version: "1.0.0"
+  author: "Flex Table Suite"
+
+  enabled: true
+
+  menu:
+    label: "View and Browse"
+    icon: "table"
+    tabname: "fx_hub_explore"
+    group: "Flex Table"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinyjs
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: ["claude", "bigquery"]
+
+  data:
+    required: []
+    optional: []

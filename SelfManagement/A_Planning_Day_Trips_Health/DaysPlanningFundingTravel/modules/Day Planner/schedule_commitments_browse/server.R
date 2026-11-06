@@ -23,7 +23,8 @@ schedule_commitments_browse_server <- function(id, api_manager) {
     }
 
     observeEvent(input$refresh, { load_commitments() })
-    observeEvent(api_manager$state_trigger_schedule(), { if (api_manager$bq_authenticated) load_commitments() }, ignoreInit = TRUE)
+    observeEvent(list(api_manager$state_trigger_schedule(), api_manager$tab_open("schedule_commitments_browse")),
+                 { if (api_manager$tab_open("schedule_commitments_browse") && api_manager$bq_authenticated) load_commitments() }, ignoreInit = TRUE)   # on first open + on refresh triggers
 
     output$download <- downloadHandler(
       filename = function() paste0("monthly_commitments_", format(Sys.Date(), "%Y%m%d"), ".csv"),
@@ -60,7 +61,7 @@ schedule_commitments_browse_server <- function(id, api_manager) {
         tags$div(class = "status-success", tags$i(class = "fa fa-check-circle"),
                  " Sent! Go to Generate Schedule - the commitment's context has been added to Additional Details.")
       })
-      updateTabItems(session$rootScope(), "sidebar_menu", selected = "generate_schedule")
+      nav_goto(session, "generate_schedule")
       showNotification("✓ Commitment sent to Generate Schedule!", type = "message")
     })
 

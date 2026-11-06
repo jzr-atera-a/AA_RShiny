@@ -166,7 +166,7 @@ generate_table_server <- function(id, api_manager) {
     observeEvent(input$copy_to_bulk, {
       if (nchar(table_data()) > 0) {
         api_manager$set_pending_bulk_text_flex(table_data())
-        updateTabItems(session$rootScope(), "sidebar_menu", selected = "bulk_import")
+        td_nav(session, "bulk_import")
         showNotification("✓ Table copied to Bulk Import tab!", type = "message")
       } else {
         showNotification("No table to copy. Generate first.", type = "warning")

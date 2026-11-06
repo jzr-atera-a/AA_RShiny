@@ -23,7 +23,8 @@ schedule_generate_prep_server <- function(id, api_manager) {
       }, error = function(e) {})
     }
 
-    observeEvent(api_manager$state_trigger_schedule(), { refresh_dates() }, ignoreInit = FALSE)
+    observeEvent(list(api_manager$state_trigger_schedule(), api_manager$tab_open("schedule_generate_prep")),
+                 { req(api_manager$tab_open("schedule_generate_prep")); refresh_dates() }, ignoreInit = FALSE)   # on first open + on refresh triggers
 
     observeEvent(input$select_date, {
       req(input$select_date, api_manager$bq_authenticated)

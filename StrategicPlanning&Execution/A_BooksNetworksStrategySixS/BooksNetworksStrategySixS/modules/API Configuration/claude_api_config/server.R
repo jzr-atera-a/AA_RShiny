@@ -12,7 +12,10 @@ claude_api_config_server <- function(id, api_manager) {
     })
 
     observeEvent(input$test_connection, {
-      req(input$api_key)
+      typed <- nzchar(trimws(input$api_key %||% ""))
+      if (!typed && !(isTRUE(api_manager$claude_authenticated) && !is.null(api_manager$claude_api_key))) {
+        showNotification("Paste a key first, or load one from the key folder.", type = "warning"); return()
+      }
 
       output$status <- renderUI({
         tags$div(class = "status-info",
@@ -21,8 +24,9 @@ claude_api_config_server <- function(id, api_manager) {
       })
 
       tryCatch({
+        # empty box = test the key already loaded (for example from the key folder)
         api_manager$set_claude_credentials(
-          api_key = input$api_key,
+          api_key = if (typed) input$api_key else api_manager$claude_api_key,
           model = input$model,
           max_tokens = input$max_tokens,
           timeout = input$timeout

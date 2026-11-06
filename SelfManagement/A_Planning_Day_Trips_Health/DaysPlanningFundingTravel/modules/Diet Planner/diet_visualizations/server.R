@@ -6,6 +6,7 @@ diet_visualizations_server <- function(id, api_manager) {
     viz_data <- reactiveVal(NULL)
 
     viz_taxonomy <- reactive({
+      api_manager$tab_gate("diet_visualizations")     # loads when this tab is first opened, not before
       api_manager$state_trigger_diet()
       if (!api_manager$bq_authenticated) return(data.frame(diet_type = character(), stringsAsFactors = FALSE))
       tryCatch(api_manager$bq_get_diet_taxonomy(), error = function(e) data.frame(diet_type = character(), stringsAsFactors = FALSE))

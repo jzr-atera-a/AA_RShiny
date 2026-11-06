@@ -71,7 +71,7 @@ image_generation_server <- function(id, api_manager) {
     observeEvent(input$transferBtn, {
       if (!is.null(input$description) && nchar(trimws(input$description)) > 0) {
         api_manager$set_pending_prompt_visual_media(input$description)
-        updateTabItems(session$rootScope(), "sidebar_menu", "further_context")
+        nav_goto(session, "further_context")
         showNotification("Description transferred to Further Context tab!", type = "message", duration = 3)
       } else {
         showNotification("Please enter a description first", type = "warning")

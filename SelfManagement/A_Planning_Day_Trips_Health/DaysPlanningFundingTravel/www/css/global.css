@@ -510,3 +510,26 @@ table.flex-comparison-table tbody tr:hover th.row-index-cell {
 }
 .ticket-box a { color: #008A82; font-weight: bold; text-decoration: none; }
 .ticket-box a:hover { color: #00A39A; text-decoration: underline; }
+
+/* ====================================
+   SECTION TABS: the modules of a sidebar section as horizontal tabs in the page body
+   ==================================== */
+.section-tabs > .tabbable > .nav-tabs {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.35);
+  margin-bottom: 16px;
+}
+.section-tabs > .tabbable > .nav-tabs > li { float: none; margin-bottom: 0; }
+.section-tabs > .tabbable > .nav-tabs > li > a {
+  color: #ffffff; background: rgba(255, 255, 255, 0.12);
+  border: none; border-radius: 8px 8px 0 0; margin: 0;
+  font-weight: 600; padding: 9px 16px;
+}
+.section-tabs > .tabbable > .nav-tabs > li > a > i { margin-right: 7px; }
+.section-tabs > .tabbable > .nav-tabs > li > a:hover { background: rgba(255, 255, 255, 0.25); color: #ffffff; border: none; }
+.section-tabs > .tabbable > .nav-tabs > li.active > a,
+.section-tabs > .tabbable > .nav-tabs > li.active > a:hover,
+.section-tabs > .tabbable > .nav-tabs > li.active > a:focus {
+  color: #006a64; background: #ffffff; border: none;
+}
+.section-tabs > .tabbable > .tab-content { padding: 0; }

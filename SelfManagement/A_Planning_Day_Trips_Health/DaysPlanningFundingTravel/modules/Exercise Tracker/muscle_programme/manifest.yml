@@ -1,0 +1,17 @@
+module:
+  id: "muscle_programme"
+  name: "Muscle Programme"
+  description: "Weekly muscle-building split with three options per day (gym, no equipment, home kit)"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "Muscle Programme"
+    icon: "dumbbell"
+    tabname: "muscle_programme"
+    badge: {label: "new", color: "green"}
+  dependencies:
+    packages: [shiny, shinydashboard, jsonlite, DT, shinyjs]
+    package_versions: {}
+  api: {required: ["claude"], optional: ["bigquery"]}
+  data: {required: [], optional: []}

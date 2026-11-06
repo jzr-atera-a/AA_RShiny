@@ -143,7 +143,7 @@ scan_events_server <- function(id, api_manager) {
       current_text <- input$scan_text_edit
       if (nchar(trimws(current_text %||% "")) > 0) {
         api_manager$set_pending_bulk_text_events(current_text)
-        updateTabItems(session$rootScope(), "sidebar_menu", selected = "bulk_import_events")
+        nav_goto(session, "bulk_import_events")
         showNotification("✓ Events copied to Bulk Import tab!", type = "message")
       } else {
         showNotification("No events to copy. Scan first.", type = "warning")

@@ -65,7 +65,7 @@ td_actions_server <- function(input, session, api_manager, get_design) {
     d <- need(); if (is.null(d)) return()
     tryCatch({
       api_manager$set_pending_bulk_text_flex(techdesign_to_flex_text(d, which))
-      updateTabItems(session$rootScope(), "sidebar_menu", selected = "bulk_import")
+      td_nav(session, "bulk_import")
       showNotification("Sent to Flex Table's Bulk Import tab.", type = "message")
     }, error = function(e) showNotification(paste("Could not send:", e$message), type = "error"))
   }
@@ -89,7 +89,25 @@ techdesign_module_ui <- function(id, group) {
   choices <- c(td_catalog_choices(group), "+ Custom design..." = TD_CUSTOM_VALUE)
   kind_txt <- if (TD_GROUP_DIAGRAM_KIND[[group]] == "class") "a UML class diagram" else "a swimlane architecture diagram"
 
+  algo_box <- if (identical(group, "algorithms")) fluidRow(
+    box(
+      title = "Algorithm Selector - paste the interview question", status = "warning", solidHeader = TRUE, width = 12,
+      div(class = "alert alert-warning",
+          tags$strong("How this works:"), " type the algorithm or design question (for example a LeetCode problem, or a Meta system-design / data-structure question). ",
+          "The Editing Tool picks the best-fitting LeetCode pattern from all topic groups, explains why, and returns the full design as a network of boxes ",
+          "with a worked example and a step-by-step trace. Then save it to BigQuery (Technical Designs table) and download it as HTML, PDF, PPTX or image."),
+      textAreaInput(ns("question"), "Question: *", rows = 5, width = "100%",
+                    placeholder = "e.g., Given a stream of posts from friends, return the 10 most recent posts for a user's news feed. Followed accounts can be up to 5,000."),
+      fluidRow(
+        column(5, textInput(ns("language"), "Language for code-level detail (optional):", placeholder = "e.g., Python, Java, C++")),
+        column(4, radioButtons(ns("algo_detail"), "Detail:", inline = TRUE, choices = c("Compact" = "1", "Standard" = "2", "Detailed" = "3"), selected = "2")),
+        column(3, br(), actionButton(ns("recommend"), "Recommend and Design", icon = icon("lightbulb"), class = "btn-warning btn-lg", style = "width: 100%;"))
+      )
+    )
+  ) else NULL
+
   tagList(
+    algo_box,
     fluidRow(
       box(
         title = paste("Design:", TD_GROUP_LABELS[[group]]), status = "primary", solidHeader = TRUE, width = 12,
@@ -258,13 +276,47 @@ techdesign_module_server <- function(id, api_manager, group) {
       })
     })
 
+    # ---------------- Algorithm Selector: question -> pattern + full design in one call ----------------
+    if (identical(group, "algorithms")) observeEvent(input$recommend, {
+      if (!api_manager$claude_authenticated) {
+        showNotification("Please configure and save Editing Tool API credentials first!", type = "error", duration = 10)
+        return()
+      }
+      q <- trimws(input$question %||% "")
+      if (nchar(q) < 10) { showNotification("Please type the question first (at least a sentence).", type = "warning"); return() }
+      prompt <- generate_algo_prompt(q, input$language %||% "", as.integer(input$algo_detail %||% "2"))
+      editing_id(NULL)
+      shinyjs::show("loading_spinner")
+      updateTextAreaInput(session, "gen_text", value = "")
+      progress_msg <- reactiveVal("Choosing the best pattern for your question...")
+      output$status <- renderUI({ tags$div(class = "status-info", tags$i(class = "fa fa-spinner fa-spin"), " ", progress_msg()) })
+      tryCatch({
+        resp <- api_manager$call_claude(prompt = prompt, max_tokens = 9000, progress_callback = function(msg) progress_msg(msg))
+        truncated <- identical(attr(resp, "claude_stop_reason"), "max_tokens")
+        txt <- td_force_header(resp, group)
+        d <- parse_techdesign_text(txt)
+        txt <- td_force_header(txt, group, d$meta$design_type)
+        updateTextAreaInput(session, "gen_text", value = txt)
+        shinyjs::hide("loading_spinner")
+        draw(d)
+        set_status(if (truncated) "status-warning" else "status-success", if (truncated) "fa fa-exclamation-triangle" else "fa fa-check-circle",
+                   sprintf("%s Pattern: %s. %d boxes, %d connections. Review the diagram, then 'Save to BigQuery'.",
+                           if (truncated) "Response was cut off (try Compact)." else "Done.",
+                           td_design_name(group, d$meta$design_type, d$meta$title), nrow(d$components), nrow(d$connections)), warn_ui(d))
+      }, error = function(e) {
+        shinyjs::hide("loading_spinner")
+        set_status("status-error", "fa fa-times-circle", paste("Failed:", e$message))
+        showNotification(paste("Error:", e$message), type = "error", duration = 12)
+      })
+    })
+
     # ---------------- Handoffs ----------------
     td_actions_server(input, session, api_manager, function() current_design())
 
     observeEvent(input$to_bulk, {
       if (nchar(trimws(input$gen_text %||% "")) == 0) { showNotification("Nothing to send - generate a design first.", type = "warning"); return() }
       api_manager$set_pending_bulk_text_techdesign(td_force_header(input$gen_text, group))
-      updateTabItems(session$rootScope(), "sidebar_menu", selected = "techdesign_bulk_import")
+      td_nav(session, "techdesign_bulk_import")
       showNotification("Design sent to the Technical Designs Bulk Import tab.", type = "message")
     })
 
@@ -276,9 +328,10 @@ techdesign_module_server <- function(id, api_manager, group) {
         updateSelectInput(session, "design_type", selected = sel$design_type)
       }
       if (nzchar(sel$context %||% "")) updateTextAreaInput(session, "context", value = sel$context)
+      if (identical(group, "algorithms") && nzchar(sel$context %||% "")) updateTextAreaInput(session, "question", value = sel$context)   # the Algorithm Selector's question box
       api_manager$set_pending_techdesign_selection(NULL)
       showNotification(sprintf("Preselected: %s", td_design_name(group, sel$design_type %||% "")), type = "message")
-    }, ignoreInit = TRUE, ignoreNULL = TRUE)
+    }, ignoreInit = FALSE, ignoreNULL = TRUE)   # FALSE: the tab's server is built on first visit, after the handoff value was set
 
     # ---------------- Re-parse & draw ----------------
     observeEvent(input$preview, {
@@ -297,7 +350,7 @@ techdesign_module_server <- function(id, api_manager, group) {
       if (nchar(trimws(input$gen_text %||% "")) == 0) { showNotification("Nothing to save - generate a design first.", type = "warning"); return() }
       tryCatch({
         eid <- editing_id()
-        txt <- if (is.null(eid) && !is.null(chosen_type()) && nzchar(chosen_type())) td_force_header(input$gen_text, group, chosen_type())
+        txt <- if (is.null(eid) && !identical(group, "algorithms") && !is.null(chosen_type()) && nzchar(chosen_type())) td_force_header(input$gen_text, group, chosen_type())
                else td_force_header(input$gen_text, group)
         d <- parse_techdesign_text(txt)
         design_id <- eid %||% generate_new_design_id(d$meta$design_type)

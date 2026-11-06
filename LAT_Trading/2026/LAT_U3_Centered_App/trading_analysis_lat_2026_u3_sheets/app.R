@@ -41,40 +41,38 @@ u3_start_ui <- function() {
     fluidRow(
       column(6, box(width = 12, status = "primary", solidHeader = TRUE, title = "Once",
         st(1, "API Configuration", "BigQuery: sign in with the service-account key (or set ATERA_BQ_KEY_FILE). Claude API: paste the key and Test Connection (or set ANTHROPIC_API_KEY)."),
-        st(2, "Trading Records > 1. Connection & Setup", "Create / verify tables. Your name, LAT ID, period, plan numbers and ", tags$b("your expected duration per chart period"), ", then Save settings. Press ",
+        st(2, "Trading Desk > 1. Setup", "Create / verify tables (both the trading_ and the cc_ ones). Your name, LAT ID, period, plan numbers and ", tags$b("your expected duration per chart period"), ", then Save settings. Press ",
            tags$b("Test Dropbox"), ". Sheets always go to ", tags$code("Dropbox/London Academy of Trading/Jose-F_Zubizarreta/Morning Sheets"), " and ", tags$code(".../Individual Trade Sheets"), ", Word + PDF, saved automatically after every change."),
-        st(3, "Catch up once", tags$b("Complete past Morning Sheets and trades"), " (Setup): every trading day since 12 Oct gets its overnight levels from Yahoo; sheets already in Dropbox are kept."))),
+        st(3, "Catch up once", tags$b("Complete past Morning Sheets and trades"), " (Trading Desk > 1. Setup): every trading day since 12 Oct gets its overnight levels from Yahoo; sheets already in Dropbox are kept."))),
       column(6, box(width = 12, status = "info", solidHeader = TRUE, title = "Rules that keep the work yours",
         tags$ul(style = "font-size:12.5px; line-height:1.6; padding-left:18px;",
           tags$li("Claude only copies values from your screenshots and finds published data with its sources. It never writes your set-up, trigger, execution, reasons, lessons, plan, evaluation or SWOT."),
           tags$li("Crop account names and numbers out of screenshots before uploading."),
           tags$li("Values that cannot be read stay empty, or are marked as estimates. Nothing is invented."),
           tags$li("Say in your submission that records were transcribed with an AI tool from your own platform screenshots (it is in the References list)."))))),
-    box(width = 12, status = "success", solidHeader = TRUE, title = "Every trading day",
+    box(width = 12, status = "success", solidHeader = TRUE, title = "Every trading day: Trading Desk, the green tabs in order",
       fluidRow(
         column(6,
-          st("AM", "Morning Sheet (Trading Records > 2)",
-             tags$b("IG screenshots: "), "watchlist with Dow (Wall Street), Japan 225, EUR/USD, USD/JPY, GBP/USD, AUD/USD, Oil - US Crude, Spot Gold, Oil - Brent Crude, then ", tags$b("Read levels with Claude"), ". ",
-             tags$b("Calendar: "), "IG economic calendar for yesterday and today, then ", tags$b("Read calendar"), " (the pictures are also kept for the sheet). ",
-             tags$b("Low / High: "), tags$b("Fill Low / High from Yahoo"), " (overnight range 21:00 to now, scaled to IG points). ",
-             "Type your overnight news notes, then ", tags$b("Fill every empty cell and save"), ": Yahoo fills the rest, Claude adds sourced headlines / calendar only if those boxes are empty, and the Word + PDF land in Dropbox."),
-          st("PLAN", "Before a trade (Decision Panel)",
-             "Read the IG ticket (or type the IG price): levels, noise, regime, calendar and your record are lined up with IG prices. ",
-             "Choose Buy / Sell / No trade, fill entry, stop, target and the six boxes in your own words while you look at the facts, then ", tags$b("Save decision snapshot"), ". ",
-             "When the trade is saved it links itself and your words fill its empty boxes. An order that expires: Decision journal > ", tags$b("Mark expired"), " saves the 'order not filled' Trade Sheet."),
-          st("IN", "Opening a trade (Order Evidence)",
-             "Screenshots of the ", tags$b("deal ticket"), " and the ", tags$b("Positions row"), " (entry, stop, limit), then ", tags$b("History > Activity"), " (the time the position opened). ",
-             "Read them, Send to Trades, choose Assessed, check the values and Save. If no time was shown, the Activity screenshot fixes it later.")),
+          st("AM", "2. Morning Sheet",
+             tags$b("Levels: "), "web search, or IG watchlist screenshots and ", tags$b("Read levels with Claude"), ", or ", tags$b("Fill Low / High from Yahoo"), ". ",
+             tags$b("Calendar: "), "load it (Forex Factory, Yahoo, Claude fills the actuals) or read IG calendar screenshots. ",
+             "Type your overnight news notes, then ", tags$b("Fill every empty cell and save"), ": BigQuery, plus Word + PDF in Dropbox. The sheet of the day is what Claude reads in tab 4."),
+          st("MKT", "3. Market & Patterns",
+             "Find the market (e.g. Brent), choose the candle size and ", tags$b("Load chart & find patterns"), " (Capital.com candles; Yahoo if you choose it). ",
+             "Every pattern of the matrix is checked, with its measured record. Optional: the Decision Panel (Yahoo facts lined up with IG prices) folds open under the chart."),
+          st("PLAN", "4. Plan & Order",
+             tags$b("Work out the scenarios"), " (levels as prices and as distance from the price now, both chances, money in GBP), then ", tags$b("Ask Claude for suggested trades"),
+             " with today's Morning Sheet. Copy the levels you choose, write the six boxes in your own words, tick the check and send the order to the Capital.com demo.")),
         column(6,
-          st("MG", "Managing it", "Trades > B: Moved stop / Partial exit with the time. Exports > Pictures: save the updated chart as ", tags$i("In-trade"), " for that action."),
-          st("OUT", "Closing it", tags$b("History"), " 'Closed in the last 24 hours' screenshot > Order Evidence > Send to Trades (it finds the matching open trade) > exit code, plan followed? > Save."),
-          st("PM", "Completing the Trade Sheet (Exports)",
-             tags$b("Pictures: "), "entry chart(s) with captions (4 Hour, 1 Hour, 15 Min...), exit and post-exit charts. ",
-             tags$b("Complete this sheet: "), "chart period, expected duration and YOUR set-up, trigger, execution, reasons, reason for exit and lessons, written while you look at the facts panel. ",
-             "Every save updates the Word + PDF in Dropbox (the earlier file is kept in '_previous versions'). Empty chart slots get a chart drawn from Yahoo prices, labelled as such: replace it with your IG chart when you can.")))),
+          st("IN", "5. Positions & Sync", "Your open position and working orders from Capital.com. Move the stop / target or close it here (with your reason). ", tags$b("Sync"), " picks up the close, the exit level and the amount booked."),
+          st("OUT", "6. Journal & Trade Sheet",
+             "Choose the closed trade, write the reason for exit, lessons and analysis in your own words, then ", tags$b("Save my entries and write the Individual Trade Sheet"),
+             ": BigQuery, plus Word + PDF in Dropbox with the entry and exit charts."),
+          st("IG", "Trades on IG: 7. IG / screenshot trades",
+             "Deal ticket, Positions and History screenshots read by Claude (Order Evidence), then the trade, its management and its close. Their sheets are finished in 9. Exports.")))),
     box(width = 12, status = "warning", solidHeader = TRUE, title = "Each week and at the end",
       tags$div(style = "font-size:12.5px; line-height:1.6;", tags$b("Unit 3 > Report Builder: "), "coverage of every trading day, the numbers and labelled figures for Task 2 and Task 3, your References and the Answer Sheet filled with your own text (word count per task, name and LAT ID, figures numbered and labelled). ",
-               tags$b("Exports: "), "the Trade Blotter and statistics (Excel).")))
+               tags$b("Trading Desk > 9. Exports: "), "the Trade Blotter and statistics (Excel).")))
 }
 
 ui <- dashboardPage(
@@ -83,9 +81,9 @@ ui <- dashboardPage(
     sidebarMenu(id = "sidebar_menu",
       menuItem("Start here", tabName = "u3_start", icon = icon("flag-checkered")),
       menuItem("Trade Journal", icon = icon("file-invoice"), startExpanded = TRUE,
-        menuSubItem("Trading Records (BigQuery)", tabName = "trading_records", icon = icon("database"), selected = TRUE),
-        menuSubItem("Decision Panel (before a trade)", tabName = "trading_decision", icon = icon("scale-balanced")),
-        menuSubItem("Order Evidence (Claude)", tabName = "trading_evidence", icon = icon("camera"))),
+        menuSubItem("Trading Desk", tabName = "trading_records", icon = icon("chart-line"), selected = TRUE)),
+      menuItem("Step-by-Step Practice (Steps 1-6)", tabName = "pattern_matrix", icon = icon("chalkboard-user")),
+      menuItem("Improvements Proposed", tabName = "improvements", icon = icon("lightbulb")),
       menuItem("Unit 3", icon = icon("graduation-cap"), startExpanded = TRUE,
         menuSubItem("Report Builder (Tasks 1-3)", tabName = "u3_report", icon = icon("file-lines")),
         menuSubItem("Assignment & Plan Guide", tabName = "unit3_workbench", icon = icon("screwdriver-wrench")),
@@ -94,6 +92,7 @@ ui <- dashboardPage(
       menuItem("API Configuration", icon = icon("key"),
         menuSubItem("BigQuery", tabName = "econ_bigquery_auth", icon = icon("database")),
         menuSubItem("Claude API", tabName = "econ_claude_config", icon = icon("robot")),
+        menuSubItem("Capital.com", tabName = "cc_api_config", icon = icon("building-columns")),
         menuSubItem("Trello & Jira", tabName = "trello_jira_config", icon = icon("trello")),
         menuSubItem("Debug Console", tabName = "debug_console", icon = icon("terminal")))
     ),
@@ -114,15 +113,17 @@ ui <- dashboardPage(
               tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0")),
     tabItems(
       tabItem(tabName = "u3_start", u3_start_ui()),
-      tabItem(tabName = "trading_records", trading_records_ui("trading_records")),
-      tabItem(tabName = "trading_evidence", trading_evidence_ui("trading_evidence")),
-      tabItem(tabName = "trading_decision", trading_decision_ui("trading_decision")),
+      tabItem(tabName = "trading_records", trading_desk_ui()),
+      tabItem(tabName = "pattern_matrix", pattern_matrix_ui("pattern_matrix")),   # course Steps 1-6 + the 141 matrix patterns, drawn and checked
+      tabItem(tabName = "improvements", improvements_ui("improvements")),
+      # Trading Records + T Records C.C + Decision Panel + Order Evidence
       tabItem(tabName = "u3_report", u3_report_builder_ui("u3_report")),
       tabItem(tabName = "unit3_workbench", unit3_workbench_ui("unit3_workbench", guidance_only = TRUE)),
       tabItem(tabName = "unit3_live_signals", unit3_live_signals_ui("unit3_live_signals")),
       tabItem(tabName = "unit3_execution_plan", unit3_execution_plan_ui("unit3_execution_plan")),
       tabItem(tabName = "econ_bigquery_auth", econ_bigquery_auth_ui("econ_bigquery_auth")),
       tabItem(tabName = "econ_claude_config", econ_claude_config_ui("econ_claude_config")),
+      tabItem(tabName = "cc_api_config", cc_api_config_ui("cc_api_config")),
       tabItem(tabName = "trello_jira_config", trello_jira_config_ui("trello_jira_config")),
       tabItem(tabName = "debug_console", debug_console_ui("debug_console"))
     )
@@ -159,6 +160,18 @@ server <- function(input, output, session) {
     }
   })
 
+  # Capital.com: a credentials file in the local key folder connects on its own (the tab can load another one)
+  local({
+    cr <- tryCatch(cc_find_local_credentials(), error = function(e) NULL)
+    if (!is.null(cr) && !cc_client$has_credentials()) {
+      cc_client$set_credentials(cr[c("api_key", "identifier", "api_password", "environment")])
+      ok <- tryCatch({ cc_client$login(); TRUE }, error = function(e) { cat("[Capital.com] file", cr$path, "found but login failed:", conditionMessage(e), "\n"); FALSE })
+      st <- u3_cred_status()
+      st$cc <- if (ok) sprintf("Connected automatically with %s (%s, key %s).", basename(cr$path), toupper(cr$environment), cc_mask(cr$api_key)) else sprintf("A file was found (%s) but the login failed: see the Debug Console.", basename(cr$path))
+      assign(".u3_cred_status", st, envir = .GlobalEnv)
+    }
+  })
+
   # sidebar lights: BigQuery / Claude readiness (re-checked every 3 s, so a key loaded later in API Configuration shows too)
   output$api_status <- renderUI({
     invalidateLater(3000)
@@ -172,7 +185,9 @@ server <- function(input, output, session) {
     bq_fail <- !bq && !is.null(st$bq)
     tagList(
       light("BigQuery", bq, FALSE, if (bq) "ready" else if (bq_fail) "key found, connection failed (see Debug Console)" else "not connected: API Configuration > BigQuery"),
-      light("Claude", cl, FALSE, if (cl) "ready (key loaded)" else "no key: API Configuration > Claude API"))
+      light("Claude", cl, FALSE, if (cl) "ready (key loaded)" else "no key: API Configuration > Claude API"),
+      light("Capital.com", cc_client$connected(), cc_client$has_credentials() && !cc_client$connected(),
+            if (cc_client$connected()) sprintf("ready (%s)", toupper(cc_client$environment())) else if (cc_client$has_credentials()) "credentials loaded, not connected" else "not set up: API Configuration > Capital.com"))
   })
 
   econ_bigquery_auth_server("econ_bigquery_auth", api_manager)
@@ -187,6 +202,12 @@ server <- function(input, output, session) {
   trading_evidence_server("trading_evidence", api_manager, records_store, records_bus, pictures = records_pictures)
   trading_decision_server("trading_decision", api_manager, records_store, bus = records_bus, pictures = records_pictures)
   u3_report_builder_server("u3_report", records_store, active = reactive(identical(input$sidebar_menu, "u3_report")))
+
+  cc_store <- cc_make_store(cc_bq_backend(api_manager))   # separate cc_ tables: the IG records are not touched
+  cc_api_config_server("cc_api_config", cc_client, cc_store)
+  cc_trading_records_server("cc_records", cc_client, api_manager, cc_store)
+  trading_desk_server(input, session, output)   # one place for the shared plan settings
+  pattern_matrix_server("pattern_matrix", data_manager, api_manager)   # course Steps 1-6 (with their own step servers) + the 141 patterns
 
   unit3_workbench_server("unit3_workbench", data_manager)
   unit3_live_signals_server("unit3_live_signals", data_manager, api_manager, shared_econ_state)

@@ -1,0 +1,33 @@
+module:
+  id: "ss_hub_learn"
+  name: "Learn and Choose"
+  description: "Hub: Learn and Choose"
+  version: "1.0.0"
+  author: "Six Sigma Analysis Suite"
+
+  enabled: true
+
+  menu:
+    label: "Learn and Choose"
+    icon: "lightbulb"
+    tabname: "ss_hub_learn"
+    group: "Six Sigma Analysis"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinyjs
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: ["claude", "bigquery"]
+
+  data:
+    required: []
+    optional: []

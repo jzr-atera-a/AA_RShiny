@@ -24,7 +24,7 @@ u3_report_builder_ui <- function(id) {
       tabPanel("1. Checklist & coverage",
         u3rb_h("Answer Sheet instructions"), uiOutput(ns("instr")),
         u3rb_h("Trading period: Morning Sheets and Trade Sheets day by day"),
-        u3rb_note("A sheet is 'complete' when the missing-field check in Trading Records > Exports finds nothing (boxes only you can write count as missing until written)."),
+        u3rb_note("A sheet is 'complete' when the missing-field check in Trading Desk > 9. Exports finds nothing (boxes only you can write count as missing until written)."),
         uiOutput(ns("cov_summary")), DT::DTOutput(ns("cov_table"))),
       tabPanel("2. Your task answers",
         u3rb_note("Drafts are saved to BigQuery (trading_settings) with the Save button, so they survive a restart. Word counts follow Word (anything with a letter or digit is a word). The brief allows 3150-3850 words in total, excluding references."),
@@ -138,7 +138,7 @@ u3_report_builder_server <- function(id, store, quiet = FALSE, active = reactive
       quotes <- unlist(lapply(txts, u3_long_quotes))
       st <- c(nzchar(tr_or(s$trader_name, "")) && nzchar(tr_or(s$student_id, "")), if (all(is.na(numb))) NA else all(numb, na.rm = TRUE),
               length(refs()) > 0, if (all(n == 0)) NA else !length(quotes), fig_ok, all(n > 0))
-      note <- c(if (st[1]) paste(s$trader_name, s$student_id, "(from Trading Records > Setup; printed in the student table)") else "Set your name and LAT ID in Trading Records > Setup",
+      note <- c(if (st[1]) paste(s$trader_name, s$student_id, "(from Trading Desk > 1. Setup; printed in the student table)") else "Set your name and LAT ID in Trading Desk > 1. Setup",
                 if (all(is.na(numb))) "Checked when you write: each answer should start with its task number (for example '1.' or 'Task 1') and number its sub-points"
                 else if (all(numb, na.rm = TRUE)) "Each answer starts with its task number" else paste("Start with the task number:", paste(sprintf("Task %d", which(!numb)), collapse = ", ")),
                 sprintf("%d reference(s), built in tab 4 (web addresses in your text are added automatically) and printed at the end", length(refs())),

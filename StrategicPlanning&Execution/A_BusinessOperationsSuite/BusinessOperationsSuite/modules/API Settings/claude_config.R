@@ -10,6 +10,7 @@ claude_config_ui <- function(id) {
         title = "Claude (Anthropic) API Configuration",
         status = "primary", solidHeader = TRUE, width = 12,
 
+        uiOutput(ns("auto_note")),
         p("Enter your Anthropic API key below. This key is stored in-memory for the duration of your session ",
           "and is used by every AI feature in this app (contact extraction, message generation, communication ",
           "summaries, and Funding Programmes discovery)."),
@@ -47,6 +48,13 @@ claude_config_server <- function(id, api_manager) {
 
     output$api_status_ui <- renderUI({ tags$div() })
 
+    # where the current key came from (local key folder / environment / by hand)
+    output$auto_note <- renderUI({
+      invalidateLater(3000); st <- api_manager$cred_status
+      if (!is.null(st$claude)) cred_banner(!isTRUE(st$claude_failed), st$claude, " Model: ", api_manager$claude_model, ".")
+      else if (isTRUE(st$done)) cred_banner(FALSE, cred_not_found_text(api_manager, "Claude key (ap_claude_1_line.txt)"))
+    })
+
     observeEvent(input$save_api, {
       if (nchar(trimws(input$api_key)) == 0) {
         output$api_status_ui <- renderUI({
@@ -57,6 +65,7 @@ claude_config_server <- function(id, api_manager) {
       }
 
       api_manager$save_claude_config(input$api_key, input$claude_model)
+      cred_set_status(api_manager, claude = "Key saved by hand in this tab.", claude_failed = FALSE, done = TRUE)
 
       output$api_status_ui <- renderUI({
         div(class = "api-status-success", icon("check-circle"), " API Key saved successfully! Model: ", api_manager$claude_model)

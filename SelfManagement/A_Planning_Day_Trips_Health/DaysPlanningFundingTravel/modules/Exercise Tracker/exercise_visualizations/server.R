@@ -6,6 +6,7 @@ exercise_visualizations_server <- function(id, api_manager) {
     viz_data <- reactiveVal(NULL)
 
     viz_taxonomy <- reactive({
+      api_manager$tab_gate("exercise_visualizations")     # loads when this tab is first opened, not before
       api_manager$state_trigger_exercise()
       if (!api_manager$bq_authenticated) return(data.frame(session_type = character(), stringsAsFactors = FALSE))
       tryCatch(api_manager$bq_get_exercise_taxonomy(), error = function(e) data.frame(session_type = character(), stringsAsFactors = FALSE))

@@ -12,6 +12,7 @@ bigquery_auth_ui <- function(id) {
         solidHeader = TRUE,
         width = 12,
 
+        uiOutput(ns("auto_note")),
         h4("BigQuery Configuration"),
         p("Connect once to enable all three suites: Day Planner, Events Scheduling, and Funding Programmes."),
 

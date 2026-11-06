@@ -140,7 +140,7 @@ tr_tpl_fill_items <- function(tp, p, items, width_in = 6.2) {
   paras <- list(p); cur <- p
   for (k in seq_len(max(0, length(items) - 1))) { xml2::xml_add_sibling(cur, p, .where = "after", .copy = TRUE); cur <- xml2::xml_find_first(cur, "following-sibling::w:p[1]", tr_tpl_ns); paras[[length(paras) + 1]] <- cur }
   for (k in seq_along(items)) { it <- items[[k]]
-    if (it$type == "table") { xml2::xml_add_sibling(paras[[k]], tr_tpl_cal_table_xml(it$value), .where = "after"); xml2::xml_remove(paras[[k]]) }
+    if (it$type == "table") { xml2::xml_add_sibling(paras[[k]], if (isTRUE(attr(it$value, "grid"))) tr_tpl_df_table_xml(it$value) else tr_tpl_cal_table_xml(it$value), .where = "after"); xml2::xml_remove(paras[[k]]) }
     else if (it$type == "pic") { xml2::xml_add_child(paras[[k]], tr_tpl_picture_run(tp, it$value, width_in)); tr_tpl_centre(paras[[k]]) }
     else if (it$type == "text" && grepl("https?://", it$value)) tr_tpl_add_linked_text(tp, paras[[k]], it$value)
     else { xml2::xml_add_child(paras[[k]], tr_tpl_run(it$value, if (it$type == "caption") "<w:rPr><w:b/></w:rPr>" else NULL))
@@ -193,6 +193,26 @@ tr_tpl_cal_table_xml <- function(df) {
     '</w:tblBorders><w:tblCellMar><w:left w:w="50" w:type="dxa"/><w:right w:w="50" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>', paste(sprintf('<w:gridCol w:w="%d"/>', w), collapse = ""),
     '</w:tblGrid>', row(hd, TRUE), paste(vapply(seq_len(nrow(df)), function(i) row(unlist(df[i, c("mark", "time", "country", "importance", "event", "actual", "forecast", "previous")])), ""), collapse = ""), '</w:tbl>'))
 }
+# any small data.frame as a plain Word table (header row shaded), columns sized by their longest text; 9600 dxa wide
+tr_tpl_df_table_xml <- function(df) {
+  df <- as.data.frame(lapply(df, function(x) ifelse(is.na(x), "", as.character(x))), stringsAsFactors = FALSE, check.names = FALSE)
+  len <- vapply(seq_along(df), function(j) max(nchar(c(names(df)[j], df[[j]])), 4), 0); w <- as.integer(round(9600 * pmin(len, 40) / sum(pmin(len, 40))))
+  cell <- function(txt, wd, head = FALSE) sprintf(paste0('<w:tc><w:tcPr><w:tcW w:w="%d" w:type="dxa"/>%s</w:tcPr><w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="240" w:lineRule="auto"/></w:pPr>',
+    '<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>%s<w:sz w:val="16"/><w:szCs w:val="16"/></w:rPr><w:t xml:space="preserve">%s</w:t></w:r></w:p></w:tc>'),
+    wd, if (head) '<w:shd w:val="clear" w:color="auto" w:fill="D9E2F3"/>' else "", if (head) "<w:b/>" else "", tr_tpl_esc(txt))
+  row <- function(v, head = FALSE) paste0("<w:tr>", if (head) "<w:trPr><w:tblHeader/></w:trPr>" else "<w:trPr><w:cantSplit/></w:trPr>", paste(mapply(cell, v, w, MoreArgs = list(head = head)), collapse = ""), "</w:tr>")
+  b <- '<w:top w:val="single" w:sz="4" w:color="A6A6A6"/><w:left w:val="single" w:sz="4" w:color="A6A6A6"/><w:bottom w:val="single" w:sz="4" w:color="A6A6A6"/><w:right w:val="single" w:sz="4" w:color="A6A6A6"/><w:insideH w:val="single" w:sz="4" w:color="A6A6A6"/><w:insideV w:val="single" w:sz="4" w:color="A6A6A6"/>'
+  xml2::read_xml(paste0('<w:tbl xmlns:w="', tr_tpl_ns[["w"]], '"><w:tblPr><w:tblW w:w="', sum(w), '" w:type="dxa"/><w:tblLayout w:type="fixed"/><w:tblBorders>', b,
+    '</w:tblBorders><w:tblCellMar><w:left w:w="50" w:type="dxa"/><w:right w:w="50" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>', paste(sprintf('<w:gridCol w:w="%d"/>', w), collapse = ""),
+    '</w:tblGrid>', row(names(df), TRUE), paste(vapply(seq_len(nrow(df)), function(i) row(unlist(df[i, ])), ""), collapse = ""), '</w:tbl>'))
+}
+# a new empty paragraph at the very end of the document body (before the section settings): where the 'Context' block goes
+tr_tpl_end_par <- function(tp) {
+  body <- tr_tpl_body(tp); sp <- xml2::xml_find_first(body, "./w:sectPr", tr_tpl_ns)
+  p <- xml2::read_xml(paste0('<w:p xmlns:w="', tr_tpl_ns[["w"]], '"><w:r><w:t>x</w:t></w:r></w:p>'))
+  if (inherits(sp, "xml_missing")) xml2::xml_add_child(body, p) else xml2::xml_add_sibling(sp, p, .where = "before")
+  xml2::xml_find_first(body, if (inherits(sp, "xml_missing")) "./w:p[last()]" else "./w:sectPr/preceding-sibling::w:p[1]", tr_tpl_ns)
+}
 # Pictures (data.frame slot / event_id / caption / path) -> items: caption line (when there is one) then the picture
 tr_tpl_pic_items <- function(pics) {
   if (is.null(pics) || !nrow(pics)) return(list())
@@ -205,7 +225,7 @@ tr_tpl_drop_par <- function(p) if (!is.null(p)) xml2::xml_remove(p)
 # charts: list(entry = paths, trade = paths, exit = paths) (character vectors)
 # pics: data.frame(slot, event_id, caption, path) with slot entry / entry_platform / intrade / exit / post_exit
 # (tr_chart_frame() turns the older list(entry =, trade =, exit =) into this form).
-tr_trade_sheet_template <- function(trade, legs, events, name, charts = list(), file) {
+tr_trade_sheet_template <- function(trade, legs, events, name, charts = list(), file, context = list()) {
   pics <- tr_chart_frame(charts)
   sl <- function(...) pics[pics$slot %in% c(...), , drop = FALSE]
   path <- tr_tpl_find("Trade_Sheet_Template.docx"); tp <- tr_tpl_open(path); tb <- tr_tpl_tables(tp)
@@ -256,6 +276,7 @@ tr_trade_sheet_template <- function(trade, legs, events, name, charts = list(), 
     if (nrow(post)) c(list(list(type = "caption", value = "Post Exit")), tr_tpl_pic_items(transform(post, caption = ifelse(is.na(caption), NA, caption)))) else list()))
   # an empty chart slot shows nothing (not the template's "[Insert chart picture here]" prompt)
   for (k in 1:2) { ph <- tr_tpl_find_par(tp, "[Insert chart picture here]", 1); if (is.null(ph)) break; tr_tpl_clear_par(ph) }
+  if (length(context)) { pe <- tr_tpl_end_par(tp); if (!tr_tpl_fill_items(tp, pe, context)) xml2::xml_remove(pe) }
   tr_tpl_save(tp, file)
 }
 tr_duration_text <- function(h) { if (!is.finite(h)) return(""); m <- round(h * 60); if (m >= 60) sprintf("%dHr %d Mins", m %/% 60, m %% 60) else sprintf("%d Mins", m) }

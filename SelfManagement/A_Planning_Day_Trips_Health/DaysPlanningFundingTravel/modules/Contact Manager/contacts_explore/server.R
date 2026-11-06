@@ -24,7 +24,8 @@ contacts_explore_server <- function(id, api_manager) {
     }
 
     observeEvent(input$refresh_data, { load_contacts() })
-    observeEvent(api_manager$state_trigger_contacts(), { if (api_manager$bq_authenticated) load_contacts() }, ignoreInit = TRUE)
+    observeEvent(list(api_manager$state_trigger_contacts(), api_manager$tab_open("contacts_explore")),
+                 { if (api_manager$tab_open("contacts_explore") && api_manager$bq_authenticated) load_contacts() }, ignoreInit = TRUE)   # on first open + on refresh triggers
 
     filtered <- reactive({
       d <- edited_contacts()
@@ -66,7 +67,7 @@ contacts_explore_server <- function(id, api_manager) {
       if (is.null(sel)) { showNotification("Please select a contact first.", type = "warning"); return() }
       contact <- filtered()[sel, ]
       api_manager$set_contacts_selected_contact(as.list(contact))
-      updateTabItems(session$rootScope(), "sidebar_menu", selected = "contacts_customise_communication")
+      nav_goto(session, "contacts_customise_communication")
     })
 
     observeEvent(input$update_record, {

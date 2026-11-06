@@ -113,7 +113,7 @@ techdesign_matrix_server <- function(id, api_manager) {
       d <- current(); if (is.null(d)) { showNotification("Generate or load a matrix first.", type = "warning"); return() }
       tryCatch({
         api_manager$set_pending_bulk_text_flex(tdm_to_flex_text(d))
-        updateTabItems(session$rootScope(), "sidebar_menu", selected = "bulk_import")
+        td_nav(session, "bulk_import")
         showNotification("Sent to Flex Table's Bulk Import tab.", type = "message")
       }, error = function(e) showNotification(paste("Could not send:", e$message), type = "error"))
     })

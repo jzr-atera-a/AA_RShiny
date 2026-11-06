@@ -113,7 +113,7 @@ sixsigma_recommender_server <- function(id, api_manager) {
 
       cat(sprintf("🖱️  [Six Sigma Recommender][DEBUG] Recommended tool clicked: %s -> jumping to Generate Six Sigma Diagram\n", dtype))
       api_manager$set_pending_sixsigma_selection(dtype)
-      updateTabItems(session$rootScope(), "sidebar_menu", selected = "generate_sixsigma")
+      td_nav(session, "generate_sixsigma")
       showNotification(sprintf("✓ %s selected - jumping to Generate Six Sigma Diagram", SIXSIGMA_TYPE_LABELS[[dtype]]), type = "message")
     })
 

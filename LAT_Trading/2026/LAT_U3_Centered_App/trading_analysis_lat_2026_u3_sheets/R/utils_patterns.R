@@ -59,7 +59,25 @@ tr_pat_intervals <- c("3 hours" = 180, "2 hours" = 120, "1 hour" = 60, "30 min" 
 # Yahoo serves 5m / 15m / 30m / 60m: 10 min is built from 5 min bars, 2 h and 3 h from 1 h bars
 tr_pat_yahoo_plan <- function(minutes, hours) {
   base <- if (minutes %in% c(5, 10)) 5 else if (minutes %in% c(15, 30)) minutes else 60
-  list(interval = paste0(base, "m"), base = base, range = if (hours <= 72) "5d" else "1mo")
+  list(interval = paste0(base, "m"), base = base,
+       range = if (hours <= 72) "5d" else if (hours <= 25 * 24) "1mo" else "3mo")
+}
+
+# ---- the moment a chart is read at ----------------------------------------------------------
+# Time zones offered in the Trades tab: UK first (the course and every stored time are UK), then the US zones.
+tr_tz_choices <- c("UK time (London)" = "Europe/London", "US Eastern (New York)" = "America/New_York",
+                   "US Central (Chicago)" = "America/Chicago", "US Mountain (Denver)" = "America/Denver",
+                   "US Pacific (Los Angeles)" = "America/Los_Angeles")
+
+# "2026-10-30 06:10", "30/10/2026 06:10" or just "06:10" (today in that zone) -> POSIXct. Empty -> NULL (meaning now).
+tr_parse_when <- function(txt, tz = "Europe/London", now = Sys.time()) {
+  s <- trimws(if (is.null(txt) || !length(txt)) "" else as.character(txt)[1])
+  if (!nzchar(s)) return(NULL)
+  s <- gsub("/", "-", s); s <- gsub("[Tt]", " ", s); s <- trimws(gsub("\\s+", " ", s))
+  cand <- c(s, paste(format(now, "%Y-%m-%d", tz = tz), s))
+  for (f in c("%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S", "%d-%m-%Y %H:%M", "%d-%m-%Y %H:%M:%S"))
+    for (x in cand) { v <- suppressWarnings(as.POSIXct(x, format = f, tz = tz)); if (length(v) == 1 && !is.na(v)) return(v) }
+  stop("Could not read the time \"", s, "\". Use YYYY-MM-DD HH:MM (for example 2026-10-30 06:10), or just HH:MM for today.")
 }
 tr_pat_aggregate <- function(b, minutes) {
   if (is.null(b) || !nrow(b)) return(b)
@@ -70,14 +88,23 @@ tr_pat_aggregate <- function(b, minutes) {
 }
 # bars for an asset on the IG scale. ref_ig = an IG price for the latest bar (Morning Sheet current price / your entry / the
 # price you typed); without it oil is x100 (IG quotes Brent and WTI in points). Returns list(bars, source, note) or stops.
-tr_pat_bars <- function(asset, hours = 48, minutes = 15, ref_ig = NA, fetch = tr_yahoo_fetch, now = Sys.time()) {
+tr_pat_bars <- function(asset, hours = 48, minutes = 15, ref_ig = NA, fetch = tr_yahoo_fetch, now = Sys.time(), end = NULL) {
   sym <- unname(tr_yahoo_symbols[toupper(asset)]); if (!length(sym) || is.na(sym)) stop("No Yahoo symbol for ", asset, ".")
-  pl <- tr_pat_yahoo_plan(minutes, hours)
+  # `end` = the moment the chart is read at (a trade you are writing up hours later); NULL / NA = now
+  endt <- if (is.null(end) || !length(end) || any(is.na(end))) NULL else as.POSIXct(end[1])
+  # reading an earlier moment needs Yahoo to go back further than the window itself
+  back_h <- hours + if (is.null(endt)) 0 else max(0, as.numeric(difftime(now, endt, units = "hours")))
+  pl <- tr_pat_yahoo_plan(minutes, back_h)
   p <- fetch(sym, pl$range, pl$interval); b <- p$bars
   b <- b[is.finite(b$open) & is.finite(b$high) & is.finite(b$low) & is.finite(b$close), , drop = FALSE]
   if (!nrow(b)) stop("Yahoo returned no prices for ", sym, ".")
   attr(b$time, "tzone") <- "UTC"
   if (minutes != pl$base) b <- tr_pat_aggregate(b, minutes)
+  if (!is.null(endt)) {   # only candles that had CLOSED by then, so the chart is what you could have seen (no look-ahead)
+    b <- b[b$time + minutes * 60 <= as.numeric(endt) + 1, , drop = FALSE]
+    if (!nrow(b)) stop("Yahoo has no ", minutes, "-minute candles for ", sym, " closed before ",
+                       format(endt, "%d/%m/%Y %H:%M", tz = "Europe/London"), " UK. Try a larger candle size, a shorter window, or a time closer to now.")
+  }
   last <- max(b$time); b <- b[b$time > last - hours * 3600, , drop = FALSE]
   last_close <- utils::tail(b$close, 1)
   oil <- toupper(asset) %in% c("BRENT", "WTI")
@@ -85,7 +112,9 @@ tr_pat_bars <- function(asset, hours = 48, minutes = 15, ref_ig = NA, fetch = tr
     note <- sprintf("Yahoo %s, shifted so the last candle closes at your IG price %s", sym, format(ref_ig)) }
   else { k <- if (oil) 100 else 1; off <- 0; note <- sprintf("Yahoo %s%s (no IG price to align to: levels can differ from IG by a few points)", sym, if (oil) " x100" else "") }
   for (cn in c("open", "high", "low", "close")) b[[cn]] <- b[[cn]] * k + off
-  list(bars = b, source = paste0("Yahoo ", sym), note = note, symbol = sym, scale = k, offset = off)
+  if (!is.null(endt)) note <- paste0(note, sprintf("; read as the chart stood at %s UK", format(endt, "%d/%m/%Y %H:%M", tz = "Europe/London")))
+  list(bars = b, source = paste0("Yahoo ", sym), note = note, symbol = sym, scale = k, offset = off,
+       as_of = if (is.null(endt)) NA else endt, from = min(b$time), to = max(b$time))
 }
 
 # ---- building blocks

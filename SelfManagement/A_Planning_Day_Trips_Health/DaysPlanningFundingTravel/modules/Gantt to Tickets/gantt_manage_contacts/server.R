@@ -64,7 +64,8 @@ gantt_manage_contacts_server <- function(id, api_manager) {
     }
 
     observeEvent(input$refresh_contacts, { load_contacts() })
-    observeEvent(api_manager$state_trigger_gantt(), { if (api_manager$bq_authenticated) load_contacts() }, ignoreInit = TRUE)
+    observeEvent(list(api_manager$state_trigger_gantt(), api_manager$tab_open("gantt_manage_contacts")),
+                 { if (api_manager$tab_open("gantt_manage_contacts") && api_manager$bq_authenticated) load_contacts() }, ignoreInit = TRUE)   # on first open + on refresh triggers
 
     output$download_contacts <- downloadHandler(
       filename = function() paste0("contacts_export_", Sys.Date(), ".xlsx"),

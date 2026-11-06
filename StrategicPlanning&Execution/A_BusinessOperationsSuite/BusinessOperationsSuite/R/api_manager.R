@@ -211,6 +211,7 @@ APIManager <- R6::R6Class("APIManager",
     claude_api_key = NULL,
     claude_model = "claude-sonnet-4-5",
     claude_authenticated = FALSE,
+    claude_tested = NA,            # NA = key not tested yet, TRUE/FALSE = result of the last live test (sidebar light)
 
     # ---- OpenAI (Project Application suite only) -------------------------------------------------------
     openai_api_key = NULL,
@@ -234,6 +235,13 @@ APIManager <- R6::R6Class("APIManager",
     bq_full_table_de_roadmap = NULL,
     bq_credentials_path = NULL,
     bq_authenticated = FALSE,
+    # On-demand table loading: one "unit" per BigQuery-backed tab group (see R/utils_tables.R)
+    bq_units_opened = list(),        # unit -> TRUE once the user opened that tab group this session
+    bq_units_ready  = list(),        # unit -> TRUE once its tables are verified
+    bq_unit_status  = list(),        # unit -> list(label, state, detail, at, since) shown in the sidebar TABLES box
+    bq_unit_check_secs = list(),     # unit -> seconds the table check took
+    status_hook = NULL,              # function() pushing bq_unit_status to the browser (set by tables_wire)
+    cred_status = list(),            # start-up key auto-load result (see R/utils_local_creds.R)
 
     # ---- SMTP (Communications suite) -------------------------------------------------------
     smtp_host = "smtpout.secureserver.net",
@@ -358,6 +366,7 @@ APIManager <- R6::R6Class("APIManager",
       self$claude_api_key <- trimws(api_key)
       self$claude_model <- trimws(model)
       self$claude_authenticated <- nchar(self$claude_api_key) > 0
+      self$claude_tested <- NA
       invisible(self$claude_authenticated)
     },
 
@@ -406,8 +415,12 @@ APIManager <- R6::R6Class("APIManager",
       )
     },
 
-    test_claude = function() {
-      self$call_claude("Reply with exactly these three words: Claude connection OK", max_tokens = 20)
+    test_claude = function(timeout = 30) {
+      res <- tryCatch(
+        self$call_claude("Reply with exactly these three words: Claude connection OK", max_tokens = 20, timeout = timeout),
+        error = function(e) { self$claude_tested <- FALSE; stop(e) })
+      self$claude_tested <- TRUE
+      res
     },
 
     # =====================================================================
@@ -513,18 +526,21 @@ APIManager <- R6::R6Class("APIManager",
         # Quick connection check
         bigrquery::bq_project_datasets(self$bq_project_id)
 
-        self$bq_authenticated <- TRUE
-
-        # CREATE TABLE IF NOT EXISTS for every table this suite uses
-        for (r in self$create_all_tables()) cat("   [BigQuery]", r, "\n")
-
+        # That is ALL that happens at connect time (one quick round trip). Tables are no longer created/checked here:
+        # each tab group verifies and reads its own tables the first time it is opened (bq_open_unit / bq_need).
+        self$bq_units_ready <- list()          # a new connection / project: nothing verified yet
+        self$bq_unit_check_secs <- list()
         self$funding_taxonomy_cache <- NULL
         self$canvas_taxonomy_cache <- NULL
-        for (trig in c("state_trigger_contacts", "state_trigger_funding", "state_trigger_canvas", "state_trigger_gantt")) {
-          rv <- self[[trig]]
-          if (is.function(rv)) tryCatch(rv(shiny::isolate(rv()) + 1), error = function(e) NULL)
-        }
-        cat("✅ [BigQuery] Connected | project:", self$bq_project_id, "| funding table:", self$bq_full_table_funding, "\n")
+        self$contacts_cache <- NULL
+        self$communications_cache <- NULL
+        self$bq_authenticated <- TRUE
+        cat("\u2705 [BigQuery] Connected | project:", self$bq_project_id, "| dataset:", self$bq_dataset_id,
+            "| tables are loaded on demand, when a tab group is opened\n")
+
+        # only tab groups the user has ALREADY opened are refreshed now; a failure here must never undo a good connection
+        tryCatch(self$bq_fire_opened(),
+                 error = function(e) cat("[BigQuery] note: refresh of opened tab groups skipped:", conditionMessage(e), "\n"))
         return(TRUE)
       }, error = function(e) {
         self$bq_authenticated <- FALSE
@@ -544,7 +560,8 @@ APIManager <- R6::R6Class("APIManager",
 
     # Same as the working app: run the query as a BigQuery job and download it.
     bq_query = function(query) {
-      if (!self$bq_authenticated) stop("Not authenticated to BigQuery - go to API Settings > BigQuery Config and click 'Test Connection & Load Data'")
+      if (!self$bq_authenticated) stop("Not authenticated to BigQuery - go to API Settings > BigQuery Config and click 'Connect to BigQuery'")
+      self$bq_need_for_query(query)      # make sure the tab group that owns the queried table is verified
       t0 <- Sys.time()
       short <- substr(gsub("\\s+", " ", trimws(query)), 1, 160)
       res <- tryCatch({
@@ -564,33 +581,24 @@ APIManager <- R6::R6Class("APIManager",
       invisible(TRUE)
     },
 
-    create_all_tables = function() {
-      results <- c()
-
-      tryCatch({
-        self$bq_execute(sprintf("
+    # CREATE TABLE IF NOT EXISTS text for one app table (safe no-op if it exists; never alters or drops anything)
+    bq_table_ddl = function(key) {
+      switch(key,
+        contacts = sprintf("
           CREATE TABLE IF NOT EXISTS `%s` (
             contact_id STRING, full_name STRING, industry STRING, company STRING,
             job_title STRING, location STRING, country STRING, email STRING,
             phone STRING, linkedin STRING, areas_of_interest STRING, university STRING,
             academic_background STRING, user_notes STRING, last_interaction_date DATE,
             created_at TIMESTAMP, updated_at TIMESTAMP
-          )", self$bq_full_table_contacts))
-        results <- c(results, paste("✓", self$bq_table_contacts))
-      }, error = function(e) results <<- c(results, paste("⚠️", self$bq_table_contacts, "-", e$message)))
-
-      tryCatch({
-        self$bq_execute(sprintf("
+          )", self$bq_full_table_contacts),
+        communications = sprintf("
           CREATE TABLE IF NOT EXISTS `%s` (
             message_id STRING, contact_id STRING, channel_type STRING,
             communication_purpose STRING, language STRING, message_length STRING,
             message_content STRING, created_at TIMESTAMP
-          )", self$bq_full_table_communications))
-        results <- c(results, paste("✓", self$bq_table_communications))
-      }, error = function(e) results <<- c(results, paste("⚠️", self$bq_table_communications, "-", e$message)))
-
-      tryCatch({
-        self$bq_execute(sprintf("
+          )", self$bq_full_table_communications),
+        funding = sprintf("
           CREATE TABLE IF NOT EXISTS `%s` (
             id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
             category STRING, country STRING, city_region STRING,
@@ -598,12 +606,8 @@ APIManager <- R6::R6Class("APIManager",
             key_sponsors STRING, key_organiser_profiles STRING, areas_of_application STRING,
             start_date_for_applying STRING, deadline STRING,
             recommendations_for_applying STRING, verified_urls STRING
-          )", self$bq_full_table_funding))
-        results <- c(results, paste("✓", self$bq_table_funding))
-      }, error = function(e) results <<- c(results, paste("⚠️", self$bq_table_funding, "-", e$message)))
-
-      tryCatch({
-        self$bq_execute(sprintf("
+          )", self$bq_full_table_funding),
+        bm_canvas = sprintf("
           CREATE TABLE IF NOT EXISTS `%s` (
             canvas_id STRING NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
@@ -611,12 +615,8 @@ APIManager <- R6::R6Class("APIManager",
             key_partners STRING, key_activities STRING, key_resources STRING,
             value_propositions STRING, customer_relationships STRING, channels STRING,
             customer_segments STRING, cost_structure STRING, revenue_streams STRING
-          )", self$bq_full_table_bm_canvas))
-        results <- c(results, paste("✓", self$bq_table_bm_canvas))
-      }, error = function(e) results <<- c(results, paste("⚠️", self$bq_table_bm_canvas, "-", e$message)))
-
-      tryCatch({
-        self$bq_execute(sprintf("
+          )", self$bq_full_table_bm_canvas),
+        de_canvas = sprintf("
           CREATE TABLE IF NOT EXISTS `%s` (
             canvas_id STRING NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
@@ -624,12 +624,8 @@ APIManager <- R6::R6Class("APIManager",
             raison_detre STRING, initial_market STRING, value_creation STRING,
             competitive_advantage STRING, customer_acquisition STRING, product_unit_economics STRING,
             sales STRING, overall_economics STRING, design_build STRING, scaling STRING
-          )", self$bq_full_table_de_canvas))
-        results <- c(results, paste("✓", self$bq_table_de_canvas))
-      }, error = function(e) results <<- c(results, paste("⚠️", self$bq_table_de_canvas, "-", e$message)))
-
-      tryCatch({
-        self$bq_execute(sprintf("
+          )", self$bq_full_table_de_canvas),
+        de_roadmap = sprintf("
           CREATE TABLE IF NOT EXISTS `%s` (
             roadmap_id STRING NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
@@ -646,11 +642,130 @@ APIManager <- R6::R6Class("APIManager",
             step_19_calculate_cac STRING, step_20_identify_key_assumptions STRING,
             step_21_test_key_assumptions STRING, step_22_define_mvbp STRING,
             step_23_dogs_eat_dog_food STRING, step_24_develop_product_plan STRING
-          )", self$bq_full_table_de_roadmap))
-        results <- c(results, paste("✓", self$bq_table_de_roadmap))
-      }, error = function(e) results <<- c(results, paste("⚠️", self$bq_table_de_roadmap, "-", e$message)))
+          )", self$bq_full_table_de_roadmap),
+        NULL)
+    },
 
-      results
+    # =====================================================================
+    # ON-DEMAND TABLE LOADING (one "unit" per BigQuery-backed tab group)
+    # unit -> tab group:  contacts = Communications | funding = Funding Programmes | canvases = Strategy Canvases
+    # =====================================================================
+    bq_unit_tables = function(unit) switch(unit,
+      contacts = c("contacts", "communications"),
+      funding  = "funding",
+      canvases = c("bm_canvas", "de_canvas", "de_roadmap"),
+      character()),
+    bq_unit_label = function(unit) switch(unit, contacts = "Communications", funding = "Funding Programmes",
+                                          canvases = "Strategy Canvases", unit),
+    bq_unit_of_key = function(key) {
+      for (u in c("contacts", "funding", "canvases")) if (key %in% self$bq_unit_tables(u)) return(u)
+      NULL
+    },
+
+    # Verifies one unit: ONE INFORMATION_SCHEMA query limited to its tables, then creates only what is missing.
+    # Cheap when already done. Returns TRUE/FALSE; never raises (a failed unit is retried next time).
+    bq_ensure_unit = function(unit, announce = TRUE) {
+      if (!isTRUE(self$bq_authenticated)) return(FALSE)
+      if (isTRUE(self$bq_units_ready[[unit]])) return(TRUE)
+      keys <- self$bq_unit_tables(unit); if (!length(keys)) return(TRUE)
+      label <- self$bq_unit_label(unit); t0 <- Sys.time()
+      tnames <- vapply(keys, function(k) self[[paste0("bq_table_", k)]], "")
+      self$bq_note_status(unit, "checking", sprintf("checking %d table%s...", length(keys), if (length(keys) > 1) "s" else ""))
+      cat(sprintf("[BigQuery] %s: checking %s\n", label, paste(tnames, collapse = ", ")))
+      ok <- tryCatch({
+        known <- tryCatch({
+          d <- bigrquery::bq_table_download(bigrquery::bq_project_query(self$bq_project_id, sprintf(
+            "SELECT DISTINCT table_name FROM `%s.%s.INFORMATION_SCHEMA.COLUMNS` WHERE table_name IN (%s)",
+            self$bq_project_id, self$bq_dataset_id, paste0("'", tnames, "'", collapse = ","))))
+          as.character(d$table_name)
+        }, error = function(e) {
+          cat("\u26a0\ufe0f  [BigQuery] could not read INFORMATION_SCHEMA - falling back to CREATE IF NOT EXISTS:", conditionMessage(e), "\n")
+          character()
+        })
+        for (i in seq_along(keys)) {
+          if (!tnames[i] %in% known) self$bq_execute(self$bq_table_ddl(keys[i]))
+          cat(sprintf("\u2713 [BigQuery] %s table ready (%s)\n", tnames[i], label))
+        }
+        TRUE
+      }, error = function(e) {
+        cat("\u26a0\ufe0f  [BigQuery]", label, "table check failed:", conditionMessage(e), "\n")
+        self$bq_note_status(unit, "failed", conditionMessage(e))
+        FALSE
+      })
+      if (isTRUE(ok)) {
+        secs <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
+        self$bq_units_ready[[unit]] <- TRUE
+        self$bq_unit_check_secs[[unit]] <- secs
+        if (announce) self$bq_note_status(unit, "ready", sprintf("%d table%s ready in %.1f s", length(keys), if (length(keys) > 1) "s" else "", secs))
+      }
+      isTRUE(ok)
+    },
+
+    # Reads what the group's tabs need on screen (dropdown values, contacts ...) and wakes them up.
+    # Runs once when the group is opened; the sidebar shows "loading data..." meanwhile.
+    bq_fire_unit = function(unit) {
+      t0 <- Sys.time(); n <- length(self$bq_unit_tables(unit))
+      self$bq_note_status(unit, "loading", "loading data...")
+      err <- tryCatch({
+        switch(unit,
+          contacts = { self$bq_load_contacts(strict = TRUE);                                self$bq_bump("state_trigger_contacts") },
+          funding  = { self$funding_taxonomy_cache <- NULL; self$bq_get_funding_taxonomy(strict = TRUE); self$bq_bump("state_trigger_funding") },
+          canvases = { self$canvas_taxonomy_cache <- NULL;  self$bq_get_canvas_taxonomy(strict = TRUE);  self$bq_bump("state_trigger_canvas") },
+          NULL)
+        NULL
+      }, error = function(e) conditionMessage(e))
+      secs <- (self$bq_unit_check_secs[[unit]] %||% 0) + as.numeric(difftime(Sys.time(), t0, units = "secs"))
+      if (is.null(err)) {
+        self$bq_note_status(unit, "ready", sprintf("%d table%s ready, data loaded in %.1f s", n, if (n > 1) "s" else "", secs))
+        cat(sprintf("\u2713 [BigQuery] %s: data loaded (%.1f s)\n", self$bq_unit_label(unit), secs))
+      } else {
+        self$bq_note_status(unit, "failed", paste("data load failed:", err))
+        cat("\u26a0\ufe0f  [BigQuery]", self$bq_unit_label(unit), "data load failed:", err, "\n")
+      }
+      invisible(is.null(err))
+    },
+    bq_bump = function(trig) {
+      rv <- self[[trig]]
+      if (is.function(rv)) tryCatch(shiny::isolate(rv(shiny::isolate(rv()) + 1)), error = function(e) NULL)
+      invisible(NULL)
+    },
+
+    # Called when the user opens a tab group: verify its tables, then read its data.
+    bq_open_unit = function(unit) {
+      self$bq_units_opened[[unit]] <- TRUE
+      if (!isTRUE(self$bq_authenticated)) return(invisible(FALSE))
+      ok <- self$bq_ensure_unit(unit, announce = FALSE)
+      if (isTRUE(ok)) self$bq_fire_unit(unit)
+      invisible(ok)
+    },
+    bq_fire_opened = function() {
+      for (u in names(self$bq_units_opened)) if (isTRUE(self$bq_units_opened[[u]])) self$bq_open_unit(u)
+      invisible(TRUE)
+    },
+    # shorthand used at the top of data methods: make sure the owning tab group's tables are verified
+    bq_need = function(key_or_unit) {
+      # a unit name ("contacts", "funding", "canvases") or a table key ("communications", "bm_canvas" ...)
+      unit <- if (key_or_unit %in% c("contacts", "funding", "canvases")) key_or_unit else self$bq_unit_of_key(key_or_unit)
+      if (is.null(unit)) return(invisible(TRUE))
+      invisible(self$bq_ensure_unit(unit))
+    },
+    # finds which app tables a SQL text mentions and ensures their units (safety net for direct queries)
+    bq_need_for_query = function(query) {
+      for (k in c("contacts", "communications", "funding", "bm_canvas", "de_canvas", "de_roadmap")) {
+        tn <- self[[paste0("bq_table_", k)]]
+        if (!is.null(tn) && grepl(sprintf("%s`", tn), query, fixed = TRUE)) self$bq_need(k)
+      }
+      invisible(TRUE)
+    },
+    # status notes for the sidebar TABLES box; every note is pushed to the browser immediately
+    bq_note_status = function(unit, state, detail = "") {
+      live <- c("checking", "loading", "waiting")
+      prev <- self$bq_unit_status[[unit]]
+      since <- if (!is.null(prev) && prev$state %in% live && state %in% live) prev$since else Sys.time()
+      self$bq_unit_status[[unit]] <- list(label = self$bq_unit_label(unit), state = state, detail = detail, at = Sys.time(), since = since)
+      if (is.function(self$status_hook)) tryCatch(self$status_hook(),
+        error = function(e) cat("[Tables] could not update the sidebar indicator:", conditionMessage(e), "\n"))
+      invisible(NULL)
     },
 
     # =====================================================================
@@ -669,10 +784,10 @@ APIManager <- R6::R6Class("APIManager",
       )
     },
 
-    bq_load_contacts = function() {
+    bq_load_contacts = function(strict = FALSE) {
       df <- tryCatch(
         self$bq_query(sprintf("SELECT * FROM `%s`", self$bq_full_table_contacts)),
-        error = function(e) self$empty_contacts_df()
+        error = function(e) { if (strict) stop(e); self$empty_contacts_df() }
       )
       self$contacts_cache <- df
       df
@@ -680,6 +795,7 @@ APIManager <- R6::R6Class("APIManager",
 
     bq_insert_contact = function(record) {
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      self$bq_need("contacts")
       con <- self$bq_connect()
       on.exit(DBI::dbDisconnect(con), add = TRUE)
       DBI::dbWriteTable(conn = con, name = self$bq_table_contacts, value = record, append = TRUE, row.names = FALSE)
@@ -736,6 +852,7 @@ APIManager <- R6::R6Class("APIManager",
 
     bq_insert_communication = function(record) {
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      self$bq_need("communications")
       con <- self$bq_connect()
       on.exit(DBI::dbDisconnect(con), add = TRUE)
       DBI::dbWriteTable(conn = con, name = self$bq_table_communications, value = record, append = TRUE, row.names = FALSE)
@@ -803,7 +920,7 @@ APIManager <- R6::R6Class("APIManager",
       data.frame(category = character(), country = character(), city_region = character(), stringsAsFactors = FALSE)
     },
 
-    bq_get_funding_taxonomy = function() {
+    bq_get_funding_taxonomy = function(strict = FALSE) {
       if (!is.null(self$funding_taxonomy_cache)) return(self$funding_taxonomy_cache)
       if (!self$bq_authenticated) return(self$empty_funding_taxonomy())
 
@@ -814,6 +931,7 @@ APIManager <- R6::R6Class("APIManager",
         ))
       }, error = function(e) {
         cat("⚠️  [bq_get_funding_taxonomy] Query failed:", e$message, "\n")
+        if (strict) stop(e)
         NULL
       })
 
@@ -824,6 +942,7 @@ APIManager <- R6::R6Class("APIManager",
 
     bq_insert_funding = function(data_frame) {
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      self$bq_need("funding")
 
       required_cols <- c("id", "created_at", "category", "country", "city_region",
                         "programme_name", "amount_of_money", "conditions", "key_sponsors",
@@ -871,7 +990,7 @@ APIManager <- R6::R6Class("APIManager",
       data.frame(business_area = character(), project = character(), business_focus = character(), stringsAsFactors = FALSE)
     },
 
-    bq_get_canvas_taxonomy = function() {
+    bq_get_canvas_taxonomy = function(strict = FALSE) {
       if (!is.null(self$canvas_taxonomy_cache)) return(self$canvas_taxonomy_cache)
       if (!self$bq_authenticated) return(self$empty_canvas_taxonomy())
 
@@ -882,9 +1001,11 @@ APIManager <- R6::R6Class("APIManager",
         ))
       }, error = function(e) {
         cat("⚠️  [bq_get_canvas_taxonomy] Query failed:", e$message, "\n")
-        self$empty_canvas_taxonomy()
+        if (strict) stop(e)
+        NULL
       })
 
+      if (is.null(result)) return(self$empty_canvas_taxonomy())   # not cached, so it is retried next time
       self$canvas_taxonomy_cache <- result
       result
     },
@@ -906,6 +1027,7 @@ APIManager <- R6::R6Class("APIManager",
 
     bq_insert_bm_canvas = function(fields) {
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      self$bq_need("bm_canvas")
       record <- data.frame(
         canvas_id = self$make_canvas_id(fields$business_area, fields$project, fields$business_focus),
         created_at = Sys.time(), updated_at = Sys.time(),
@@ -924,6 +1046,7 @@ APIManager <- R6::R6Class("APIManager",
 
     bq_insert_de_canvas = function(fields) {
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      self$bq_need("de_canvas")
       record <- data.frame(
         canvas_id = self$make_canvas_id(fields$business_area, fields$project, fields$business_focus),
         created_at = Sys.time(), updated_at = Sys.time(),
@@ -942,6 +1065,7 @@ APIManager <- R6::R6Class("APIManager",
 
     bq_insert_de_roadmap = function(fields) {
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      self$bq_need("de_roadmap")
       record <- data.frame(
         roadmap_id = self$make_canvas_id(fields$business_area, fields$project, fields$business_focus),
         created_at = Sys.time(), updated_at = Sys.time(),

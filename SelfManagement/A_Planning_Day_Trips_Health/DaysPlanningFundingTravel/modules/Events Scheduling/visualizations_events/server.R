@@ -18,6 +18,7 @@ visualizations_events_server <- function(id, api_manager) {
 
     # ── Cascade: Country → City → Category → Subcategory + Scan Date ──
     viz_taxonomy <- reactive({
+      api_manager$tab_gate("visualizations_events")     # loads when this tab is first opened, not before
       api_manager$state_trigger_events()
       if (!api_manager$bq_authenticated) {
         return(data.frame(category  = character(), subcategory = character(),

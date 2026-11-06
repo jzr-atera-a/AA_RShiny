@@ -127,7 +127,7 @@ generate_diet_server <- function(id, api_manager) {
       current_text <- input$diet_text_edit
       if (nchar(trimws(current_text %||% "")) > 0) {
         api_manager$set_pending_bulk_text_diet(current_text)
-        updateTabItems(session$rootScope(), "sidebar_menu", selected = "diet_bulk_import")
+        nav_goto(session, "diet_bulk_import")
         showNotification("✓ Diet plan copied to Bulk Import tab!", type = "message")
       } else {
         showNotification("No diet plan to copy. Generate first.", type = "warning")

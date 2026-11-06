@@ -3,6 +3,13 @@
 bigquery_auth_server <- function(id, api_manager) {
   moduleServer(id, function(input, output, session) {
 
+    # where the current connection came from (local key folder / environment / by hand)
+    output$auto_note <- renderUI({
+      invalidateLater(3000); st <- cred_status()
+      if (!is.null(st$bq)) cred_banner(!isTRUE(st$bq_failed), st$bq, " You can still load another key below.")
+      else cred_banner(FALSE, cred_not_found_text("service-account .json key"))
+    })
+
     observeEvent(input$authenticate, {
 
       if (trimws(input$project_id) == "" || trimws(input$dataset_id) == "") {
@@ -30,19 +37,17 @@ bigquery_auth_server <- function(id, api_manager) {
         output$auth_status <- renderUI({
           tags$div(class = "status-success",
                    tags$i(class = "fa fa-check-circle"),
-                   " ✓ Successfully authenticated! All three tables are ready:",
+                   " ✓ Successfully authenticated!",
                    tags$br(),
-                   tags$small("Day Planner: ", api_manager$bq_full_table_schedule),
+                   tags$small("Each tab group checks its own tables the first time you open it (see TABLES in the sidebar)."),
                    tags$br(),
-                   tags$small("Events Scheduling: ", api_manager$bq_full_table_events),
-                   tags$br(),
-                   tags$small("Funding Programmes: ", api_manager$bq_full_table_funding))
+                   tags$small("Project: ", api_manager$bq_project_id, "  Dataset: ", api_manager$bq_dataset_id))
         })
 
-        # Events' table is expected to pre-exist with real data - surface a
-        # non-blocking warning if its actual columns don't cover everything
-        # this app needs to write (see check_events_table_compatibility()).
+        # city_events' schema compatibility is checked when Events Scheduling is opened; show the result then
         output$events_schema_status <- renderUI({
+          invalidateLater(3000)
+          if (!isTRUE(api_manager$bq_units_ready[["events"]])) return(tags$div())
           if (is.null(api_manager$events_schema_warning)) {
             tags$div(class = "status-success", style = "margin-top: 10px;",
                      tags$i(class = "fa fa-check-circle"),
@@ -54,7 +59,8 @@ bigquery_auth_server <- function(id, api_manager) {
           }
         })
 
-        showNotification("✓ BigQuery connected - all three suites ready!", type = "message")
+        cred_set_status(bq = "Connected by hand in this tab.", bq_failed = FALSE)
+        showNotification("✓ BigQuery connected. Tables are checked when you open each tab group.", type = "message")
 
       }, error = function(e) {
         output$auth_status <- renderUI({

@@ -103,7 +103,7 @@ trading_evidence_server <- function(id, api_manager = NULL, store, bus, vision_f
     rd <- function(name) reactive({ refresh(); tr_read_current(store, name) })
     evidence_df <- rd("evidence"); trades_df <- rd("trades"); levels_df <- rd("morning_levels")
     rv <- reactiveValues(img = NULL, ext = NULL, ev_id = NULL, kind = NULL, source = NULL, model = NA_character_, parsed = NULL, items = list(), cur = NULL, path = NA_character_)
-    # where screenshots are kept (Dropbox folder / API, set in Trading Records > Setup); a session-only store until then
+    # where screenshots are kept (Dropbox folder / API, set in Trading Desk > 1. Setup); a session-only store until then
     pic_store <- function() { s <- if (!is.null(pictures)) pictures$store else NULL; if (is.null(s)) { if (is.null(rv$fallback)) rv$fallback <- tr_image_store(); s <- rv$fallback }; s }
 
     output$statusBar <- renderUI({

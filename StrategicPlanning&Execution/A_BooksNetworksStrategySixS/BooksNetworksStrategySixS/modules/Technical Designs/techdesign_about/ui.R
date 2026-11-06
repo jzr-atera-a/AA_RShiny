@@ -29,7 +29,7 @@ techdesign_about_ui <- function(id) {
           col_tbl(list(
             c("id / created_at", "Row id and timestamp (assigned on insert)"),
             c("design_id", "Stable id shared by all versions of one design"),
-            c("design_group / design_type", "ml_genai, data_processing, software_patterns / e.g. rag, lambda_architecture, observer_pattern"),
+            c("design_group / design_type", "ml_genai, data_processing, software_patterns, algorithms / e.g. rag, lambda_architecture, observer_pattern, sliding_window"),
             c("name / variant / title / summary", "Display fields"),
             c("when_to_use / when_not_to_use", "Guidance text"),
             c("complexity_level / tags", "Low, Medium, High / comma-separated tags"),

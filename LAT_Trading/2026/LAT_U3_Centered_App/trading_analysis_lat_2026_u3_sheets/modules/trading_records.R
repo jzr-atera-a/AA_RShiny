@@ -35,7 +35,7 @@ tr_box <- function(n, title, ..., tint = "#f8fafc") {
 tr_fmt_pct <- function(x, d = 1) if (is.finite(x)) sprintf(paste0("%.", d, "f%%"), 100 * x) else "—"
 tr_fmt_num <- function(x, d = 2) if (is.finite(x)) formatC(x, format = "f", digits = d, big.mark = ",") else "—"
 
-trading_records_ui <- function(id) {
+trading_records_ui <- function(id, parts = FALSE) {
   ns <- NS(id)
   ta <- function(i, l, r = 2) textAreaInput(ns(i), tr_lab(l), rows = r, width = "100%")
   num <- function(i, l, v = NA, ...) numericInput(ns(i), tr_lab(l), v, ...)
@@ -60,7 +60,7 @@ trading_records_ui <- function(id) {
         "Your own morning sheets and trades, stored in BigQuery so they survive restarts, plus Blotter-style statistics worked out from what you record. Everything here is entered by you; the app never creates or suggests trades or results.")),
     uiOutput(ns("statusBar")),
 
-    tabBox(width = 12, id = ns("tabs"),
+    desk_tabbox(parts, width = 12, id = ns("tabs"),
       # ---------------------------------------------------------------- 1 SETUP
       tabPanel("1. Connection & Setup",
         tr_h("Storage"),
@@ -170,6 +170,7 @@ trading_records_ui <- function(id) {
         conditionalPanel(sprintf("input['%s']", ns("ms_stand")), ta("ms_stand_why", "Reason for standing aside", 2)),
         actionButton(ns("ms_save"), "Save Morning Sheet → BigQuery only", icon = icon("floppy-disk"), class = "btn-success", style = "color:#ffffff; font-weight:700;"),
         actionButton(ns("ms_complete"), "Fill every empty cell + save Morning Sheet → BigQuery only", icon = icon("wand-magic-sparkles"), class = "btn-primary", style = "color:#ffffff; font-weight:700;"),
+        actionButton(ns("ms_to_exports"), "Open this Morning Sheet in Exports (LAT files) →", icon = icon("arrow-right"), class = "btn-primary", style = "color:#ffffff; font-weight:700;"),
         checkboxInput(ns("ms_web_fill"), tr_lab("When the news box or the calendar is empty, let Claude find them online (with sources; needs the Claude key)"), TRUE),
         uiOutput(ns("ms_complete_out")),
         tags$hr(), tr_h("Saved sheets"), DT::DTOutput(ns("ms_table"))),
@@ -204,10 +205,18 @@ trading_records_ui <- function(id) {
             column(3, selectInput(ns("pc_hours"), tr_lab("Chart window"), tr_pat_windows, selected = 48)),
             column(3, selectInput(ns("pc_mins"), tr_lab("Candle size"), tr_pat_intervals, selected = 15)),
             column(3, numericInput(ns("pc_ref"), tr_lab("IG price now (aligns Yahoo to IG; empty = Morning Sheet / entry price)"), NA)),
-            column(3, tags$div(style = "margin-top:24px;", actionButton(ns("pc_load"), "Load chart & find patterns", icon = icon("chart-line"), class = "btn-primary", style = "color:#ffffff; font-weight:700;")))),
+            column(3, textInput(ns("pc_when"), tr_lab("Read the chart at (empty = now)"), "", placeholder = "2026-10-30 06:10 or 06:10"))),
+          fluidRow(
+            column(3, selectInput(ns("pc_tz"), tr_lab("Time zone of that time"), tr_tz_choices, selected = "Europe/London")),
+            column(3, tags$div(style = "margin-top:24px;", actionButton(ns("pc_load"), "Load chart & find patterns", icon = icon("chart-line"), class = "btn-primary", style = "color:#ffffff; font-weight:700;"))),
+            column(6, tr_note("Writing up a trade you took earlier: type the time you entered. The window then runs from that time minus the chart window to that time, and only candles that had closed by then are used, so the chart is what you could have seen. Claude's scenarios in box 4 are told to judge that moment, not now. Empty means now, in the time zone chosen here (UK by default)."))),
           fluidRow(column(8, selectInput(ns("pc_saved"), tr_lab("Or open a chart saved with a trade (BigQuery): candles and patterns exactly as they were at entry"), c("(no saved charts yet)" = ""), width = "100%")),
                    column(4, tags$div(style = "margin-top:24px;", actionButton(ns("pc_restore"), "Load saved chart from BigQuery", icon = icon("database"))))),
           uiOutput(ns("pc_info")),
+          tags$div(style = "background:#ffffff; border:1px solid #ddd6fe; border-radius:8px; padding:8px 12px; margin:6px 0 10px 0;",
+            tr_note("The list above comes from the app's own rules. This asks Claude to read the same candles and the indicators worked out from them (EMA 20/50/200, RSI, MACD, Bollinger, Keltner, ADX with DI+/DI-, Stochastic, ATR) and to name every pattern in the whole course catalogue: price structures, harmonics, Elliott, gaps, traps and retests, multi-candle candlesticks, moving averages, momentum, volatility, trend strength and the course strategies. Single-candle patterns are never included and anything that has stopped running at the right-hand edge is left out. What Claude finds is added to the list above, drawn on the chart, sent with the scenarios in box 4 and saved with the trade."),
+            actionButton(ns("pc_llm"), "Ask Claude to find every pattern (multi-candle)", icon = icon("robot"), class = "btn-primary", style = "color:#ffffff; font-weight:700;"),
+            uiOutput(ns("pc_llm_out"))),
           fluidRow(column(6, selectInput(ns("pc_pick"), tr_lab("Pattern shown on the chart (top 5 multi-candle patterns reaching the last candle)"), c("(load the chart first)" = ""), width = "100%")),
                    column(6, uiOutput(ns("pc_note")))),
           checkboxGroupInput(ns("pc_send"), tr_lab("Patterns sent to Claude with the Morning Sheet (scenarios below)"), choices = character(0), inline = TRUE),
@@ -222,6 +231,9 @@ trading_records_ui <- function(id) {
             column(2, num("sc_price", "Current price (IG)")),
             column(2, num("sc_size", "Size n (GBP per point; empty = from your risk per trade)", NA, min = 0)),
             column(4, textInput(ns("sc_notes"), tr_lab("Notes for Claude (optional)"), ""))),
+          textAreaInput(ns("sc_force"), tr_lab("Levels Claude must use (optional): your own stop and limit, so the scenario matches the trade you actually took"), "", rows = 2, width = "100%",
+                        placeholder = "for example: SELL stop 11050, limit 10950"),
+          tr_note("Leave empty and Claude picks the levels. Fill it and Claude builds the scenarios around exactly these numbers, explains what each one sits beyond or targets, and says under 'Risks' if it thinks a level is wrong. Use it when you are writing up a trade you already placed."),
           actionButton(ns("sc_go"), "Ask Claude for BUY and SELL scenarios", icon = icon("robot"), class = "btn-primary", style = "color:#ffffff; font-weight:700;"),
           uiOutput(ns("sc_out"))),
         tr_box(5, "The trade you took",
@@ -268,7 +280,10 @@ trading_records_ui <- function(id) {
         uiOutput(ns("t_req_note"))),
         tr_box(6, "Save the trade → BigQuery",
           tr_note("Writes to BigQuery: the trade, the chart's candles with its top 5 patterns, and Claude's two scenarios with the one you took, so the whole plan comes back whenever you open this trade again. If 'Use this chart as the trade's Entry chart' is ticked in box 3, that picture also goes to Dropbox. Your LAT files are not written here: the Individual Trade Sheet is written on tab 5, Exports (LAT files)."),
-          actionButton(ns("t_save"), "Save open trade → BigQuery only", icon = icon("floppy-disk"), class = "btn-success", style = "color:#ffffff; font-weight:700;"))
+          actionButton(ns("t_save"), "Save open trade → BigQuery only", icon = icon("floppy-disk"), class = "btn-success", style = "color:#ffffff; font-weight:700;"),
+          actionButton(ns("t_verify"), "Check the last saved trade in BigQuery again", icon = icon("magnifying-glass")),
+          tr_note("After saving, the trade is read back out of the BigQuery table by its own trade_id and shown below. If it is not there, this says so instead of claiming it saved."),
+          uiOutput(ns("t_save_out")))
         ),
 
         # ============================== 2 and 3: pick the trade, and what was planned for it
@@ -410,11 +425,19 @@ trading_records_ui <- function(id) {
       tabPanel("5. Exports (LAT files)",
         tr_note("These files are filled from the records you saved, in the layout of your LAT documents. Nothing is written for you: text fields are exactly what you typed, and empty stays empty. Check your course rules about AI-assisted record keeping and describe it honestly in your submission."),
         uiOutput(ns("ex_from_trades")),
-        fluidRow(column(4, selectInput(ns("ex_scope"), tr_lab("Trades to include"), c("Assessed trades only" = "ASSESSED", "Practice trades only" = "PRACTICE", "All trades" = "ALL")))),
-        tr_h("Trade Blotter (Excel)"),
-        tr_note("Same columns A to AK as the 'Trade Blotter' sheet. Copy the input columns into your LAT workbook, or use this file to check your own figures."),
-        downloadButton(ns("dlBlotter"), "Download Blotter (.xlsx)"),
-        tags$hr(), tr_h("Individual Trade Sheet (Word)"),
+        # order of work: 1 the Morning Sheet (done first each day), 2 the Individual Trade Sheet, 3 the Blotter, 4 the statistics
+        tr_box(1, "Morning Sheet (Word + PDF): do this first, once the day's sheet is saved", tint = "#eef6f5",
+          tr_note("Opened with the button on tab 2, or pick the day here. Filled into your LAT Morning Sheet template. The IG calendar screenshots you read on the Morning Sheet tab were saved with that date and are placed automatically under 'Economic Calendar from overnight' and 'Economic Calendar for today'. Pictures added here replace them for this export (and are saved too)."),
+          selectInput(ns("ex_sheet"), tr_lab("Saved sheet"), choices = c("(no sheets yet)" = "")),
+          fluidRow(column(6, fileInput(ns("cal_o"), tr_lab("Overnight calendar / news pictures"), multiple = TRUE, accept = c("image/png", "image/jpeg"))),
+                   column(6, fileInput(ns("cal_t"), tr_lab("Today's calendar pictures"), multiple = TRUE, accept = c("image/png", "image/jpeg")))),
+          uiOutput(ns("morning_gaps")),
+          actionButton(ns("ms_dbx_docx"), "Save Morning Sheet (.docx) to Dropbox", icon = icon("file-word"), class = "btn-primary", style = "color:#fff; font-weight:700;"),
+          actionButton(ns("ms_dbx_pdf"), "Save Morning Sheet (PDF) to Dropbox", icon = icon("file-pdf"), class = "btn-primary", style = "color:#fff; font-weight:700;"),
+          uiOutput(ns("ms_dbx_out")),
+          tr_note("PDF files are made from the Word file with LibreOffice, which must be installed on the computer running the app. Without it you still get the Word file; open it and use Save as PDF. Files are named like Morning_Sheet_20-10-2026 and Individual_Trade_Sheet_Brent_19-10-2026, and saved again with the same name when you re-export.")),
+        tr_box(2, "Individual Trade Sheet (Word + PDF)", tint = "#f8fafc",
+        fluidRow(column(4, selectInput(ns("ex_scope"), tr_lab("Trades to include (also for the Blotter and statistics)"), c("Assessed trades only" = "ASSESSED", "Practice trades only" = "PRACTICE", "All trades" = "ALL")))),
         selectInput(ns("ex_trade"), tr_lab("Trade"), choices = c("(no trades yet)" = "")),
         tr_note("Pictures are saved ONCE with the trade (Dropbox, path kept in the evidence table) and placed on the sheet every time you export, in this order: entry charts (each with its caption, for example 4 Hour, 1 Hour, 15 Min as in the LAT sample), the IG screenshots you linked in Order Evidence, each in-trade action followed by its own chart, the exit chart, then 'Post Exit'. Crop out account names and numbers."),
         tags$div(style = "background:#f6f8fb; border-radius:8px; padding:8px 12px; margin-bottom:10px;",
@@ -452,18 +475,13 @@ trading_records_ui <- function(id) {
         downloadButton(ns("dlTradeSheet"), "Download Trade Sheet (.docx)"), downloadButton(ns("dlTradeSheetPdf"), "Download Trade Sheet (PDF)"),
         actionButton(ns("sv_trade"), "Save Trade Sheet Word + PDF and Trade Blotter → Dropbox only", icon = icon("dropbox")),
         uiOutput(ns("sv_warn")),
-        tags$hr(), tr_h("Morning Sheet (Word)"),
-        selectInput(ns("ex_sheet"), tr_lab("Saved sheet"), choices = c("(no sheets yet)" = "")),
-        tr_note("Filled into your LAT Morning Sheet template. The IG calendar screenshots you read on the Morning Sheet tab were saved with that date and are placed automatically under 'Economic Calendar from overnight' and 'Economic Calendar for today'. Pictures added here replace them for this export (and are saved too)."),
-        fluidRow(column(6, fileInput(ns("cal_o"), tr_lab("Overnight calendar / news pictures"), multiple = TRUE, accept = c("image/png", "image/jpeg"))),
-                 column(6, fileInput(ns("cal_t"), tr_lab("Today's calendar pictures"), multiple = TRUE, accept = c("image/png", "image/jpeg")))),
-        uiOutput(ns("morning_gaps")),
-        downloadButton(ns("dlMorning"), "Download Morning Sheet (.docx)"), downloadButton(ns("dlMorningPdf"), "Download Morning Sheet (PDF)"),
-        tr_note("PDF files are made from the Word file with LibreOffice, which must be installed on the computer running the app. Without it you still get the Word file; open it and use Save as PDF. Files are named like Morning_Sheet_20-10-2026 and Individual_Trade_Sheet_Brent_19-10-2026, and saved again with the same name when you re-export."),
-        uiOutput(ns("sv_out")),
-        tags$hr(), tr_h("Statistics (Excel)"),
-        tr_note("Summary, by asset, strategy, exit code, weekday, entry time and mood, the equity series, the trade list and the deviations you wrote. Use it for the numbers in Tasks 2 and 3; the evaluation is yours to write."),
-        downloadButton(ns("dlStatsX"), "Download statistics (.xlsx)")),
+        uiOutput(ns("sv_out"))),
+        tr_box(3, "Trade Blotter (Excel)", tint = "#f8fafc",
+          tr_note("Same columns A to AK as the 'Trade Blotter' sheet. Copy the input columns into your LAT workbook, or use this file to check your own figures."),
+          downloadButton(ns("dlBlotter"), "Download Blotter (.xlsx)")),
+        tr_box(4, "Statistics (Excel)", tint = "#f8fafc",
+          tr_note("Summary, by asset, strategy, exit code, weekday, entry time and mood, the equity series, the trade list and the deviations you wrote. Use it for the numbers in Tasks 2 and 3; the evaluation is yours to write."),
+          downloadButton(ns("dlStatsX"), "Download statistics (.xlsx)"))),
 
       # ---------------------------------------------------------- 6 SCHEMA
       tabPanel("6. Schema & SQL",
@@ -746,6 +764,15 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
     output$ms_complete_out <- renderUI({ n <- ms_complete_res(); if (is.null(n)) return(NULL)
       tags$div(style = "font-size:12.5px; background:#f6f8fb; border-radius:8px; padding:8px 12px; margin:6px 0;", lapply(n, tags$div)) })
     observeEvent(input$ms_loadBtn, { req(input$ms_load != "(none)"); load_sheet(paste0("MS_", input$ms_load)) })
+    # tab 2 -> tab 5: picks this day's saved sheet in Exports box 1 and opens that tab (writes nothing)
+    observeEvent(input$ms_to_exports, {
+      d <- tryCatch(as.Date(input$ms_date), error = function(e) NA)
+      if (is.na(d)) { msg("Choose the date of the Morning Sheet first.", "warning"); return() }
+      if (!(format(d) %in% format(sheets_df()$sheet_date))) { msg("Save this Morning Sheet first (green button), then open it in Exports.", "warning"); return() }
+      updateSelectInput(session, "ex_sheet", selected = format(d))
+      updateTabsetPanel(session, "tabs", selected = "5. Exports (LAT files)")
+      msg(sprintf("Morning Sheet %s is in Exports box 1, ready to download.", format(d, "%d/%m/%Y")))
+    })
     load_sheet <- function(sid) {
       s <- tr_read_current(store, "morning_sheets"); h <- s[s$sheet_id == sid, , drop = FALSE]; if (nrow(h) != 1) return(invisible())
       updateDateInput(session, "ms_date", value = h$sheet_date)
@@ -822,11 +849,18 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
       if (!is.null(lv) && nrow(lv)) { r <- lv[lv$instrument == asset, , drop = FALSE]; if (nrow(r) && is.finite(r$current_price[1])) return(r$current_price[1]) }
       v <- tr_num(input$t_entry); if (is.finite(v)) v else NA_real_
     }
+    # IG price now: a price typed in box 3 fills box 4 (Current price (IG)); box 4 can then be changed without touching box 3
+    observeEvent(input$pc_ref, { v <- tr_num(input$pc_ref); if (is.finite(v)) updateNumericInput(session, "sc_price", value = v) }, ignoreInit = TRUE)
+    # the moment the chart is read at: the time typed in box 3 read in the chosen zone, or NULL for now
+    pc_end <- function() tr_parse_when(input$pc_when, tr_or(input$pc_tz, "Europe/London"))
     pc_load <- function() {
       asset <- toupper(trimws(tr_or(input$t_asset, ""))); h <- as.numeric(input$pc_hours); m <- as.numeric(input$pc_mins)
       if (!nzchar(asset)) { msg("Choose the asset in A first.", "warning"); return() }
+      endt <- tryCatch(pc_end(), error = function(e) { msg(conditionMessage(e), "error"); NA })
+      if (length(endt) == 1 && !inherits(endt, "POSIXct") && is.na(endt)) return()   # the time could not be read: say so, load nothing
+      if (!is.null(endt) && endt > Sys.time() + 60) { msg("That time is in the future: the chart is loaded up to now instead.", "warning"); endt <- NULL }
       res <- withProgress(message = "Loading prices and finding patterns...", value = 0.4, tryCatch({
-        x <- tr_pat_bars(asset, h, m, ref_ig = pc_ref_price(asset), fetch = if (is.null(yahoo_fn)) tr_yahoo_fetch else yahoo_fn)
+        x <- tr_pat_bars(asset, h, m, ref_ig = pc_ref_price(asset), fetch = if (is.null(yahoo_fn)) tr_yahoo_fetch else yahoo_fn, end = endt)
         d <- tr_pat_detect(x$bars); c(x, list(det = d, asset = asset, hours = h, mins = m, at = Sys.time())) },
         error = function(e) { msg(conditionMessage(e), "warning"); NULL }))
       pc_res(res); if (is.null(res)) return()
@@ -838,6 +872,58 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
       cat(sprintf("[Chart] %s %sh x %s min: %d candles, top: %s\n", asset, h, m, nrow(res$bars), paste(vapply(top, function(p) p$label, ""), collapse = " | ")))
     }
     observeEvent(input$pc_load, pc_load())
+    # ---- Claude reads the same candles and names every pattern in the course catalogue ----------
+    pc_llm_res <- reactiveVal(NULL)
+    pc_refresh_pick <- function(res, keep = TRUE) {   # the pattern lists after the top has changed
+      top <- res$det$top
+      ch <- if (length(top)) setNames(as.character(seq_along(top)), vapply(seq_along(top), function(k)
+              sprintf("%d. %s (%s) - score %d%s", k, top[[k]]$label, top[[k]]$status, top[[k]]$score,
+                      if (identical(top[[k]]$source, "claude")) " [Claude]" else ""), "")) else c("(no pattern found)" = "")
+      sel <- isolate(input$pc_pick); if (!keep || is.null(sel) || !(sel %in% ch)) sel <- if (length(top)) "1" else "0"
+      updateSelectInput(session, "pc_pick", choices = c(ch, "Candles only (no pattern)" = "0"), selected = sel)
+      updateCheckboxGroupInput(session, "pc_send",
+        choices = if (length(top)) setNames(as.character(seq_along(top)), sprintf("%d. %s", seq_along(top), vapply(top, function(p) p$label, ""))) else character(0),
+        selected = as.character(seq_along(top)), inline = TRUE)
+    }
+    observeEvent(input$pc_llm, {
+      r <- pc_res()
+      if (is.null(r)) { msg("Load the chart first: Claude reads the candles that are on it.", "warning"); return() }
+      b <- r$bars
+      bt <- tr_pat_bars_text_n(b)
+      ind <- tryCatch(tr_pat_indicators(b), error = function(e) { msg(paste("Indicators could not be worked out:", conditionMessage(e)), "error"); NULL })
+      if (is.null(ind)) return()
+      prompt <- tr_pat_llm_prompt(tr_asset_label(r$asset), names(tr_pat_intervals)[tr_pat_intervals == r$mins], bt$text,
+                                  tr_pat_ind_text(b, ind), tr_pat_summary(r$det$top, b), r$det$atr, bt$n_rows,
+                                  as_of_uk = if (is.null(r$as_of) || any(is.na(r$as_of))) "" else format(r$as_of, "%d/%m/%Y %H:%M", tz = "Europe/London"))
+      cat("[Chart] asking Claude for patterns:", r$asset, bt$n_rows, "candles\n")
+      res <- withProgress(message = "Claude is reading the chart for patterns...", value = 0.4,
+        tryCatch(vision_fn(list(), prompt), error = function(e) { msg(conditionMessage(e), "error"); NULL }))
+      if (is.null(res)) return()
+      found <- tryCatch(tr_pat_llm_parse(if (is.list(res)) res$text else res, b, r$det$atr, bt$offset),
+                        error = function(e) { msg(paste("Claude's reply could not be read:", conditionMessage(e)), "error"); NULL })
+      if (is.null(found)) return()
+      if (!length(found)) { pc_llm_res(list(n = 0L, read = attr(found, "chart_read"), at = Sys.time()))
+        msg("Claude found no further multi-candle pattern running to the last candle.", "warning"); return() }
+      r$det$top <- tr_pat_llm_merge(r$det$top, found); r$det$all <- r$det$top
+      pc_res(r); pc_refresh_pick(r)
+      pc_llm_res(list(n = length(found), read = attr(found, "chart_read"), at = Sys.time(),
+                      items = lapply(found, function(p) list(label = p$label, group = p$group, bias = p$bias, status = p$status,
+                        score = p$score, note = p$note, invalid = p$invalid, target = p$target))))
+      msg(sprintf("Claude added %d pattern(s) to the list: they are on the chart, go with box 4's scenarios and are saved with the trade.", length(found)))
+    })
+    output$pc_llm_out <- renderUI({
+      x <- pc_llm_res(); if (is.null(x)) return(NULL)
+      if (!x$n) return(tags$div(style = "font-size:12.5px; color:#b45309; margin-top:6px;",
+                                "Claude found no further multi-candle pattern still running at the last candle.",
+                                if (nzchar(tr_or(x$read, ""))) tags$div(style = "color:#334155; margin-top:3px;", x$read)))
+      tags$div(style = "margin-top:8px; font-size:12.5px; color:#1f2937;",
+        tags$div(style = "font-weight:800; color:#5b21b6;", sprintf("Claude added %d pattern(s), newest at the bottom of the list above:", x$n)),
+        if (nzchar(tr_or(x$read, ""))) tags$div(style = "color:#334155; margin:3px 0 5px 0;", tags$b("Chart read: "), x$read),
+        tags$ul(style = "margin:4px 0 0 0; padding-left:18px;", lapply(x$items, function(p) tags$li(
+          tags$b(p$label), sprintf(" [%s, %s bias] %s, confidence %d%%. ", p$group, p$bias, p$status, p$score), p$note,
+          if (is.finite(p$invalid %||% NA)) sprintf(" Cancelled beyond %s.", tr_pat_fmt(p$invalid)),
+          if (is.finite(p$target %||% NA)) sprintf(" Target %s.", tr_pat_fmt(p$target))))))
+    })
     observeEvent(list(input$pc_hours, input$pc_mins), { r <- isolate(pc_res()); if (!is.null(r) && !isTRUE(r$restored)) pc_load() }, ignoreInit = TRUE)
     # ---- charts saved with trades (evidence kind "patterns"): newest first
     pc_saved_rows <- reactive({
@@ -944,6 +1030,8 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
       dur <- tr_num(input$t_dur); if (!is.finite(dur)) dur <- tr_num(input$s_plan_dur)
       prompt <- tr_scn_prompt(if (nzchar(asset)) asset else "the asset", price, size, tr_scn_morning_text(x$hdr, lv), dur, tr_or(input$sc_notes, ""),
                               risk = list(pct = plan_risk_pct(), equity = equity_now()),
+                              force = tr_or(input$sc_force, ""),
+                              as_of = { a <- if (is.null(pcr)) NULL else pcr$as_of; if (is.null(a) || any(is.na(a))) tryCatch(pc_end(), error = function(e) NULL) else a },
                               chart = if (is.null(pcr)) NULL else list(bars = tr_pat_bars_text(pcr$bars), decision = pcr$det$decision$text,
                                                                          patterns = tr_pat_summary(pcr$det$top[intersect(seq_along(pcr$det$top), suppressWarnings(as.integer(input$pc_send)))], pcr$bars),
                                                                          what = sprintf("%s candles of %s over the last %s hours (%s)", nrow(pcr$bars), names(tr_pat_intervals)[tr_pat_intervals == pcr$mins], pcr$hours, pcr$note)),
@@ -962,6 +1050,8 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
         tags$div(style = sprintf("flex:1; min-width:260px; border:2px solid %s; border-radius:8px; padding:8px 12px; background:#ffffff;", col),
           tags$div(style = sprintf("font-weight:800; color:%s; font-size:15px;", col), r$side, sprintf(" - estimated success %s%%", ifelse(is.finite(r$success_pct), r$success_pct, "?"))),
           tags$div(sprintf("Entry %s | Stop %s | Limit %s", r$entry, r$stop, r$limit)),
+          tags$div(style = "font-weight:700; color:#002C3C;", sprintf("IG form, pts away from the price: Stop %s | Limit %s",
+            ifelse(is.finite(r$stop_pts), format(r$stop_pts), "?"), ifelse(is.finite(r$limit_pts), format(r$limit_pts), "?"))),
           tags$div(sprintf("Reward:risk %s | Risk GBP %s | Reward GBP %s%s", r$reward_risk, r$risk_gbp, r$reward_gbp, if (is.finite(r$size)) sprintf(" at GBP %s per point", r$size) else "")),
           if (is.finite(r$size_plan)) tags$div(style = "font-size:12px; color:#334155;", tags$b("Size for your plan: "), sprintf("GBP %s per point = GBP %s at risk (%s%% of equity GBP %s; size = GBP risk / stop points)",
             r$size_plan, round(r$size_plan * abs(r$entry - r$stop), 2), plan_risk_pct(), format(round(equity_now()), big.mark = ","))),
@@ -1008,6 +1098,43 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
       lab <- c(t_required, t_date = "Entry date")[m]
       tags$div(style = "background:#ffedd5; border-left:4px solid #f97316; padding:6px 10px; margin:6px 0; font-size:12.5px; color:#7c2d12;",
                "Fill these before you can save: ", paste(lab, collapse = ", "), ".") })
+
+    # ---- proof that a trade really is in BigQuery: read it straight back out of the table by its trade_id ----
+    t_saved <- reactiveVal(NULL)
+    verify_trade <- function(tid) {
+      store$invalidate("trades")   # drop this session's copy, so the row comes from the table itself
+      t <- tryCatch(tr_read_current(store, "trades"), error = function(e) { msg(paste("Read-back failed:", conditionMessage(e)), "error"); NULL })
+      r <- if (is.null(t) || !nrow(t)) NULL else t[t$trade_id == tid, , drop = FALSE]
+      pend <- tryCatch(store$pending_data()$trades, error = function(e) NULL)
+      t_saved(list(tid = tid, row = if (is.null(r) || !nrow(r)) NULL else r[1, ],
+                   queued = !is.null(pend) && tid %in% pend$trade_id,
+                   connected = isTRUE(store$connected()), at = Sys.time()))
+      invisible(TRUE)
+    }
+    observeEvent(input$t_verify, { s <- t_saved()
+      if (is.null(s)) { msg("Save a trade first: this checks the one you saved last.", "warning"); return() }
+      verify_trade(s$tid); bump(); msg("Checked again in BigQuery: see the panel under the button.") })
+    output$t_save_out <- renderUI({
+      s <- t_saved(); if (is.null(s)) return(NULL)
+      ok <- !is.null(s$row) && !isTRUE(s$queued) && isTRUE(s$connected)
+      col <- if (ok) "#15803d" else "#b91c1c"; bg <- if (ok) "#ecfdf5" else "#fef2f2"
+      head <- if (ok) "Confirmed: this trade is in BigQuery"
+              else if (isTRUE(s$queued)) "NOT in BigQuery: the write failed and the row is kept in this session only"
+              else if (!isTRUE(s$connected)) "NOT in BigQuery: BigQuery is not connected, so the row is kept in this session only"
+              else "NOT found: the table has no row with this trade_id"
+      r <- s$row
+      tags$div(style = sprintf("background:%s; border:1px solid %s; border-left:5px solid %s; border-radius:8px; padding:10px 14px; margin-top:10px; color:#1f2937;", bg, col, col),
+        tags$div(style = sprintf("font-weight:800; color:%s;", col), head),
+        tags$div(style = "font-size:12.5px; margin-top:4px;", tags$b("trade_id: "), tags$code(s$tid),
+                 sprintf(" (read back from trading_trades at %s UK)", format(s$at, "%H:%M:%S", tz = "Europe/London"))),
+        if (!is.null(r)) tags$div(style = "font-size:12.5px; line-height:1.6; margin-top:4px;",
+          tags$div(sprintf("%s %s | status %s | version %s", r$asset, if (identical(r$direction, "S")) "SELL" else "BUY", r$status, r$record_version)),
+          tags$div(sprintf("Entry %s at %s UK | Stop %s | Target %s | GBP %s per point", r$entry_price,
+                           format(r$entry_ts, "%d/%m/%Y %H:%M", tz = "Europe/London"), r$stop1, r$target, r$stake_per_pip_gbp)),
+          tags$div(sprintf("saved_at %s UK", format(r$saved_at, "%d/%m/%Y %H:%M:%S", tz = "Europe/London")))),
+        if (!ok) tags$div(style = "font-size:12.5px; margin-top:6px; font-weight:600;",
+          "Nothing is lost yet: the row is still in this session. Fix the connection in API Configuration, press the Sync button on tab 1, then press 'Check the last saved trade in BigQuery again'. Do not close the app before it says Confirmed."))
+    })
 
     observeEvent(input$t_save, {
       if (length(t_missing())) { msg(paste0("Fill these first: ", paste(c(t_required, t_date = "Entry date")[t_missing()], collapse = ", "), "."), "error"); return() }
@@ -1092,6 +1219,11 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
         }
       }
       queue_save("trade", row$trade_id)
+      verify_trade(row$trade_id)   # read it straight back: the panel under the button says whether it is really there
+      s <- t_saved()
+      if (!is.null(s$row) && !isTRUE(s$queued) && isTRUE(s$connected))
+        msg(sprintf("Confirmed in BigQuery: %s, read back by its trade_id %s.", row$trade_sheet_name, row$trade_id))
+      else msg(sprintf("The trade is NOT in BigQuery yet (kept in this session as %s). See the red panel under the Save button.", row$trade_id), "error")
       bump()
     })
 
@@ -2165,6 +2297,27 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
       sv_res(res); msg(if (all(res$ok)) "Saved." else "Some files were not saved: see the list below.", if (all(res$ok)) "message" else "warning")
     }
     observeEvent(input$sv_morning, save_dbx(function(f) build_morning(f), tr_morning_filename(morning_day()), "morning"))
+    # Morning Sheet buttons: written straight into the LAT Dropbox Morning Sheet folder (no browser dialog)
+    ms_dbx <- reactiveVal(NULL)
+    ms_dbx_save <- function(want) {
+      if (!nzchar(tr_or(input$ex_sheet, ""))) { ms_dbx(list(ok = FALSE, text = "Pick the saved sheet (day) first.")); return() }
+      tg <- tryCatch(tr_sheet_targets("morning"), error = function(e) list(local = "", api = "")); tok <- nzchar(tryCatch(tr_dropbox_token(), error = function(e) ""))
+      name <- tr_morning_filename(morning_day())
+      out <- withProgress(message = sprintf("Writing the Morning Sheet (%s) to Dropbox...", if (want == "pdf") "PDF" else "Word"), value = 0.5, tryCatch({
+        d <- tempfile("sheet_"); dir.create(d); f <- file.path(d, name); build_morning(f)
+        file <- if (want == "pdf") { p <- tr_docx_to_pdf(f, d); if (is.na(p)) stop("PDF not made: LibreOffice was not found on this computer (save the Word file instead, or install LibreOffice)."); p } else f
+        if (!nzchar(tg$local) && !tok) list(ok = FALSE, file = file, text = "The LAT Dropbox folder was not found on this computer and no Dropbox token is set.")
+        else { res <- tr_save_sheet(file, "morning"); list(ok = any(res$ok), file = file, res = res, where = if (nzchar(tg$local)) tg$local else tg$api) } },
+        error = function(e) list(ok = FALSE, text = conditionMessage(e))))
+      cat("[Records] Morning Sheet", want, "to Dropbox:", if (isTRUE(out$ok)) out$where else out$text %||% "not saved", "\n"); ms_dbx(out) }
+    observeEvent(input$ms_dbx_docx, ms_dbx_save("docx")); observeEvent(input$ms_dbx_pdf, ms_dbx_save("pdf"))
+    output$ms_dbx_out <- renderUI({ r <- ms_dbx(); if (is.null(r)) return(NULL)
+      if (isTRUE(r$ok)) return(tags$div(style = "margin-top:6px; color:#166534; font-weight:700;", icon("check"), sprintf(" Saved: %s", file.path(r$where, basename(r$file))),
+                                        if (any(grepl("previous", r$res$note %||% ""))) tags$div(style = "font-weight:400; color:#475569;", "The older copy was kept in '_previous versions'.") else NULL))
+      tg <- tryCatch(tr_sheet_targets("morning"), error = function(e) list(local = "")); exp <- tryCatch(file.path(tr_lat_base_local(), tr_lat_sheet_dirs[["morning"]]), error = function(e) "")
+      tags$div(style = "margin-top:6px; color:#b91c1c; font-weight:700;", "Not saved to Dropbox: ", r$text %||% paste(r$res$note, collapse = " "),
+        if (nzchar(exp)) tags$div(style = "font-weight:400; color:#475569;", "Expected folder: ", tags$code(exp)) else NULL,
+        tags$div(style = "font-weight:400; margin-top:4px;", "Meanwhile you can ", downloadLink(session$ns("dlMorning"), "download the Word file"), " or ", downloadLink(session$ns("dlMorningPdf"), "the PDF"), " to this computer.")) })
     observeEvent(input$sv_trade, {   # Dropbox only: it prints what is stored in BigQuery, it never writes there
       save_dbx(function(f) build_trade(f), trade_name("docx"), "trade"); b <- save_blotter(); if (!is.null(b)) sv_res(rbind(sv_res(), b)) })
     output$sv_out <- renderUI({ r <- sv_res(); if (is.null(r)) return(NULL)
@@ -2209,6 +2362,7 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
       parts <- Filter(function(d) NROW(d) > 0, parts)
       if (!length(parts)) { msg("No market prices were read.", "warning"); return() }
       all <- do.call(rbind, parts); all <- all[!duplicated(all$code, fromLast = TRUE), , drop = FALSE]
+      ck <- tr_ms_check_levels(all); all <- ck$levels; if (length(ck$notes)) msg(paste("Values left empty because they cannot be right:", paste(ck$notes, collapse = " ")), "warning")
       apply_markets(all); msg(sprintf("%d market(s) read. Compare every value with the screenshot before saving.", nrow(all)))
     })
     output$ms_read_out <- renderUI({
@@ -2223,8 +2377,13 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
 
     # ---------------------------------------------------------------- morning sheet: web search + calendar
     text_fn_in <- text_fn
-    if (is.null(text_fn)) text_fn <- function(prompt) api_manager$call_claude_web(prompt, max_tokens = 6000, enable_web_search = TRUE,
-                                                                                 system = "You are a careful market-data researcher. Report only values you found in a source, with that source. Never estimate.")
+    # 12000 tokens (a web search with many sources filled 6000 on 3 Nov and the headlines were lost); a reply still cut
+    # is asked again once with more room
+    if (is.null(text_fn)) text_fn <- function(prompt) {
+      sys <- "You are a careful market-data researcher. Report only values you found in a source, with that source. Never estimate. Keep every text field short."
+      r <- api_manager$call_claude_web(prompt, max_tokens = 12000, enable_web_search = TRUE, system = sys)
+      if (identical(r$stop_reason, "max_tokens")) { cat("[Records] Claude's reply was cut: asking again with more room\n"); r <- api_manager$call_claude_web(prompt, max_tokens = 20000, enable_web_search = TRUE, system = sys) }
+      r }
     web_src <- reactiveVal(NULL)   # data.frame(what, url, title) of the last web searches
     output$ms_web_src <- renderUI({
       d <- web_src(); if (is.null(d) || !nrow(d)) return(NULL)
@@ -2258,6 +2417,7 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
       withProgress(message = "Claude is searching the web for market levels...", value = 0.3, {
         p <- ask_web(tr_morning_web_prompt(d), "Market levels"); if (is.null(p)) return()
         all <- tr_morning_assign(p); if (!NROW(all)) { msg("No market levels were found. Try again, or use screenshots.", "warning"); return() }
+        ck <- tr_ms_check_levels(all); all <- ck$levels; if (length(ck$notes)) msg(paste("Values left empty because they cannot be right:", paste(ck$notes, collapse = " ")), "warning")
         apply_markets(all)
         hl <- tr_web_headlines(p$headlines); hl <- hl[!is.na(hl) & nzchar(hl)]
         if (length(hl)) {   # your own notes stay first; the web lines are added under them, labelled
@@ -2266,6 +2426,7 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
           updateTextAreaInput(session, "ms_news", value = paste(c(if (nzchar(mine)) mine, paste0("Found online (unverified), ", format(d, "%d/%m/%Y"), ":"), paste("-", hl),
                                                                  paste0("Note: levels and headlines found online, not read from the IG platform. Sources: ", paste(src, collapse = ", "))), collapse = "\n"))
         }
+        if (!length(hl)) msg("No overnight headlines came back from the search: press the button again, or write the news yourself.", "warning")
         msg(sprintf("%d market(s) found online. They are approximate: compare with your IG platform before saving.", nrow(all)))
       })
     })
@@ -2333,6 +2494,13 @@ trading_records_server <- function(id, api_manager = NULL, store = NULL, quiet =
             notes <- c(notes, sprintf("Claude found %d actual value(s) with sources (see the web sources list).", sum(nzchar(c(yo$actual, tt$actual))) - n0)) }
         }
       }
+      # say plainly which releases already out still have no actual value
+      if (!is.null(yo) || !is.null(tt)) { now_uk2 <- format(Sys.time(), "%H:%M", tz = "Europe/London"); today2 <- identical(d, tr_london_today())
+        skip <- "(?i)speaks|press conference|statement|report|auction|bulletin|meeting|elections"
+        miss_o <- if (!is.null(yo) && nrow(yo)) yo$event[!nzchar(yo$actual) & !grepl(skip, yo$event, perl = TRUE)] else character(0)
+        miss_t <- if (!is.null(tt) && nrow(tt)) tt$event[!nzchar(tt$actual) & (!today2 | sub("^\\w{3} ", "", tt$time) < now_uk2) & !grepl(skip, tt$event, perl = TRUE)] else character(0)
+        if (length(miss_o) + length(miss_t)) notes <- c(notes, sprintf("Still without an actual value although already released (%d): %s. Check them on Forex Factory or Investing.com and type them in.",
+                                                                      length(miss_o) + length(miss_t), paste(utils::head(c(miss_o, miss_t), 12), collapse = "; "))) }
       if (!is.null(yo)) set_cal("o", yo, "Yesterday's"); if (!is.null(tt)) set_cal("t", tt, "Today's")
       # releases inside the trading window: from now (today) or 08:00, for your plan's expected duration
       if (!is.null(tt) && nrow(tt)) {

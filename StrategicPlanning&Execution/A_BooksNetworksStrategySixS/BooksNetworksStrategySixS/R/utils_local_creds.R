@@ -64,11 +64,23 @@ app_cred_autoload <- function(api_manager, dir = app_cred_dir(), which = "both",
     m <- Sys.getenv("CLAUDE_MODEL", "")
     api_manager$set_claude_credentials(lc$claude_key, model = if (nzchar(m)) m else NULL)
     cat("[Claude] API key taken from", file.path(dir, "ap_claude_1_line.txt"), "\n")   # path only, never the key
-    # no test call at start-up (it would spend a request on every launch): the key is marked as loaded and is checked by the first real
-    # request, or at once with the Test Connection button in the Claude API tab
     api_manager$claude_authenticated <- TRUE
-    st$claude_failed <- FALSE
-    st$claude <- sprintf("Key loaded from %s (%s). It is checked by the first request; press Test Connection to check it now.", file.path(dir, "ap_claude_1_line.txt"), app_mask_key(lc$claude_key))
+    api_manager$claude_tested <- NA
+    kpath <- file.path(dir, "ap_claude_1_line.txt")
+    # the key is saved AND tested at once (one tiny request), exactly as if the user had typed the folder and pressed Test connection
+    res <- tryCatch({ api_manager$test_claude_connection(); NULL }, error = function(e) conditionMessage(e))
+    if (is.null(res)) {
+      api_manager$claude_tested <- TRUE; st$claude_failed <- FALSE
+      st$claude <- sprintf("Key loaded from %s (%s) and tested: Claude answered, the key works (model %s).", kpath, app_mask_key(lc$claude_key), api_manager$claude_model)
+      cat("[Claude] key tested OK\n")
+    } else {
+      refused <- grepl("401|403|authentication|invalid x-api-key|permission", res, ignore.case = TRUE)
+      api_manager$claude_authenticated <- TRUE                       # keep the key so the user can retry or fix it
+      api_manager$claude_tested <- if (refused) FALSE else NA        # network trouble is not proof that the key is bad
+      st$claude_failed <- TRUE
+      st$claude <- sprintf("Key loaded from %s (%s) but the test call failed: %s", kpath, app_mask_key(lc$claude_key), substr(res, 1, 200))
+      cat("[Claude] key test failed:", substr(res, 1, 200), "\n")
+    }
   }
   .app_cred_env$status <- st
   invisible(st)
@@ -101,7 +113,9 @@ app_cred_box_ui <- function(ns, what = "key file") {
 }
 app_cred_banner <- function(which, trigger = NULL) {
   if (!is.null(trigger)) trigger()
-  st <- app_cred_status(); txt <- st[[which]]; d <- if (is.null(st$dir)) "" else st$dir
+  st <- app_cred_status(); txt <- st[[which]]
+  if (is.null(txt) && !isTRUE(st[[paste0(which, "_failed")]])) shiny::invalidateLater(2000)   # keys load a moment after the page appears: refresh until they do
+  d <- if (is.null(st$dir)) "" else st$dir
   bad <- isTRUE(st[[paste0(which, "_failed")]])
   if (!is.null(txt)) tags$div(style = sprintf("background:%s; border:1px solid %s; color:%s; border-radius:8px; padding:8px 10px; margin-bottom:10px; font-size:12.5px;", if (bad) "#fffbeb" else "#ecfdf5", if (bad) "#fde68a" else "#a7f3d0", if (bad) "#92400e" else "#065f46"),
                               icon("key"), " ", txt, " You can still load another key below.")
@@ -111,19 +125,33 @@ app_cred_banner <- function(which, trigger = NULL) {
 }
 
 # sidebar box
-app_api_status_css <- function() tags$style(HTML("#api_status:empty::before { content: 'BigQuery: connecting...   Claude: connecting...'; color:#fbbf24; font-size:11.5px; }"))
+app_api_status_css <- function() tags$style(HTML("@keyframes tblpulse { 0%,100% { opacity:1; transform:scale(1);} 50% { opacity:.35; transform:scale(.7);} } .pulse-dot { animation: tblpulse 0.9s ease-in-out infinite; } #api_status:empty::before { content: 'BigQuery: connecting...   Claude: connecting...'; color:#fbbf24; font-size:11.5px; }"))
 app_api_status_ui <- function() tagList(app_api_status_css(),
   tags$div(style = "padding:10px; background-color:#2c3e50; margin-top:6px;",
     tags$div(style = "color:#b2e0db; font-size:11px; font-weight:700; margin-bottom:4px;", "API CONNECTIONS"), uiOutput("api_status")))
-app_api_status_render <- function(api_manager) {
+app_api_status_render <- function(api_manager, booting = NULL, checks = NULL) {
   invalidateLater(3000)
+  if (!is.null(booting) && isTRUE(booting())) return(tags$div(style = "font-size:11.5px; color:#fbbf24;", icon("spinner", class = "fa-spin"), " connecting to BigQuery and Claude ..."))
   st <- app_cred_status()
   light <- function(name, ok, txt) {
-    col <- if (ok) "#22c55e" else "#ef4444"
+    col <- if (is.character(ok)) ok else if (ok) "#22c55e" else "#ef4444"
     tags$div(style = "display:flex; align-items:flex-start; gap:6px; margin:3px 0; font-size:11.5px; color:#ecf0f1;",
       tags$span(style = sprintf("display:inline-block; width:10px; height:10px; border-radius:50%%; background:%s; margin-top:3px; flex:none;", col)), tags$span(tags$b(name, ": "), txt))
   }
-  bq <- isTRUE(api_manager$bq_connected) || isTRUE(api_manager$bq_authenticated); cl <- isTRUE(api_manager$claude_authenticated)
+  bq <- isTRUE(api_manager$bq_connected) || isTRUE(api_manager$bq_authenticated); cl <- isTRUE(api_manager$claude_authenticated); tst <- api_manager$claude_tested
+  claude_col <- if (!cl || isFALSE(tst)) "#ef4444" else if (isTRUE(tst)) "#22c55e" else "#fbbf24"
+  claude_txt <- if (!cl) { if (isTRUE(st$claude_failed)) "key loaded, test call failed" else "no key: API Configuration > Claude API" } else if (isFALSE(tst)) "key refused: check it in API Configuration" else if (isTRUE(tst)) "ready (tested)" else "key loaded, not tested yet"
+  # third light: the tables of the tab group that was just opened (amber and pulsing while loading, green when ready, red on failure)
+  tbl <- NULL
+  if (!is.null(checks)) {
+    cs <- checks(); stt <- vapply(cs, function(x) as.character(x$status), ""); lab <- vapply(cs, function(x) as.character(x$label %||% ""), "")
+    if (any(stt == "checking")) tbl <- tags$div(class = "tbl-light", style = "display:flex; align-items:flex-start; gap:6px; margin:3px 0; font-size:11.5px; color:#fde68a;",
+        tags$span(class = "pulse-dot", style = "display:inline-block; width:10px; height:10px; border-radius:50%; background:#fbbf24; margin-top:3px; flex:none;"),
+        tags$span(tags$b("Tables: "), icon("spinner", class = "fa-spin"), " loading ", paste(unique(lab[stt == "checking"]), collapse = ", "), " ..."))
+    else if (any(stt == "error")) tbl <- light("Tables", "#ef4444", paste0("failed: ", paste(unique(lab[stt == "error"]), collapse = ", "), " (see Debug Console)"))
+    else if (any(stt == "ready")) tbl <- light("Tables", "#22c55e", paste0(paste(unique(lab[stt == "ready"]), collapse = ", "), " loaded"))
+    else tbl <- light("Tables", "#94a3b8", "loaded when you open a tab that needs them")
+  }
   tagList(light("BigQuery", bq, if (bq) "connected (suites load when opened)" else if (isTRUE(st$bq_failed)) "key found, connection failed (see Debug Console)" else "not connected: API Configuration > BigQuery"),
-          light("Claude", cl, if (cl) "key loaded" else if (isTRUE(st$claude_failed)) "key loaded, test call failed" else "no key: API Configuration > Claude API"))
+          light("Claude", claude_col, claude_txt), tbl)
 }
