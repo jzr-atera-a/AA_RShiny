@@ -206,7 +206,7 @@ server <- function(input, output, session) {
   cc_store <- cc_make_store(cc_bq_backend(api_manager))   # separate cc_ tables: the IG records are not touched
   cc_api_config_server("cc_api_config", cc_client, cc_store)
   cc_trading_records_server("cc_records", cc_client, api_manager, cc_store)
-  trading_desk_server(input, session, output)   # one place for the shared plan settings
+  trading_desk_server(input, session, output, cc_store = cc_store, records_store = records_store)   # one place for the shared plan settings
   pattern_matrix_server("pattern_matrix", data_manager, api_manager)   # course Steps 1-6 (with their own step servers) + the 141 patterns
 
   unit3_workbench_server("unit3_workbench", data_manager)

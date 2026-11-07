@@ -49,7 +49,7 @@ trading_decision_ui <- function(id) {
               column(2, numericInput(ns("entry"), "Entry", value = NA, step = 0.1), textInput(ns("expiry"), "Good till (HH:MM UK, orders)", value = "")),
               column(2, numericInput(ns("stop"), "Stop", value = NA, step = 0.1), numericInput(ns("target"), "Target (limit)", value = NA, step = 0.1)),
               column(2, numericInput(ns("size"), "Size (£ per point)", value = NA, step = 0.1), numericInput(ns("min_size"), "IG minimum size", value = 1, step = 0.1)),
-              column(2, selectInput(ns("chart"), "Chart period used", choices = c("", "5 Min", "15 Min", "1 Hour", "4 Hour", "Daily")),
+              column(2, selectInput(ns("chart_period"), "Chart period used", choices = c("", "5 Min", "15 Min", "1 Hour", "4 Hour", "Daily")),
                         numericInput(ns("dur"), "Expected duration (hours)", value = NA, step = 0.5))),
             uiOutput(ns("plan_facts")),
             conditionalPanel(sprintf("input['%s'] == 'N'", ns("dir")),
@@ -136,14 +136,14 @@ trading_decision_server <- function(id, api_manager = NULL, store = NULL, bus = 
     price_now <- reactive({ p <- ig_price(); if (is.finite(p)) p else { a <- al15(); if (is.null(a)) NA_real_ else utils::tail(a$bars$close, 1) } })
 
     # ---- the decision in the form ---------------------------------------------------------------
-    hold_hours <- reactive({ h <- num(input$dur); if (is.finite(h)) h else tr_or(tr_plan_duration(tr_or(input$chart, ""), tr_or(sv()$plan_durations, "")), 4) })
+    hold_hours <- reactive({ h <- num(input$dur); if (is.finite(h)) h else tr_or(tr_plan_duration(tr_or(input$chart_period, ""), tr_or(sv()$plan_durations, "")), 4) })
     form <- reactive({
       e <- num(input$entry); s <- num(input$stop); t <- num(input$target); dir <- tr_or(input$dir, "")
       sg <- if (identical(dir, "S")) -1 else 1
       d <- list(asset = asset(), direction = dir, order_type = input$otype,
                 entry_type_label = switch(tr_or(input$otype, "market"), limit = if (identical(dir, "S")) "sell-limit" else "buy-limit", stop = if (identical(dir, "S")) "sell-stop" else "buy-stop", "market order"),
                 entry = e, stop = s, target = t, size = num(input$size), min_size = num(input$min_size), spread = num(input$spread), ig_price = ig_price(),
-                expiry_uk = trimws(tr_or(input$expiry, "")), chart_period = tr_blank_na(input$chart), expected_duration_hours = num(input$dur),
+                expiry_uk = trimws(tr_or(input$expiry, "")), chart_period = tr_blank_na(input$chart_period), expected_duration_hours = num(input$dur),
                 stop_pts = if (is.finite(e) && is.finite(s)) (e - s) * sg else NA_real_, target_pts = if (is.finite(e) && is.finite(t)) (t - e) * sg else NA_real_,
                 no_trade_reason = tr_blank_na(input$d_no_trade_reason))
       for (k in tr_dec_text_fields) d[[k]] <- tr_blank_na(input[[paste0("d_", k)]])
