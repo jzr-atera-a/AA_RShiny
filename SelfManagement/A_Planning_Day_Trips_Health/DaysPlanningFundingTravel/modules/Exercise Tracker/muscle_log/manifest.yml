@@ -1,0 +1,17 @@
+module:
+  id: "muscle_log"
+  name: "Muscle Log"
+  description: "Log sets, loads and reps for a planned muscle workout"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "Muscle Log"
+    icon: "clipboard-check"
+    tabname: "muscle_log"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, jsonlite, DT]
+    package_versions: {}
+  api: {required: [], optional: ["bigquery"]}
+  data: {required: [], optional: []}

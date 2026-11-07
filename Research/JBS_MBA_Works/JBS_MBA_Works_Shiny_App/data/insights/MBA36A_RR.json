@@ -1,0 +1,63 @@
+{
+  "audience": "Client organisation",
+  "themes": ["AI & digital", "Sustainability & climate", "Operations & data", "Finance & investment"],
+  "profile": [
+    {"q": "Who", "a": "The author as a generative AI analyst on placement at the Cambridge Centre for Alternative Finance (CCAF)."},
+    {"q": "For whom", "a": "CCAF, and the financial-services firms and regulators that need to measure the cost and emissions of AI."},
+    {"q": "What", "a": "A method to estimate the energy use and cost of generative AI inference across cloud providers and specialist AI hosts."},
+    {"q": "When", "a": "Summer 2025; handed in on 12 September 2025, with projections to 2026 and 2027."},
+    {"q": "Where", "a": "Global providers such as Microsoft Azure, Google, AWS, Meta and CoreWeave, with regional cost differences from Nordic to tropical sites."},
+    {"q": "Why", "a": "Inference makes up 80-90% of an AI system's lifetime energy, could cost £50-80bn a year globally by 2027, and feeds into the Scope 3 emissions banks must report."},
+    {"q": "How", "a": "More than 50 sources classified into three evidence tracks, capital spending converted to capacity (about £8m per MW) with regional factors, power usage effectiveness, and cross-checks by capex, GPU-hours and benchmarks, delivered as a dashboard."}
+  ],
+  "headline": [
+    {"value": "80-90%", "label": "Inference share of AI energy"},
+    {"value": "~16x", "label": "Energy per query: o1 vs GPT-3.5 (derived)"},
+    {"value": "50+", "label": "Sources collected and validated"},
+    {"value": "1.09", "label": "Google's power usage effectiveness"}
+  ],
+  "facts": [
+    {"what": "Share of total AI energy used by inference over a deployment", "value": "80-90% (up to 90%)", "page": 186},
+    {"what": "Projected global annual cost of inference energy by 2027", "value": "£50-80bn", "page": 186},
+    {"what": "Energy cost per query, by model and infrastructure", "value": "£0.0001 to £0.02", "page": 187},
+    {"what": "Inference energy as a share of cloud spending for AI-intensive firms by 2026", "value": "15-25%", "page": 188},
+    {"what": "Capital-spending proxy for capacity", "value": "about £8m per MW", "page": 189},
+    {"what": "Sources collected", "value": "more than 50", "page": 190},
+    {"what": "GPT-3.5 Turbo energy per query", "value": "0.00025 kWh (about £0.0001)", "page": 192},
+    {"what": "o1-series energy per query", "value": "0.0039 kWh (about £0.0015)", "page": 192},
+    {"what": "Azure per-query consumption advantage on standard workloads", "value": "15-20% lower", "page": 192},
+    {"what": "Confidence interval for CoreWeave's Track A estimate", "value": "within plus or minus 10%", "page": 192},
+    {"what": "Google power usage effectiveness", "value": "1.09", "page": 193},
+    {"what": "Total cost advantage of energy-efficient providers", "value": "25-40%", "page": 193}
+  ],
+  "charts": [
+    {"type": "bar", "title": "Energy per query (kWh)", "labels": ["GPT-3.5 Turbo", "o1-series (reasoning)"], "values": [0.00025, 0.0039],
+     "text": ["0.00025 kWh (~£0.0001)", "0.0039 kWh (~£0.0015)"], "colors": ["#2A6FB5", "#C0392B"],
+     "takeaway": "A reasoning model uses about 16 times the energy per query because it runs several inference passes. Model choice matters more to cost than provider choice.",
+     "source": "Page 192. Multiple calculated from the two figures."},
+    {"type": "range", "title": "The ranges that drive the business case (%)", "suffix": "%",
+     "items": [
+       {"label": "Inference share of AI energy", "low": 80, "high": 90},
+       {"label": "Cost advantage of efficient providers", "low": 25, "high": 40},
+       {"label": "Inference share of cloud spend by 2026", "low": 15, "high": 25},
+       {"label": "Azure per-query advantage", "low": 15, "high": 20}
+     ],
+     "takeaway": "Efficiency differences of 15-40% on a cost that is up to a quarter of cloud spend make energy a procurement decision, not just a reporting one.",
+     "source": "Pages 186-193."},
+    {"type": "cards", "cols": 3, "title": "Three evidence tracks for uneven disclosure",
+     "items": [
+       {"tag": "Track A", "title": "Direct capacity disclosed", "text": "Use reported capacity directly. Example: CoreWeave, estimates within plus or minus 10%."},
+       {"tag": "Track B", "title": "Proxy indicators", "text": "Infer capacity from indicators such as GPU counts and campus PUE."},
+       {"tag": "Track C", "title": "Financial estimates", "text": "Convert capital spending at about £8m per MW, adjusted by region."}
+     ],
+     "takeaway": "The tracks make the uncertainty of each estimate visible instead of hiding it behind one number."},
+    {"type": "steps", "title": "How an estimate is built",
+     "items": [
+       {"title": "Collect", "text": "50+ sources: SEC filings, earnings, sustainability reports, hardware specifications."},
+       {"title": "Classify", "text": "Assign each provider to Track A, B or C by disclosure quality."},
+       {"title": "Convert", "text": "Capital spending to MW of capacity, with regional factors (cheaper Nordic sites, costlier tropical and urban ones)."},
+       {"title": "Adjust", "text": "Apply power usage effectiveness: disclosed values where available, peer benchmarks otherwise."},
+       {"title": "Estimate and check", "text": "Per-query energy and cost, cross-checked by capex, GPU-hours and benchmarks; published in a dashboard."}
+     ]}
+  ]
+}

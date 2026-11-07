@@ -1,0 +1,65 @@
+# modules/_module_registry.yml
+# Integrated AV Development Suite - Flat Module Structure
+# All modules are single .R files in modules/ directory
+
+app:
+  name: "Integrated AV Development Suite"
+  version: "1.0.0"
+  description: "Complete AV platform: route planning + simulation"
+
+modules:
+  bigquery_connection:
+    enabled: true
+    priority: 10
+    name: "BigQuery Setup"
+    icon: "database"
+    tabname: "bigquery_connection"
+    
+  road_network:
+    enabled: true
+    priority: 20
+    name: "Road Network"
+    icon: "road"
+    tabname: "road_network"
+    
+  route_optimizer:
+    enabled: true
+    priority: 30
+    name: "Route Optimizer"
+    icon: "route"
+    tabname: "route_optimizer"
+    
+  route_map:
+    enabled: true
+    priority: 40
+    name: "Route Map"
+    icon: "map"
+    tabname: "route_map"
+    
+  omniverse_connection:
+    enabled: true
+    priority: 50
+    name: "Omniverse Connection"
+    icon: "cube"
+    tabname: "omniverse_connection"
+    
+  scenario_manager:
+    enabled: true
+    priority: 60
+    name: "Scenarios"
+    icon: "list"
+    tabname: "scenario_manager"
+    
+  route_preview:
+    enabled: true
+    priority: 70
+    name: "Route Preview"
+    icon: "map-marked"
+    tabname: "route_preview"
+    
+  advanced_visualization:
+    enabled: true
+    priority: 80
+    name: "Advanced Visualization"
+    icon: "vr-cardboard"
+    tabname: "advanced_visualization"

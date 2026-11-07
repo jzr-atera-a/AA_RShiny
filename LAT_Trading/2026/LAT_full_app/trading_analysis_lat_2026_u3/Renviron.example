@@ -1,0 +1,11 @@
+# Copy to .Renviron (desktop: ~/.Renviron; Shiny Server: the app folder) and fill in. Never commit real keys.
+ANTHROPIC_API_KEY=
+# CLAUDE_MODEL=claude-sonnet-4-6
+ATERA_BQ_KEY_FILE=
+# Dropbox API: recommended (does not expire)
+DROPBOX_APP_KEY=
+DROPBOX_APP_SECRET=
+DROPBOX_REFRESH_TOKEN=
+# or a short-lived token instead of the three above
+# DROPBOX_ACCESS_TOKEN=
+# TRADING_RUNTIME=server

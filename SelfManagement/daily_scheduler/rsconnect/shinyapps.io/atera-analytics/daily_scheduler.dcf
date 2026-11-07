@@ -1,0 +1,10 @@
+name: daily_scheduler
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17582300
+bundleId: 12222182
+url: https://atera-analytics.shinyapps.io/daily_scheduler/
+version: 1

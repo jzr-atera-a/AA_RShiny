@@ -1,0 +1,17 @@
+module:
+  id: "diet_about"
+  name: "About"
+  description: "Diet Planner schema documentation"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "About"
+    icon: "info-circle"
+    tabname: "diet_about"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

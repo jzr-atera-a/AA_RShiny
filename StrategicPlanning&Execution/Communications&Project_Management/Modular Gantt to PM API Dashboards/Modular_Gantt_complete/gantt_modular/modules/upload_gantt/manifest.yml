@@ -1,0 +1,12 @@
+module:
+  id: "upload_gantt"
+  name: "Upload Gantt Chart"
+  description: "Upload and preview Gantt chart Excel files"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Upload Gantt Chart"
+    icon: "upload"
+    tabname: "upload"
+  dependencies:
+    packages: [shiny, shinydashboard, readxl, DT, writexl]

@@ -1,0 +1,39 @@
+# ============================================================================
+# MODULE REGISTRY
+# Order here = order of tabs in the sidebar
+# ============================================================================
+
+modules:
+  - id: photo_explorer
+    name: "Explore Photos"
+    enabled: true
+    packages:
+      - digest
+    menu:
+      label: "Elegir mis fotos"
+      tabname: "photo_explorer"
+      icon: "images"
+
+  - id: my_selection
+    name: "My Selection"
+    enabled: true
+    packages:
+      - digest
+    menu:
+      label: "Mis fotos elegidas"
+      tabname: "my_selection"
+      icon: "shopping-cart"
+
+  - id: admin_settings
+    name: "Admin Settings"
+    enabled: true
+    packages:
+      - shinyFiles
+      - fs
+      - magick
+      - ragg
+      - systemfonts
+    menu:
+      label: "Administrador"
+      tabname: "admin_settings"
+      icon: "lock"

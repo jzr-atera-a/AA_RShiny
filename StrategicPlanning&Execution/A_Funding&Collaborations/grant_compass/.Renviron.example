@@ -1,0 +1,7 @@
+# Copy to .Renviron (never commit the real one), then restart R.
+GH_SHEET_ID=                      # Google Sheet URL or id (leave empty for local CSV testing)
+GH_SERVICE_ACCOUNT_JSON=./service-account.json
+GH_AUTH_REQUIRED=false            # true = invited email needed; default false while testing
+GH_ADMIN_EMAIL=admin@atera-analytics.co.uk   # seeded as the first admin
+ANTHROPIC_API_KEY=                # optional, for AI idea generation
+GH_POLL_SECONDS=20                # how often screens refresh for collaborators

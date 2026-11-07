@@ -1,0 +1,64 @@
+{
+  "audience": "Investors",
+  "themes": ["AI & digital", "Real estate", "Finance & investment", "Risk & regulation"],
+  "profile": [
+    {"q": "Who", "a": "The five-person Global Consulting Project team, writing the final report."},
+    {"q": "For whom", "a": "BlackRock's Real Estate Research Team; BlackRock managed nearly $12 trillion at December 2024."},
+    {"q": "What", "a": "How BlackRock can responsibly and effectively adopt AI to improve its real estate investment capability and decisions."},
+    {"q": "When", "a": "Handed in on 22 April 2025, after weekly client meetings and interviews from 20 March to 14 April 2025."},
+    {"q": "Where", "a": "BlackRock's global portfolio of direct commercial real estate investments."},
+    {"q": "Why", "a": "AI is reshaping real estate value drivers, and opaque models clash with BlackRock's duty to explain decisions to investors, clients and the public."},
+    {"q": "How", "a": "Over 30 outreach attempts led to more than 10 informal conversations and 5 formal interviews (2 academic, 2 industry, 1 AI), backed by secondary research, a risk matrix and the three-horizon framework."}
+  ],
+  "headline": [
+    {"value": "~$12tn", "label": "BlackRock assets under management"},
+    {"value": "30+ to 5", "label": "Outreach to formal interviews"},
+    {"value": "3", "label": "Research questions answered"},
+    {"value": "3", "label": "Horizons: 0-1, 2-5, 5+ years"}
+  ],
+  "facts": [
+    {"what": "BlackRock assets under management, December 2024", "value": "nearly $12 trillion", "page": 121},
+    {"what": "Outreach attempts to experts", "value": "30+", "page": 122},
+    {"what": "Informal conversations held", "value": "10+", "page": 122},
+    {"what": "Formal interviews: academic / industry / AI specialist", "value": "2 / 2 / 1", "page": 122},
+    {"what": "Research questions in the project brief", "value": "3", "page": 119},
+    {"what": "Report word count", "value": "3,594", "page": 118},
+    {"what": "Interpretability tools recommended for year one", "value": "SHAP and LIME", "page": 128}
+  ],
+  "charts": [
+    {"type": "bar", "horizontal": true, "title": "From outreach to evidence: how the primary research narrowed",
+     "labels": ["Experts approached", "Informal conversations", "Formal interviews"], "values": [30, 10, 5],
+     "text": ["30+", "10+", "5"], "colors": ["#b0bec5", "#2A6FB5", "#1a3a6a"],
+     "takeaway": "One in six approaches became a formal interview. The report's sector and adoption conclusions rest on these five conversations plus secondary sources, a limit the team itself acknowledges.",
+     "source": "Page 122."},
+    {"type": "donut", "title": "Formal interviews by expertise", "labels": ["Academic researchers", "Industry professionals", "AI specialist"], "values": [2, 2, 1],
+     "colors": ["#1a3a6a", "#E8A020", "#2E9D6A"],
+     "takeaway": "A deliberately balanced panel, but with one AI specialist the technical claims about explainability rest on a single expert view.",
+     "source": "Page 122."},
+    {"type": "diverging", "title": "Winners and losers by asset class", "height": 320,
+     "labels": ["Data centres", "Logistics", "Life sciences and healthcare", "Office", "Retail"],
+     "values": [2, 2, 2, -1, -1],
+     "text": ["Front runner: AI infrastructure", "Front runner: AI supply chains, e-commerce", "Front runner: innovation clusters", "Straggler: remote and hybrid work", "Straggler: AI-driven e-commerce"],
+     "colors": ["#1e8449", "#1e8449", "#1e8449", "#C0392B", "#C0392B"],
+     "xticks": {"vals": [-1, 0, 2], "text": ["Structural risk", "", "Clear beneficiary"]},
+     "takeaway": "The implication for BlackRock: adjust exposure towards tech-aligned, service-oriented assets, and reposition office and retail before they become obsolete.",
+     "source": "Page 125."},
+    {"type": "table", "title": "The three research questions and what the report answers",
+     "columns": ["Question", "Answer"],
+     "rows": [
+       ["How does AI change real estate demand and behaviour?", "A fourth wave after mechanisation, urbanisation and globalisation; buildings become services and asset management matters as much as acquisition."],
+       ["How can AI be used in investment strategy?", "Across the lifecycle: lease abstraction, GPT-powered underwriting tools, sentiment analysis, automated valuation and risk forecasting, all dependent on integrated data."],
+       ["What are the risks and how are they mitigated?", "Explainability, data bias and fair-housing compliance; SHAP and LIME, prompt rules, stop lists, classifiers and human oversight; the structured AI judgement process."]
+     ]},
+    {"type": "gantt", "title": "Roadmap recommended to BlackRock", "xlab": "Years from now", "height": 300,
+     "items": [
+       {"label": "Consolidate data into a unified platform", "start": 0, "end": 1, "group": "H1", "text": "Horizon 1"},
+       {"label": "Pilot proven AI in deals and due diligence", "start": 0, "end": 1, "group": "H1", "text": "Horizon 1"},
+       {"label": "Scale cloud, governance and partnerships (e.g. OpenAI)", "start": 2, "end": 5, "group": "H2", "text": "Horizon 2"},
+       {"label": "Train talent; adopt structural intelligence", "start": 2, "end": 5, "group": "H2", "text": "Horizon 2"},
+       {"label": "Embed AI in strategy; digital twins; AI-era infrastructure", "start": 5, "end": 8, "group": "H3", "text": "Horizon 3 (5+ years)"}
+     ],
+     "takeaway": "In the final report, partnering with providers replaces the deck's in-house language model, following the expert warning that custom models date quickly.",
+     "source": "Pages 128-129. Horizon 3 shown to year 8 for display."}
+  ]
+}

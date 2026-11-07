@@ -1,0 +1,32 @@
+module:
+  id: "sixsigma_add_single"
+  name: "Add Single Component"
+  description: "Manually add a single Six Sigma diagram component row, bypassing generation"
+  version: "1.0.0"
+  author: "Six Sigma Analysis Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Add Single Component"
+    icon: "plus-circle"
+    tabname: "sixsigma_add_single"
+    group: "Six Sigma Analysis"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: ["bigquery"]
+
+  data:
+    required: []
+    optional: []

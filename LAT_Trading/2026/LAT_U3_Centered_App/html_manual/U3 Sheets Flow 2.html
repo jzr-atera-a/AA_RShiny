@@ -1,0 +1,379 @@
+<!doctype html><html><head><meta charset="utf8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><script type='text/javascript' nonce='H9C5kF4pKJ2qcPdQm9LTsg==' src='https://60b63c1e-384b-4805-a5cf-45aafb18bc4c.frame.claudeusercontent.com/O8804fuuJXzTPdlsOB6Yhj8WGfHzVA8j4lQGNiRZc0mzAWPN152SMrBuPWgrVyMEwHDAaTQn0WyPSLOyaLZ0_9OwuIfPARF37lON-NRUCyKSIgC7gv63a8mileFW-DRJUDWOooAXBwImOU1qrJsb0wAX5dP2UST0GVfiIBvklgIeyNuya25FGo09kAD4I4SKMUOeQPEhQyBdHSTd3tyGTuJlGfh3eYPhVHuYRNeC-JLkTQmWpRy7DhycuVVCrGBf2ashg7FQb2syHVuoA0cOEDBL7vKVxqFyKR1CY40hcmd0xPRKJTBaB54PJ_JXrClrWkSDMvFvKryn2wtthol1Bea0BiHfav6zC8EIRfrx5oeRv8FYnik64f-ctkYo3Y6RUe06sQAQPhyrlE4w9WheI1YalxgKkOxTAdaFtwjb4jbFCE8w7fMrgb53W93ef4yFOL2kB2TfQLRbHsd_SLLIKg-UMln7cr3zp_RhvxEWXm_L5-Ouw8qukVpwaOjvgFgosXqFBxGmUsFzbIWroorpNqR3IiK9RAAvgySfzwZ0zxtS3bCaMWstS4-vIqeAf_pxmInz7hsFmAbrj93h9FiWHnCKflIiLuH72kLlrx34iBL79bgOWC-1QovvTf4igLWWgf8XAh7QfMSarEcqiopRha6wQsmJ44myxe_oeGmDN1NU-yOhkl3Plkjl6pDJWRYIE5QVH7LPZb9VdXXiva-4Uw'></script></head><body>
+<title>U3 Sheets Flow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Source+Sans+3:wght@400;600;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+/* Layout: a trading-desk run sheet. One overview board (inputs > app > Dropbox), then two swim lanes (Morning, Trade) read top to bottom, ending in the Dropbox folder tree. */
+:root{
+  --bg:#f3f6f6; --paper:#ffffff; --ink:#0f2a33; --muted:#5b6e73; --line:#d5e0e0;
+  --teal:#008a82; --deep:#002c3c; --amber:#b7791f; --blue:#1d5fbf; --red:#b42318; --green:#18794e;
+  --teal-soft:#e2f3f1; --amber-soft:#fbf1df; --blue-soft:#e6eefb; --red-soft:#fde8e6;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0b1a1f; --paper:#11252c; --ink:#e3eef0; --muted:#94aab0; --line:#24414a;
+  --teal:#3cc4b9; --deep:#9fe3dc; --amber:#e3b25a; --blue:#7fb0ff; --red:#ff8a7d; --green:#5fd39b;
+  --teal-soft:#123a3a; --amber-soft:#3a2e15; --blue-soft:#172c4a; --red-soft:#3d1c19; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b1a1f; --paper:#11252c; --ink:#e3eef0; --muted:#94aab0; --line:#24414a;
+  --teal:#3cc4b9; --deep:#9fe3dc; --amber:#e3b25a; --blue:#7fb0ff; --red:#ff8a7d; --green:#5fd39b;
+  --teal-soft:#123a3a; --amber-soft:#3a2e15; --blue-soft:#172c4a; --red-soft:#3d1c19; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--f-body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;gap:40px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:.2px;color:var(--deep)}
+h1{font-size:clamp(34px,6vw,54px);line-height:1}
+h2{font-size:30px;line-height:1.1}
+h3{font-size:20px}
+p{margin:0}
+code,.path{font-family:var(--f-mono);font-size:.84em;background:var(--teal-soft);color:var(--ink);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+.eyebrow{font:600 12px/1 var(--f-mono);letter-spacing:1.4px;text-transform:uppercase;color:var(--teal)}
+.lede{max-width:70ch;color:var(--muted);font-size:17px}
+header{display:grid;gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 var(--f-mono);padding:6px 9px;border-radius:999px;border:1px solid var(--line);background:var(--paper)}
+.dot{width:9px;height:9px;border-radius:50%}
+.auto .dot{background:var(--teal)} .check .dot{background:var(--blue)} .you .dot{background:var(--amber)}
+.tag{font:600 11px/1 var(--f-mono);padding:3px 7px;border-radius:4px;white-space:nowrap}
+.tag.auto{background:var(--teal-soft);color:var(--teal)} .tag.check{background:var(--blue-soft);color:var(--blue)} .tag.you{background:var(--amber-soft);color:var(--amber)}
+section{display:grid;gap:18px}
+.sechead{display:grid;gap:6px}
+
+/* overview board */
+.board{display:grid;grid-template-columns:1fr 40px 1.25fr 40px 1fr;align-items:stretch;gap:0}
+.col{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:10px;align-content:start;min-width:0}
+.col h3{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.col .small{font-size:13px;color:var(--muted)}
+.node{border:1px solid var(--line);border-radius:8px;padding:9px 11px;display:grid;gap:3px;background:var(--bg)}
+.node b{font-size:14.5px} .node span{font-size:13px;color:var(--muted)}
+.node.app{border-left:4px solid var(--teal)}
+.node.db{border-left:4px solid var(--deep)}
+.arrow{display:flex;align-items:center;justify-content:center;color:var(--teal)}
+.arrow svg{width:30px;height:30px}
+@media (max-width:820px){.board{grid-template-columns:1fr}.arrow{height:34px}.arrow svg{transform:rotate(90deg)}}
+
+/* once setup */
+.setup{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;counter-reset:s}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:8px;align-content:start;min-width:0}
+.card .n{font:700 13px/1 var(--f-mono);color:var(--teal)}
+.card ul{margin:0;padding-left:18px;display:grid;gap:4px;font-size:14.5px}
+
+/* lanes */
+.lanes{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width:900px){.lanes{grid-template-columns:1fr}}
+.lane{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:14px;align-content:start;min-width:0}
+.lane-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;border-bottom:2px solid var(--teal);padding-bottom:10px}
+.lane-head .when{font:600 12px/1 var(--f-mono);color:var(--muted)}
+ol.steps{list-style:none;margin:0;padding:0;display:grid;gap:0;position:relative}
+ol.steps>li{display:grid;grid-template-columns:44px 1fr;gap:10px;position:relative;padding-bottom:16px}
+ol.steps>li::before{content:"";position:absolute;left:21px;top:34px;bottom:0;width:2px;background:var(--line)}
+ol.steps>li:last-child::before{display:none}
+.badge{width:44px;height:34px;border-radius:7px;display:flex;align-items:center;justify-content:center;font:700 12px/1 var(--f-mono);color:#fff;background:var(--deep)}
+:root[data-theme="dark"] .badge{color:#0b1a1f}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .badge{color:#0b1a1f}}
+.badge.save{background:var(--green)}
+.step{display:grid;gap:5px;min-width:0}
+.step .t{font-weight:700;font-size:15.5px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.step .d{font-size:14.5px;color:var(--ink)}
+.step .where{font:12px/1.4 var(--f-mono);color:var(--muted)}
+.btn{font:600 12.5px/1.5 var(--f-body);background:var(--teal);color:#fff;padding:1px 7px;border-radius:4px;white-space:normal;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+:root[data-theme="dark"] .btn{color:#06201f}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn{color:#06201f}}
+.result{border:1px dashed var(--green);background:color-mix(in srgb,var(--green) 8%,var(--paper));border-radius:8px;padding:8px 10px;font-size:13.5px}
+
+/* field maps */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px/1.2 var(--f-mono);letter-spacing:.6px;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td.f{font-weight:700;white-space:nowrap}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button{font:600 14px/1 var(--f-body);padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--deep);color:var(--bg);border-color:var(--deep)}
+.tabs button:focus-visible,summary:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+
+/* dropbox tree */
+.tree{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px;font:13.5px/1.75 var(--f-mono);overflow-x:auto;white-space:pre;color:var(--ink)}
+.tree .dir{color:var(--deep);font-weight:600} .tree .new{color:var(--green)} .tree .old{color:var(--muted)} .tree .c{color:var(--muted)}
+
+/* checklist + help */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width:900px){.two{grid-template-columns:1fr}}
+.check-list{display:grid;gap:6px}
+.check-list label{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;padding:7px 9px;border-radius:7px;cursor:pointer}
+.check-list label:hover{background:var(--bg)}
+.check-list input{margin-top:4px;accent-color:var(--teal);width:16px;height:16px}
+.check-list label.done span{color:var(--muted);text-decoration:line-through}
+.progress{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.progress i{display:block;height:100%;width:0;background:var(--teal);transition:width .25s}
+details{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+details+details{margin-top:8px}
+summary{cursor:pointer;font-weight:700}
+details p{margin-top:6px;font-size:14.5px;color:var(--ink)}
+.rule{background:var(--amber-soft);border:1px solid color-mix(in srgb,var(--amber) 40%,transparent);border-radius:10px;padding:14px 16px;display:grid;gap:6px;font-size:14.5px}
+.muted{color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">LAT Level 5 · Unit 3 · trading_analysis_lat_2026_u3_sheets</span>
+  <h1>From IG screenshots to sheets in Dropbox</h1>
+  <p class="lede">How to use the app each trading day so that the Morning Sheet and every Individual Trade Sheet are filled and saved as Word + PDF in your Dropbox, without saving any file yourself. Updated 25 Oct for the 24 Oct build: the <b>Decision Panel</b> now comes before every trade.</p>
+  <div class="rule" style="border-color:color-mix(in srgb,var(--blue) 40%,transparent);background:var(--blue-soft)"><b>This week only: clocks</b><span>UK clocks went back today (25 Oct). Until the US changes on Sun 1 Nov, US releases come <b>one hour earlier in UK time</b>: EIA crude stocks Wed 14:30 UK, US data 12:30 UK. Use the times on your IG calendar screenshot.</span></div>
+  <div class="chips" aria-label="Legend">
+    <span class="chip auto"><span class="dot"></span>App fills it</span>
+    <span class="chip check"><span class="dot"></span>App reads it, you check it</span>
+    <span class="chip you"><span class="dot"></span>Your own words (Unit 3 rule)</span>
+  </div>
+</header>
+
+<!-- ============ OVERVIEW ============ -->
+<section aria-labelledby="ov">
+  <div class="sechead"><span class="eyebrow">The whole flow</span><h2 id="ov">What goes in, what the app does, where it lands</h2></div>
+  <div class="board">
+    <div class="col">
+      <h3>Inputs</h3>
+      <div class="node"><b>IG demo screenshots</b><span>Watchlist, economic calendar, deal ticket, Positions row, History &gt; Activity, History closed row, charts</span></div>
+      <div class="node"><b>Yahoo Finance</b><span>Hourly bars 21:00 UK to now: overnight low and high, prices, Dow, Nikkei</span></div>
+      <div class="node"><b>Claude web search</b><span>Only for an empty news box or a missing calendar, always with sources</span></div>
+      <div class="node"><b>Your own words</b><span>Set-up, trigger, execution, reasons, lessons, news notes</span></div>
+    </div>
+    <div class="arrow" aria-hidden="true"><svg viewbox="0 0 30 30"><path d="M4 15h20M17 8l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="col">
+      <h3>The app <span class="small">Trading Records</span></h3>
+      <div class="node app"><b>2. Morning Sheet</b><span>Read levels, Read calendar, Fill every empty cell and save</span></div>
+      <div class="node app"><b>Decision Panel</b><span>Facts lined up with the IG price; you decide and write your six boxes; snapshot saved before the trade</span></div>
+      <div class="node app"><b>Order Evidence</b><span>Claude reads each trade screenshot; you send it to the trade form</span></div>
+      <div class="node app"><b>3. Trades</b><span>Open, move stop, partial exit, close, edit any trade</span></div>
+      <div class="node app"><b>5. Exports</b><span>Pictures with captions, Complete this sheet, gaps panel</span></div>
+      <div class="node app"><b>BigQuery</b><span>Every save is a new version of the record; nothing is overwritten</span></div>
+    </div>
+    <div class="arrow" aria-hidden="true"><svg viewbox="0 0 30 30"><path d="M4 15h20M17 8l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="col">
+      <h3>Dropbox <span class="small">automatic</span></h3>
+      <div class="node db"><b>Morning Sheets</b><span>Morning_Sheet_26-10-2026 .docx + .pdf</span></div>
+      <div class="node db"><b>Individual Trade Sheets</b><span>Individual_Trade_Sheet_Brent_26-10-2026 .docx + .pdf (or …_order_not_filled)</span></div>
+      <div class="node db"><b>Jose-F_Zubizarreta</b><span>Trade_Blotter.xlsx, Answer Sheet, Screenshots</span></div>
+      <div class="node db"><b>_previous versions</b><span>The older file, each time one is replaced</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ONCE ============ -->
+<section aria-labelledby="once">
+  <div class="sechead"><span class="eyebrow">Once, about 10 minutes</span><h2 id="once">Set it up</h2></div>
+  <div class="setup">
+    <div class="card"><span class="n">1 · Install</span><h3>Unzip into a new folder</h3>
+      <ul><li>Unzip <code>trading_analysis_lat_2026_u3_sheets.zip</code> into an empty folder (not over the old app).</li>
+      <li>Install LibreOffice, which makes the PDFs.</li>
+      <li>In RStudio: <code>shiny::runApp("that folder")</code>. The header must read <b>LAT Unit 3 Records</b>.</li></ul></div>
+    <div class="card"><span class="n">2 · Keys</span><h3>Put the keys in .Renviron</h3>
+      <ul><li><code>ANTHROPIC_API_KEY</code>: Claude reads the screenshots.</li>
+      <li><code>ATERA_BQ_KEY_FILE</code>: path to the BigQuery JSON key.</li>
+      <li>No Dropbox key is needed on your PC: the app writes into your synced Dropbox folder.</li>
+      <li>Or paste the keys under <b>API Configuration</b> each session.</li></ul></div>
+    <div class="card"><span class="n">3 · Setup tab</span><h3>Trading Records &gt; 1. Connection &amp; Setup</h3>
+      <ul><li><span class="btn">Create / verify tables</span></li>
+      <li>Name, LAT ID, period 12/10 to 06/11, opening balance, risk % per trade, combined cap, minimum RRR and ADX numbers. The Decision Panel checks your plan against these.</li>
+      <li><b>Your plan durations</b>, e.g. <code>15 Min = 4; 1 Hour = 8; Daily = 48</code></li>
+      <li><span class="btn">Save settings</span></li></ul></div>
+    <div class="card"><span class="n">4 · Check Dropbox</span><h3>Test, then catch up</h3>
+      <ul><li><span class="btn">Test Dropbox (write a small file and read it back)</span> should show ✓.</li>
+      <li><span class="btn">Complete past Morning Sheets and trades</span>: every trading day since 12 Oct gets its levels. Sheets already in Dropbox are kept.</li></ul></div>
+    <div class="card"><span class="n">5 · First live check</span><h3>Prove each link works once</h3>
+      <ul><li><b>BigQuery:</b> the bar at the top of Trading Records is green.</li>
+      <li><b>Claude:</b> Order Evidence shows "Claude API connected"; read one watchlist screenshot.</li>
+      <li><b>Yahoo:</b> <span class="btn">Fill Low / High from Yahoo</span> fills Brent.</li>
+      <li><b>Dropbox:</b> the test above shows ✓.</li>
+      <li>Anything red: copy the message from <b>API Configuration &gt; Debug Console</b>.</li></ul></div>
+  </div>
+</section>
+
+<!-- ============ LANES ============ -->
+<section aria-labelledby="day">
+  <div class="sechead"><span class="eyebrow">Every trading day</span><h2 id="day">Two lanes, both ending in Dropbox</h2>
+  <p class="lede">The Morning Sheet is done once before you trade. The trade lane repeats for each trade. Every <b>Save</b> rebuilds the Word file and the PDF and puts them in the right folder.</p></div>
+  <div class="lanes">
+    <!-- MORNING -->
+    <div class="lane" aria-label="Morning Sheet lane">
+      <div class="lane-head"><h3>Morning Sheet</h3><span class="when">about 06:30 to 07:30 UK, before any trade</span></div>
+      <ol class="steps">
+        <li><span class="badge">IG</span><div class="step"><span class="t">Take the IG screenshots <span class="tag you">you</span></span>
+          <span class="d">Watchlist showing Wall Street, Japan 225, EUR/USD, USD/JPY, GBP/USD, AUD/USD, Oil - US Crude, Spot Gold and Oil - Brent Crude. Then the economic calendar for <b>yesterday</b> and for <b>today</b>. Crop out account names and numbers.</span></div></li>
+        <li><span class="badge">2</span><div class="step"><span class="t">Read the prices <span class="tag check">check</span></span>
+          <span class="where">Trading Records &gt; 2. Morning Sheet &gt; I will upload screenshots</span>
+          <span class="d">Upload the watchlist, then <span class="btn">Read levels with Claude</span>. Prices and Time now go into the rows; compare them with the picture.</span></div></li>
+        <li><span class="badge">2</span><div class="step"><span class="t">Read the calendar <span class="tag check">check</span></span>
+          <span class="d">Upload yesterday's and today's calendar screenshots, then <span class="btn">Read calendar</span>. The tables fill, and the pictures are kept for the sheet.</span></div></li>
+        <li><span class="badge">2</span><div class="step"><span class="t">Write your overnight news <span class="tag you">you</span></span>
+          <span class="d">A few lines in your own words in <b>Overnight news</b>. Leave it empty if you want Claude to add sourced headlines in the next step.</span></div></li>
+        <li><span class="badge save">SAVE</span><div class="step"><span class="t">Fill every empty cell and save <span class="tag auto">app</span></span>
+          <span class="d"><span class="btn">Fill every empty cell and save</span>: Yahoo fills the overnight Low and High, any missing price, the time, and the Dow and Nikkei change. Claude fills an empty news box or a missing calendar, with links. Your IG values are kept.</span>
+          <div class="result">Saved to BigQuery and to <span class="path">Dropbox\London Academy of Trading\Jose-F_Zubizarreta\Morning Sheets\Morning_Sheet_26-10-2026.docx</span> and <b>.pdf</b></div></div></li>
+        <li><span class="badge">5</span><div class="step"><span class="t">Look at the gaps panel <span class="tag check">check</span></span>
+          <span class="where">5. Exports &gt; Morning Sheet</span>
+          <span class="d">Green ✓ means every box is filled. Anything listed in red: fix it on the Morning tab and save again. The earlier file goes to <code>_previous versions</code>.</span></div></li>
+      </ol>
+    </div>
+    <!-- TRADE -->
+    <div class="lane" aria-label="Trade lane">
+      <div class="lane-head"><h3>Individual Trade Sheet</h3><span class="when">for every trade, from decision to exit</span></div>
+      <ol class="steps">
+        <li><span class="badge">IG</span><div class="step"><span class="t">Open the deal ticket, don't place it yet <span class="tag you">you</span></span>
+          <span class="d">Screenshot the IG <b>deal ticket</b> for Brent (Sell / Buy price, size, minimum size). Crop out account names and numbers.</span></div></li>
+        <li><span class="badge">DP</span><div class="step"><span class="t">Look at the facts <span class="tag check">check</span></span>
+          <span class="where">Trade Journal &gt; Decision Panel &gt; 1. Before the trade</span>
+          <span class="d">Upload the ticket in <b>Or read them from an IG ticket screenshot</b> (or type the IG price). The badge must say <b>Levels aligned to your IG price</b>. Read the cards: where price is, noise, regime, calendar and clock, and the levels table and chart.</span></div></li>
+        <li><span class="badge">DP</span><div class="step"><span class="t">Decide and write your reasons <span class="tag you">you</span></span>
+          <span class="d">Choose <b>Buy</b>, <b>Sell</b> or <b>No trade</b>. Enter order type, entry, stop, target, size, chart period and expected duration. Read the risk line and any red warnings. Write the six boxes in your own words, using the facts shown under each box. For No trade, write why.</span></div></li>
+        <li><span class="badge save">SAVE</span><div class="step"><span class="t">Save decision snapshot <span class="tag auto">app</span></span>
+          <span class="d"><span class="btn">Save decision snapshot</span> stores the time, your words and the facts you saw in BigQuery. It cannot be changed later without a note. <b>Now place the trade in IG.</b></span></div></li>
+        <li><span class="badge">IG</span><div class="step"><span class="t">After the fill: two screenshots <span class="tag you">you</span></span>
+          <span class="d">The <b>Positions row</b> (entry, stop, limit) and <b>History &gt; Activity</b>, which shows the time the position opened.</span></div></li>
+        <li><span class="badge">OE</span><div class="step"><span class="t">Read them with Claude <span class="tag check">check</span></span>
+          <span class="where">Trade Journal &gt; Order Evidence &gt; 1. Screenshot to fields</span>
+          <span class="d">Source: Desktop website or Mobile app. Upload both, then <span class="btn">Read all with Claude</span>. Pick each item, check the values against the picture, then <span class="btn">Send to Trades (right form for this screen)</span>.</span></div></li>
+        <li><span class="badge save">SAVE</span><div class="step"><span class="t">Save the open trade <span class="tag check">check</span></span>
+          <span class="where">Trading Records &gt; 3. Trades &gt; A</span>
+          <span class="d">The form is filled from the screenshots. Choose <b>Assessed</b> and the strategy, then <span class="btn">Save open trade</span>. The app finds your decision (same market, side and day, entry close by) and links it: your six boxes and chart period fill the trade, and your ticket screenshot moves to its sheet.</span>
+          <div class="result">Saved to BigQuery; first Trade Sheet in <span class="path">…\Individual Trade Sheets\Individual_Trade_Sheet_Brent_26-10-2026</span> .docx + .pdf</div></div></li>
+        <li><span class="badge">MG</span><div class="step"><span class="t">If you manage it <span class="tag you">you</span></span>
+          <span class="where">3. Trades &gt; B: Moved stop / Partial exit, then 5. Exports &gt; pictures</span>
+          <span class="d">Record the time, the new stop or the size closed, and why. Save the updated chart as <b>In-trade management</b>, tied to that action. The LAT asks for one chart per action.</span></div></li>
+        <li><span class="badge">OUT</span><div class="step"><span class="t">At exit: History row <span class="tag check">check</span></span>
+          <span class="d">Screenshot <b>History, Closed in the last 24 hours</b>, then Order Evidence &gt; Read &gt; Send to Trades. The app finds the matching open trade by market, opening price and size. Choose the exit code (S1, S2+, ME, T) and whether you followed the plan, then <span class="btn">Save</span>.</span></div></li>
+        <li><span class="badge">5</span><div class="step"><span class="t">Complete the sheet <span class="tag you">you</span></span>
+          <span class="where">5. Exports &gt; Individual Trade Sheet</span>
+          <span class="d"><b>Pictures:</b> entry charts with their timeframe (4 Hour, 1 Hour, 15 Min), exit and post-exit charts, then <span class="btn">Save picture(s) to this trade</span>. <b>Complete this sheet:</b> your six boxes are already there from the decision; add the <b>reason for exit</b> and <b>lessons</b>. Then <span class="btn">Save my text to this trade</span>.</span></div></li>
+        <li><span class="badge save">DONE</span><div class="step"><span class="t">Gaps panel green <span class="tag auto">app</span></span>
+          <span class="d">Each save above rebuilt the sheet in Dropbox. A chart slot you left empty gets a chart drawn from Yahoo data, labelled as such. Replace it with your IG chart when you can.</span>
+          <div class="result">Final Word + PDF in <b>Individual Trade Sheets</b>; <span class="path">Trade_Blotter.xlsx</span> updated in <b>Jose-F_Zubizarreta</b></div></div></li>
+      </ol>
+      <div class="rule"><b>If a limit or stop order never fills</b><span>Decision Panel &gt; 2. Decision journal: select the order, <span class="btn">Check the order against prices</span>, then <span class="btn">Mark expired and save the 'order not filled' Trade Sheet</span>. It saves <span class="path">Individual_Trade_Sheet_Brent_&lt;date&gt;_order_not_filled</span> .docx + .pdf, with your words and a chart. Add an IG History screenshot if you have one.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FIELD MAPS ============ -->
+<section aria-labelledby="map">
+  <div class="sechead"><span class="eyebrow">Box by box</span><h2 id="map">Where each box on the LAT templates comes from</h2></div>
+  <div class="tabs" role="tablist" aria-label="Sheet">
+    <button role="tab" id="tab-ms" aria-selected="true" aria-controls="p-ms">Morning Sheet</button>
+    <button role="tab" id="tab-ts" aria-selected="false" aria-controls="p-ts">Individual Trade Sheet</button>
+  </div>
+  <div id="p-ms" role="tabpanel" aria-labelledby="tab-ms" class="tablewrap">
+    <table><thead><tr><th>Template box</th><th>Source</th><th>Where in the app</th><th>Who</th></tr></thead><tbody>
+      <tr><td class="f">Name, Date</td><td>Setup, sheet date</td><td>1. Setup</td><td><span class="tag auto">app</span></td></tr>
+      <tr><td class="f">Dow Jones price, change</td><td>IG Wall Street, or Yahoo ^DJI (last US close)</td><td>Read levels / Fill every empty cell</td><td><span class="tag check">check</span></td></tr>
+      <tr><td class="f">Nikkei price, change</td><td>IG Japan 225, or Yahoo ^N225 (today's Tokyo session)</td><td>same</td><td><span class="tag check">check</span></td></tr>
+      <tr><td class="f">EUR-USD · USD-JPY · GBP-USD · AUD-USD</td><td>Low/High: Yahoo 21:00 UK to now. Price and time: IG watchlist</td><td>same</td><td><span class="tag check">check</span></td></tr>
+      <tr><td class="f">WTI Crude · Gold · Brent</td><td>As above; Yahoo scaled to IG points (Brent 10793.9 = $107.94)</td><td>same</td><td><span class="tag check">check</span></td></tr>
+      <tr><td class="f">Overnight news</td><td>Your notes; if empty, Claude headlines with links, labelled</td><td>2. Morning Sheet</td><td><span class="tag you">you</span></td></tr>
+      <tr><td class="f">Economic Calendar from overnight</td><td>IG calendar screenshot (picture on the sheet + table)</td><td>Read calendar</td><td><span class="tag check">check</span></td></tr>
+      <tr><td class="f">Today's Data Releases</td><td>IG calendar screenshot</td><td>Read calendar</td><td><span class="tag check">check</span></td></tr>
+    </tbody></table>
+  </div>
+  <div id="p-ts" role="tabpanel" aria-labelledby="tab-ts" class="tablewrap" hidden="">
+    <table><thead><tr><th>Template box</th><th>Source</th><th>Where in the app</th><th>Who</th></tr></thead><tbody>
+      <tr><td class="f">Name</td><td>Setup</td><td>1. Setup</td><td><span class="tag auto">app</span></td></tr>
+      <tr><td class="f">Chart Period</td><td>The timeframe you entered on</td><td>Decision Panel (or Complete this sheet)</td><td><span class="tag you">you</span></td></tr>
+      <tr><td class="f">Expected Trade Duration</td><td>Your plan durations (Setup), or typed</td><td>automatic</td><td><span class="tag auto">app</span></td></tr>
+      <tr><td class="f">Initial Risk · Reward · RRR</td><td>Worked out from entry, stop, target and size</td><td>automatic</td><td><span class="tag auto">app</span></td></tr>
+      <tr><td class="f">Date · Time</td><td>Positions screenshot; time from History &gt; Activity</td><td>Order Evidence</td><td><span class="tag check">check</span></td></tr>
+      <tr><td class="f">B/S · Asset · Lot Size · Price · Stop · Target</td><td>Deal ticket + Positions row</td><td>Order Evidence</td><td><span class="tag check">check</span></td></tr>
+      <tr><td class="f">Set-up (fundamental) · Set-up (technical)</td><td>Your analysis, written before the trade</td><td>Decision Panel (copied to the trade when it links)</td><td><span class="tag you">you</span></td></tr>
+      <tr><td class="f">Trigger · Execution</td><td>Your decision, written before the trade</td><td>Decision Panel</td><td><span class="tag you">you</span></td></tr>
+      <tr><td class="f">Reason for Stop Loss · Target placement</td><td>Your reasoning, next to the stop and target facts</td><td>Decision Panel</td><td><span class="tag you">you</span></td></tr>
+      <tr><td class="f">Entry charts</td><td>Your IG charts, captioned by timeframe; else a labelled Yahoo chart</td><td>5. Exports &gt; pictures</td><td><span class="tag check">check</span></td></tr>
+      <tr><td class="f">In-trade Management</td><td>Each action + its chart + your reason</td><td>3. Trades B + pictures</td><td><span class="tag you">you</span></td></tr>
+      <tr><td class="f">Actual Trade Duration</td><td>Exit time minus entry time</td><td>automatic</td><td><span class="tag auto">app</span></td></tr>
+      <tr><td class="f">Exit rows (date, time, B/S, size, entry, exit, pips, £)</td><td>History closed row; one row per partial exit</td><td>Order Evidence</td><td><span class="tag check">check</span></td></tr>
+      <tr><td class="f">Reason for Exit</td><td>"S1 hit: stop loss 10649.5 reached at 12:55." + your explanation</td><td>automatic + Complete this sheet</td><td><span class="tag you">you</span></td></tr>
+      <tr><td class="f">Lessons learned</td><td>Your reflection</td><td>Complete this sheet</td><td><span class="tag you">you</span></td></tr>
+      <tr><td class="f">Exit / Post Exit chart</td><td>Your IG charts; else a labelled Yahoo chart</td><td>5. Exports &gt; pictures</td><td><span class="tag check">check</span></td></tr>
+    </tbody></table>
+  </div>
+</section>
+
+<!-- ============ DROPBOX TREE ============ -->
+<section aria-labelledby="tree">
+  <div class="sechead"><span class="eyebrow">The result</span><h2 id="tree">What your Dropbox looks like</h2>
+  <p class="lede">The folders are fixed in the app. File names carry the date (and the time when you trade the same market twice in a day).</p></div>
+<div class="tree" role="figure" aria-label="Dropbox folder tree"><span class="dir">C:\Users\jfz00\Dropbox\London Academy of Trading\Jose-F_Zubizarreta\</span>
+├─ <span class="dir">Morning Sheets\</span>
+│   ├─ <span class="new">Morning_Sheet_26-10-2026.docx</span>
+│   ├─ <span class="new">Morning_Sheet_26-10-2026.pdf</span>
+│   ├─ Morning_Sheet_23-10-2026.docx / .pdf      <span class="c">kept by the back-fill</span>
+│   └─ <span class="dir">_previous versions\</span>
+│       └─ <span class="old">Morning_Sheet_26-10-2026_20261026-071502.docx</span>
+├─ <span class="dir">Individual Trade Sheets\</span>
+│   ├─ <span class="new">Individual_Trade_Sheet_Brent_26-10-2026.docx</span>
+│   ├─ <span class="new">Individual_Trade_Sheet_Brent_26-10-2026.pdf</span>
+│   ├─ Individual_Trade_Sheet_Brent_22-10-2026_order_not_filled.docx / .pdf   <span class="c">an order that expired</span>
+│   └─ <span class="dir">_previous versions\</span>
+├─ <span class="new">Trade_Blotter.xlsx</span>                  <span class="c">updated after every trade change</span>
+├─ Unit_3_Assignment_Jose_F_Zubizarreta.docx / .pdf   <span class="c">Report Builder</span>
+└─ <span class="dir">Screenshots\</span>2026-10-21\EV_…_ticket.png   <span class="c">every screenshot, kept once</span></div>
+</section>
+
+<!-- ============ CHECKLIST + HELP ============ -->
+<section aria-labelledby="ck">
+  <div class="sechead"><span class="eyebrow">Today</span><h2 id="ck">Daily checklist and fixes</h2></div>
+  <div class="two">
+    <div class="card">
+      <h3>Today's run</h3>
+      <div class="progress" aria-hidden="true"><i id="bar"></i></div>
+      <p class="muted" id="count" style="font-size:13px"></p>
+      <div class="check-list" id="list">
+        <label><input type="checkbox" id="c1"><span>IG watchlist + both calendar screenshots taken</span></label>
+        <label><input type="checkbox" id="c2"><span>Read levels with Claude · Read calendar</span></label>
+        <label><input type="checkbox" id="c3"><span>Overnight news written in my words</span></label>
+        <label><input type="checkbox" id="c4"><span>Fill every empty cell and save, gaps panel green</span></label>
+        <label><input type="checkbox" id="c10"><span>Decision Panel: levels aligned, six boxes written, snapshot saved before placing</span></label>
+        <label><input type="checkbox" id="c5"><span>Each trade: Positions and Activity read, trade saved and linked to the decision</span></label>
+        <label><input type="checkbox" id="c6"><span>Stop moves / partial exits recorded with a chart</span></label>
+        <label><input type="checkbox" id="c7"><span>Each exit: History row read, exit code, plan followed</span></label>
+        <label><input type="checkbox" id="c8"><span>Pictures with captions, reason for exit and lessons written</span></label>
+        <label><input type="checkbox" id="c9"><span>Morning_Sheet + Trade Sheets present in Dropbox</span></label>
+      </div>
+      <p class="muted" style="font-size:12.5px">Ticks are kept in this browser for today only.</p>
+    </div>
+    <div>
+      <details open=""><summary>Decision Panel says "NOT aligned to IG"</summary><p>No IG price yet. Read the ticket screenshot or type the IG Mid price in <b>IG price now</b>. Without it, Yahoo levels can be 150 to 250 points away from IG.</p></details>
+      <details><summary>The trade did not link to my decision</summary><p>It links only when market, side and day match, the decision was saved before the entry, and the entries are within 0.5%. Otherwise use Decision journal: select the decision, choose the trade under <b>It filled: link it to this trade</b>, then <b>Link</b>.</p></details>
+      <details><summary>Entry time is empty</summary><p>The Positions screen has no clock. Take <b>History &gt; Activity</b>, read it in Order Evidence and send it: the app opens the trade in <i>Edit trade</i> with the real time. Press Save.</p></details>
+      <details><summary>Dropbox shows ✗ or nothing was saved</summary><p>Check that Dropbox is installed at <code>C:\Users\jfz00\Dropbox</code> and running. Setup &gt; <b>Test Dropbox</b> tells you which part failed. On a server, the Dropbox app needs Full Dropbox access and a refresh token.</p></details>
+      <details><summary>Word file saved but no PDF</summary><p>LibreOffice is missing on the computer running the app. Install it and save again (any save rebuilds both).</p></details>
+      <details><summary>Low / High still empty</summary><p>Yahoo was not reachable or the symbol had no bars. The Morning tab lists each problem under the Yahoo box. Try again, or read the range from an IG hourly chart and type it.</p></details>
+      <details><summary>A chart says the Yahoo prices do not reach the IG exit</summary><p>Yahoo's Brent future and IG's price differ that day. Replace the drawn chart with your own IG screenshot in Exports &gt; pictures.</p></details>
+      <details><summary>Wrong trade closed by a History row</summary><p>Choose the right trade in 3. Trades &gt; B before saving. Then use <i>Edit trade</i> on any trade, open or closed, to correct it. Every change is a new version.</p></details>
+      <div class="rule" style="margin-top:12px"><b>The Unit 3 rule the app keeps</b><span>Claude only copies what your screenshots show and finds published data with its sources. It never writes your set-up, trigger, execution, reasons, lessons, plan, evaluation or SWOT. Those must be your own words and judgement (Learner Statement).</span></div>
+    </div>
+  </div>
+</section>
+</div>
+
+<script>
+(function(){
+  // tabs
+  var tabs=[["tab-ms","p-ms"],["tab-ts","p-ts"]];
+  function show(i){tabs.forEach(function(t,j){var b=document.getElementById(t[0]),p=document.getElementById(t[1]);b.setAttribute("aria-selected",i===j?"true":"false");p.hidden=i!==j;});}
+  tabs.forEach(function(t,i){document.getElementById(t[0]).addEventListener("click",function(){show(i)});});
+  if(location.hash==="#trade") show(1);
+  // daily checklist, kept per day in this browser
+  var key="u3-checklist-"+new Date().toISOString().slice(0,10), state={};
+  try{state=JSON.parse(localStorage.getItem(key)||"{}")||{}}catch(e){state={}}
+  var boxes=[].slice.call(document.querySelectorAll("#list input"));
+  function paint(){var n=0;boxes.forEach(function(b){b.parentElement.classList.toggle("done",b.checked);if(b.checked)n++;});
+    document.getElementById("bar").style.width=(100*n/boxes.length)+"%";document.getElementById("count").textContent=n+" of "+boxes.length+" done today";}
+  boxes.forEach(function(b){b.checked=!!state[b.id];b.addEventListener("change",function(){state[b.id]=b.checked;try{localStorage.setItem(key,JSON.stringify(state))}catch(e){}paint();});});
+  paint();
+})();
+</script>
+
+</body></html>

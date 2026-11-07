@@ -1,0 +1,10 @@
+name: events_app
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17536031
+bundleId: 12158389
+url: https://atera-analytics.shinyapps.io/events_app/
+version: 1

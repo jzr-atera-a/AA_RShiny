@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XFN Interview · Cross-Functional STAR Scenarios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#04131E; --ink:#071E2E; --teal:#00A39A; --teal-lt:#00D4C8;
+  --gold:#C9A84C; --gold-lt:#F0CE7A; --slate:#7A9AAF;
+  --red:#D95555;  --blue:#5B9BE8;  --green:#5BC98A; --purple:#9B7FE8;
+  --W:1280px; --H:720px;
+}
+html,body{background:#0d0d0d;display:flex;flex-direction:column;align-items:center;
+  padding:16px 8px 80px;gap:12px;font-family:'DM Sans',sans-serif;min-height:100vh;}
+
+.bar{display:flex;gap:10px;align-items:center;background:#161616;
+  border:1px solid #252525;border-radius:8px;padding:8px 16px;
+  width:var(--W);max-width:100%;flex-wrap:wrap;}
+.bar-l{font-family:'DM Mono',monospace;font-size:9.5px;color:#555;flex:1;}
+.dl{background:var(--teal);border:none;color:#fff;border-radius:5px;
+  padding:7px 16px;font-size:11px;font-family:'DM Sans',sans-serif;font-weight:600;
+  cursor:pointer;transition:opacity .2s;}
+.dl:hover{opacity:.82;}
+
+.tabs{display:flex;gap:8px;width:var(--W);max-width:100%;}
+.tb{flex:1;padding:9px 0;background:#161616;border:1px solid #252525;border-radius:7px;
+  color:#555;font-size:11px;font-family:'DM Sans',sans-serif;font-weight:500;
+  cursor:pointer;transition:all .2s;text-align:center;}
+.tb:hover{background:#1e1e1e;color:#999;}
+.tb.on{background:var(--ink);border-color:var(--teal);color:var(--teal-lt);font-weight:600;}
+
+.wrap{width:var(--W);max-width:100%;}
+.slide{width:var(--W);height:var(--H);max-width:100%;background:var(--navy);
+  position:relative;overflow:hidden;border-radius:3px;
+  box-shadow:0 24px 72px rgba(0,0,0,.8);display:none;}
+.slide.on{display:block;}
+.slide::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 55% 50% at 5% 8%,rgba(155,127,232,.08) 0%,transparent 70%),
+             radial-gradient(ellipse 40% 40% at 95% 92%,rgba(201,168,76,.07) 0%,transparent 70%);}
+
+/* layout */
+.g{position:relative;z-index:1;width:100%;height:100%;
+  display:grid;grid-template-columns:178px 1fr;grid-template-rows:62px 1fr 38px;}
+
+/* spine */
+.sp{grid-column:1;grid-row:1/-1;background:linear-gradient(180deg,#0A0E1A 0%,#060A14 100%);
+  border-right:2px solid var(--purple);display:flex;flex-direction:column;
+  align-items:center;padding:20px 12px 14px;position:relative;}
+.sp-logo{font-family:'Cormorant Garamond',serif;font-size:12px;font-weight:700;
+  letter-spacing:.06em;color:var(--purple);text-align:center;line-height:1.3;margin-bottom:10px;}
+.sp-hr{width:24px;height:1px;background:rgba(155,127,232,.3);margin-bottom:10px;}
+.sp-tag{writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);
+  font-size:7.5px;letter-spacing:.13em;color:var(--slate);text-transform:uppercase;font-weight:500;}
+.sp-badge{margin-top:auto;margin-bottom:26px;background:rgba(155,127,232,.10);
+  border:1px solid rgba(155,127,232,.28);border-radius:3px;padding:5px 8px;text-align:center;
+  font-size:7.5px;letter-spacing:.10em;color:#C4B0F8;text-transform:uppercase;font-weight:600;line-height:1.5;}
+.sp-n{position:absolute;bottom:12px;font-family:'Cormorant Garamond',serif;
+  font-size:60px;font-weight:700;color:rgba(155,127,232,.06);line-height:1;user-select:none;}
+
+/* header */
+.hd{grid-column:2;grid-row:1;border-bottom:1px solid rgba(255,255,255,.05);
+  display:flex;align-items:center;padding:0 22px;gap:12px;}
+.hd-t{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;
+  color:#fff;flex:1;line-height:1.2;}
+.hd-t em{color:#C4B0F8;font-style:normal;}
+.chips{display:flex;gap:6px;flex-wrap:wrap;}
+.chip{font-size:8px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;
+  padding:3px 8px;border-radius:3px;font-family:'DM Mono',monospace;white-space:nowrap;}
+.c-p{background:rgba(155,127,232,.14);color:#C4B0F8;border:1px solid rgba(155,127,232,.28);}
+.c-g{background:rgba(201,168,76,.13);color:var(--gold-lt);border:1px solid rgba(201,168,76,.26);}
+.c-r{background:rgba(217,85,85,.13);color:#F09898;border:1px solid rgba(217,85,85,.26);}
+.c-t{background:rgba(0,163,154,.13);color:var(--teal-lt);border:1px solid rgba(0,163,154,.26);}
+.c-s{background:rgba(122,154,175,.10);color:#aabbc8;border:1px solid rgba(122,154,175,.20);}
+.c-b{background:rgba(91,155,232,.13);color:#A0C8F8;border:1px solid rgba(91,155,232,.26);}
+
+/* body 3-col */
+.bd{grid-column:2;grid-row:2;display:grid;grid-template-columns:2fr 1.55fr 1.4fr;
+  padding:12px 18px 10px 22px;gap:0;}
+
+/* STAR col */
+.sc{padding-right:13px;border-right:1px solid rgba(255,255,255,.045);
+  display:flex;flex-direction:column;gap:8px;}
+.sb{display:grid;grid-template-columns:22px 1fr;gap:0 8px;}
+.sl{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;
+  line-height:1.05;align-self:start;margin-top:1px;}
+.sl.s{color:var(--purple)} .sl.t{color:var(--gold)}
+.sl.a{color:var(--blue)}   .sl.r{color:var(--green)}
+.lbl{font-size:7px;letter-spacing:.13em;text-transform:uppercase;font-weight:600;
+  color:var(--slate);margin-bottom:2px;font-family:'DM Mono',monospace;}
+.tx{font-size:10.5px;line-height:1.48;color:#B8CDD8;font-weight:300;}
+.tx strong{color:#fff;font-weight:500;}
+.tx em{color:#C4B0F8;font-style:normal;font-weight:500;}
+.tx .hg{color:var(--gold-lt);font-weight:500;}
+.tx .hr{color:#F09898;font-weight:500;}
+.tx .ht{color:var(--teal-lt);font-weight:500;}
+
+/* mid + right */
+.mc{padding:0 13px;border-right:1px solid rgba(255,255,255,.045);
+  display:flex;flex-direction:column;gap:7px;}
+.rc{padding-left:13px;display:flex;flex-direction:column;gap:7px;}
+.slbl{font-size:7px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--slate);font-family:'DM Mono',monospace;font-weight:500;margin-bottom:1px;}
+
+/* panels */
+.pnl{border-radius:4px;padding:7px 9px;}
+.purple{background:rgba(155,127,232,.07);border:1px solid rgba(155,127,232,.18);border-left:3px solid var(--purple);}
+.gold  {background:rgba(201,168,76,.07); border:1px solid rgba(201,168,76,.18); border-left:3px solid var(--gold);}
+.teal  {background:rgba(0,163,154,.07);  border:1px solid rgba(0,163,154,.18);  border-left:3px solid var(--teal);}
+.blue  {background:rgba(91,155,232,.07); border:1px solid rgba(91,155,232,.18); border-left:3px solid var(--blue);}
+.red   {background:rgba(217,85,85,.07);  border:1px solid rgba(217,85,85,.18);  border-left:3px solid var(--red);}
+.slate-p{background:rgba(122,154,175,.06);border:1px solid rgba(122,154,175,.14);border-left:3px solid var(--slate);}
+
+.pt{font-size:7.5px;text-transform:uppercase;letter-spacing:.11em;font-weight:600;
+  font-family:'DM Mono',monospace;margin-bottom:4px;}
+.pt.purple{color:#C4B0F8} .pt.gold{color:var(--gold)}
+.pt.teal{color:var(--teal-lt)} .pt.blue{color:#A0C8F8}
+.pt.red{color:#F09898} .pt.slate{color:#aabbc8}
+
+.pi{font-size:9.5px;color:#B0C4D0;line-height:1.38;margin-bottom:3px;}
+.pi strong{font-weight:500;}
+.tg{display:inline-block;font-size:7.5px;font-family:'DM Mono',monospace;
+  border-radius:2px;padding:1px 5px;margin-left:3px;vertical-align:middle;}
+.tg-p{background:rgba(155,127,232,.15);color:#C4B0F8;}
+.tg-t{background:rgba(0,163,154,.15);color:var(--teal-lt);}
+.tg-g{background:rgba(201,168,76,.15);color:var(--gold-lt);}
+.tg-r{background:rgba(217,85,85,.15);color:#F09898;}
+.tg-b{background:rgba(91,155,232,.15);color:#A0C8F8;}
+
+/* stakeholder map */
+.smap{display:flex;flex-direction:column;gap:3px;margin-bottom:3px;}
+.sm-row{display:grid;grid-template-columns:110px 1fr 70px;gap:4px;
+  align-items:center;font-size:9px;padding:3px 6px;border-radius:3px;}
+.sm-row:nth-child(odd){background:rgba(255,255,255,.02);}
+.sm-name{color:#C4B0F8;font-weight:500;}
+.sm-want{color:#B0C4D0;}
+.sm-status{text-align:right;font-family:'DM Mono',monospace;font-size:7.5px;}
+.sm-status.a{color:var(--green);} .sm-status.r{color:#F09898;}
+.sm-status.n{color:var(--gold-lt);}
+
+/* friction timeline */
+.ftl{display:flex;flex-direction:column;gap:4px;}
+.ft-item{display:grid;grid-template-columns:14px 1fr;gap:0 7px;align-items:start;}
+.ft-dot{width:14px;height:14px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:7px;margin-top:1px;flex-shrink:0;}
+.ft-dot.r{background:rgba(217,85,85,.25);border:1px solid var(--red);color:#F09898;}
+.ft-dot.g{background:rgba(201,168,76,.25);border:1px solid var(--gold);color:var(--gold-lt);}
+.ft-dot.t{background:rgba(0,163,154,.25);border:1px solid var(--teal);color:var(--teal-lt);}
+.ft-dot.p{background:rgba(155,127,232,.25);border:1px solid var(--purple);color:#C4B0F8;}
+.ft-body{font-size:9.5px;color:#B0C4D0;line-height:1.38;}
+.ft-body strong{color:#fff;font-weight:500;}
+
+/* metrics */
+.ms{display:flex;gap:5px;margin-top:3px;}
+.mp{flex:1;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);
+  border-radius:3px;padding:5px 4px;text-align:center;}
+.mv{font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:700;line-height:1;}
+.mv.p{color:#C4B0F8} .mv.g{color:var(--gold-lt)}
+.mv.t{color:var(--teal-lt)} .mv.gr{color:var(--green)} .mv.r{color:#F09898}
+.ml{font-size:6.5px;color:var(--slate);letter-spacing:.06em;margin-top:1px;font-family:'DM Mono',monospace;}
+
+/* footer */
+.ft{grid-column:2;grid-row:3;border-top:1px solid rgba(255,255,255,.04);
+  display:flex;align-items:center;padding:0 22px;gap:8px;}
+.fd{width:4px;height:4px;border-radius:50%;background:var(--purple);}
+.ft-t{font-size:7.5px;letter-spacing:.08em;color:var(--slate);font-family:'DM Mono',monospace;}
+.ft-s{flex:1;}
+.ft-p{font-family:'DM Mono',monospace;font-size:7.5px;color:rgba(122,154,175,.4);}
+
+@media print{
+  html,body{background:#fff;padding:0;margin:0;gap:0;}
+  .bar,.tabs{display:none!important;}
+  .slide{display:block!important;box-shadow:none;border-radius:0;
+    width:297mm;height:167mm;page-break-after:always;max-width:none;}
+  .wrap{width:297mm;max-width:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <span class="bar-l">XFN Interview · Cross-Functional STAR Scenarios · ML Interviews Prep (Susan Shu Chang, O'Reilly)</span>
+  <button class="dl" onclick="window.print()">⬇ Download PDF</button>
+</div>
+
+<div class="tabs">
+  <button class="tb on" onclick="sw(0,this)">Scenario 1 — Banking NBA · Four-Way Org Conflict: Risk vs Marketing vs ML vs PEGA Teams</button>
+  <button class="tb"    onclick="sw(1,this)">Scenario 2 — AV Infrastructure · Three-Body Problem: Innovate UK vs DfT vs Internal Engineering</button>
+</div>
+
+<!-- ═══════════ SLIDE 1: BANKING XFN ═══════════════════════════════════ -->
+<div class="wrap"><div class="slide on" id="s0"><div class="g">
+  <div class="sp">
+    <div class="sp-logo">ML Interviews<br>Prep</div>
+    <div class="sp-hr"></div>
+    <div class="sp-tag">Banking NBA · XFN · Cross-Functional STAR</div>
+    <div class="sp-badge">XFN · Chang Ch.1<br>Ch.4 · Ch.6 · Ch.7</div>
+    <div class="sp-n">01</div>
+  </div>
+
+  <div class="hd">
+    <div class="hd-t">Marketing Wanted Aggressive Targeting. Risk Wanted a Veto. ML Had No Mandate. — <em>Navigating Four Competing Agendas</em> to Ship a Regulated NBA Platform</div>
+    <div class="chips">
+      <span class="chip c-p">XFN Navigation</span>
+      <span class="chip c-r">Competing Agendas</span>
+      <span class="chip c-g">Influence w/o Authority</span>
+      <span class="chip c-t">Proactive Alignment</span>
+      <span class="chip c-s">FCA Regulated</span>
+    </div>
+  </div>
+
+  <div class="bd">
+
+    <!-- STAR -->
+    <div class="sc">
+      <div class="sb">
+        <div class="sl s">S</div>
+        <div>
+          <div class="lbl">Situation — Four Competing Agendas (Chang Ch.7 Pillar 3)</div>
+          <div class="tx">I was leading delivery of the NBA ML platform with <strong>no formal authority over any of the four teams</strong> whose cooperation I needed. <strong>Marketing</strong> wanted to maximise contact volume and remove channel caps — revenue pressure. <strong>Risk &amp; Compliance</strong> wanted model-level veto power and a 4-week MRM gate on every change. <strong>PEGA Admins</strong> owned the decisioning engine and resisted the API integration contract I proposed, preferring to own the score logic themselves. <strong>Data Science BL leads</strong> each wanted their model to take precedence in PEGA arbitration.</div>
+        </div>
+      </div>
+      <div class="sb">
+        <div class="sl t">T</div>
+        <div>
+          <div class="lbl">Task — The Complexity (Not a Migration. Not Reporting.)</div>
+          <div class="tx">Align four teams with <em>directly opposing objectives</em> around a shared governance model — while simultaneously designing the ML architecture, satisfying FCA TCF requirements, and delivering a pilot A/B test that Marketing, Risk, and the CTO would each accept as legitimate evidence. If I built the A/B platform without proactively aligning Marketing, the results would have been <span class="hr">rejected as biased</span> and the friction would have killed the rollout.</div>
+        </div>
+      </div>
+      <div class="sb">
+        <div class="sl a">A</div>
+        <div>
+          <div class="lbl">Action — Proactive Alignment Before Building Anything</div>
+          <div class="tx"><strong>1. Stakeholder mapping first:</strong> Before writing a line of code, I mapped each team's primary objective, their veto risk, and their minimum acceptable outcome — then designed the governance model around their constraints, not mine. <strong>2. Marketing aligned before A/B design:</strong> I invited Marketing's Head of CRM to co-design the A/B test KPIs and guardrails. They defined the opt-out SLO (≤0.5%) and approved the 6-week duration — so the results were <em>their evidence</em>, not mine imposed on them. <strong>3. Risk given structure, not a veto:</strong> I proposed a tiered MRM model — minor model updates (same architecture, new training data) required 3-day review; material changes 4 weeks. This gave Risk the gate they needed without blocking iteration velocity. <strong>4. PEGA integration contract:</strong> Reframed the API as "ML provides signals, PEGA retains all decisioning authority" — PEGA Admins became advocates once they understood they kept control.</div>
+        </div>
+      </div>
+      <div class="sb">
+        <div class="sl r">R</div>
+        <div>
+          <div class="lbl">Result — Quantified, Cross-Functional</div>
+          <div class="tx">All four teams signed the governance charter within <span class="hg">8 weeks of pilot launch</span>. Marketing co-presented the A/B results (+22% conversion, −18% opt-out) to the Group CTO — framing it as <em>their initiative</em>, not the ML team's. Risk approved the tiered MRM model as a bank-wide standard. PEGA Admins built the next integration themselves. <span class="ht">Zero friction escalations</span> post-launch.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Middle: navigation map -->
+    <div class="mc">
+      <div class="slbl">Stakeholder Navigation Map (Chang Ch.7 — Pillar 3)</div>
+
+      <div class="pnl purple">
+        <div class="pt purple">🗺 Who Wanted What — And How I Moved Each</div>
+        <div class="smap">
+          <div class="sm-row" style="font-size:7.5px;color:var(--slate);font-family:'DM Mono',monospace;background:transparent;padding-bottom:1px;">
+            <span>Stakeholder</span><span>Wanted / Feared</span><span style="text-align:right;">Outcome</span>
+          </div>
+          <div class="sm-row">
+            <span class="sm-name">Marketing (CRM)</span>
+            <span class="sm-want">Max contact volume; no channel caps</span>
+            <span class="sm-status a">Co-owner ✅</span>
+          </div>
+          <div class="sm-row">
+            <span class="sm-name">Risk &amp; Compliance</span>
+            <span class="sm-want">Full MRM veto on every model change</span>
+            <span class="sm-status a">Tiered gate ✅</span>
+          </div>
+          <div class="sm-row">
+            <span class="sm-name">PEGA Admins</span>
+            <span class="sm-want">Own the score logic; resist API</span>
+            <span class="sm-status a">Built next API ✅</span>
+          </div>
+          <div class="sm-row">
+            <span class="sm-name">DS BL Leads (×4)</span>
+            <span class="sm-want">Their model to win arbitration</span>
+            <span class="sm-status a">Neutral charter ✅</span>
+          </div>
+          <div class="sm-row">
+            <span class="sm-name">CTO / CCO</span>
+            <span class="sm-want">Delivery; no regulatory incident</span>
+            <span class="sm-status a">Co-presented ✅</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pnl gold">
+        <div class="pt gold">⚡ Friction Points Navigated — Genuine Complexity</div>
+        <div class="ftl">
+          <div class="ft-item">
+            <div class="ft-dot r">1</div>
+            <div class="ft-body"><strong>Marketing vs ML:</strong> Marketing initially refused to allow a 20% holdout — "we lose revenue on the control group." Resolution: I showed the cost of shipping a model the business doesn't trust — the previous 14-month stall. They accepted the holdout as insurance.</div>
+          </div>
+          <div class="ft-item">
+            <div class="ft-dot g">2</div>
+            <div class="ft-body"><strong>Risk 4-week gate:</strong> Blocking iteration entirely. Resolution: tiered MRM — minor vs material changes. Required 3 rounds of negotiation with Group CRO. Final model gave Risk more visibility, not less, so they accepted.</div>
+          </div>
+          <div class="ft-item">
+            <div class="ft-dot t">3</div>
+            <div class="ft-body"><strong>PEGA ownership conflict:</strong> PEGA Admins saw the API as a threat. Resolution: I changed the framing to "ML scores, PEGA decides" — they retained arbitration authority and became the integration's champions.</div>
+          </div>
+          <div class="ft-item">
+            <div class="ft-dot p">4</div>
+            <div class="ft-body"><strong>Wealth BL data refusal:</strong> Cited client confidentiality to block data sharing. Resolution: escalated to Group CTO with two options (proceed without Wealth data / get Data Committee approval). Chose the latter — 6-week delay but no compliance risk.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: XFN principles + signal -->
+    <div class="rc">
+      <div class="slbl">XFN Principles Applied (Chang Ch.7 — Pillar 3)</div>
+
+      <div class="pnl teal">
+        <div class="pt teal">📐 Influence Without Authority — How</div>
+        <div class="pi"><strong>Built their goals into your design.</strong> Marketing's opt-out SLO became a guardrail in the A/B test they co-owned. Risk's review gate became a formal tiered standard. Each stakeholder saw their priority reflected in the output. <span class="tg tg-t">Ch.7</span></div>
+        <div class="pi"><strong>Made evidence theirs, not yours.</strong> Marketing co-presented the results to the CTO. They moved from blocker to advocate by owning the outcome. <span class="tg tg-t">Ch.7</span></div>
+        <div class="pi"><strong>Changed the frame, not the facts.</strong> "API integration" became "ML provides signals, PEGA retains all decisions." Same technical design — different political outcome. <span class="tg tg-p">Navigation</span></div>
+      </div>
+
+      <div class="pnl blue">
+        <div class="pt blue">✅ Proactive vs Reactive Alignment</div>
+        <div class="pi"><strong>Before A/B design:</strong> Marketing joined the test design meeting — they defined the KPIs and duration. Result: they defended the test's validity when challenged by the CFO. <span class="tg tg-t">Proactive</span></div>
+        <div class="pi"><strong>Before architecture:</strong> I mapped PEGA's contact cap logic before designing the ML integration — discovered it was undocumented, not in any system of record. Surfaced early, not at launch. <span class="tg tg-t">Proactive</span></div>
+        <div class="pi"><strong>Before escalation:</strong> Wealth BL refusal was escalated with two defined options — not as a problem, but as a decision for the CTO with trade-offs quantified. <span class="tg tg-g">Navigation</span></div>
+      </div>
+
+      <div class="ms">
+        <div class="mp"><div class="mv p">4</div><div class="ml">Teams Aligned</div></div>
+        <div class="mp"><div class="mv g">0</div><div class="ml">Escalations Post-Launch</div></div>
+        <div class="mp"><div class="mv t">+22%</div><div class="ml">Conversion Lift</div></div>
+        <div class="mp"><div class="mv gr">Bank</div><div class="ml">MRM Standard</div></div>
+      </div>
+
+      <div class="pnl red">
+        <div class="pt red">🎯 Interviewer Signal — XFN Complexity &amp; Communication</div>
+        <div class="pi">This is not a reporting project or a migration. It is four teams with <strong>opposing regulatory, commercial, and political incentives</strong>, navigated without authority. Each answer stays on the specific XFN challenge asked — not the ML architecture. Results are framed in cross-functional terms, not just model metrics.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ft">
+    <div class="fd"></div>
+    <div class="ft-t">ML Interviews Prep · Banking NBA · XFN Cross-Functional Interview · Chang O'Reilly Ch.7 Pillar 3</div>
+    <div class="ft-s"></div>
+    <div class="ft-p">Scenario 01 / 02</div>
+  </div>
+</div></div></div>
+
+<!-- ═══════════ SLIDE 2: AV XFN ════════════════════════════════════════ -->
+<div class="wrap"><div class="slide" id="s1"><div class="g">
+  <div class="sp">
+    <div class="sp-logo">ML Interviews<br>Prep</div>
+    <div class="sp-hr"></div>
+    <div class="sp-tag">AV Infrastructure · XFN · Cross-Functional STAR</div>
+    <div class="sp-badge">XFN · Chang Ch.1<br>Ch.4 · Ch.6 · Ch.7</div>
+    <div class="sp-n">02</div>
+  </div>
+
+  <div class="hd">
+    <div class="hd-t">Innovate UK Had No ML Evidence Standard. DfT Disagreed with Engineering. Atera Engineering Wanted a Different Model. — <em>Three-Body Alignment</em> on a Safety-Critical Platform</div>
+    <div class="chips">
+      <span class="chip c-p">XFN Navigation</span>
+      <span class="chip c-r">Regulatory Conflict</span>
+      <span class="chip c-g">Influence w/o Authority</span>
+      <span class="chip c-t">Safety-Critical</span>
+      <span class="chip c-s">AV Act 2024</span>
+    </div>
+  </div>
+
+  <div class="bd">
+
+    <!-- STAR -->
+    <div class="sc">
+      <div class="sb">
+        <div class="sl s">S</div>
+        <div>
+          <div class="lbl">Situation — Three External Bodies, Opposing Standards</div>
+          <div class="tx">I was the ML lead on CAM Pathfinder One with <strong>no authority over Innovate UK, DfT, or Atera's engineering team</strong> — all three of whose cooperation was required for delivery. <strong>Innovate UK</strong> (grant body) had published WP deliverables in vague English — each work package owner interpreted them differently. <strong>DfT technical reviewers</strong> wanted a safety case standard that conflicted with what Innovate UK had told us to produce. <strong>Atera's internal engineering team</strong> had proposed a single neural network end-to-end — directly contradicting the decomposed three-model architecture I believed was necessary for regulatory explainability.</div>
+        </div>
+      </div>
+      <div class="sb">
+        <div class="sl t">T</div>
+        <div>
+          <div class="lbl">Task — The Complexity (Three Conflicting Authorities, One Deadline)</div>
+          <div class="tx">Align Innovate UK, DfT, and internal engineering around a <em>single ML safety case</em> that satisfied the AV Act 2024, was evidenced by WP6 deliverables, and was technically defensible — while the three parties had <span class="hr">never been in the same room</span> and operated on different timelines. Failure to align DfT before the WP5 safety case submission would have triggered a grant audit. Failure to align engineering would have shipped a model I could not defend under AV Act scrutiny.</div>
+        </div>
+      </div>
+      <div class="sb">
+        <div class="sl a">A</div>
+        <div>
+          <div class="lbl">Action — Proactive Three-Way Alignment Before Any Code</div>
+          <div class="tx"><strong>1. Convened a joint scoping session</strong> with Innovate UK programme manager and DfT technical monitor in week 2 — before any architecture was committed to. Surfaced the standard conflict directly: "You have told us different things — we need one agreed specification before we build." This was uncomfortable but avoided a far more expensive misalignment at submission. <strong>2. Translated the conflict into a decision:</strong> Presented a one-page comparison of the two interpretations with the regulatory risk of each — gave both parties a concrete choice, not an abstract debate. They reached agreement in the session. <strong>3. Won internal engineering alignment through evidence, not authority:</strong> Rather than overriding the engineering team's preference, I ran a 2-week model comparison — their end-to-end NN vs my decomposed pipeline — on held-out data. The explainability gap was decisive: SHAP outputs from XGBoost satisfied WP5; the NN produced no auditable rationale. <strong>4. Shared the DfT agreement back to all parties immediately</strong> — creating a single written record that prevented later reinterpretation.</div>
+        </div>
+      </div>
+      <div class="sb">
+        <div class="sl r">R</div>
+        <div>
+          <div class="lbl">Result — All Three Bodies Aligned, Safety Case Accepted</div>
+          <div class="tx">DfT accepted the SHAP + calibration diagram as safety case evidence — establishing a <span class="hg">reusable template</span> for future UK AV projects. Innovate UK approved all 8 WPs on schedule. Engineering team's NN approach was retained as a research branch — preserving the relationship while keeping the production architecture defensible. Atera CTO approved expansion to two additional ODDs within 6 weeks. <ht>Zero grant compliance flags</ht> across the full project lifecycle.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Middle: friction map -->
+    <div class="mc">
+      <div class="slbl">Stakeholder Navigation Map (Chang Ch.7 — Pillar 3)</div>
+
+      <div class="pnl purple">
+        <div class="pt purple">🗺 Who Wanted What — And How I Moved Each</div>
+        <div class="smap">
+          <div class="sm-row" style="font-size:7.5px;color:var(--slate);font-family:'DM Mono',monospace;background:transparent;padding-bottom:1px;">
+            <span>Stakeholder</span><span>Wanted / Feared</span><span style="text-align:right;">Outcome</span>
+          </div>
+          <div class="sm-row">
+            <span class="sm-name">Innovate UK (PM)</span>
+            <span class="sm-want">WP evidence on their timeline; vague spec</span>
+            <span class="sm-status a">Co-spec agreed ✅</span>
+          </div>
+          <div class="sm-row">
+            <span class="sm-name">DfT (Tech Monitor)</span>
+            <span class="sm-want">AV Act safety case; different from IUK spec</span>
+            <span class="sm-status a">SHAP template ✅</span>
+          </div>
+          <div class="sm-row">
+            <span class="sm-name">Atera Engineering</span>
+            <span class="sm-want">End-to-end NN; resist decomposition</span>
+            <span class="sm-status a">Research branch ✅</span>
+          </div>
+          <div class="sm-row">
+            <span class="sm-name">Atera CTO</span>
+            <span class="sm-want">Grant compliance; ODD expansion</span>
+            <span class="sm-status a">2 ODDs approved ✅</span>
+          </div>
+          <div class="sm-row">
+            <span class="sm-name">Safety Expert (WP5)</span>
+            <span class="sm-want">CRITICAL data — impossible to collect safely</span>
+            <span class="sm-status a">Isaac Sim ✅</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pnl gold">
+        <div class="pt gold">⚡ Friction Points Navigated — Genuine Tricky Situations</div>
+        <div class="ftl">
+          <div class="ft-item">
+            <div class="ft-dot r">1</div>
+            <div class="ft-body"><strong>IUK vs DfT standards conflict:</strong> Two external authorities with opposing interpretations — neither would formally defer to the other. Resolution: convened them jointly in week 2; presented the conflict as a decision they needed to make together. First time either body had been asked to reconcile directly on an Innovate UK AV project.</div>
+          </div>
+          <div class="ft-item">
+            <div class="ft-dot g">2</div>
+            <div class="ft-body"><strong>Engineering NN preference:</strong> Senior engineer believed decomposition was over-engineering. Resolution: 2-week model comparison on held-out data. Their preferred model produced no auditable SHAP rationale — WP5 would have failed. Evidence, not hierarchy, resolved it.</div>
+          </div>
+          <div class="ft-item">
+            <div class="ft-dot t">3</div>
+            <div class="ft-body"><strong>CRITICAL data catch-22:</strong> Safety expert needed CRITICAL scenario labels — but creating CRITICAL scenarios on real roads is ethically and legally impossible. Resolution: Isaac Sim synthetic data. Proactively aligned the safety expert on this approach before WP3 began — not after the data gap was discovered.</div>
+          </div>
+          <div class="ft-item">
+            <div class="ft-dot p">4</div>
+            <div class="ft-body"><strong>OSM rural data quality:</strong> Discovered 15% of rural B-roads had missing speed limits — a features gap that would have caused model failures at WP6 submission. Surfaced in week 3 data audit; imputation strategy agreed with engineering and WP5 lead before modelling began.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: XFN principles + signal -->
+    <div class="rc">
+      <div class="slbl">XFN Principles Applied (Chang Ch.7 — Pillar 3)</div>
+
+      <div class="pnl teal">
+        <div class="pt teal">📐 Influence Without Authority — How</div>
+        <div class="pi"><strong>Named the conflict early and directly.</strong> "You have told us different things — we need one agreed specification before we build." This is uncomfortable to say to two external grant bodies. It is far less uncomfortable than a WP5 audit failure. <span class="tg tg-t">Ch.7</span></div>
+        <div class="pi"><strong>Translated abstract disagreement into a concrete decision.</strong> One-page comparison of the two standards with regulatory risk of each — gave IUK and DfT a choice, not a debate. <span class="tg tg-p">Navigation</span></div>
+        <div class="pi"><strong>Gave the losing party a face-saving win.</strong> Engineering's NN became a research branch — their work wasn't wasted, their relationship wasn't damaged. <span class="tg tg-g">Ch.7</span></div>
+      </div>
+
+      <div class="pnl blue">
+        <div class="pt blue">✅ Proactive vs Reactive Alignment</div>
+        <div class="pi"><strong>Week 2 joint session:</strong> Convened IUK + DfT before any architecture was committed. Standard conflict surfaced and resolved before it became a submission blocker. <span class="tg tg-t">Proactive</span></div>
+        <div class="pi"><strong>WP3 before WP4:</strong> Isaac Sim approach for CRITICAL synthetic data aligned with safety expert at physics modelling stage — not discovered as a gap at model validation. <span class="tg tg-t">Proactive</span></div>
+        <div class="pi"><strong>Week 3 data audit:</strong> OSM quality gap surfaced and imputation strategy agreed before feature engineering began — not as a last-minute patch at WP6 submission. <span class="tg tg-g">Proactive</span></div>
+      </div>
+
+      <div class="ms">
+        <div class="mp"><div class="mv p">3</div><div class="ml">Bodies Aligned</div></div>
+        <div class="mp"><div class="mv g">8 WPs</div><div class="ml">On Schedule</div></div>
+        <div class="mp"><div class="mv t">0</div><div class="ml">Grant Flags</div></div>
+        <div class="mp"><div class="mv gr">2 ODDs</div><div class="ml">Expansion Approved</div></div>
+      </div>
+
+      <div class="pnl red">
+        <div class="pt red">🎯 Interviewer Signal — XFN Complexity &amp; Navigation</div>
+        <div class="pi">Three external authorities with conflicting mandates, navigated without formal authority over any of them. Friction was surfaced and resolved <strong>before it became a delivery blocker</strong> — not reported after the fact. Communication in each scenario answers the XFN question specifically: how was the misalignment navigated, not what the ML model achieved.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ft">
+    <div class="fd"></div>
+    <div class="ft-t">ML Interviews Prep · AV Infrastructure · XFN Cross-Functional Interview · Chang O'Reilly Ch.7 Pillar 3</div>
+    <div class="ft-s"></div>
+    <div class="ft-p">Scenario 02 / 02</div>
+  </div>
+</div></div></div>
+
+<script>
+function sw(i,b){
+  document.querySelectorAll('.slide').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.tab-btn, .tb').forEach(x=>x.classList.remove('on'));
+  document.getElementById('s'+i).classList.add('on');
+  b.classList.add('on');
+}
+</script>
+</body>
+</html>

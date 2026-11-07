@@ -1,0 +1,49 @@
+{
+  "audience": "Public & policy",
+  "themes": ["Finance & investment", "Risk & regulation", "AI & digital"],
+  "profile": [
+    {"q": "Who", "a": "The author, writing an op-ed for the Financial Times for International Finance, with a companion dashboard."},
+    {"q": "For whom", "a": "FT readers: bankers, fund managers and UK businesses that buy from emerging economies."},
+    {"q": "What", "a": "Are emerging market currencies more a risk or an opportunity? The answer given: an opportunity, for those who analyse the risk well."},
+    {"q": "When", "a": "June 2025, comparing fund holdings in 2017 with today and using the IMF's April 2025 outlook."},
+    {"q": "Where", "a": "Emerging markets, with Colombia as the AI example and Vietnam, Brazil and Mexico as trading partners for UK firms."},
+    {"q": "Why", "a": "Fund managers are pulling back from the dollar amid erratic US policy, and several emerging currencies are outperforming developed ones, yet emerging equities' share of global funds has fallen from 8% to 5%."},
+    {"q": "How", "a": "Auction theory (Milgrom and Wilson) and Sen's development as freedom as lenses, a Colombian central-bank forecasting example, IMF and Bank of England data, and a local-currency hedging example."}
+  ],
+  "headline": [
+    {"value": "8% to 5%", "label": "EM share of global equity funds since 2017"},
+    {"value": "4.2%", "label": "EM growth forecast"},
+    {"value": "-4%", "label": "EM currencies vs dollar this year (IMF)"},
+    {"value": "796", "label": "Words, within the FT's 800 limit"}
+  ],
+  "facts": [
+    {"what": "Emerging market equities as a share of global equity fund holdings, 2017", "value": "8%", "page": 164},
+    {"what": "The same share today", "value": "5%", "page": 164},
+    {"what": "Fall in emerging market currencies against the dollar this year (IMF)", "value": "about 4%", "page": 165},
+    {"what": "IMF growth forecast for emerging markets, 2024 and 2025", "value": "4.2%", "page": 165},
+    {"what": "Growth expected in developed economies", "value": "half that rate or less", "page": 165},
+    {"what": "Colombia's central bank launches AI exchange-rate forecasting", "value": "2024", "page": 164},
+    {"what": "Op-ed length", "value": "796 words (limit 800)", "page": 163}
+  ],
+  "charts": [
+    {"type": "bar", "title": "Emerging market equities as a share of global equity funds (%)", "labels": ["2017", "2025"], "values": [8, 5], "suffix": "%",
+     "colors": ["#1a3a6a", "#E8A020"],
+     "takeaway": "Investors cut their emerging-market weight by more than a third. The op-ed reads this as hesitation rather than weaker fundamentals; it does not rule out the second explanation.",
+     "source": "Page 164."},
+    {"type": "bar", "title": "Growth forecasts: emerging vs developed economies (%)", "labels": ["Emerging markets", "Developed economies (upper bound)"], "values": [4.2, 2.1],
+     "suffix": "%", "colors": ["#2E9D6A", "#7f8c8d"],
+     "takeaway": "Emerging economies grow at least twice as fast, the op-ed's case for 'real productivity'. Faster growth is not the same as a stable currency, which the piece treats as one point.",
+     "source": "Page 165. The developed figure is the upper bound implied by 'half that rate or less'."},
+    {"type": "versus", "title": "The two sides of the question", "mid": "EM FX",
+     "left": {"title": "Opportunity (the op-ed's case)", "items": ["Capital moving away from the dollar", "Several EM currencies beating developed ones", "Stronger institutions, digitised systems, diverse trade", "Growth of about 4.2%, at least double developed economies", "AI tools improving forecasting"]},
+     "right": {"title": "Risk (acknowledged)", "items": ["EM currencies down about 4% against the dollar (IMF)", "Bank of England: volatility can hit UK institutions", "Wide gap between strong and weak economies", "Falling share of global fund holdings"]},
+     "takeaway": "The verdict depends on telling strong currencies from weak ones; the op-ed does not say how to do that."},
+    {"type": "steps", "title": "The practical example: a natural hedge for a UK firm",
+     "items": [
+       {"title": "Exposure", "text": "A UK business buys materials from Vietnam or Brazil and pays in local currency."},
+       {"title": "Action", "text": "It borrows in the same local currency."},
+       {"title": "Effect", "text": "Debt and costs move together, so currency swings partly cancel out."},
+       {"title": "Result", "text": "More predictable costs and less exposure, turning currency risk into a manageable position."}
+     ]}
+  ]
+}

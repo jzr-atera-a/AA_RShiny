@@ -1,0 +1,16 @@
+module:
+  id: "claude_api_config"
+  name: "Claude API Configuration"
+  description: "Configure Claude API credentials for AI event scanning"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Claude API Config"
+    icon: "robot"
+    tabname: "claude_api_config"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, httr, jsonlite]
+    package_versions: {}
+  api: {required: [], optional: [claude]}
+  data: {required: [], optional: []}

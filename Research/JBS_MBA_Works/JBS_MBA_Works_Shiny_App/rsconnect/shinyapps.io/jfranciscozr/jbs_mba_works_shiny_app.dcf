@@ -1,0 +1,10 @@
+name: jbs_mba_works_shiny_app
+title:
+username: jfranciscozr
+account: jfranciscozr
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 18245130
+bundleId: 12724263
+url: https://jfranciscozr.shinyapps.io/jbs_mba_works_shiny_app/
+version: 1

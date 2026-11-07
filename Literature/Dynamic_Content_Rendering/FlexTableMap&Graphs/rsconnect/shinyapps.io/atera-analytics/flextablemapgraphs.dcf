@@ -1,0 +1,10 @@
+name: flextablemapgraphs
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17787830
+bundleId: 12486868
+url: https://atera-analytics.shinyapps.io/flextablemapgraphs/
+version: 1

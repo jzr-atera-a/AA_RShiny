@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Slide 7 – Validation Strategy</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+
+  body{
+    width:1333px;height:750px;overflow:hidden;
+    background:#0c0f14;
+    font-family:'DM Sans',sans-serif;color:#b7b7b7;position:relative;
+  }
+  body::before{
+    content:'';position:absolute;inset:0;
+    background-image:radial-gradient(circle,rgba(0,255,0,0.06) 1px,transparent 1px);
+    background-size:38px 38px;pointer-events:none;z-index:0;
+  }
+  .glow-tl{position:absolute;top:-140px;left:-80px;width:520px;height:380px;
+    background:radial-gradient(ellipse,rgba(0,255,0,0.08) 0%,transparent 68%);
+    pointer-events:none;z-index:0;}
+  .glow-br{position:absolute;bottom:-100px;right:-60px;width:440px;height:320px;
+    background:radial-gradient(ellipse,rgba(255,192,0,0.07) 0%,transparent 68%);
+    pointer-events:none;z-index:0;}
+
+  .slide{
+    position:relative;z-index:1;
+    width:1333px;height:750px;
+    padding:24px 44px 18px 44px;
+    display:flex;flex-direction:column;gap:0;
+  }
+
+  /* ── HEADER ── */
+  .header{
+    padding-bottom:11px;border-bottom:1px solid rgba(0,255,0,0.2);
+    margin-bottom:13px;flex-shrink:0;
+  }
+  .eyebrow{
+    font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;
+    color:rgba(0,255,0,0.5);text-transform:uppercase;margin-bottom:4px;
+  }
+  h1{font-size:34px;font-weight:700;color:#00ff00;letter-spacing:-0.5px;line-height:1;}
+
+  /* ── BODY ── */
+  .body{
+    flex:1;min-height:0;
+    display:flex;flex-direction:column;gap:20px;
+  }
+
+  /* ══ TOP HALF: TIERS ══ */
+  .tiers-section{
+    flex:1;
+    display:flex;flex-direction:column;
+    justify-content:space-evenly;
+    gap:12px;
+  }
+
+  /* Single tier row */
+  .tier-row{
+    display:flex;align-items:center;gap:14px;
+    height:85px;
+  }
+
+  /* Downward-pointing chevron box on left (V shape) */
+  .tier-chevron{
+    width:130px;height:100%;
+    position:relative;
+  }
+
+  .chevron-down-bg{
+    position:absolute;left:0;right:0;top:0;bottom:0;
+    background:linear-gradient(135deg,rgba(70,120,200,0.65),rgba(50,90,160,0.55));
+    border:2px solid rgba(96,165,250,0.4);
+    box-shadow:0 3px 10px rgba(0,0,0,0.4);
+    /* Downward chevron: inverted V shape */
+    clip-path:polygon(
+      0% 0%,
+      50% 85%,
+      100% 0%,
+      100% 30%,
+      50% 100%,
+      0% 30%
+    );
+  }
+
+  .chevron-text{
+    position:absolute;left:0;right:0;top:15%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;font-weight:700;color:#fff;
+  }
+
+  /* Description box on right */
+  .tier-desc{
+    flex:1;height:100%;
+    background:linear-gradient(135deg,rgba(70,120,200,0.55),rgba(50,90,160,0.45));
+    border:2px solid rgba(96,165,250,0.35);
+    border-radius:8px;
+    display:flex;align-items:center;
+    padding:0 28px;
+    font-size:18px;font-weight:600;color:#fff;
+    box-shadow:0 3px 10px rgba(0,0,0,0.4);
+  }
+
+  /* ══ BOTTOM HALF: 2 parallel columns ══ */
+  .parallel-section{
+    flex:1;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:24px;
+  }
+
+  /* Single column with green → arrow → blue */
+  .flow-column{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:0;
+  }
+
+  /* Green box at top */
+  .green-box{
+    width:100%;
+    background:linear-gradient(135deg,rgba(10,100,50,0.65),rgba(5,70,30,0.55));
+    border:2px solid rgba(0,255,0,0.4);
+    border-radius:8px;
+    padding:20px;
+    box-shadow:0 3px 10px rgba(0,0,0,0.4);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+    font-weight:700;
+    color:#fff;
+    min-height:70px;
+  }
+
+  /* White arrow pointing down */
+  .white-arrow-down{
+    width:0;
+    height:0;
+    border-left:18px solid transparent;
+    border-right:18px solid transparent;
+    border-top:30px solid rgba(255,255,255,0.8);
+    margin:8px 0;
+  }
+
+  /* Blue box at bottom */
+  .blue-box{
+    width:100%;
+    flex:1;
+    background:linear-gradient(135deg,rgba(70,120,200,0.65),rgba(50,90,160,0.55));
+    border:2px solid rgba(96,165,250,0.4);
+    border-radius:8px;
+    padding:24px;
+    box-shadow:0 3px 10px rgba(0,0,0,0.4);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:10px;
+  }
+
+  .blue-line{
+    font-size:15px;
+    font-weight:600;
+    color:#fff;
+    line-height:1.4;
+    text-align:center;
+  }
+
+</style>
+</head>
+<body>
+<div class="glow-tl"></div>
+<div class="glow-br"></div>
+<div class="slide">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="eyebrow">07 — Validation Approach</div>
+    <h1>Validation strategy – De-risked &amp; structured</h1>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- ══ TOP HALF: TIERS with downward chevrons ══ -->
+    <div class="tiers-section">
+
+      <div class="tier-row">
+        <div class="tier-chevron">
+          <div class="chevron-down-bg"></div>
+          <div class="chevron-text">Tier 1</div>
+        </div>
+        <div class="tier-desc">Controlled validation</div>
+      </div>
+
+      <div class="tier-row">
+        <div class="tier-chevron">
+          <div class="chevron-down-bg"></div>
+          <div class="chevron-text">Tier 2</div>
+        </div>
+        <div class="tier-desc">Limited operational NUIC</div>
+      </div>
+
+      <div class="tier-row">
+        <div class="tier-chevron">
+          <div class="chevron-down-bg"></div>
+          <div class="chevron-text">Tier 3</div>
+        </div>
+        <div class="tier-desc">Extended deployment (subject to approval)</div>
+      </div>
+
+    </div>
+
+    <!-- ══ BOTTOM HALF: 2 parallel columns ══ -->
+    <div class="parallel-section">
+
+      <!-- LEFT COLUMN: Fallback -->
+      <div class="flow-column">
+        <div class="green-box">Fallback</div>
+        <div class="white-arrow-down"></div>
+        <div class="blue-box">
+          <div class="blue-line">Controlled &amp; teleoperation data sufficient for validation</div>
+          <div class="blue-line">9.5 km AV Test track + test vehicle</div>
+          <div class="blue-line">Atera existing analytics datasets</div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: Target -->
+      <div class="flow-column">
+        <div class="green-box">Target</div>
+        <div class="white-arrow-down"></div>
+        <div class="blue-box">
+          <div class="blue-line">&gt; 85% agreement between automated &amp; manual evaluation</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+</body>
+</html>

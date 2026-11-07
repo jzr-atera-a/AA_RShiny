@@ -1,0 +1,56 @@
+{
+  "audience": "Executives & boards",
+  "themes": ["Strategy & competition", "AI & digital"],
+  "profile": [
+    {"q": "Who", "a": "A study group writing a 998-word assessment for Advanced Strategy."},
+    {"q": "For whom", "a": "NVIDIA's senior leadership."},
+    {"q": "What", "a": "Reduce NVIDIA's dependence on GPUs by turning its Omniverse simulation platform into a Simulation-as-a-Service business."},
+    {"q": "When", "a": "Handed in on 6 June 2025. The paper gives no timeline for the move."},
+    {"q": "Where", "a": "Enterprise and industrial markets: logistics, healthcare, urban planning and advanced manufacturing, delivered with Microsoft Azure and AWS."},
+    {"q": "Why", "a": "The GPU market is described as saturating, with price pressure, technological convergence and geopolitical limits."},
+    {"q": "How", "a": "Blue Ocean Strategy's Four Actions Framework, platform and ecosystem logic, a new division with adoption-based KPIs, and a move to software pricing."}
+  ],
+  "headline": [
+    {"value": "4", "label": "Actions: eliminate, reduce, raise, create"},
+    {"value": "4", "label": "Target industries"},
+    {"value": "1", "label": "New division reporting to leadership"},
+    {"value": "0", "label": "Market figures given in the paper"}
+  ],
+  "facts": [
+    {"what": "Word count against a 1,000-word limit", "value": "998", "page": 140},
+    {"what": "Target industries", "value": "logistics, healthcare, urban planning, manufacturing", "page": 142},
+    {"what": "Cloud partners named", "value": "Microsoft Azure, Amazon Web Services", "page": 142},
+    {"what": "Business model proposed", "value": "SaaS with tiered pricing, marketplace and co-development", "page": 142},
+    {"what": "Market size, revenue split or growth figures provided", "value": "none", "page": 142}
+  ],
+  "charts": [
+    {"type": "cards", "cols": 4, "title": "The Four Actions applied to NVIDIA",
+     "items": [
+       {"tag": "Eliminate", "title": "Hardware benchmarks as the main selling point", "text": "Especially in gaming."},
+       {"tag": "Reduce", "title": "Spending on incremental GPU gains", "text": "Returns are diminishing."},
+       {"tag": "Raise", "title": "Industry-specific software and AI", "text": "Integrated solutions for simulation needs."},
+       {"tag": "Create", "title": "A full-stack digital-twin platform", "text": "Omniverse as Simulation-as-a-Service for enterprises."}
+     ],
+     "takeaway": "The grid is clear, but it does not count the cost of what is given up, such as gaming revenue and brand loyalty."},
+    {"type": "versus", "title": "The shift in business model", "mid": "to",
+     "left": {"title": "Today: hardware", "items": ["Transactional GPU sales", "Cyclical demand", "Competes on performance benchmarks", "Exposed to price pressure and export limits"]},
+     "right": {"title": "Proposed: platform", "items": ["Recurring software revenue (SaaS)", "Tiered pricing and a marketplace", "Competes on ecosystem stickiness", "Co-development with enterprise partners"]},
+     "takeaway": "The core argument: recurring platform revenue smooths the hardware cycle and deepens lock-in, as CUDA did for developers."},
+    {"type": "cards", "cols": 4, "title": "Where the simulation platform would be used",
+     "items": [
+       {"title": "Urban planning", "text": "Simulate traffic flow with real-time data."},
+       {"title": "Manufacturing", "text": "Optimise factory layouts virtually."},
+       {"title": "Healthcare", "text": "Train medical professionals without risk."},
+       {"title": "Logistics", "text": "Test and deploy supply-chain simulations."}
+     ]},
+    {"type": "table", "title": "Risks and mitigations",
+     "columns": ["Risk", "Mitigation"],
+     "rows": [
+       ["Slow adoption by enterprises lacking digital maturity or skills", "User-friendly interfaces, onboarding and support"],
+       ["Internal shift from product engineering to platform and services", "Dedicated division, aligned incentives, clear communication"],
+       ["Credibility in new industries", "Pilot partnerships with established firms"],
+       ["Thin developer base", "Build a community as with CUDA"]
+     ],
+     "takeaway": "The paper omits the biggest risk: competing with existing simulation and digital-twin vendors, some of whom are NVIDIA customers."}
+  ]
+}

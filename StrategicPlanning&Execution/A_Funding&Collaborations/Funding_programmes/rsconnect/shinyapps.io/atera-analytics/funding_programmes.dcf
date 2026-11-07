@@ -1,0 +1,10 @@
+name: funding_programmes
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17583180
+bundleId: 12223933
+url: https://atera-analytics.shinyapps.io/funding_programmes/
+version: 1

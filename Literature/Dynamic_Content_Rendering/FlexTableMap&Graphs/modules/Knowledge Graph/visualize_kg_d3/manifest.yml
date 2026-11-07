@@ -1,0 +1,33 @@
+module:
+  id: "visualize_kg_d3"
+  name: "Visualize Graph (D3)"
+  description: "Interactive force-directed knowledge graph rendered with D3.js - nodes colored by entity type, sized by degree"
+  version: "1.0.0"
+  author: "Knowledge Graph Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "D3 Visualization"
+    icon: "circle-nodes"
+    tabname: "visualize_kg_d3"
+    group: "Knowledge Graph"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - jsonlite
+
+    package_versions: {}
+
+  api:
+    required: ["bigquery"]
+    optional: []
+
+  data:
+    required: []
+    optional: []

@@ -1,0 +1,31 @@
+module:
+  id: "table_viewer"
+  name: "Table Viewer"
+  description: "Render the full scrollable comparison grid for a Category+Topic+Rows Label+Columns Label subtable, with LaTeX support"
+  version: "1.0.0"
+  author: "Flex Table Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Table Viewer"
+    icon: "th"
+    tabname: "table_viewer"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+
+    package_versions: {}
+
+  api:
+    required: ["bigquery"]
+    optional: []
+
+  data:
+    required: []
+    optional: []

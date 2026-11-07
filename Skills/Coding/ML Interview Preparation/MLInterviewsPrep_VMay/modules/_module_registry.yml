@@ -1,0 +1,118 @@
+# modules/_module_registry.yml
+# ML Interviews Prep Suite — Susan Shu Chang (O'Reilly)
+
+app:
+  name: "ML Interviews Prep"
+  version: "1.4.0"
+  description: "Complete ML interview preparation based on Susan Shu Chang's framework"
+
+# groups: define collapsible sidebar sections for grouped modules
+# Only grouped modules use this — ungrouped modules render as flat menu items
+groups:
+  use_cases:
+    label: "Use Cases"
+    icon:  "flask"
+    priority: 90
+
+modules:
+  overview:
+    enabled: true
+    priority: 10
+    name: "Overview & Book Map"
+    icon: "home"
+    tabname: "overview"
+
+  ch1_ml_roles:
+    enabled: true
+    priority: 12
+    name: "Ch.1 — ML Roles & Process"
+    icon: "users"
+    tabname: "ch1_ml_roles"
+
+  ch2_job_application:
+    enabled: true
+    priority: 16
+    name: "Ch.2 — Job Application"
+    icon: "file-text"
+    tabname: "ch2_job_application"
+
+  ch3_ml_algorithms:
+    enabled: true
+    priority: 20
+    name: "Ch.3 — ML Algorithms"
+    icon: "brain"
+    tabname: "ch3_ml_algorithms"
+
+  ch4_model_training:
+    enabled: true
+    priority: 30
+    name: "Ch.4 — Model Training"
+    icon: "cogs"
+    tabname: "ch4_model_training"
+
+  ch5_coding:
+    enabled: true
+    priority: 40
+    name: "Ch.5 — Coding Interview"
+    icon: "code"
+    tabname: "ch5_coding"
+
+  ch6_deployment:
+    enabled: true
+    priority: 50
+    name: "Ch.6 — Deployment & MLOps"
+    icon: "rocket"
+    tabname: "ch6_deployment"
+
+  ch7_behavioural:
+    enabled: true
+    priority: 60
+    name: "Ch.7 — Behavioural"
+    icon: "comments"
+    tabname: "ch7_behavioural"
+
+  ch8_roadmap:
+    enabled: true
+    priority: 70
+    name: "Ch.8 — Interview Roadmap"
+    icon: "map"
+    tabname: "ch8_roadmap"
+
+  ch9_post_interview:
+    enabled: true
+    priority: 80
+    name: "Ch.9 — Post-Interview"
+    icon: "check-circle"
+    tabname: "ch9_post_interview"
+
+  banking_case_study:
+    enabled: true
+    priority: 91
+    group: "use_cases"
+    name: "Banking: Next-Best-Action"
+    icon: "university"
+    tabname: "banking_case_study"
+
+  social_recommender_case_study:
+    enabled: true
+    priority: 92
+    group: "use_cases"
+    name: "Social Media Recommender"
+    icon: "share-alt"
+    tabname: "social_recommender_case_study"
+
+  quant_trading_case_study:
+    enabled: true
+    priority: 93
+    group: "use_cases"
+    name: "Quant Trading: Alpha Signals"
+    icon: "line-chart"
+    tabname: "quant_trading_case_study"
+
+  av_infrastructure_case_study:
+    enabled: true
+    priority: 94
+    group: "use_cases"
+    name: "AV Infrastructure"
+    icon: "car"
+    tabname: "av_infrastructure_case_study"

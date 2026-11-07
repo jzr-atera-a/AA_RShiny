@@ -1,0 +1,24 @@
+NOTEBOOK BUILD TASK — Test Run, First 3 Cells Only
+Read all files in the context folder before writing anything.
+
+AUTHENTICATION — LOCKED, DO NOT MODIFY
+from arcgis.gis import GIS
+connect to your GIS
+gis = GIS(
+profile="josephzr"
+)
+This exact block must appear in Cell 2. Do not change it under any circumstances.
+
+TASK
+Build the first 3 cells of a Jupyter notebook for Australian mining data using the ArcGIS API for Python.
+Cell 1 — Imports: import everything needed for all 3 cells in one single cell. Include arcgis.gis, arcgis.features, arcgis.geometry, pandas, json, urllib.request, urllib.parse. End with print("Imports OK").
+Cell 2 — Environment and Auth: use the locked GIS connection above exactly as written. Then read the output path like this:
+import os
+RUN_DIR = os.environ.get("NB_RUN_DIR", os.getcwd())
+print("Connected as:", gis.users.me.username if gis.users.me else "anonymous")
+print("Output folder:", RUN_DIR)
+Then define the curated mines list as a pandas DataFrame with columns name, state, commodity, lat, lon, pit_depth_m for these 8 sites: Kalgoorlie Super Pit WA Gold -30.7701 121.5082 570, Boddington Gold Mine WA Gold -32.7917 116.4658 250, Mount Tom Price WA Iron Ore -22.6942 117.7931 300, Newman Whaleback WA Iron Ore -23.3523 119.7317 450, Olympic Dam SA Copper -30.4418 136.8795 350, Goonyella Moranbah QLD Coal -21.9833 148.0167 None, Prominent Hill SA Copper -29.7333 135.5333 280, Cannington Mine QLD Silver -22.4833 140.7667 None. End with display(mines_df) and print("Environment OK").
+Cell 3 — ArcGIS Data Pull: search ArcGIS Online for a public Australian mining feature layer using gis.content.search with outside_org=True. Validate any result geographically before using it by sampling 20 points and checking that at least 60 percent fall within lat -45 to -10 and lon 113 to 154. If a valid layer is found query it with FeatureLayer.query and convert to a Spatially Enabled DataFrame. Print the layer title, number of records, and column names. If no valid layer is found print a clear message and continue. End with print("Data pull OK").
+
+VERIFIER INSTRUCTIONS
+Reject if gis.properties.user appears anywhere. Reject if the auth block in Cell 2 differs from the locked pattern. Reject if any path is hardcoded instead of using RUN_DIR. Reject if a cell is missing its final print confirmation. Approve if the cell runs without errors and the print confirmation appears in output.

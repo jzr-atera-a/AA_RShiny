@@ -1,0 +1,17 @@
+module:
+  id: "muscle_map"
+  name: "Muscle Map"
+  description: "Interactive anatomy diagram: click a muscle, see weekly sets, gaps and history"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "Muscle Map"
+    icon: "person"
+    tabname: "muscle_map"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, jsonlite, DT]
+    package_versions: {}
+  api: {required: [], optional: ["bigquery"]}
+  data: {required: [], optional: []}

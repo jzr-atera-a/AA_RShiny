@@ -1,0 +1,26 @@
+app:
+  name: "ML System Design — Decision Engine"
+  version: "1.0.0"
+  description: "Select the right ML architecture for your scenario"
+
+modules:
+  wizard:
+    enabled: true
+    priority: 10
+    name: "Decision Wizard"
+    icon: "magic"
+    tabname: "wizard"
+
+  results:
+    enabled: true
+    priority: 20
+    name: "Recommendations"
+    icon: "star"
+    tabname: "results"
+
+  reference:
+    enabled: true
+    priority: 30
+    name: "Methods Reference"
+    icon: "book"
+    tabname: "reference"

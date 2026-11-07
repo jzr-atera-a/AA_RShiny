@@ -1,0 +1,71 @@
+{
+  "audience": "Client organisation",
+  "themes": ["Operations & data", "Finance & investment"],
+  "profile": [
+    {"q": "Who", "a": "The author, presenting an individual Lean Six Sigma project (MBA36A)."},
+    {"q": "For whom", "a": "The JBS Centre for Endowment Asset Management (CEAM): its director and the research students who analyse foreign exchange data."},
+    {"q": "What", "a": "A research-grade platform in Python and R-Shiny to clean, analyse and visualise foreign exchange spot prices."},
+    {"q": "When", "a": "Summer 2025, with a 15-week build in three phases."},
+    {"q": "Where", "a": "Cambridge Judge Business School, using data from Bloomberg, Reuters and internal systems."},
+    {"q": "Why", "a": "The centre received several terabytes of trading data that existing tools could not visualise or aggregate, and researchers spent most of their 33 analytical hours a week on method and cleaning."},
+    {"q": "How", "a": "DMADV: voice of the customer (define), Gage R&R and time study (measure), root cause analysis (analyse), design of experiments (design), control charts and accuracy standards (verify)."}
+  ],
+  "headline": [
+    {"value": "33 h", "label": "Analytical time per researcher per week"},
+    {"value": "99.2%", "label": "Data completeness measured"},
+    {"value": "2.3%", "label": "Outlier rate in the data"},
+    {"value": "99.8%", "label": "Minimum statistical accuracy set"}
+  ],
+  "facts": [
+    {"what": "Quality targets set in Define: cleaning / outlier detection / statistical rigour / visual clarity", "value": "95% / 92% / 99% / 85%", "page": 180},
+    {"what": "Gage R&R design", "value": "10 parts x 3 operators x 3 measurements", "page": 180},
+    {"what": "Gage R&R acceptance bands", "value": "<10% good, 10-30% marginal, >30% poor", "page": 180},
+    {"what": "Time allocation: analytical thinking / data understanding / outlier detection / validation / documentation", "value": "65% / 24% / 18% / 12% / 9% (sums to 128%)", "page": 180},
+    {"what": "Weekly time: total analytical / data structure / quality validation", "value": "33 h / 8 h / 4 h", "page": 180},
+    {"what": "Validation methods: usage and effectiveness", "value": "visual 95%/85%, statistical 88%/92%, pattern 82%/78%", "page": 180},
+    {"what": "Data completeness / outlier rate", "value": "99.2% / 2.3%", "page": 180},
+    {"what": "Root causes found", "value": "no visualisation, poor aggregation, monolithic architecture", "page": 181},
+    {"what": "Build phases (weeks)", "value": "1-4, 5-10, 11-15", "page": 182},
+    {"what": "Accuracy standards: statistics / volatility / correlation / returns", "value": "99.8% / 99.5% / 99.9% / 99.7%", "page": 182},
+    {"what": "Industry benchmark exceeded", "value": "99.0%", "page": 182}
+  ],
+  "charts": [
+    {"type": "grouped", "title": "Current validation methods: how often used vs how effective (%)",
+     "labels": ["Visual inspection of price plots", "Statistical review of returns", "Pattern consistency checks"],
+     "series": [{"name": "Usage", "values": [95, 88, 82], "color": "#7f8c8d"}, {"name": "Effectiveness", "values": [85, 92, 78], "color": "#1a3a6a"}],
+     "suffix": "%",
+     "takeaway": "The most-used check (visual inspection) is less effective than statistical review. The platform's built-in statistical and outlier checks target exactly this gap.",
+     "source": "Page 180."},
+    {"type": "bar", "horizontal": true, "title": "Where researchers' time goes (% as reported)",
+     "labels": ["Analytical thinking on method", "Understanding data structure", "Outlier detection", "Validation", "Documentation"],
+     "values": [65, 24, 18, 12, 9], "suffix": "%", "colors": ["#1a3a6a", "#2A6FB5", "#E8A020", "#2E9D6A", "#7f8c8d"],
+     "takeaway": "Most effort goes into working out method and cleaning rather than research. Note that the shares as printed add to 128%, so they need correcting before they can be used as a baseline.",
+     "source": "Page 180."},
+    {"type": "bar", "title": "Accuracy standards set for the platform vs the industry benchmark (%)",
+     "labels": ["Correlation", "Statistics", "Returns", "Volatility", "Industry benchmark"],
+     "values": [99.9, 99.8, 99.7, 99.5, 99.0], "suffix": "%", "colors": ["#1a3a6a", "#1a3a6a", "#1a3a6a", "#1a3a6a", "#7f8c8d"],
+     "takeaway": "Every standard sits above the 99.0% benchmark. This is what the '100% accuracy requirement' means in practice: tolerances of 0.1 to 0.5 percentage points.",
+     "source": "Page 182."},
+    {"type": "gantt", "title": "Implementation timeline (weeks)", "xlab": "Week", "height": 240,
+     "items": [
+       {"label": "Data infrastructure and processing engine", "start": 0, "end": 4, "group": "P1", "text": "Weeks 1-4"},
+       {"label": "Visualisation layer and dashboard", "start": 4, "end": 10, "group": "P2", "text": "Weeks 5-10"},
+       {"label": "Integration and Python/R-Shiny connectivity", "start": 10, "end": 15, "group": "P3", "text": "Weeks 11-15"}
+     ],
+     "source": "Page 182."},
+    {"type": "steps", "title": "DMADV: what each phase did",
+     "items": [
+       {"title": "Define: voice of the customer", "text": "Interviews with CEAM research students set requirements: clean data with transparent outlier removal, flexible filters, heatmaps, export to Python and MATLAB."},
+       {"title": "Measure: Gage R&R and time study", "text": "10 parts, 3 operators, 3 measurements; 33 analytical hours a week mapped; data 99.2% complete with 2.3% outliers."},
+       {"title": "Analyse: root causes", "text": "Five whys and a fishbone point to missing visualisation, poor data aggregation and a monolithic architecture."},
+       {"title": "Design: experiments", "text": "Tests frequency settings, outlier thresholds and chart parameters to choose the platform configuration."},
+       {"title": "Verify: control charts", "text": "Track dashboard complexity and time to insight; accuracy standards of 99.5-99.9%."}
+     ]},
+    {"type": "cards", "cols": 3, "title": "Root causes and the fix for each",
+     "items": [
+       {"tag": "Cause", "title": "No real-time visualisation", "text": "Fix: real-time dashboards."},
+       {"tag": "Cause", "title": "Poor data aggregation", "text": "Fix: chunked data processing to manage memory."},
+       {"tag": "Cause", "title": "Monolithic architecture", "text": "Fix: distributed computing."}
+     ]}
+  ]
+}

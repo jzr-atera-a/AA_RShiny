@@ -1,0 +1,6 @@
+{
+  "name": "Atera Fleet Intelligence Engine",
+  "description": "Commercial dispatch control center and dynamic route & EV charging schedule optimizer ingesting vehicle telemetry, storm alerts, and grid rates.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

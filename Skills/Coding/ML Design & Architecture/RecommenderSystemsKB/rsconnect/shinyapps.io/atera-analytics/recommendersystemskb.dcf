@@ -1,0 +1,10 @@
+name: recommendersystemskb
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17395493
+bundleId: 12020163
+url: https://atera-analytics.shinyapps.io/recommendersystemskb/
+version: 1

@@ -1,0 +1,58 @@
+{
+  "audience": "Course assessors",
+  "themes": ["Leadership & teams", "Health & social impact"],
+  "profile": [
+    {"q": "Who", "a": "The author as co-lead of a six-person, multicultural Cambridge Venture Project team (names changed), writing for Management Praxis I."},
+    {"q": "For whom", "a": "The course assessors; the client was a local charity serving a community with different ethnic and cultural groups."},
+    {"q": "What", "a": "Five incidents of team friction during the project and how the author changed his leadership to get the team delivering."},
+    {"q": "When", "a": "Michaelmas term 2024, from the client visit in week 2 to the final week; handed in on 8 January 2025."},
+    {"q": "Where", "a": "Cambridge, with an anonymised local charity (the same client as the CVP presentation)."},
+    {"q": "Why", "a": "Four early assumptions proved wrong: the client had a humanitarian rather than business aim, and team motivation varied widely in an unpaid project."},
+    {"q": "How", "a": "Project funnel, task-group-individual needs, difficult conversations, personality styles, power management, then Trello and Gantt charts, OKRs and 'disagree and commit'."}
+  ],
+  "headline": [
+    {"value": "15 vs 10", "label": "Interviews run vs target"},
+    {"value": "< 7 days", "label": "Time taken to run them"},
+    {"value": "5", "label": "Incidents analysed"},
+    {"value": "4", "label": "Assumptions tested"}
+  ],
+  "facts": [
+    {"what": "Time taken to discover the client's aim was humanitarian, not commercial", "value": "2 weeks", "page": 23},
+    {"what": "Interview objective set as an OKR", "value": "10 interviews", "page": 27},
+    {"what": "Interviews actually run", "value": "15 (+50%)", "page": 27},
+    {"what": "Time taken to run the interviews", "value": "less than 7 days", "page": 27},
+    {"what": "Incidents analysed in the report", "value": "5 (of more than 5)", "page": 22},
+    {"what": "Team size including the author", "value": "6", "page": 24},
+    {"what": "Recommendations the client took away", "value": "4", "page": 27}
+  ],
+  "charts": [
+    {"type": "bar", "title": "Interviews: the objective and the result",
+     "labels": ["OKR target", "Achieved"], "values": [10, 15], "colors": ["#7f8c8d", "#2E9D6A"],
+     "takeaway": "Once the team had a shared plan and owned its tasks, it beat its own target by 50% in under a week. It is the only measured outcome in the report and the evidence that the change in method worked.",
+     "source": "Page 27."},
+    {"type": "steps", "title": "The five incidents in sequence",
+     "items": [
+       {"title": "I. Client visit (week 2)", "text": "Some members ask nothing; the team realises the charity's impact on individual lives."},
+       {"title": "II. Calling on a quiet member", "text": "A private talk, then an invitation to speak in a group session. Well meant, but some felt she was put on the spot."},
+       {"title": "III. 'Not paid to do this'", "text": "In the second-to-last week a member refuses extra work. The co-leads set up a non-judgemental joint session."},
+       {"title": "IV. Difficult conversations", "text": "One-to-ones with the resistant member and a power struggle with the co-lead, handled by changing the author's own style."},
+       {"title": "V. Taking ownership", "text": "Trello, Gantt charts, OKRs and 'disagree and commit'; 15 interviews in under 7 days."}
+     ],
+     "takeaway": "Problems peaked late in the project; the fix was structural (roles, plan, targets) rather than another conversation."},
+    {"type": "cards", "cols": 2, "title": "The author's assumptions against what happened",
+     "items": [
+       {"tag": "Wrong", "title": "The client wants a business result", "text": "It wanted better community engagement for humanitarian reasons, which left no business KPIs. Took 2 weeks to establish."},
+       {"tag": "Wrong", "title": "Cambridge peers will be highly committed", "text": "Motivation varied widely; one member openly said he was not paid to do the work."},
+       {"tag": "Partly", "title": "The team shares a view of the client's needs", "text": "Several members had never encountered this kind of organisation in their home countries."},
+       {"tag": "Partly", "title": "The humanitarian purpose will motivate everyone", "text": "Questionable early on; it took hold only once members owned specific tasks."}
+     ],
+     "takeaway": "The report's method is to state assumptions and test them, which turns team problems into things that can be checked."},
+    {"type": "cards", "cols": 4, "title": "What the client took away",
+     "items": [
+       {"title": "Joint programmes", "text": "with health organisations"},
+       {"title": "Community champions", "text": "from ethnic groups to recommend services"},
+       {"title": "Inclusive hiring", "text": "practices"},
+       {"title": "Quantified outcomes", "text": "a more analytical approach to measuring initiatives"}
+     ]}
+  ]
+}

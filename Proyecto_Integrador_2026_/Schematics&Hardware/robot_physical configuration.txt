@@ -1,0 +1,9 @@
+Robot: Car like robot with 4 wheels.
+Direction: Controlled via servo with Ackerman Mechanism attached to the 2 front wheels.
+Rear wheels: 2 wheels each connected to an independent DC motor with gear reduction mechanism and controlled via MD22 H bridge.
+Turning Radius: 50 cm.
+Maximum speed of the robot 20cm/second when motors are at 90% of their power.
+Minumun power sent to motors to make the robot move: 50% of their power at 8cm/second.
+Distance between front and back wheels: 34cm
+Maximum range for servo controlling the front direction mechanism: 45 to 135 degrees.
+Central position for servo controlling the front direction mechanism: 90 degrees

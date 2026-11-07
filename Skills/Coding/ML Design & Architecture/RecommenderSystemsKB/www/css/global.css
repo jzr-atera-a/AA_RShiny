@@ -1,0 +1,654 @@
+/* ============================================================
+   PRACTICAL RECOMMENDER SYSTEMS — Kim Falk (Manning 2019)
+   Theme: Teal Gradient / White Cards
+   Colours: #002C3C → #008A82 → #00A39A
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+/* ── Base body ────────────────────────────────────────────── */
+.content-wrapper, .right-side {
+  background: linear-gradient(135deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────── */
+.sidebar, .main-sidebar {
+  background: linear-gradient(180deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+}
+
+.sidebar .sidebar-menu > li > a {
+  color: #ffffff !important;
+  border-left: 3px solid transparent;
+  transition: all 0.3s ease;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.sidebar .sidebar-menu > li.active > a,
+.sidebar .sidebar-menu > li:hover > a {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-left: 3px solid #ffffff !important;
+  color: #ffffff !important;
+}
+
+/* ── Header / Navbar ──────────────────────────────────────── */
+.main-header, .main-header .navbar {
+  background: linear-gradient(135deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+  border-bottom: none !important;
+}
+
+.main-header .logo {
+  background: linear-gradient(135deg, #002C3C 0%, #008A82 100%) !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+}
+
+.main-header .navbar .sidebar-toggle,
+.main-header .navbar .sidebar-toggle:hover {
+  color: #ffffff !important;
+}
+
+/* ── Sidebar book badge ───────────────────────────────────── */
+.sidebar-book-badge {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  margin-bottom: 6px;
+}
+
+.book-chip {
+  background: rgba(255, 255, 255, 0.20);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.book-authors {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.65);
+  text-align: center;
+  margin-top: 5px;
+  font-style: italic;
+}
+
+.book-pub {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  margin-top: 3px;
+}
+
+/* ── Boxes ────────────────────────────────────────────────── */
+.box {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 25px rgba(0, 44, 60, 0.20) !important;
+  margin-bottom: 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(0, 44, 60, 0.30) !important;
+}
+
+.box-header {
+  background: linear-gradient(135deg, #008A82 0%, #00A39A 100%) !important;
+  color: #ffffff !important;
+  border-radius: 12px 12px 0 0 !important;
+  padding: 14px 20px;
+  border-bottom: none !important;
+}
+
+.box-header > .box-title {
+  color: #ffffff !important;
+  font-weight: 700;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+}
+
+.box-body {
+  background: #ffffff !important;
+  color: #2c3e50 !important;
+  padding: 20px;
+  border-radius: 0 0 12px 12px;
+}
+
+.box.box-primary > .box-header   { background: linear-gradient(135deg, #007a72 0%, #00A39A 100%) !important; }
+.box.box-info    > .box-header   { background: linear-gradient(135deg, #2980b9 0%, #3498db 100%) !important; }
+.box.box-success > .box-header   { background: linear-gradient(135deg, #1a9b6b 0%, #27ae60 100%) !important; }
+.box.box-warning > .box-header   { background: linear-gradient(135deg, #d68910 0%, #f39c12 100%) !important; }
+.box.box-danger  > .box-header   { background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%) !important; }
+
+/* ── Hero banner ──────────────────────────────────────────── */
+.meta-hero {
+  background: linear-gradient(135deg, #002C3C 0%, #005f5a 55%, #008A82 100%);
+  border: none;
+  color: white;
+  padding: 38px 32px;
+  border-radius: 16px;
+  margin-bottom: 25px;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 44, 60, 0.40);
+  position: relative;
+  overflow: hidden;
+}
+
+.meta-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 60% 40%, rgba(255,255,255,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.meta-hero h1 {
+  font-size: 2.3em;
+  font-weight: 800;
+  margin-bottom: 10px;
+  letter-spacing: -0.5px;
+  color: #ffffff;
+  font-family: 'Inter', sans-serif;
+}
+
+.meta-hero h2 {
+  font-size: 1.1em;
+  font-weight: 400;
+  opacity: 0.80;
+  margin-bottom: 22px;
+  color: #d0f0ed;
+}
+
+.meta-hero .hero-badge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  padding: 5px 16px;
+  border-radius: 20px;
+  font-size: 11px;
+  margin: 4px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* ── Metric cards ─────────────────────────────────────────── */
+.metric-card {
+  background: linear-gradient(135deg, #008A82 0%, #00A39A 100%);
+  border: none;
+  color: white;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 20px rgba(0, 44, 60, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(0, 44, 60, 0.35);
+}
+
+.metric-card .metric-value {
+  font-size: 2.1em;
+  font-weight: 800;
+  display: block;
+  line-height: 1;
+  color: #ffffff;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.metric-card .metric-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* ── Section headings ─────────────────────────────────────── */
+.section-heading {
+  color: #008A82;
+  font-weight: 700;
+  font-size: 1.1em;
+  border-bottom: 2px solid #00A39A;
+  padding-bottom: 7px;
+  margin-bottom: 14px;
+  font-family: 'Inter', sans-serif;
+}
+
+.section-heading-dark {
+  color: #005f5a;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  border-left: 4px solid #008A82;
+  padding-left: 12px;
+  margin-bottom: 12px;
+  margin-top: 4px;
+}
+
+/* ── Framework / content cards ────────────────────────────── */
+.framework-card {
+  background: #f0fafa;
+  border: 1px solid #b2dfdb;
+  border-left: 4px solid #008A82;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.framework-card:hover {
+  border-left-color: #00A39A;
+  transform: translateX(2px);
+}
+
+.framework-card h5 {
+  color: #002C3C;
+  font-weight: 700;
+  margin-bottom: 7px;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+}
+
+.framework-card p,
+.framework-card li {
+  margin: 0;
+  font-size: 12.5px;
+  color: #2c3e50;
+  line-height: 1.65;
+}
+
+/* ── Chapter cards ────────────────────────────────────────── */
+.chapter-card {
+  background: #f8fffe;
+  border: 1px solid #cceae8;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: border-color 0.2s, transform 0.2s;
+  cursor: default;
+}
+
+.chapter-card:hover {
+  border-color: #008A82;
+  transform: translateX(3px);
+}
+
+.chapter-card .chapter-num {
+  font-size: 10px;
+  font-weight: 700;
+  color: #008A82;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 1px;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.chapter-card .chapter-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #002C3C;
+  margin-bottom: 6px;
+}
+
+.chapter-card .chapter-desc {
+  font-size: 12px;
+  color: #546e7a;
+  line-height: 1.5;
+}
+
+.chapter-card .chapter-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.chapter-card .topic-tag {
+  display: inline-block;
+  font-size: 9px;
+  background: #e0f4f2;
+  border: 1px solid #b2dfdb;
+  color: #008A82;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-weight: 600;
+}
+
+/* ── Alert boxes ──────────────────────────────────────────── */
+.tip-box {
+  background: #fffde7;
+  border: 1px solid #ffe082;
+  border-left: 4px solid #f39c12;
+  border-radius: 8px;
+  padding: 13px 15px;
+  margin-bottom: 12px;
+  font-size: 12.5px;
+  color: #5d4037;
+}
+.tip-box strong { color: #e65100; }
+
+.warn-box {
+  background: #ffeaed;
+  border: 1px solid #ffcdd2;
+  border-left: 4px solid #e74c3c;
+  border-radius: 8px;
+  padding: 13px 15px;
+  margin-bottom: 12px;
+  font-size: 12.5px;
+  color: #721c24;
+}
+.warn-box strong { color: #c0392b; }
+
+.success-box {
+  background: #e8f5e9;
+  border: 1px solid #c8e6c9;
+  border-left: 4px solid #00A39A;
+  border-radius: 8px;
+  padding: 13px 15px;
+  margin-bottom: 12px;
+  font-size: 12.5px;
+  color: #1b5e20;
+}
+.success-box strong { color: #008A82; }
+
+.info-box-plain {
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-left: 4px solid #3498db;
+  border-radius: 8px;
+  padding: 13px 15px;
+  margin-bottom: 12px;
+  font-size: 12.5px;
+  color: #0d47a1;
+}
+.info-box-plain strong { color: #1565c0; }
+
+/* ── Timeline ─────────────────────────────────────────────── */
+.timeline-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 18px;
+  padding-left: 8px;
+}
+
+.timeline-badge {
+  background: linear-gradient(135deg, #008A82, #00A39A);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+  margin-right: 14px;
+  box-shadow: 0 3px 12px rgba(0, 138, 130, 0.35);
+}
+
+.timeline-content { flex: 1; }
+.timeline-content h6 {
+  font-weight: 700;
+  color: #002C3C;
+  margin-bottom: 3px;
+  font-size: 13px;
+}
+.timeline-content p {
+  font-size: 12px;
+  color: #546e7a;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── Buttons ──────────────────────────────────────────────── */
+.btn-meta {
+  background: linear-gradient(135deg, #008A82 0%, #00A39A 100%) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+  padding: 10px 20px !important;
+  font-family: 'Inter', sans-serif !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 4px 15px rgba(0, 138, 130, 0.3) !important;
+  font-size: 12px !important;
+}
+
+.btn-meta:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 22px rgba(0, 138, 130, 0.45) !important;
+  background: linear-gradient(135deg, #006b63 0%, #008A82 100%) !important;
+}
+
+/* ── Progress bars ────────────────────────────────────────── */
+.progress {
+  height: 10px;
+  border-radius: 6px !important;
+  background: #cceae8 !important;
+}
+
+.progress-bar {
+  background: linear-gradient(90deg, #008A82 0%, #00A39A 100%) !important;
+  border-radius: 6px !important;
+}
+
+/* ── Tables ───────────────────────────────────────────────── */
+.algo-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0;
+}
+
+.algo-table th {
+  background: #e0f4f2;
+  color: #002C3C;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 10px;
+  border-bottom: 2px solid #80cbc4;
+}
+
+.algo-table td {
+  padding: 10px;
+  color: #2c3e50;
+  font-size: 11.5px;
+  border-bottom: 1px solid #f0f4f8;
+}
+
+.algo-table tr:hover {
+  background: #f0fafa;
+}
+
+/* ── Scrollable pane ──────────────────────────────────────── */
+.scroll-pane {
+  max-height: 450px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.scroll-pane::-webkit-scrollbar { width: 5px; }
+.scroll-pane::-webkit-scrollbar-track { background: #f0fafa; }
+.scroll-pane::-webkit-scrollbar-thumb {
+  background: #80cbc4;
+  border-radius: 3px;
+}
+
+/* ── Plotly theming ───────────────────────────────────────── */
+.plotly {
+  background: transparent !important;
+}
+
+.plotly .main-svg {
+  background: transparent !important;
+}
+
+/* ============================================================
+   CODE LAB EXTENSIONS
+   ============================================================ */
+
+/* ── Code Lab header banner ───────────────────────────────── */
+.codelab-header {
+  background: linear-gradient(135deg, #002C3C 0%, #004d47 60%, #007a72 100%);
+  border-radius: 12px;
+  padding: 22px 26px 18px;
+  margin-bottom: 20px;
+  border-left: 5px solid #00A39A;
+  box-shadow: 0 6px 20px rgba(0,44,60,0.30);
+}
+
+.codelab-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.codelab-badge {
+  background: #00A39A;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+}
+
+.codelab-lang-badge {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.30);
+  color: #d0f0ed;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+}
+
+.codelab-title {
+  color: #ffffff !important;
+  font-weight: 700;
+  font-size: 1.15em;
+  margin: 0 0 5px 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.codelab-subtitle {
+  color: rgba(255,255,255,0.70);
+  font-size: 12.5px;
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* ── Code block ───────────────────────────────────────────── */
+.code-block {
+  background: #001f2b;
+  color: #7fffd4;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  padding: 16px 18px;
+  border-radius: 10px;
+  overflow-x: auto;
+  white-space: pre;
+  margin: 10px 0 14px 0;
+  border: 1px solid rgba(0,163,154,0.25);
+  line-height: 1.65;
+}
+
+.code-block .comment { color: #546e7a; }
+.code-block .keyword { color: #80cbc4; font-weight: 600; }
+
+/* ── Control panel inside Code Lab ───────────────────────── */
+.control-panel {
+  background: #f0fafa;
+  border: 1px solid #b2dfdb;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.control-panel label {
+  color: #002C3C !important;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+/* ── Result card ──────────────────────────────────────────── */
+.result-card {
+  background: #ffffff;
+  border: 1px solid #cceae8;
+  border-top: 3px solid #00A39A;
+  border-radius: 10px;
+  padding: 18px;
+  margin-bottom: 14px;
+  box-shadow: 0 3px 12px rgba(0,44,60,0.10);
+}
+
+.result-card h5 {
+  color: #002C3C;
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+/* ── Stat highlight inside code lab ──────────────────────── */
+.stat-highlight {
+  display: inline-block;
+  background: linear-gradient(135deg, #008A82, #00A39A);
+  color: #ffffff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.6em;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 8px;
+  margin: 6px 0;
+}
+
+/* ── tabBox tab override to match theme ───────────────────── */
+.nav-tabs-custom > .nav-tabs > li.active > a,
+.nav-tabs-custom > .nav-tabs > li.active > a:hover {
+  border-top-color: #008A82 !important;
+  color: #002C3C !important;
+  font-weight: 700;
+}
+
+.nav-tabs-custom > .nav-tabs > li > a {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ── DT table override ────────────────────────────────────── */
+.dataTables_wrapper .dataTables_filter input {
+  border: 1px solid #b2dfdb !important;
+  border-radius: 6px !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background: #008A82 !important;
+  color: #fff !important;
+  border-radius: 4px !important;
+}

@@ -4,8 +4,8 @@
 
 cat("\n═══ AUDIO PROCESSING DASHBOARD - INITIALIZING ═══\n\n")
 
-# Increase file upload limit to 100MB
-options(shiny.maxRequestSize = 100*1024^2)
+# Increase file upload limit to 500MB
+options(shiny.maxRequestSize = 500*1024^2)
 
 # Core packages (always required)
 suppressPackageStartupMessages({

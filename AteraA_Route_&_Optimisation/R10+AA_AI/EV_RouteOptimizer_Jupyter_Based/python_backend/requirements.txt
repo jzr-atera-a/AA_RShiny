@@ -1,0 +1,23 @@
+# Python Backend Requirements for CAV Integration
+# Install with: pip install -r requirements.txt
+
+# Core ML/CV
+torch>=2.0.0
+torchvision>=0.15.0
+ultralytics>=8.0.0
+opencv-python>=4.8.0
+Pillow>=10.0.0
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Google APIs
+googlemaps>=4.10.0
+requests>=2.31.0
+
+# Geospatial
+geopy>=2.4.0
+polyline>=2.0.0
+
+# Utilities
+python-dotenv>=1.0.0
+tqdm>=4.66.0

@@ -1,0 +1,10 @@
+name: mldesignprep_chiphuyen_v1_0
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17389017
+bundleId: 12015433
+url: https://atera-analytics.shinyapps.io/mldesignprep_chiphuyen_v1_0/
+version: 1

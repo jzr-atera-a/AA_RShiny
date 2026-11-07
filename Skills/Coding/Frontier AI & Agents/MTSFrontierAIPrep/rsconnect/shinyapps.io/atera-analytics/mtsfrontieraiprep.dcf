@@ -1,0 +1,10 @@
+name: mtsfrontieraiprep
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17504977
+bundleId: 12122819
+url: https://atera-analytics.shinyapps.io/mtsfrontieraiprep/
+version: 1

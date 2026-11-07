@@ -1,0 +1,16 @@
+module:
+  id: "maternal_health_monitor"
+  name: "Maternal Health Monitor"
+  description: "Continuity-gap timeline, intelligence layer & interventions, early-detection risk trajectory, statistical-concepts primer, concepts applied to our monitoring, cohort A/B simulation, and a clickable pregnancy-to-24-month intervention timeline"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Health Monitor"
+    icon: "heartbeat"
+    tabname: "maternal_health_monitor"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, plotly, dplyr, DT]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

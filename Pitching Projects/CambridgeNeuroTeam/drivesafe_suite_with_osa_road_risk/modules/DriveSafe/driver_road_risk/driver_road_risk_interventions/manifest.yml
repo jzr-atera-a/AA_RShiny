@@ -1,0 +1,16 @@
+module:
+  id: "driver_road_risk_interventions"
+  name: "Risk Interventions"
+  description: "Scenario builder for CPAP treatment and route/rest interventions, with per-driver CPAP adherence trajectory and fleet-level risk projection"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Risk Interventions"
+    icon: "hand-holding-medical"
+    tabname: "driver_road_risk_interventions"
+    badge: {label: "NEW", color: "green"}
+  dependencies:
+    packages: [shiny, shinydashboard, plotly, dplyr]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

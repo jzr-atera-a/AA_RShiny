@@ -1,0 +1,17 @@
+module:
+  id: "exercise_browse"
+  name: "Browse Data"
+  description: "Browse and download all logged workouts"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "Browse Data"
+    icon: "table"
+    tabname: "exercise_browse"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, DT]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

@@ -1,0 +1,174 @@
+/* =========================================================================
+   Estilo de la aplicación de la tesis CPM
+   Paleta: azul CPM (#1D4E89) sobre marino, con el ámbar de las franjas de
+   advertencia del vehículo como acento.
+   ========================================================================= */
+:root {
+  --marino: #0B2545;
+  --marino-2: #13315C;
+  --azul: #1D4E89;
+  --azul-2: #2A6FB5;
+  --cian: #0E9AA7;
+  --ambar: #E8A317;
+  --verde: #2E9D6A;
+  --rojo: #C0392B;
+  --violeta: #6C4F9E;
+  --texto: #1F2D3D;
+  --texto-2: #4A5A6A;
+  --fondo-caja: #FFFFFF;
+  --fondo-suave: #F4F7FB;
+  --borde: #DCE3EC;
+}
+
+body, .content-wrapper, .main-sidebar, h1, h2, h3, h4, h5, .box-title {
+  font-family: "Source Sans 3", "Source Sans Pro", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+code, pre, .mono { font-family: "JetBrains Mono", "Fira Code", Consolas, monospace; }
+
+.content-wrapper, .right-side {
+  background: linear-gradient(160deg, #0B2545 0%, #13315C 45%, #1D4E89 100%) !important;
+  min-height: 100vh;
+}
+.main-sidebar, .left-side, .sidebar {
+  background: linear-gradient(180deg, #08192F 0%, #0B2545 55%, #13315C 100%) !important;
+}
+.sidebar-menu > li > a { color: #E6EDF6 !important; border-left: 3px solid transparent; transition: all .2s ease; }
+.sidebar-menu > li.active > a, .sidebar-menu > li:hover > a {
+  background: rgba(255,255,255,.10) !important; border-left: 3px solid var(--ambar) !important; color: #fff !important;
+}
+.sidebar-menu > li.header { color: #8FA6C1 !important; background: transparent !important; font-size: 11px; letter-spacing: .08em; }
+.sidebar-menu .treeview-menu > li > a { color: #C9D6E6 !important; }
+.main-header .logo, .main-header .navbar {
+  background: linear-gradient(135deg, #08192F 0%, #13315C 60%, #1D4E89 100%) !important; border-bottom: none;
+}
+.main-header .logo { font-weight: 600; letter-spacing: .02em; }
+.main-header .navbar .sidebar-toggle:hover { background: rgba(255,255,255,.1); }
+.titulo-barra { color: #fff; font-size: 15px; line-height: 50px; padding-left: 12px; opacity: .9; }
+
+/* ---- Cajas ---- */
+.box { background: var(--fondo-caja) !important; border: none !important; border-radius: 12px !important;
+       box-shadow: 0 8px 24px rgba(5, 20, 45, .28) !important; margin-bottom: 20px; }
+.box.box-solid > .box-header { border-radius: 12px 12px 0 0 !important; padding: 13px 18px; }
+.box.box-solid.box-primary > .box-header { background: linear-gradient(135deg, #13315C 0%, #1D4E89 100%) !important; }
+.box.box-solid.box-info > .box-header    { background: linear-gradient(135deg, #0B7F8A 0%, #0E9AA7 100%) !important; }
+.box.box-solid.box-warning > .box-header { background: linear-gradient(135deg, #C98A0C 0%, #E8A317 100%) !important; }
+.box.box-solid.box-success > .box-header { background: linear-gradient(135deg, #23805A 0%, #2E9D6A 100%) !important; }
+.box.box-solid.box-danger > .box-header  { background: linear-gradient(135deg, #A02F24 0%, #C0392B 100%) !important; }
+.box.box-solid.box-primary, .box.box-solid.box-info, .box.box-solid.box-warning,
+.box.box-solid.box-success, .box.box-solid.box-danger { border: none !important; }
+.box-header > .box-title { color: #fff !important; font-weight: 600; font-size: 17px; }
+.box-body { padding: 16px 20px; }
+
+/* ---- Bloques de texto ---- */
+.description-text { font-size: 15px; line-height: 1.75; text-align: justify; color: var(--texto); }
+.concept-box { background: #EAF2FB; padding: 14px 16px; border-radius: 9px; margin: 10px 0; border: 1px solid #D3E3F5; }
+.concept-box h4, .math-formula h4 { margin-top: 0; color: var(--marino-2); font-weight: 600; font-size: 16px; }
+.concept-box.ambar { background: #FFF6E0; border-color: #F5DE9F; }
+.concept-box.verde { background: #E8F6EF; border-color: #BFE6D2; }
+.concept-box.rojo  { background: #FDECEA; border-color: #F4C2BC; }
+.concept-box.gris  { background: var(--fondo-suave); border-color: var(--borde); }
+.math-formula { background: #F7F9FC; padding: 12px 16px; border-radius: 9px; margin: 10px 0;
+                border-left: 4px solid var(--azul); overflow-x: auto; }
+.math-formula .desc { color: var(--texto-2); font-size: 14px; margin: 4px 0 0; }
+.pregunta { background: linear-gradient(135deg, #FFF6E0, #FFEFC6); border-left: 5px solid var(--ambar);
+            padding: 16px 20px; border-radius: 9px; font-size: 16.5px; line-height: 1.6; font-style: italic; color: #3D2E05; }
+.etiqueta { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600;
+            background: #E3ECF7; color: var(--marino-2); margin: 2px 4px 2px 0; }
+.etiqueta.ok { background: #DDF3E8; color: #1B6B47; }
+.etiqueta.mal { background: #FBE1DD; color: #8E2A1F; }
+.etiqueta.warn { background: #FFF0CC; color: #7A5600; }
+.nota { font-size: 13px; color: var(--texto-2); margin-top: 6px; }
+.aviso-sim { font-size: 13px; color: #7A5600; background: #FFF6E0; border: 1px dashed #E8C66B;
+             border-radius: 8px; padding: 8px 12px; margin: 8px 0; }
+
+/* ---- Figuras ---- */
+figure.figura { margin: 6px 0 14px; text-align: center; }
+figure.figura img { max-width: 100%; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,.12); background: #fff; }
+figure.figura figcaption { font-size: 13px; color: var(--texto-2); margin-top: 7px; line-height: 1.45; text-align: left; }
+figure.figura figcaption b { color: var(--marino-2); }
+.galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+
+/* ---- Resultados de calculadoras ---- */
+.resultado { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 8px 0; }
+.resultado .celda { background: var(--fondo-suave); border: 1px solid var(--borde); border-radius: 9px; padding: 9px 11px; }
+.resultado .celda .v { font-size: 20px; font-weight: 700; color: var(--marino-2); font-variant-numeric: tabular-nums; }
+.resultado .celda .l { font-size: 12px; color: var(--texto-2); }
+.resultado .celda.ok { border-color: #9ED6BB; background: #EEF9F3; }
+.resultado .celda.mal { border-color: #F0B2A9; background: #FDF0EE; }
+.resultado .celda.warn { border-color: #EFD18A; background: #FFF8E6; }
+
+/* ---- Portada ---- */
+.portada { background: linear-gradient(135deg, rgba(255,255,255,.97), rgba(240,246,253,.97)); border-radius: 14px;
+           padding: 26px 30px; box-shadow: 0 10px 30px rgba(5, 20, 45, .35); margin-bottom: 20px; }
+.portada .inst { display: flex; align-items: center; gap: 14px; color: var(--texto-2); font-size: 14px; }
+.portada .inst img { height: 64px; width: auto; }
+.portada h1 { font-size: 30px; font-weight: 700; color: var(--marino); margin: 14px 0 8px; line-height: 1.25; }
+.portada .sub { font-size: 16px; color: var(--texto-2); }
+.portada .autor { font-size: 17px; font-weight: 600; color: var(--azul); margin-top: 10px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.kpi { background: rgba(255,255,255,.97); border-radius: 12px; padding: 14px 16px; box-shadow: 0 6px 18px rgba(5,20,45,.28);
+       border-top: 4px solid var(--azul); }
+.kpi .v { font-size: 26px; font-weight: 700; color: var(--marino); font-variant-numeric: tabular-nums; }
+.kpi .l { font-size: 13px; color: var(--texto-2); line-height: 1.35; }
+.kpi .i { float: right; font-size: 22px; color: var(--azul-2); opacity: .75; }
+.kpi.c2 { border-top-color: var(--cian); } .kpi.c3 { border-top-color: var(--ambar); }
+.kpi.c4 { border-top-color: var(--verde); } .kpi.c5 { border-top-color: var(--violeta); } .kpi.c6 { border-top-color: var(--rojo); }
+
+/* Ruta de cuatro etapas */
+.ruta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 10px 0 4px; }
+.ruta .etapa { background: #fff; border: 2px solid var(--azul); border-radius: 10px; padding: 10px; text-align: center; position: relative; }
+.ruta .etapa .n { font-size: 12px; color: var(--azul); font-weight: 700; letter-spacing: .06em; }
+.ruta .etapa .t { font-weight: 700; color: var(--marino); margin: 2px 0; }
+.ruta .etapa .d { font-size: 12.5px; color: var(--texto-2); }
+.ruta .etapa .m { font-size: 12px; margin-top: 6px; color: #7A5600; background: #FFF6E0; border-radius: 6px; padding: 2px 4px; }
+.ruta .etapa:not(:last-child)::after { content: "➜"; position: absolute; right: -16px; top: 40%; color: var(--ambar); font-size: 18px; }
+.base-ruta { background: #EAF2FB; border: 1px dashed var(--azul-2); border-radius: 9px; text-align: center; padding: 7px; font-size: 13px; color: var(--marino-2); }
+@media (max-width: 900px) { .ruta { grid-template-columns: 1fr 1fr; } .ruta .etapa::after { display: none; } }
+
+/* Tarjetas de contribución */
+.contrib { text-align: center; padding: 6px 4px 2px; }
+.contrib .ico { font-size: 38px; color: var(--azul-2); }
+.contrib h4 { color: var(--marino-2); font-weight: 700; margin: 8px 0 6px; }
+
+/* Puente H dinámico */
+.svg-wrap { text-align: center; }
+
+/* Consola del firmware */
+.consola { background: #0B1726; color: #CFE3FF; font-family: "JetBrains Mono", Consolas, monospace; font-size: 13px;
+           border-radius: 9px; padding: 12px 14px; height: 260px; overflow-y: auto; white-space: pre-wrap; }
+.consola .tx { color: #FFD479; } .consola .ok { color: #7EE0A8; } .consola .err { color: #FF8C7F; } .consola .info { color: #8FB3E8; }
+
+/* Lista de verificación */
+.checklist .checkbox label { font-size: 14px; line-height: 1.5; }
+.progress { height: 14px; border-radius: 7px; }
+
+/* Tablas DT */
+table.dataTable thead th { background: #EEF3F9; color: var(--marino-2); }
+table.dataTable td { font-size: 13.5px; }
+.dataTables_wrapper .dt-buttons .btn, .dt-button { border-radius: 6px !important; }
+
+/* Controles */
+.btn-primary { background: linear-gradient(135deg, #1D4E89 0%, #2A6FB5 100%) !important; border: none !important; border-radius: 7px !important; }
+.btn-warning { background: linear-gradient(135deg, #C98A0C, #E8A317) !important; border: none !important; border-radius: 7px !important; color: #fff !important; }
+.btn-default { border-radius: 7px !important; }
+.irs--shiny .irs-bar { background: var(--azul-2); border-color: var(--azul-2); }
+.irs--shiny .irs-single { background: var(--azul); }
+.nav-tabs-custom > .nav-tabs > li.active { border-top-color: var(--ambar); }
+.nav-tabs-custom > .nav-tabs > li > a { font-weight: 600; color: var(--marino-2); }
+.panel-modulo { border-left: 4px solid var(--ambar); padding-left: 12px; }
+.small-muted { color: var(--texto-2); font-size: 12.5px; }
+
+/* ---- Listados de código (apéndices C a F) ---- */
+.codigo-wrap { display: flex; background: #0B1726; border-radius: 9px; max-height: 720px; overflow: auto; border: 1px solid #1d2b3f; }
+.codigo-wrap pre { margin: 0; border: none; border-radius: 0; font-family: "JetBrains Mono", Consolas, monospace; font-size: 12.5px; line-height: 1.5; }
+pre.codigo-num { background: #08111d; color: #5d7290; text-align: right; padding: 12px 10px; user-select: none; min-width: 52px; }
+pre.codigo { background: transparent; color: #D6E4F5; padding: 12px 14px; white-space: pre !important; word-wrap: normal !important; overflow-wrap: normal !important; word-break: normal !important; flex: 1; overflow: visible; }
+pre.codigo-num { white-space: pre !important; word-wrap: normal !important; }
+pre.codigo code.hljs { background: transparent; padding: 0; }
+pre.pseudo { background: #F7F9FC; border: none; font-family: "JetBrains Mono", Consolas, monospace; font-size: 12.5px; line-height: 1.55; white-space: pre; overflow-x: auto; color: #1F2D3D; }
+
+/* Logo CPM en la parte superior de la barra lateral */
+.logo-sidebar { margin: 14px 14px 6px; padding: 10px 12px; background: #fff; border-radius: 10px; text-align: center;
+                box-shadow: 0 4px 12px rgba(0,0,0,.25); }
+.logo-sidebar img { width: 100%; max-width: 220px; height: auto; display: block; margin: 0 auto; }
+.sidebar-collapse .logo-sidebar { display: none; }

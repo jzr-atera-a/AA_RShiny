@@ -1,0 +1,34 @@
+module:
+  id: "generate_diagram"
+  name: "Generate Diagram"
+  description: "AI-powered strategy diagram generation (SWOT, PESTEL, Five Forces, etc.) via Claude"
+  version: "1.0.0"
+  author: "Strategic Analysis Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Generate Diagram"
+    icon: "magic"
+    tabname: "generate_diagram"
+    group: "Strategic Analysis"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinyjs
+      - DT
+
+    package_versions: {}
+
+  api:
+    required: ["claude"]
+    optional: ["bigquery"]
+
+  data:
+    required: []
+    optional: []

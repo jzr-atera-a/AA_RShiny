@@ -1,0 +1,57 @@
+{
+  "audience": "Course assessors",
+  "themes": ["Leadership & teams", "Strategy & competition", "AI & digital", "Governance & ethics"],
+  "profile": [
+    {"q": "Who", "a": "The author, writing in the first person as if NVIDIA's chief executive (a role-play for Strategy)."},
+    {"q": "For whom", "a": "The course assessors; within the narrative, NVIDIA's board, investors and staff."},
+    {"q": "What", "a": "A reflection on 24 months leading NVIDIA after succeeding its founder, including the DeepSeek share-price shock."},
+    {"q": "When", "a": "May 2023 to mid-2025 in the narrative; the shock on 27 January 2025; handed in on 2 June 2025."},
+    {"q": "Where", "a": "NVIDIA globally, competing in AI infrastructure with a Chinese challenger."},
+    {"q": "Why", "a": "Succeeding a founder requires both continuity and renewal, and a competitor's breakthrough wiped $600bn off the company's value in a day."},
+    {"q": "How", "a": "Feigen Advisors' 'Unique Work of the CEO', Porter's five forces, Helmer's 7 Powers (three chosen) and Porter and Nohria's research on how CEOs use their time."}
+  ],
+  "headline": [
+    {"value": "231", "label": "Engineers hired from Intel (9.24% of hires)"},
+    {"value": "$600bn", "label": "Market value lost after DeepSeek"},
+    {"value": "93%", "label": "Year-on-year data-centre revenue growth"},
+    {"value": "3 of 7", "label": "Helmer powers the plan relies on"}
+  ],
+  "facts": [
+    {"what": "Intel employees who joined in the past year", "value": "231", "page": 134},
+    {"what": "Their share of new hires", "value": "9.24%", "page": 134},
+    {"what": "Implied total new hires (231 / 9.24%, calculated)", "value": "about 2,500", "page": 134},
+    {"what": "Market capitalisation lost after the DeepSeek announcement (27 Jan 2025)", "value": "$600bn", "page": 136},
+    {"what": "Share price rise before the shock", "value": "tripled over a short period", "page": 136},
+    {"what": "Year-on-year data-centre revenue growth cited to investors", "value": "93%", "page": 136},
+    {"what": "Period of the reflection", "value": "24 months", "page": 134}
+  ],
+  "charts": [
+    {"type": "donut", "title": "Where new hires came from (derived)", "labels": ["From Intel", "From elsewhere"], "values": [231, 2269],
+     "colors": ["#E8A020", "#1a3a6a"],
+     "takeaway": "Nearly one in ten new hires came from a direct rival, the reflection's evidence for talent density as a strategic resource.",
+     "source": "Page 134. Total of about 2,500 calculated from 231 hires being 9.24% of new hires."},
+    {"type": "cards", "cols": 4, "title": "Helmer's 7 Powers: the three the plan leans on",
+     "items": [
+       {"tag": "Relied on", "title": "Switching costs", "text": "The CUDA ecosystem; the core investor message."},
+       {"tag": "Relied on", "title": "Branding", "text": "Trusted leader in AI infrastructure; reliability and performance."},
+       {"tag": "Relied on", "title": "Process power", "text": "Chip design, integration and time to market."},
+       {"tag": "Not used", "title": "Scale economies", "text": ""},
+       {"tag": "Not used", "title": "Network economies", "text": ""},
+       {"tag": "Not used", "title": "Counter-positioning", "text": ""},
+       {"tag": "Not used", "title": "Cornered resource", "text": ""}
+     ],
+     "takeaway": "The plan builds on powers NVIDIA already has; it does not explain why scale and network economies, arguably also present, were left out."},
+    {"type": "steps", "title": "The CEO's unique work, area by area",
+     "items": [
+       {"title": "Vision, strategy and execution", "text": "Five forces review; deepen CUDA and data-centre leadership; decentralised teams with KPIs; talent density and top pay."},
+       {"title": "Capital", "text": "Acquisitions and stakes in AI start-ups instead of large buybacks; R&D on inference, compression and next-generation GPUs; a cash cushion inspired by Ford in 2008."},
+       {"title": "Governance", "text": "Scenario planning and rapid-response teams; new directors with AI ethics and quantum expertise; tighter risk standards."},
+       {"title": "Investors and stakeholders", "text": "Publicly praised DeepSeek as an 'excellent AI advancement', called a shareholder meeting, cited 93% data-centre growth and Blackwell."},
+       {"title": "Personal leadership", "text": "Humility as a founder's successor; stakeholder mapping, scenario planning and an advisory circle on AI policy and security."}
+     ]},
+    {"type": "versus", "title": "The shock and the response", "mid": "27 Jan 2025",
+     "left": {"title": "The shock", "items": ["Chinese competitor announces strong performance", "$600bn of market value lost", "Contrast with 18 months of rapid gains"]},
+     "right": {"title": "The response", "items": ["Public praise of the competitor's work", "Global shareholder meeting days later", "Focus on 93% data-centre growth and Blackwell", "Reinforce branding and process power"]},
+     "takeaway": "The reflection presents the response as integrity; it does not weigh alternatives or report how investors reacted."}
+  ]
+}

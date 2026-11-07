@@ -1,0 +1,58 @@
+# modules/_module_registry.yml
+# Meta ML Interview Prep Suite
+# Software Engineer (Leadership) - Machine Learning
+
+app:
+  name: "Meta ML Interview Prep"
+  version: "1.0.0"
+  description: "Complete interview preparation for Meta SWE Leadership - ML role"
+
+modules:
+  intro:
+    enabled: true
+    priority: 10
+    name: "Welcome & Overview"
+    icon: "home"
+    tabname: "intro"
+
+  qualities:
+    enabled: true
+    priority: 20
+    name: "Engineer Qualities"
+    icon: "star"
+    tabname: "qualities"
+
+  coding_interview:
+    enabled: true
+    priority: 30
+    name: "Coding Interview"
+    icon: "code"
+    tabname: "coding_interview"
+
+  ml_design:
+    enabled: true
+    priority: 40
+    name: "ML Design Interview"
+    icon: "brain"
+    tabname: "ml_design"
+
+  tech_project:
+    enabled: true
+    priority: 50
+    name: "Technical Project"
+    icon: "project-diagram"
+    tabname: "tech_project"
+
+  cross_functional:
+    enabled: true
+    priority: 60
+    name: "Cross-Functional"
+    icon: "handshake"
+    tabname: "cross_functional"
+
+  career_interview:
+    enabled: true
+    priority: 70
+    name: "Career Interview"
+    icon: "user-tie"
+    tabname: "career_interview"

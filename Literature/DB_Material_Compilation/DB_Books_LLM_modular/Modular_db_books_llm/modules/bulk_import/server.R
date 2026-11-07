@@ -5,6 +5,16 @@ bulk_import_server <- function(id, api_manager) {
     
     parsed_data <- reactiveVal(NULL)
     
+    # Receive text pushed from the Generate Summary tab's "Copy to Bulk
+    # Import" button (see APIManager$pending_bulk_text in R/utils_api.R)
+    observeEvent(api_manager$pending_bulk_text(), {
+      incoming_text <- api_manager$pending_bulk_text()
+      if (nchar(incoming_text) > 0) {
+        cat("📥 [bulk_import] Received text from generate_summary (", nchar(incoming_text), "chars )\n")
+        updateTextAreaInput(session, "summary_text", value = incoming_text)
+      }
+    }, ignoreInit = TRUE)
+    
     # Parse summary
     observeEvent(input$parse, {
       

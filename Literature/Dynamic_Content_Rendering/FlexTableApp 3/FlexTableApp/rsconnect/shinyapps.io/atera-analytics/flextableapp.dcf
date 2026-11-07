@@ -1,0 +1,10 @@
+name: flextableapp
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17782731
+bundleId: 12480717
+url: https://atera-analytics.shinyapps.io/flextableapp/
+version: 1

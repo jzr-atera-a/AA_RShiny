@@ -16,6 +16,45 @@ suppressPackageStartupMessages({
   library(purrr)
 })
 
+# ============================================================
+# DEPLOYMENT DEPENDENCY DECLARATIONS - DO NOT REMOVE
+# ============================================================
+# The module loader below installs/attaches packages dynamically
+# based on what each module's manifest.yml declares (a YAML value,
+# not literal R code). rsconnect's static dependency scanner used
+# when publishing to shinyapps.io can ONLY detect packages that
+# appear as a literal library()/require() call or a literal
+# pkg::function() reference somewhere in the bundled .R files.
+# It cannot see inside YAML files and cannot resolve
+# library(pkg, character.only = TRUE) when `pkg` is a variable.
+#
+# Without this block, shinyapps.io installs only the packages it
+# can prove are needed (e.g. via explicit pkg:: calls), silently
+# skips the rest, and the app crashes at runtime with errors like
+# "could not find function 'plotlyOutput'" - even though the same
+# app runs fine locally because those packages already happen to
+# be installed on your machine.
+#
+# Every package any module currently declares as a dependency is
+# listed here explicitly so shinyapps.io always installs it,
+# regardless of which modules are enabled/disabled in
+# modules/_module_registry.yml. This keeps the enable/disable
+# feature working purely as a runtime behavior (controlled by
+# ModuleLoader$load_packages()) while guaranteeing every package
+# is available on the server if a module is ever re-enabled later
+# without a fresh deployment.
+suppressPackageStartupMessages({
+  library(shinyjs)
+  library(httr)
+  library(jsonlite)
+  library(bigrquery)
+  library(DT)
+  library(plotly)
+  library(dplyr)
+  library(stringr)
+  library(tidyr)
+})
+
 # Source utilities
 source("R/module_loader.R")
 source("R/utils_common.R")
@@ -88,6 +127,13 @@ create_ui <- function(module_loader) {
     
     # Body
     dashboardBody(
+      # Enable shinyjs - REQUIRED for shinyjs::show()/hide() calls used by
+      # the generate_summary module (loading spinner). Without this call,
+      # shinyjs's client-side message handler is never registered, so
+      # shinyjs::show()/hide() calls are silently dropped (no error, no
+      # effect) anywhere in the app.
+      shinyjs::useShinyjs(),
+      
       # Load CSS
       tags$head(
         tags$link(

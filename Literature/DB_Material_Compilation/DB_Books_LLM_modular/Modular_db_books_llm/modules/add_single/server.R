@@ -3,6 +3,8 @@
 add_single_server <- function(id, api_manager) {
   moduleServer(id, function(input, output, session) {
     
+    genre_topic <- setup_genre_topic_cascade(input, output, session, api_manager)
+    
     observeEvent(input$submit, {
       
       if (!api_manager$bq_authenticated) {
@@ -21,6 +23,16 @@ add_single_server <- function(id, api_manager) {
         return()
       }
       
+      gt <- genre_topic()
+      if (nchar(gt$genre) == 0 || nchar(gt$topic) == 0) {
+        output$status <- renderUI({
+          tags$div(class = "status-error",
+                   tags$i(class = "fa fa-exclamation-triangle"),
+                   " Please select or enter both Genre and Topic")
+        })
+        return()
+      }
+      
       output$status <- renderUI({
         tags$div(class = "status-info",
                  tags$i(class = "fa fa-spinner fa-spin"),
@@ -31,8 +43,8 @@ add_single_server <- function(id, api_manager) {
         df <- data.frame(
           book_name = trimws(input$book_name),
           author = trimws(input$author),
-          genre = "",
-          topic = "",
+          genre = gt$genre,
+          topic = gt$topic,
           chapter = trimws(input$chapter),
           section = trimws(input$section),
           main_details = trimws(input$main_details),

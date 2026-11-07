@@ -1,0 +1,33 @@
+module:
+  id: "sixsigma_browse"
+  name: "Browse Six Sigma Diagrams"
+  description: "Browse saved Six Sigma diagrams and download the raw component rows"
+  version: "1.0.0"
+  author: "Six Sigma Analysis Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Browse Diagrams"
+    icon: "table"
+    tabname: "sixsigma_browse"
+    group: "Six Sigma Analysis"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - DT
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: ["bigquery"]
+
+  data:
+    required: []
+    optional: []

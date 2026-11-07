@@ -1,0 +1,55 @@
+{
+  "audience": "Executives & boards",
+  "themes": ["AI & digital", "Leadership & teams", "Finance & investment"],
+  "profile": [
+    {"q": "Who", "a": "The author, drawing on his time as Head of AI and Digital Transformation at one of the largest UK banks, writing for Organisational Behaviour and Leadership."},
+    {"q": "For whom", "a": "The C-suite and senior managers of a conventional retail bank trying to become AI-driven."},
+    {"q": "What", "a": "Why AI transformation in retail banks stalls on culture rather than technology, and a five-stage route to change it."},
+    {"q": "When", "a": "Handed in on 6 January 2025. Banks' generative AI spending is forecast to rise from $6bn in 2024 to $85bn in 2030."},
+    {"q": "Where", "a": "UK retail banking, with comparisons to Deutsche Bank's Open Banking payments work in Poland and Commonwealth Bank of Australia's generative AI programme."},
+    {"q": "Why", "a": "Challenger banks without branches threaten incumbents, but legacy hierarchy, a unionised workforce and fear of job losses after branch closures slow adoption even when budgets exist."},
+    {"q": "How", "a": "The three-level culture model (artifacts, espoused values, underlying assumptions) diagnoses the bank; the change framework (shared need, vision, commitment, monitoring, making change last) prescribes the route; OKRs measure progress."}
+  ],
+  "headline": [
+    {"value": "$6bn to $85bn", "label": "Bank GenAI spend, 2024 to 2030"},
+    {"value": "~56%", "label": "Implied yearly growth (derived)"},
+    {"value": "+10%", "label": "Revenue objective per year from AI"},
+    {"value": "5", "label": "Stages in the change route"}
+  ],
+  "facts": [
+    {"what": "Banks' generative AI spending worldwide, 2024", "value": "$6bn", "page": 14},
+    {"what": "Banks' generative AI spending forecast, 2030", "value": "$85bn", "page": 14},
+    {"what": "Implied compound annual growth 2024-2030 (calculated from the two figures)", "value": "about 56% a year", "page": 14},
+    {"what": "Example objective for the bank's OKRs", "value": "+10% revenue a year from AI", "page": 17},
+    {"what": "Culture levels used to diagnose the bank", "value": "3", "page": 15},
+    {"what": "Stages of the change framework applied", "value": "5", "page": 16},
+    {"what": "Era when banks started using AI to optimise operations", "value": "2010s", "page": 14}
+  ],
+  "charts": [
+    {"type": "bar", "title": "Banks' generative AI spending forecast ($bn)",
+     "labels": ["2024", "2030 (forecast)"], "values": [6, 85], "prefix": "$", "suffix": "bn",
+     "colors": ["#7f8c8d", "#1a3a6a"],
+     "takeaway": "Spending rises about 14 times in six years, roughly 56% a year. The paper's point is that money is no longer the constraint: the bank that fails will fail on culture.",
+     "source": "Page 14. Growth rate calculated from the two stated figures."},
+    {"type": "cards", "cols": 3, "title": "The bank's culture on three levels",
+     "items": [
+       {"tag": "Visible", "title": "Artifacts", "items": ["Specialist AI teams", "Code repositories", "Regular risk and progress sessions", "Dashboards on algorithm performance"]},
+       {"tag": "Stated", "title": "Espoused values", "items": ["Generic C-level AI strategy", "Customer-satisfaction targets", "FCA guidance on ethical AI", "AI risk policies with vague value attribution"]},
+       {"tag": "Hidden", "title": "Underlying assumptions", "items": ["A unionised workforce slows sudden change", "Transformation seen as branding", "AI means job losses after branch closures", "Operations treats C-level views as aspirational"]}
+     ],
+     "takeaway": "The gap sits between the levels: the bank has the artifacts and says the right things, but the assumptions underneath work against both. That is why a sound strategy can still stall."},
+    {"type": "steps", "title": "The change route the paper prescribes",
+     "items": [
+       {"title": "Create a shared need", "text": "Present AI as creative destruction needed to survive challenger banks, not as a cost."},
+       {"title": "Shape a vision", "text": "Use Open Banking as the trigger for new services and a short transformative purpose such as 'the best customised digital journey'."},
+       {"title": "Mobilise commitment", "text": "Define the problem precisely, make goals public, tolerate failure but not incompetence, use political intelligence."},
+       {"title": "Monitor progress", "text": "OKRs: +10% revenue a year from AI, with key results on digital adoption and net promoter score."},
+       {"title": "Make change last", "text": "A central AI Council, training, flatter information flow, and a CEO success story."}
+     ],
+     "takeaway": "Artifacts change first; assumptions change only with consistent behaviour over time, so the later stages carry the most weight."},
+    {"type": "versus", "title": "What resists the change and what the paper uses against it",
+     "left": {"title": "Sources of resistance", "items": ["Fear of redundancy and skill obsolescence", "Silos between data scientists, IT and business units", "Risk aversion driven by regulation", "Leaders without a clear AI vision", "Training and skill gaps"]},
+     "right": {"title": "Levers proposed", "items": ["Clear communication of how roles change", "Central AI Council and cross-functional teams", "Experimentation within compliance limits", "Leadership alignment and a success narrative", "Upskilling with realistic goals and tools"]},
+     "takeaway": "Each resistance point has a matching lever; the paper does not say which lever moved the assumptions in the author's own bank."}
+  ]
+}

@@ -1,0 +1,16 @@
+module:
+  id: "cav_route_sampler"
+  name: "CAV Route Sampler"
+  description: "Generate waypoints for CAV analysis"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Route Sampler"
+    icon: "map-marker-alt"
+    tabname: "cav_route_sampler"
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - dplyr
+      - DT

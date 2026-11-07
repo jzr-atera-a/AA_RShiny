@@ -1,0 +1,51 @@
+# modules/_module_registry.yml
+# Central Module Registry - THE CONTROL CENTER
+
+modules:
+  bigquery_auth:
+    enabled: true
+    priority: 1
+    description: "BigQuery authentication and configuration"
+
+  claude_api_config:
+    enabled: true
+    priority: 2
+    description: "Claude API credentials management"
+
+  generate_mindmap:
+    enabled: true
+    priority: 10
+    description: "AI-powered generation of a new mind map (full tree)"
+
+  edit_mindmap:
+    enabled: true
+    priority: 11
+    description: "AI-powered editing of an existing mind map (delta-based, with app-computed cascade delete)"
+
+  visualize_mindmap:
+    enabled: true
+    priority: 12
+    description: "Interactive collapsible mind map rendered with D3.js, with cross-links"
+
+  browse_data:
+    enabled: true
+    priority: 13
+    description: "Browse and download all stored node version rows"
+
+  about:
+    enabled: true
+    priority: 99
+    description: "Application information and schema"
+
+settings:
+  auto_install: false
+  check_versions: true
+  verbose: true
+  dev_mode: false
+
+app:
+  name: "Mind Map Suite"
+  version: "1.0.0"
+  description: "AI-powered generation, editing, and visualization of hierarchical mind maps with cross-links, backed by an append-only versioned BigQuery table"
+  author: "Your Team"
+  table: "atera-2.Wonderfulp_March.mindmap_nodes"

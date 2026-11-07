@@ -1,0 +1,17 @@
+module:
+  id: "schedule_commitment_config"
+  name: "Commitment Trello Config"
+  description: "Trello API credentials for pushing commitments to a board, local to this feature"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "Commitment Trello Config"
+    icon: "key"
+    tabname: "schedule_commitment_config"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, httr, jsonlite]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

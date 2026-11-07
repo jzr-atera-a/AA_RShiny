@@ -1,0 +1,33 @@
+module:
+  id: "claude_api_config"
+  name: "Claude API Configuration"
+  description: "Configure Anthropic Claude API credentials"
+  version: "1.0.0"
+  author: "Flex Table Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Claude API Config"
+    icon: "robot"
+    tabname: "claude_api_config"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - httr
+      - jsonlite
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: []
+
+  data:
+    required: []
+    optional: []

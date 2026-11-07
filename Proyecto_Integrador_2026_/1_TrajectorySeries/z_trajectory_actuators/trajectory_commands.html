@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Quest 3 - Robot Trajectory Commands</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <style>
+            body { margin: 0; font-family: monospace; background: #000; color: #fff; }
+            #info {
+                position: absolute; top: 10px; width: 100%; text-align: center; z-index: 100;
+                background: rgba(0,0,0,0.9); padding: 15px; font-size: 13px;
+            }
+            .status-good { color: #0f0; }
+            .status-bad { color: #f00; }
+            .status-warning { color: #ff0; }
+            .status-approved { color: #ffa500; }
+            .status-sent { color: #00ffff; }
+        </style>
+    </head>
+    <body>
+        <div id="info">
+            <strong>Quest 3 Robot Trajectory Commands</strong><br/>
+            Status: <span id="trajectory-status" class="status-warning">DRAWING</span> | 
+            Connected: <span id="conn-status" class="status-bad">NO</span> | 
+            Floor: <span id="floor-status" class="status-warning">Detecting...</span><br/>
+            Points: <span id="point-count">0</span> | Distance: <span id="path-distance">0.00</span>m<br/>
+            <div id="execution-status" style="display:none; margin-top:10px; color:#00ffff;">
+                <strong>EXECUTING:</strong> <span id="exec-progress">0/0</span> commands | 
+                Remaining: <span id="exec-remaining">0.00</span>m
+            </div>
+            <small>RIGHT TRIGGER: Draw | GRIP: Approve | A BUTTON: Send to Robot | THUMBSTICK: Delete</small>
+        </div>
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+                    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+                }
+            }
+        </script>
+
+        <script type="module">
+            import * as THREE from 'three';
+            import { ARButton } from 'three/addons/webxr/ARButton.js';
+
+            // CONFIG
+            const JETSON_IP = '192.168.100.10';
+            const WS_PORT = 8443;
+            const FLOOR_OFFSET = 1.6;
+            const MIN_POINT_DISTANCE = 0.05;
+            const ROBOT_TURNING_RADIUS = 0.5;  // 50cm
+            
+            // STATE
+            let scene, camera, renderer;
+            let controller1;
+            let websocket = null;
+            
+            let floorY = null;
+            let floorDetected = false;
+            let userX = 0, userZ = 0;
+            
+            let trajectoryPoints = [];
+            let trajectoryLine = null;
+            let isDrawing = false;
+            let isApproved = false;
+            let isSent = false;
+            let totalDistance = 0;
+            
+            let controllerReticle;
+            let raycaster;
+            let floorPlane;
+            
+            let lastGrip = false;
+            let lastThumbstick = false;
+            let lastAButton = false;
+
+            // WEBSOCKET
+            function connectWebSocket() {
+                try {
+                    websocket = new WebSocket(`wss://${JETSON_IP}:${WS_PORT}`);
+                    
+                    websocket.onopen = () => {
+                        console.log('✓ Connected');
+                        document.getElementById('conn-status').textContent = 'YES';
+                        document.getElementById('conn-status').className = 'status-good';
+                    };
+                    
+                    websocket.onclose = () => {
+                        document.getElementById('conn-status').textContent = 'NO';
+                        document.getElementById('conn-status').className = 'status-bad';
+                        setTimeout(connectWebSocket, 2000);
+                    };
+                    
+                    websocket.onmessage = (event) => {
+                        try {
+                            const response = JSON.parse(event.data);
+                            
+                            if (response.type === 'commands_ready') {
+                                console.log('✓ Server generated', response.command_count, 'commands');
+                                console.log('✓ CSV saved:', response.csv_file);
+                                console.log('✓ Starting real-time execution...');
+                                
+                                // Show execution status
+                                document.getElementById('execution-status').style.display = 'block';
+                                document.getElementById('exec-progress').textContent = `0/${response.command_count}`;
+                            }
+                            else if (response.type === 'command_execute') {
+                                // Real-time command execution update
+                                const cmdNum = Math.floor(response.timestamp * 5);
+                                document.getElementById('exec-remaining').textContent = response.distance_remaining.toFixed(2);
+                                
+                                console.log(`[${response.timestamp.toFixed(1)}s] SERVO2:${response.servo2} MOTOR1:${response.motor1} MOTOR2:${response.motor2}`);
+                            }
+                            else if (response.type === 'execution_complete') {
+                                console.log('✓ Trajectory execution complete!');
+                                document.getElementById('trajectory-status').textContent = 'EXECUTED';
+                                document.getElementById('execution-status').style.display = 'none';
+                            }
+                        } catch (e) {}
+                    };
+                } catch (e) {
+                    console.error('WebSocket error:', e);
+                }
+            }
+
+            function sendTrajectory() {
+                if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+                    console.log('⚠ WebSocket not connected');
+                    return;
+                }
+                
+                if (!isApproved) {
+                    console.log('⚠ Trajectory not approved');
+                    return;
+                }
+                
+                if (trajectoryPoints.length < 5) {
+                    console.log('⚠ Need at least 5 points');
+                    return;
+                }
+                
+                const data = {
+                    command: 'GENERATE_COMMANDS',
+                    trajectory: {
+                        points: trajectoryPoints.map(p => ({x: p.x, y: p.y, z: p.z})),
+                        distance: totalDistance,
+                        floorY: floorY
+                    }
+                };
+                
+                try {
+                    websocket.send(JSON.stringify(data));
+                    isSent = true;
+                    document.getElementById('trajectory-status').textContent = 'SENT TO ROBOT';
+                    document.getElementById('trajectory-status').className = 'status-sent';
+                    console.log('✓ Trajectory sent to server for command generation');
+                } catch (e) {
+                    console.error('Send failed:', e);
+                }
+            }
+
+            // ROBOT CONSTRAINTS
+            function checkCurvature(p1, p2, p3) {
+                const a = p1.distanceTo(p2);
+                const b = p2.distanceTo(p3);
+                const c = p3.distanceTo(p1);
+                const s = (a + b + c) / 2;
+                const area = Math.sqrt(Math.max(0, s * (s - a) * (s - b) * (s - c)));
+                if (area < 0.001) return true;
+                const curvature = (4 * area) / (a * b * c);
+                const radius = curvature === 0 ? Infinity : 1 / curvature;
+                return radius >= ROBOT_TURNING_RADIUS;
+            }
+
+            // TRAJECTORY
+            function addPoint(point) {
+                point.y = floorY;
+                
+                if (trajectoryPoints.length > 0) {
+                    const dist = point.distanceTo(trajectoryPoints[trajectoryPoints.length - 1]);
+                    if (dist < MIN_POINT_DISTANCE) return;
+                    totalDistance += dist;
+                }
+                
+                if (trajectoryPoints.length >= 2) {
+                    if (!checkCurvature(trajectoryPoints[trajectoryPoints.length - 2], trajectoryPoints[trajectoryPoints.length - 1], point)) {
+                        console.log('⚠ Too sharp');
+                        return;
+                    }
+                }
+                
+                trajectoryPoints.push(point.clone());
+                document.getElementById('point-count').textContent = trajectoryPoints.length;
+                document.getElementById('path-distance').textContent = totalDistance.toFixed(2);
+                updateLine();
+            }
+
+            function updateLine() {
+                if (trajectoryLine) {
+                    scene.remove(trajectoryLine);
+                    trajectoryLine.geometry.dispose();
+                    trajectoryLine.material.dispose();
+                }
+                
+                if (trajectoryPoints.length < 2) return;
+                
+                const curve = new THREE.CatmullRomCurve3(trajectoryPoints);
+                const geometry = new THREE.TubeGeometry(curve, trajectoryPoints.length * 10, 0.02, 8, false);
+                const color = isApproved ? 0xffa500 : 0x00ff00;
+                const material = new THREE.MeshBasicMaterial({ color: color });
+                
+                trajectoryLine = new THREE.Mesh(geometry, material);
+                scene.add(trajectoryLine);
+            }
+
+            function deleteLast() {
+                if (trajectoryPoints.length === 0) return;
+                
+                const count = Math.min(10, trajectoryPoints.length);
+                for (let i = 0; i < count; i++) {
+                    trajectoryPoints.pop();
+                }
+                
+                totalDistance = 0;
+                for (let i = 1; i < trajectoryPoints.length; i++) {
+                    totalDistance += trajectoryPoints[i].distanceTo(trajectoryPoints[i - 1]);
+                }
+                
+                document.getElementById('point-count').textContent = trajectoryPoints.length;
+                document.getElementById('path-distance').textContent = totalDistance.toFixed(2);
+                updateLine();
+            }
+
+            function approve() {
+                if (trajectoryPoints.length < 5) return;
+                isApproved = true;
+                document.getElementById('trajectory-status').textContent = 'APPROVED';
+                document.getElementById('trajectory-status').className = 'status-approved';
+                updateLine();
+                console.log('✓ APPROVED - Press A button to send to robot');
+            }
+
+            // SETUP
+            function init() {
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+                
+                const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
+                light.position.set(0.5, 1, 0.25);
+                scene.add(light);
+
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.xr.enabled = true;
+                document.body.appendChild(renderer.domElement);
+
+                document.body.appendChild(ARButton.createButton(renderer, { 
+                    requiredFeatures: ['local-floor'] 
+                }));
+
+                controller1 = renderer.xr.getController(1);
+                scene.add(controller1);
+                
+                const rayGeometry = new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(0, 0, 0),
+                    new THREE.Vector3(0, 0, -3)
+                ]);
+                const rayLine = new THREE.Line(rayGeometry, new THREE.LineBasicMaterial({ color: 0x00ffff }));
+                controller1.add(rayLine);
+
+                controllerReticle = new THREE.Mesh(
+                    new THREE.RingGeometry(0.1, 0.15, 32).rotateX(-Math.PI / 2),
+                    new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide })
+                );
+                controllerReticle.visible = false;
+                scene.add(controllerReticle);
+
+                raycaster = new THREE.Raycaster();
+                renderer.setAnimationLoop(animate);
+                
+                console.log('✓ Init complete');
+            }
+
+            // ANIMATION LOOP
+            let frameCount = 0;
+            
+            function animate() {
+                const session = renderer.xr.getSession();
+                
+                if (session) {
+                    frameCount++;
+                    
+                    const frame = renderer.xr.getFrame();
+                    const refSpace = renderer.xr.getReferenceSpace();
+                    
+                    // Floor detection
+                    if (!floorDetected && frame && refSpace) {
+                        const viewerPose = frame.getViewerPose(refSpace);
+                        if (viewerPose) {
+                            const headsetY = viewerPose.transform.position.y;
+                            floorY = headsetY - FLOOR_OFFSET;
+                            
+                            userX = viewerPose.transform.position.x;
+                            userZ = viewerPose.transform.position.z;
+                            
+                            floorDetected = true;
+                            
+                            console.log('✓ FLOOR DETECTED at Y:', floorY.toFixed(2));
+                            
+                            document.getElementById('floor-status').textContent = 'Detected!';
+                            document.getElementById('floor-status').className = 'status-good';
+                            
+                            floorPlane = new THREE.Mesh(
+                                new THREE.PlaneGeometry(100, 100).rotateX(-Math.PI / 2),
+                                new THREE.MeshBasicMaterial({ visible: false })
+                            );
+                            floorPlane.position.y = floorY;
+                            scene.add(floorPlane);
+                            
+                            const grid = new THREE.GridHelper(5, 20, 0x00ff00, 0x004400);
+                            grid.position.set(userX, floorY, userZ);
+                            scene.add(grid);
+                        }
+                    }
+                    
+                    // Raycast from controller
+                    if (floorDetected && controller1 && floorPlane) {
+                        const tempMatrix = new THREE.Matrix4();
+                        tempMatrix.identity().extractRotation(controller1.matrixWorld);
+                        
+                        const rayOrigin = new THREE.Vector3();
+                        rayOrigin.setFromMatrixPosition(controller1.matrixWorld);
+                        
+                        const rayDirection = new THREE.Vector3(0, 0, -1);
+                        rayDirection.applyMatrix4(tempMatrix);
+                        
+                        raycaster.set(rayOrigin, rayDirection);
+                        
+                        const intersects = raycaster.intersectObject(floorPlane);
+                        
+                        if (intersects.length > 0) {
+                            const intersectPoint = intersects[0].point;
+                            
+                            controllerReticle.position.copy(intersectPoint);
+                            controllerReticle.visible = true;
+                            
+                            // Controller input
+                            const inputSources = session.inputSources;
+                            inputSources.forEach((source, index) => {
+                                if (index !== 1) return;
+                                
+                                const gamepad = source.gamepad;
+                                if (!gamepad) return;
+                                
+                                const trigger = gamepad.buttons[0] && gamepad.buttons[0].pressed;
+                                const grip = gamepad.buttons[1] && gamepad.buttons[1].pressed;
+                                const thumbstick = gamepad.buttons[3] && gamepad.buttons[3].pressed;
+                                const aButton = gamepad.buttons[4] && gamepad.buttons[4].pressed;
+                                
+                                // Draw
+                                if (!isApproved && trigger) {
+                                    if (!isDrawing) {
+                                        isDrawing = true;
+                                        console.log('✓ Drawing started');
+                                    }
+                                    addPoint(intersectPoint);
+                                } else {
+                                    if (isDrawing) {
+                                        isDrawing = false;
+                                        console.log('✓ Drawing stopped');
+                                    }
+                                }
+                                
+                                // Approve
+                                if (grip && !lastGrip && !isApproved) {
+                                    approve();
+                                }
+                                lastGrip = grip;
+                                
+                                // Delete
+                                if (thumbstick && !lastThumbstick && !isApproved) {
+                                    deleteLast();
+                                }
+                                lastThumbstick = thumbstick;
+                                
+                                // Send to robot
+                                if (aButton && !lastAButton && isApproved && !isSent) {
+                                    sendTrajectory();
+                                }
+                                lastAButton = aButton;
+                            });
+                            
+                        } else {
+                            controllerReticle.visible = false;
+                        }
+                    }
+                }
+                
+                renderer.render(scene, camera);
+            }
+
+            // START
+            init();
+            connectWebSocket();
+            
+            console.log('Quest 3 Trajectory Commands Ready!');
+            console.log('1. Draw with RIGHT TRIGGER');
+            console.log('2. Approve with GRIP (turns orange)');
+            console.log('3. Send to robot with A BUTTON');
+        </script>
+    </body>
+</html>

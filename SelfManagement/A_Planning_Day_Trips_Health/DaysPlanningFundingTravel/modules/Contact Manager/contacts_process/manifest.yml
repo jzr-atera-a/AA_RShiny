@@ -1,0 +1,17 @@
+module:
+  id: "contacts_process"
+  name: "Process Contact"
+  description: "Extract contact information from documents with an LLM"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "Process Contact"
+    icon: "file-import"
+    tabname: "contacts_process"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, DT, jsonlite, uuid, pdftools, readtext]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

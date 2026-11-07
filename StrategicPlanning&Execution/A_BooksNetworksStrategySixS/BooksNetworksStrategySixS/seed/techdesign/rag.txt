@@ -1,0 +1,406 @@
+design_id: seed_rag
+design_group: ml_genai
+design_type: rag
+title: Retrieval-Augmented Generation (RAG)
+variant: Hybrid search with reranking and citations
+summary: RAG grounds a large language model in private or fresh knowledge. Documents are chunked, embedded and indexed offline. At question time the system retrieves the most relevant chunks, adds them to the prompt and the model answers from them with citations, so knowledge changes without retraining.
+when_to_use: Answers must be based on private, frequently changing or auditable documents, such as policies, manuals, tickets or contracts.
+when_not_to_use: The task needs no external knowledge, or the whole corpus fits comfortably in the model context window.
+complexity: Medium
+tags: rag, llm, vector search, embeddings, grounding
+
+@component
+id: C1
+label: User
+lane: Client
+kind: actor
+description: Employee or customer asking questions in natural language.
+technologies: Web app, Chat UI, Slack
+attributes: N/A
+methods: N/A
+
+@component
+id: C2
+label: Application API
+lane: Client
+kind: gateway
+description: Authenticates the user, enforces document-level access control and orchestrates each request.
+technologies: FastAPI, API Gateway, OAuth
+attributes: N/A
+methods: N/A
+
+@component
+id: C3
+label: Query Rewriter
+lane: Query Pipeline
+kind: process
+description: Rewrites the question into a standalone query using chat history and routes it to the right index.
+technologies: LLM prompt, LangChain
+attributes: N/A
+methods: N/A
+
+@component
+id: C4
+label: Query Embedding Model
+lane: Query Pipeline
+kind: model
+description: Turns the rewritten query into a dense vector.
+technologies: text-embedding-3, BGE, E5
+attributes: N/A
+methods: N/A
+
+@component
+id: C5
+label: Hybrid Retriever
+lane: Query Pipeline
+kind: service
+description: Runs vector search and keyword search in parallel and merges the candidates.
+technologies: LlamaIndex, LangChain, Haystack
+attributes: N/A
+methods: N/A
+
+@component
+id: C6
+label: Reranker
+lane: Query Pipeline
+kind: model
+description: Cross-encoder that re-scores the candidates and keeps only the best few chunks.
+technologies: Cohere Rerank, bge-reranker
+attributes: N/A
+methods: N/A
+
+@component
+id: C7
+label: Vector Database
+lane: Knowledge Stores
+kind: store
+description: Stores chunk embeddings for approximate nearest neighbour search.
+technologies: pgvector, Pinecone, Qdrant
+attributes: N/A
+methods: N/A
+
+@component
+id: C8
+label: Keyword Index
+lane: Knowledge Stores
+kind: store
+description: BM25 index that catches exact terms such as product codes and names.
+technologies: OpenSearch, Elasticsearch
+attributes: N/A
+methods: N/A
+
+@component
+id: C9
+label: Document Store
+lane: Knowledge Stores
+kind: store
+description: Holds original passages and metadata so answers can cite their sources.
+technologies: S3, Postgres
+attributes: N/A
+methods: N/A
+
+@component
+id: C10
+label: Context Builder
+lane: Generation
+kind: process
+description: Assembles the prompt from instructions, chat history and numbered source passages within the token budget.
+technologies: Prompt templates
+attributes: N/A
+methods: N/A
+
+@component
+id: C11
+label: LLM
+lane: Generation
+kind: model
+description: Generates the answer using only the supplied sources.
+technologies: Claude, GPT-4, Llama 3
+attributes: N/A
+methods: N/A
+
+@component
+id: C12
+label: Guardrails and Citation Check
+lane: Generation
+kind: process
+description: Checks that claims are supported by the cited passages and filters unsafe output.
+technologies: NeMo Guardrails, custom verifier
+attributes: N/A
+methods: N/A
+
+@component
+id: C13
+label: Data Sources
+lane: Ingestion
+kind: external
+description: Systems of record that contain the documents.
+technologies: SharePoint, Confluence, S3
+attributes: N/A
+methods: N/A
+
+@component
+id: C14
+label: Parser and Chunker
+lane: Ingestion
+kind: process
+description: Extracts text, splits it into overlapping chunks and attaches metadata and permissions.
+technologies: Unstructured, Tika
+attributes: N/A
+methods: N/A
+
+@component
+id: C15
+label: Indexing Embedding Model
+lane: Ingestion
+kind: model
+description: Embeds every chunk with the same model family used for queries.
+technologies: text-embedding-3, BGE
+attributes: N/A
+methods: N/A
+
+@component
+id: C16
+label: Semantic Cache
+lane: Operations
+kind: cache
+description: Returns a stored answer when a near-identical question was already answered.
+technologies: Redis, GPTCache
+attributes: N/A
+methods: N/A
+
+@component
+id: C17
+label: Feedback and Eval Store
+lane: Operations
+kind: store
+description: Stores thumbs up and down, traces and offline evaluation sets.
+technologies: Postgres, BigQuery
+attributes: N/A
+methods: N/A
+
+@component
+id: C18
+label: Monitoring
+lane: Operations
+kind: monitor
+description: Tracks retrieval hit rate, latency, cost and answer quality.
+technologies: LangSmith, Arize, Grafana
+attributes: N/A
+methods: N/A
+
+@connection
+from: C1
+to: C2
+label: question
+type: data
+
+@connection
+from: C2
+to: C16
+label: check cache
+type: control
+
+@connection
+from: C2
+to: C3
+label: user query and history
+type: data
+
+@connection
+from: C3
+to: C4
+label: standalone query
+type: data
+
+@connection
+from: C4
+to: C5
+label: query vector
+type: data
+
+@connection
+from: C5
+to: C7
+label: vector search
+type: data
+
+@connection
+from: C5
+to: C8
+label: keyword search
+type: data
+
+@connection
+from: C5
+to: C6
+label: merged candidates
+type: data
+
+@connection
+from: C6
+to: C9
+label: top chunk ids
+type: data
+
+@connection
+from: C9
+to: C10
+label: passages and metadata
+type: data
+
+@connection
+from: C10
+to: C11
+label: grounded prompt
+type: data
+
+@connection
+from: C11
+to: C12
+label: draft answer
+type: data
+
+@connection
+from: C12
+to: C2
+label: cited answer
+type: data
+
+@connection
+from: C2
+to: C1
+label: answer with sources
+type: data
+
+@connection
+from: C13
+to: C14
+label: documents
+type: data
+
+@connection
+from: C14
+to: C15
+label: chunks
+type: data
+
+@connection
+from: C15
+to: C7
+label: embeddings
+type: data
+
+@connection
+from: C14
+to: C8
+label: chunk text
+type: data
+
+@connection
+from: C14
+to: C9
+label: passages
+type: data
+
+@connection
+from: C2
+to: C17
+label: user feedback
+type: event
+
+@connection
+from: C17
+to: C3
+label: tune prompts and routing
+type: feedback
+
+@connection
+from: C2
+to: C18
+label: traces
+type: event
+
+@step
+order: 1
+text: Source documents are parsed and split into chunks with metadata and permissions.
+components: C13,C14
+
+@step
+order: 2
+text: Chunks are embedded and written to the vector, keyword and document stores.
+components: C14,C15,C7,C8,C9
+
+@step
+order: 3
+text: The user asks a question; the API authenticates, checks the semantic cache and passes the query on.
+components: C1,C2,C16
+
+@step
+order: 4
+text: The query is rewritten and embedded.
+components: C3,C4
+
+@step
+order: 5
+text: Hybrid retrieval searches both indexes and merges candidates.
+components: C5,C7,C8
+
+@step
+order: 6
+text: The reranker keeps the best chunks and their full passages are fetched.
+components: C6,C9
+
+@step
+order: 7
+text: The context builder assembles the prompt, the LLM answers and guardrails verify the citations.
+components: C10,C11,C12
+
+@step
+order: 8
+text: The cited answer returns to the user and feedback is logged for tuning.
+components: C2,C1,C17
+
+@tradeoff
+kind: pro
+text: Answers are grounded in your data and can cite their sources.
+
+@tradeoff
+kind: pro
+text: Knowledge is updated by re-indexing, with no model retraining.
+
+@tradeoff
+kind: con
+text: Answer quality is capped by retrieval quality, so chunking and ranking need ongoing tuning.
+
+@tradeoff
+kind: con
+text: Retrieval and reranking add latency to every question.
+
+@tradeoff
+kind: risk
+text: Stale, duplicated or poisoned documents lead to confident wrong answers.
+
+@tradeoff
+kind: cost
+text: Embedding, vector storage and reranking add recurring cost on top of LLM tokens.
+
+@tradeoff
+kind: scaling
+text: Vector index memory and ingestion throughput grow with corpus size; shard and filter by metadata.
+
+@reference
+title: Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks
+author: Lewis et al.
+url: https://arxiv.org/abs/2005.11401
+
+@reference
+title: Dense Passage Retrieval for Open-Domain Question Answering
+author: Karpukhin et al.
+url: https://arxiv.org/abs/2004.04906
+
+@reference
+title: Designing Machine Learning Systems
+author: Chip Huyen
+url: N/A
+

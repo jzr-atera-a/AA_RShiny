@@ -1,0 +1,32 @@
+module:
+  id: "bulk_import"
+  name: "Bulk Import"
+  description: "Parse and upload a raw generated table (paste text)"
+  version: "1.0.0"
+  author: "Flex Table Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Bulk Import"
+    icon: "file-import"
+    tabname: "bulk_import"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - DT
+
+    package_versions: {}
+
+  api:
+    required: ["bigquery"]
+    optional: []
+
+  data:
+    required: []
+    optional: []

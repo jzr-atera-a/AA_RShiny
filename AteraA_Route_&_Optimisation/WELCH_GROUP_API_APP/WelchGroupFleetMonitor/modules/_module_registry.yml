@@ -1,0 +1,16 @@
+modules:
+  - module:
+      id: api_connection
+      name: "API Connection"
+      tabname: api_connection_tab
+      icon: plug
+      file: modules/api_connection.R
+      enabled: true
+
+  - module:
+      id: vehicle_data
+      name: "Vehicle Data"
+      tabname: vehicle_data_tab
+      icon: truck
+      file: modules/vehicle_data.R
+      enabled: true

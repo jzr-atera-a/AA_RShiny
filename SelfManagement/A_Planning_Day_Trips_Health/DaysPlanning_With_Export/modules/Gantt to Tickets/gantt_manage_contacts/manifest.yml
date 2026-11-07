@@ -1,0 +1,17 @@
+module:
+  id: "gantt_manage_contacts"
+  name: "Manage Contacts"
+  description: "Manage the assignee contact list for this suite"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "Manage Contacts"
+    icon: "address-card"
+    tabname: "gantt_manage_contacts"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, DT, readxl, writexl, dplyr]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

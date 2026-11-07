@@ -1,0 +1,746 @@
+<!doctype html><html><head><meta charset="utf8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><script type='text/javascript' nonce='1aRyznbshNLkwKHMCiLkTQ==' src='https://37584e7b-938d-4b3e-91c4-47fe79d77c2f.frame.claudeusercontent.com/Sj2uafWwPvG1BLpt2iGTMUflkN44L8FsSvZ0hOXVXhgRq5uw94j6GJpXmDau2zvv5Cfaf32X4rOmkQOGYqM1dnQKn03_crQeaRzmBHmU36CpDJrBjh4ocwBxQjmkhQeEjEYwN8AVFXAloDKZgb8ORQxkghnMpf0cMbQ32sF0arl93dh1Fo6ETNJX4_ag2sKqEx0R7c4EEqVd4kBr7-labdH1n09qTLVO1_zuQ22JyjYkaSKVYFuFpmsYKwl1VPHr7c0SUBIru_erHhKM4L1BYkYwzxGeT_exxWpLbI69CLTQ6hfeVcWc3U8GjEviMPSdmDPSd0T6TPH_oac-4oyomFo1HT9yMsVhXk20BJXZ48mTS-SJUQa8Sn1-fjQlzh-E4aQJHtdYYg2fc3K3a1SDdPd84xPkkA5gIFMZh1yropcen_3_Ekgx2KYFsDzKeZZTiio1IOmFcE1fitMoxzv8lw5TAgN4WPsl1oi_sQ3GymYElhrLUdd5sAJEq3OXQzCvZPlOC7HwLBk8dUru842CS3XtO7xiM-0kw-vVlAyC2CzHH3ltHpqYV_CmyESMyxVd-LdWGhkB1WjnUg4TKdn5uRrGHYC0ezQNma3kiuk4aXTlKZXszwQwij1jN266BvKco293RP1NtpulF_tqv8UVgjQQ22B75SolBz5Z75MuGHC5Etx42GcSTifCjCYg4A4oBfRjMhHE8EmbEzzeQ5ZGuA'></script></head><body>
+<title>Compelling Communication — 100 Rules</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&amp;family=Nunito:wght@300;400;500;600;700&amp;display=swap">
+
+<style>
+/* ─── Token System ─────────────────────────────────────── */
+/* Layout: sticky sidebar + scrollable chapter panels grid */
+:root {
+  --bg:           #0D1117;
+  --surface:      #141B24;
+  --surface-2:    #1C2633;
+  --border:       rgba(232,160,32,0.15);
+  --fg:           #E8EDF4;
+  --fg-muted:     #8B9BB0;
+  --gold:         #E8A020;
+  --gold-light:   #F5C842;
+  --gold-dim:     rgba(232,160,32,0.12);
+  --rule-num:     rgba(232,160,32,0.20);
+
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body:    'Nunito', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg:        #F7F4EF;
+    --surface:   #FFFFFF;
+    --surface-2: #F0EDE8;
+    --border:    rgba(180,120,20,0.18);
+    --fg:        #1A1F2B;
+    --fg-muted:  #6B7485;
+    --gold:      #B87010;
+    --gold-light: #D4900A;
+    --gold-dim:  rgba(180,120,20,0.09);
+    --rule-num:  rgba(180,120,20,0.15);
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg:        #F7F4EF;
+  --surface:   #FFFFFF;
+  --surface-2: #F0EDE8;
+  --border:    rgba(180,120,20,0.18);
+  --fg:        #1A1F2B;
+  --fg-muted:  #6B7485;
+  --gold:      #B87010;
+  --gold-light: #D4900A;
+  --gold-dim:  rgba(180,120,20,0.09);
+  --rule-num:  rgba(180,120,20,0.15);
+  color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.65;
+  font-size: 15px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0;
+}
+
+/* ─── Page Shell ────────────────────────────────────────── */
+.shell {
+  display: flex;
+  min-height: 100vh;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* ─── Sidebar ───────────────────────────────────────────── */
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 36px 0 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-right: 1px solid var(--border);
+  scrollbar-width: none;
+}
+.sidebar::-webkit-scrollbar { display: none; }
+
+.sidebar-brand {
+  padding: 0 20px 28px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.sidebar-brand .eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+.sidebar-brand h1 {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--fg);
+}
+.sidebar-brand .author {
+  font-size: 12px;
+  color: var(--fg-muted);
+  margin-top: 3px;
+}
+
+.sidebar-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  padding: 0 20px 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 20px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: all 0.15s;
+  text-decoration: none;
+  color: var(--fg-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+.nav-item:hover {
+  color: var(--fg);
+  background: var(--gold-dim);
+  border-left-color: var(--border);
+}
+.nav-item.active {
+  color: var(--gold);
+  border-left-color: var(--gold);
+  background: var(--gold-dim);
+  font-weight: 600;
+}
+.nav-num {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  width: 20px;
+  flex-shrink: 0;
+}
+.nav-text { flex: 1; min-width: 0; }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 20px 20px 0;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--fg-muted);
+  line-height: 1.4;
+}
+
+/* ─── Main Content ──────────────────────────────────────── */
+main {
+  flex: 1;
+  min-width: 0;
+  padding: 0 0 80px 40px;
+}
+
+/* ─── Page Hero ─────────────────────────────────────────── */
+.page-hero {
+  padding: 48px 0 44px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 56px;
+}
+.page-hero .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--gold-dim);
+  border: 1px solid var(--border);
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+.page-hero h2 {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 700;
+  line-height: 1.15;
+  text-wrap: balance;
+  color: var(--fg);
+  margin-bottom: 16px;
+}
+.page-hero h2 em {
+  font-style: italic;
+  color: var(--gold);
+}
+.page-hero .sub {
+  font-size: 16px;
+  color: var(--fg-muted);
+  max-width: 560px;
+  line-height: 1.6;
+}
+.hero-stats {
+  display: flex;
+  gap: 32px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+}
+.hero-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.hero-stat .num {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+.hero-stat .lbl {
+  font-size: 11px;
+  color: var(--fg-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ─── Chapter Section ───────────────────────────────────── */
+.chapter {
+  margin-bottom: 72px;
+  scroll-margin-top: 32px;
+}
+.chapter-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.chapter-num-block {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  background: var(--gold-dim);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+.chapter-num-block .ch-label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  line-height: 1;
+}
+.chapter-num-block .ch-num {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.chapter-meta { flex: 1; min-width: 0; }
+.chapter-meta h3 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--fg);
+  text-wrap: balance;
+  margin-bottom: 4px;
+}
+.chapter-meta .ch-desc {
+  font-size: 13px;
+  color: var(--fg-muted);
+  line-height: 1.5;
+}
+
+/* ─── Rules Grid ────────────────────────────────────────── */
+.rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rule {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 18px;
+  transition: border-color 0.15s;
+}
+.rule:hover {
+  border-color: rgba(232,160,32,0.3);
+}
+
+.rule-num {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  background: var(--rule-num);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.rule-body { flex: 1; min-width: 0; }
+
+.rule-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--fg);
+  margin-bottom: 3px;
+  line-height: 1.3;
+}
+.rule-title .keyword {
+  color: var(--gold);
+}
+.rule-desc {
+  font-size: 13px;
+  color: var(--fg-muted);
+  line-height: 1.55;
+}
+
+/* ─── Theme Toggle ──────────────────────────────────────── */
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 100;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--fg-muted);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-body);
+}
+.theme-toggle:hover { color: var(--gold); border-color: var(--gold); }
+
+/* ─── Responsive ────────────────────────────────────────── */
+@media (max-width: 720px) {
+  body { padding-left: max(0px, env(safe-area-inset-left, 0px)); padding-right: max(0px, env(safe-area-inset-right, 0px)); }
+  .shell { flex-direction: column; }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    padding: 12px 0;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    gap: 0;
+    scrollbar-width: none;
+  }
+  .sidebar::-webkit-scrollbar { display: none; }
+  .sidebar-brand, .sidebar-label, .sidebar-footer { display: none; }
+  .nav-item {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border-left: none;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+  .nav-item.active { border-bottom-color: var(--gold); border-left-color: transparent; background: none; }
+  main { padding: 0 16px 60px; }
+  .page-hero { padding: 28px 0 28px; margin-bottom: 32px; }
+  .chapter-header { gap: 12px; }
+  .hero-stats { gap: 20px; }
+  .theme-toggle { top: 12px; right: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+</style>
+
+<button class="theme-toggle" id="themeBtn" title="Toggle theme">☀ Light</button>
+
+<div class="shell">
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="eyebrow">Simon Hall</div>
+      <h1>Compelling Communication</h1>
+      <div class="author">100 Rules — 10 Chapters</div>
+    </div>
+    <div class="sidebar-label">Chapters</div>
+    <a class="nav-item active" href="#ch1" data-target="ch1">
+      <span class="nav-num">01</span><span class="nav-text">Foundations</span>
+    </a>
+    <a class="nav-item" href="#ch2" data-target="ch2">
+      <span class="nav-num">02</span><span class="nav-text">The Craft of Writing</span>
+    </a>
+    <a class="nav-item" href="#ch3" data-target="ch3">
+      <span class="nav-num">03</span><span class="nav-text">Writing Tricks</span>
+    </a>
+    <a class="nav-item" href="#ch4" data-target="ch4">
+      <span class="nav-num">04</span><span class="nav-text">Storytelling</span>
+    </a>
+    <a class="nav-item" href="#ch5" data-target="ch5">
+      <span class="nav-num">05</span><span class="nav-text">Strategic Stories</span>
+    </a>
+    <a class="nav-item" href="#ch6" data-target="ch6">
+      <span class="nav-num">06</span><span class="nav-text">Public Speaking</span>
+    </a>
+    <a class="nav-item" href="#ch7" data-target="ch7">
+      <span class="nav-num">07</span><span class="nav-text">Powerful Speaking</span>
+    </a>
+    <a class="nav-item" href="#ch8" data-target="ch8">
+      <span class="nav-num">08</span><span class="nav-text">Online World</span>
+    </a>
+    <a class="nav-item" href="#ch9" data-target="ch9">
+      <span class="nav-num">09</span><span class="nav-text">Media Relations</span>
+    </a>
+    <a class="nav-item" href="#ch10" data-target="ch10">
+      <span class="nav-num">10</span><span class="nav-text">Strategic Comm.</span>
+    </a>
+    <div class="sidebar-footer">
+      Based on <em>Compelling Communication</em> by Simon Hall. Adapted for Atera Analytics.
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main id="main">
+    <div class="page-hero">
+      <div class="badge">Reference Guide</div>
+      <h2>The 100 Rules of <em>Compelling Communication</em></h2>
+      <p class="sub">Ten essential rules from each of Simon Hall's ten chapters — a practical framework for anyone who wants to communicate with clarity, conviction, and impact.</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><span class="num">10</span><span class="lbl">Chapters</span></div>
+        <div class="hero-stat"><span class="num">100</span><span class="lbl">Rules</span></div>
+        <div class="hero-stat"><span class="num">1</span><span class="lbl">Golden Thread</span></div>
+      </div>
+    </div>
+
+    <!-- ── Chapter 1 ─────────────────────────────────────── -->
+    <section class="chapter" id="ch1">
+      <div class="chapter-header">
+        <div class="chapter-num-block"><span class="ch-label">Ch</span><span class="ch-num">01</span></div>
+        <div class="chapter-meta">
+          <h3>The Foundations of Effective Communication</h3>
+          <p class="ch-desc">Clarity, brevity, audience empathy, authentic voice, and the strategic use of the unexpected.</p>
+        </div>
+      </div>
+      <div class="rules-list">
+        <div class="rule"><div class="rule-num">1</div><div class="rule-body"><div class="rule-title"><span class="keyword">One idea rules all.</span></div><div class="rule-desc">Every piece of communication must carry a single central message — nothing more. Before writing a word, ask: what is the one thing my audience must take away? Everything else is noise.</div></div></div>
+        <div class="rule"><div class="rule-num">2</div><div class="rule-body"><div class="rule-title"><span class="keyword">Find your Golden Thread and write it first.</span></div><div class="rule-desc">The Golden Thread is the single idea that runs through every paragraph, every slide, every spoken word. Write it at the top of every document before you begin. Every sentence either serves it or gets cut.</div></div></div>
+        <div class="rule"><div class="rule-num">3</div><div class="rule-body"><div class="rule-title"><span class="keyword">KISS: complexity signals insecurity; simplicity signals mastery.</span></div><div class="rule-desc">Keep It Simple. The most consistently violated rule in professional communication. Use short words, short sentences, and plain language. Your audience should never have to work to understand you.</div></div></div>
+        <div class="rule"><div class="rule-num">4</div><div class="rule-body"><div class="rule-title"><span class="keyword">Run the Audience Audit before every communication.</span></div><div class="rule-desc">Answer four questions: What do they already know? What do they need to know? What do they care about? What will move them to act? Communication that skips this step is written for the sender, not the reader.</div></div></div>
+        <div class="rule"><div class="rule-num">5</div><div class="rule-body"><div class="rule-title"><span class="keyword">Brevity wins — always.</span></div><div class="rule-desc">In professional contexts, shorter consistently outperforms longer. If you had more time, you would have written less. Cut every word that does not earn its place.</div></div></div>
+        <div class="rule"><div class="rule-num">6</div><div class="rule-body"><div class="rule-title"><span class="keyword">Find your authentic voice, then use it consistently.</span></div><div class="rule-desc">Every communicator has a distinctive voice. Style is a deliberate choice, not an accident. Consistency builds recognition. Imitation is forgettable; authenticity is memorable.</div></div></div>
+        <div class="rule"><div class="rule-num">7</div><div class="rule-body"><div class="rule-title"><span class="keyword">Use the unexpected — surprise is unforgettable.</span></div><div class="rule-desc">An unexpected statistic, an unusual comparison, a counter-intuitive opening: the unexpected is the most reliable tool for making any communication memorable. Deploy it deliberately.</div></div></div>
+        <div class="rule"><div class="rule-num">8</div><div class="rule-body"><div class="rule-title"><span class="keyword">Deploy borrowed wisdom strategically.</span></div><div class="rule-desc">A well-chosen quotation adds borrowed authority and memorability. Use it to open, to close, or to crystallise your central point. Verify attribution before you publish — misattribution undermines credibility.</div></div></div>
+        <div class="rule"><div class="rule-num">9</div><div class="rule-body"><div class="rule-title"><span class="keyword">Be likeable — people trust communicators they warm to.</span></div><div class="rule-desc">Warmth, humour, and genuine engagement are not soft skills — they are persuasion tools. People read and trust communicators they like. Likeability is a renewable and scalable asset.</div></div></div>
+        <div class="rule"><div class="rule-num">10</div><div class="rule-body"><div class="rule-title"><span class="keyword">Tailor your central message per audience group.</span></div><div class="rule-desc">The same project can have a different Golden Thread for each audience. What matters to investors differs from what matters to regulators or end users. One message fits all is the enemy of persuasion.</div></div></div>
+      </div>
+    </section>
+
+    <!-- ── Chapter 2 ─────────────────────────────────────── -->
+    <section class="chapter" id="ch2">
+      <div class="chapter-header">
+        <div class="chapter-num-block"><span class="ch-label">Ch</span><span class="ch-num">02</span></div>
+        <div class="chapter-meta">
+          <h3>The Craft of Writing</h3>
+          <p class="ch-desc">Striking starts, memorable endings, the Rule of Threes, counterpoint, analogy, and the power of titles.</p>
+        </div>
+      </div>
+      <div class="rules-list">
+        <div class="rule"><div class="rule-num">1</div><div class="rule-body"><div class="rule-title"><span class="keyword">Open with a striking start — you have five seconds.</span></div><div class="rule-desc">Five types work: a provocative question, a bold statistic, a compelling anecdote, a counter-intuitive statement, or a vivid scene-setter. The first sentence either earns the next or loses the reader permanently.</div></div></div>
+        <div class="rule"><div class="rule-num">2</div><div class="rule-body"><div class="rule-title"><span class="keyword">End with intention — your last word is your lasting impression.</span></div><div class="rule-desc">Weak conclusions undo strong openings. End with a call to action, a memorable phrase, a return to your opening image, or a challenge. Never trail off. The close is what they carry away.</div></div></div>
+        <div class="rule"><div class="rule-num">3</div><div class="rule-body"><div class="rule-title"><span class="keyword">Three is the magic number of communication.</span></div><div class="rule-desc">The Rule of Threes is the most reliable structural tool in all communication. Three points. Three benefits. Three words. The human brain recognises, anticipates, and remembers patterns of three above all others.</div></div></div>
+        <div class="rule"><div class="rule-num">4</div><div class="rule-body"><div class="rule-title"><span class="keyword">Use counterpoint — acknowledge the other side, then defeat it.</span></div><div class="rule-desc">Addressing the objection before your audience can raise it builds credibility and pre-empts resistance. Never pretend difficulties don't exist; show you've considered them and have better answers.</div></div></div>
+        <div class="rule"><div class="rule-num">5</div><div class="rule-body"><div class="rule-title"><span class="keyword">Use analogies to make the complex immediately understandable.</span></div><div class="rule-desc">The best analogy bridges the unfamiliar with something the audience already knows. Build an analogy library for your subject's most technical concepts — one strong comparison does more than a paragraph of explanation.</div></div></div>
+        <div class="rule"><div class="rule-num">6</div><div class="rule-body"><div class="rule-title"><span class="keyword">Banish clichés — they are the enemies of impact.</span></div><div class="rule-desc">A cliché is a phrase so overused that it no longer communicates. Game-changer, moving the needle, world-class, robust: each signals a communicator who stopped thinking. Replace every cliché with a specific, original phrase.</div></div></div>
+        <div class="rule"><div class="rule-num">7</div><div class="rule-body"><div class="rule-title"><span class="keyword">Write triumphant titles — the title is read first.</span></div><div class="rule-desc">A title is not a label; it is your opening persuasion move. It must promise a benefit, provoke curiosity, or signal authority. Audit every document title and email subject line: would you open it?</div></div></div>
+        <div class="rule"><div class="rule-num">8</div><div class="rule-body"><div class="rule-title"><span class="keyword">Write as you speak at your best.</span></div><div class="rule-desc">The best professional writing sounds like a knowledgeable, engaging person talking — not like a legal brief. Read your draft aloud. Wherever it sounds stilted, stiff, or unnatural, rewrite it until it flows.</div></div></div>
+        <div class="rule"><div class="rule-num">9</div><div class="rule-body"><div class="rule-title"><span class="keyword">Use alliteration sparingly — repetition of sound makes language stick.</span></div><div class="rule-desc">Precise, Practical, Proven. Sound repetition is one of the oldest memory tools in language. Used well it creates memorable phrases; used excessively it sounds contrived. One alliterative phrase per document is plenty.</div></div></div>
+        <div class="rule"><div class="rule-num">10</div><div class="rule-body"><div class="rule-title"><span class="keyword">Learn the rules so you can break them deliberately.</span></div><div class="rule-desc">Rule-breaking only works when the reader can tell it was intentional. A sentence fragment for emphasis. Starting with And. These work precisely because the reader knows the rule exists. Understand the convention before you violate it.</div></div></div>
+      </div>
+    </section>
+
+    <!-- ── Chapter 3 ─────────────────────────────────────── -->
+    <section class="chapter" id="ch3">
+      <div class="chapter-header">
+        <div class="chapter-num-block"><span class="ch-label">Ch</span><span class="ch-num">03</span></div>
+        <div class="chapter-meta">
+          <h3>The Tricks of the Writing Trade</h3>
+          <p class="ch-desc">Structure, visual hierarchy, texture, inclusive language, show-not-tell, and the discipline of editing.</p>
+        </div>
+      </div>
+      <div class="rules-list">
+        <div class="rule"><div class="rule-num">1</div><div class="rule-body"><div class="rule-title"><span class="keyword">Structure is a service to the reader — choose it deliberately.</span></div><div class="rule-desc">Three structures cover most professional needs. The Pyramid puts the conclusion first, then evidence. Problem-Solution names the pain before offering relief. Narrative builds chronologically to a resolution. Match the structure to the reader's starting state.</div></div></div>
+        <div class="rule"><div class="rule-num">2</div><div class="rule-body"><div class="rule-title"><span class="keyword">Write for the screen, not the page.</span></div><div class="rule-desc">Most content is now consumed on a device. Shorter paragraphs, more white space, scannable headers, and bullet points for lists. Test every document on a phone before sending. If it's hard to read there, it's hard to read.</div></div></div>
+        <div class="rule"><div class="rule-num">3</div><div class="rule-body"><div class="rule-title"><span class="keyword">Use visual hierarchy to guide the eye.</span></div><div class="rule-desc">Headers, sub-headers, bold text, pull-quotes, and white space are not decoration — they are navigation. A reader who can't find the key message in five seconds will not spend more time looking.</div></div></div>
+        <div class="rule"><div class="rule-num">4</div><div class="rule-body"><div class="rule-title"><span class="keyword">Vary sentence length — texture creates rhythm and holds attention.</span></div><div class="rule-desc">A run of identically-lengthed sentences creates a monotonous drone. Short sentences land hard. Longer sentences, used where detail or nuance is needed, give the reader room to absorb complexity before returning to impact. Vary both.</div></div></div>
+        <div class="rule"><div class="rule-num">5</div><div class="rule-body"><div class="rule-title"><span class="keyword">Write inclusively — accessible language respects every reader.</span></div><div class="rule-desc">Jargon, acronyms, and insider language exclude. Plain English, with a glossary for any unavoidable technical terms, serves every audience. Inclusive writing is not dumbing down — it is professional competence.</div></div></div>
+        <div class="rule"><div class="rule-num">6</div><div class="rule-body"><div class="rule-title"><span class="keyword">Show, don't tell — evidence persuades; claims do not.</span></div><div class="rule-desc">Don't say "innovative" — show the innovation. Don't say "significant cost savings" — state the figure. For every claim in your draft, ask: what is the specific evidence? Replace the claim with its proof.</div></div></div>
+        <div class="rule"><div class="rule-num">7</div><div class="rule-body"><div class="rule-title"><span class="keyword">Apply the five-pass editing process — first drafts are never finished writing.</span></div><div class="rule-desc">Pass 1: structure and argument. Pass 2: paragraph flow. Pass 3: sentence clarity. Pass 4: word choice and clichés. Pass 5: typography and format. Each pass has one job. Trying to do all five in one read misses everything.</div></div></div>
+        <div class="rule"><div class="rule-num">8</div><div class="rule-body"><div class="rule-title"><span class="keyword">Build an evidence bank and draw from it consistently.</span></div><div class="rule-desc">Gather your strongest proof points — quantified outcomes, independent endorsements, case studies — in one place accessible to everyone. Evidence should never be invented in the moment. The bank makes quality automatic.</div></div></div>
+        <div class="rule"><div class="rule-num">9</div><div class="rule-body"><div class="rule-title"><span class="keyword">Use Problem-Solution structure for every pitch.</span></div><div class="rule-desc">Name the problem compellingly before you describe the solution. An audience that doesn't feel the pain won't value the cure. Make the problem vivid, then make the solution inevitable.</div></div></div>
+        <div class="rule"><div class="rule-num">10</div><div class="rule-body"><div class="rule-title"><span class="keyword">Adopt a plain-English glossary for every technical document.</span></div><div class="rule-desc">Any document over ten pages that uses specialist terminology needs a glossary. Any document sent to a non-specialist audience needs every technical term explained on first use. Expertise that can't be understood is worthless.</div></div></div>
+      </div>
+    </section>
+
+    <!-- ── Chapter 4 ─────────────────────────────────────── -->
+    <section class="chapter" id="ch4">
+      <div class="chapter-header">
+        <div class="chapter-num-block"><span class="ch-label">Ch</span><span class="ch-num">04</span></div>
+        <div class="chapter-meta">
+          <h3>The Art of Storytelling</h3>
+          <p class="ch-desc">Why stories beat statistics, the four ingredients of every compelling story, and the power of jeopardy, pace, and character.</p>
+        </div>
+      </div>
+      <div class="rules-list">
+        <div class="rule"><div class="rule-num">1</div><div class="rule-body"><div class="rule-title"><span class="keyword">Stories beat statistics — data informs, stories compel.</span></div><div class="rule-desc">Stories are remembered up to 22 times more than facts alone. When you need to change minds or inspire action, a well-told story is not a supplement to evidence — it is the primary vehicle for change.</div></div></div>
+        <div class="rule"><div class="rule-num">2</div><div class="rule-body"><div class="rule-title"><span class="keyword">Every compelling story needs four ingredients.</span></div><div class="rule-desc">A protagonist (the audience must care about someone). A challenge (the stakes must be clear). A struggle (the path forward must be uncertain). A resolution (a satisfying, meaningful outcome). Remove any ingredient and the story stops working.</div></div></div>
+        <div class="rule"><div class="rule-num">3</div><div class="rule-body"><div class="rule-title"><span class="keyword">Use the Before-After-Bridge — the most efficient persuasion framework.</span></div><div class="rule-desc">Before: here is how the world looks now (the problem). After: here is how the world could look (the vision). Bridge: here is how we get from one to the other (your solution). Simple, powerful, and adaptable to every audience.</div></div></div>
+        <div class="rule"><div class="rule-num">4</div><div class="rule-body"><div class="rule-title"><span class="keyword">Build jeopardy — make the cost of inaction vivid.</span></div><div class="rule-desc">Without jeopardy, there is no urgency. The audience must feel what happens if nothing changes. Good jeopardy is specific: not "this could be a problem" but "by 2028, every competitor will have this capability and we will not."</div></div></div>
+        <div class="rule"><div class="rule-num">5</div><div class="rule-body"><div class="rule-title"><span class="keyword">Control your pace — slow down at the moments that matter.</span></div><div class="rule-desc">Pace is the storyteller's most powerful tool. Speed through context, slow for revelation. The audience takes their emotional cues from your pace: rushing through your climax signals it doesn't matter; dwelling on it signals it does.</div></div></div>
+        <div class="rule"><div class="rule-num">6</div><div class="rule-body"><div class="rule-title"><span class="keyword">The human element is non-negotiable.</span></div><div class="rule-desc">Abstract problems need human faces. Behind every infrastructure challenge is a driver, a planner, a community. Find the person at the centre of the story and make them real. Data without humanity is just a number.</div></div></div>
+        <div class="rule"><div class="rule-num">7</div><div class="rule-body"><div class="rule-title"><span class="keyword">Use the three-act structure for extended narratives.</span></div><div class="rule-desc">Act 1: set the scene, introduce the protagonist, establish the challenge. Act 2: the struggle — setbacks, learning, perseverance. Act 3: resolution and lessons learned. This structure works because it mirrors how humans experience life.</div></div></div>
+        <div class="rule"><div class="rule-num">8</div><div class="rule-body"><div class="rule-title"><span class="keyword">Character determines credibility.</span></div><div class="rule-desc">Who tells the story matters as much as the story itself. The most credible voice is often not the founder but the independent expert, the customer, the community member. Know who should tell each story for each audience.</div></div></div>
+        <div class="rule"><div class="rule-num">9</div><div class="rule-body"><div class="rule-title"><span class="keyword">Use deliberate pause in live storytelling.</span></div><div class="rule-desc">Silence after a key moment allows it to land. Most communicators fill every gap with words, denying the audience time to feel the impact. The pause is not empty — it is where the emotion registers. Mark three pause points in every live narrative.</div></div></div>
+        <div class="rule"><div class="rule-num">10</div><div class="rule-body"><div class="rule-title"><span class="keyword">Know your founding story cold — and tell it every time.</span></div><div class="rule-desc">Every organisation has a founding story. It answers why you exist, not what you do. Polish it, practice it, and tell it consistently. The founding story is the entry point into trust, and trust is the entry point into every other conversation.</div></div></div>
+      </div>
+    </section>
+
+    <!-- ── Chapter 5 ─────────────────────────────────────── -->
+    <section class="chapter" id="ch5">
+      <div class="chapter-header">
+        <div class="chapter-num-block"><span class="ch-label">Ch</span><span class="ch-num">05</span></div>
+        <div class="chapter-meta">
+          <h3>Strategic Stories</h3>
+          <p class="ch-desc">Deploying stories with intention — the story bank, audience matching, emotional resonance, and the gold standard of storytelling.</p>
+        </div>
+      </div>
+      <div class="rules-list">
+        <div class="rule"><div class="rule-num">1</div><div class="rule-body"><div class="rule-title"><span class="keyword">Build and maintain a story bank — always have stories ready.</span></div><div class="rule-desc">A story bank is a curated library of six or more ready-to-deploy stories covering your key themes. Stories discovered in the moment are rarely your best. Capture them as they happen; refine them when you have time.</div></div></div>
+        <div class="rule"><div class="rule-num">2</div><div class="rule-body"><div class="rule-title"><span class="keyword">Match the story type to the audience's state of mind.</span></div><div class="rule-desc">Sceptical audiences need proof stories (evidence of outcomes). Uninformed audiences need understanding stories (what this means and why it matters). Hostile audiences need credibility stories (demonstration of competence and integrity). Never lead with the wrong type.</div></div></div>
+        <div class="rule"><div class="rule-num">3</div><div class="rule-body"><div class="rule-title"><span class="keyword">Pathos before logos — emotion must precede logic.</span></div><div class="rule-desc">Aristotle's sequence still holds. You cannot persuade a mind that has not first been opened by feeling. Lead with the human impact, the lived experience, the emotional truth. Then bring the evidence. Logic without emotion is data; emotion without logic is anecdote. You need both, in that order.</div></div></div>
+        <div class="rule"><div class="rule-num">4</div><div class="rule-body"><div class="rule-title"><span class="keyword">Include a Pat the Dog moment — human details create emotional connection.</span></div><div class="rule-desc">Small, specific human details (a name, a location, a moment of doubt overcome) create warmth and authenticity. They signal that this is a real story, not a constructed narrative. One precise detail does more than a page of broad claims.</div></div></div>
+        <div class="rule"><div class="rule-num">5</div><div class="rule-body"><div class="rule-title"><span class="keyword">Set the scene before the story — context primes the audience.</span></div><div class="rule-desc">A story that begins without context asks too much of the audience. Give them enough background to understand what is at stake before the narrative begins. Context is the on-ramp; the story is the road.</div></div></div>
+        <div class="rule"><div class="rule-num">6</div><div class="rule-body"><div class="rule-title"><span class="keyword">Every story must carry a lesson — that's what makes it strategic.</span></div><div class="rule-desc">A story without a lesson is entertainment. A strategic story is told to deliver a specific insight that serves a specific communication goal. Know the lesson before you tell the story; it determines what to include and what to cut.</div></div></div>
+        <div class="rule"><div class="rule-num">7</div><div class="rule-body"><div class="rule-title"><span class="keyword">Third-person stories build credibility that first-person claims cannot.</span></div><div class="rule-desc">When you say you're excellent, no one believes you. When a customer, partner, or independent expert says it through your story, they do. Collect and curate third-person stories as carefully as your own.</div></div></div>
+        <div class="rule"><div class="rule-num">8</div><div class="rule-body"><div class="rule-title"><span class="keyword">Structure a story in six stages for maximum impact.</span></div><div class="rule-desc">Context (where we were). Challenge (what went wrong or what was needed). Struggle (how we tried and what we learned). Turning point (the moment things shifted). Resolution (the outcome achieved). Lesson (why this matters). Every stage serves the next.</div></div></div>
+        <div class="rule"><div class="rule-num">9</div><div class="rule-body"><div class="rule-title"><span class="keyword">The gold standard is the teacher's tale — stories that teach are remembered longest.</span></div><div class="rule-desc">The most memorable stories are those from which the audience learns something they can apply. If your story teaches a principle, a method, or a new way of seeing, it survives in the audience's mind long after the specific narrative has faded.</div></div></div>
+        <div class="rule"><div class="rule-num">10</div><div class="rule-body"><div class="rule-title"><span class="keyword">Restructure the investor pitch to lead with pathos, not the product.</span></div><div class="rule-desc">The classic mistake in investor presentations is to open with the solution. Open instead with the problem as a lived human experience. Make the investor feel why this matters before you tell them what you've built. The product pitch is more compelling once the problem is real.</div></div></div>
+      </div>
+    </section>
+
+    <!-- ── Chapter 6 ─────────────────────────────────────── -->
+    <section class="chapter" id="ch6">
+      <div class="chapter-header">
+        <div class="chapter-num-block"><span class="ch-label">Ch</span><span class="ch-num">06</span></div>
+        <div class="chapter-meta">
+          <h3>The Art of Public Speaking</h3>
+          <p class="ch-desc">Elevator pitches, slide design, data presentation, killer facts, and lifesaver responses.</p>
+        </div>
+      </div>
+      <div class="rules-list">
+        <div class="rule"><div class="rule-num">1</div><div class="rule-body"><div class="rule-title"><span class="keyword">The 60-second elevator pitch must contain three and only three components.</span></div><div class="rule-desc">Hook (why should they care?). Substance (what do you do and why does it matter?). Ask (what do you want next?). A pitch without all three is either a rant or a monologue. Practice until you can deliver all three in 60 seconds, naturally.</div></div></div>
+        <div class="rule"><div class="rule-num">2</div><div class="rule-body"><div class="rule-title"><span class="keyword">Slides are a visual aid, not the presentation — you are the presentation.</span></div><div class="rule-desc">Slides support; they do not replace. An audience that is reading your slides is not listening to you. If your slides work without you in the room, you've built the wrong thing. Make yourself necessary.</div></div></div>
+        <div class="rule"><div class="rule-num">3</div><div class="rule-body"><div class="rule-title"><span class="keyword">Apply the slide design hierarchy — one message, one slide.</span></div><div class="rule-desc">Each slide carries one idea. The headline states the conclusion (not the topic). The visual supports it. The speaker explains it. Three elements, one message. A slide that tries to carry two ideas delivers zero.</div></div></div>
+        <div class="rule"><div class="rule-num">4</div><div class="rule-body"><div class="rule-title"><span class="keyword">Maximum three data points per slide — data needs a story to land.</span></div><div class="rule-desc">Numbers without narrative are forgettable. Every data point on a slide needs a sentence explaining what it means and why it matters to this audience. More than three numbers and none of them land. Choose the three that matter most.</div></div></div>
+        <div class="rule"><div class="rule-num">5</div><div class="rule-body"><div class="rule-title"><span class="keyword">Find and deploy your Killer Fact — one number that changes everything.</span></div><div class="rule-desc">Every subject has one number so striking that it reframes how the audience sees the problem. Find yours, verify it, and use it as your sharpest persuasion tool. A Killer Fact for investors, another for regulators, another for the public.</div></div></div>
+        <div class="rule"><div class="rule-num">6</div><div class="rule-body"><div class="rule-title"><span class="keyword">Prepare lifesaver responses for the five hardest questions you could face.</span></div><div class="rule-desc">There are no unexpected questions in a Q&A — only unprepared speakers. Identify your five most uncomfortable possible questions, prepare clear and honest answers, and practice them. Confidence in the Q&A comes from preparation, not improvisation.</div></div></div>
+        <div class="rule"><div class="rule-num">7</div><div class="rule-body"><div class="rule-title"><span class="keyword">Three elevator pitches — one per audience type.</span></div><div class="rule-desc">Your 60-second pitch for an investor should differ from the one for a regulator, which should differ from the one for a potential partner. Same organisation, different hooks, different emphasis, different ask. A pitch that works for everyone usually works for no one.</div></div></div>
+        <div class="rule"><div class="rule-num">8</div><div class="rule-body"><div class="rule-title"><span class="keyword">Let personality into your visual design.</span></div><div class="rule-desc">Slides designed to be safe are invisible. Colour, imagery, and distinctive visual choices make a presentation look like something worth watching. Blandness signals that nothing at stake here is very important.</div></div></div>
+        <div class="rule"><div class="rule-num">9</div><div class="rule-body"><div class="rule-title"><span class="keyword">Add +20% energy for online presentations.</span></div><div class="rule-desc">The camera flattens energy. What feels animated in the room reads as neutral on screen. Online presenting requires deliberate amplification — more vocal variety, more facial expression, shorter segments, and explicit interaction to compensate for what the medium takes away.</div></div></div>
+        <div class="rule"><div class="rule-num">10</div><div class="rule-body"><div class="rule-title"><span class="keyword">Audit and rewrite your document titles and email subject lines.</span></div><div class="rule-desc">The title is read before anything else. A dull title predicts a dull document and a low open rate. Apply triumphant title criteria to every report, proposal, and email you send. The effort is small; the impact on engagement is substantial.</div></div></div>
+      </div>
+    </section>
+
+    <!-- ── Chapter 7 ─────────────────────────────────────── -->
+    <section class="chapter" id="ch7">
+      <div class="chapter-header">
+        <div class="chapter-num-block"><span class="ch-label">Ch</span><span class="ch-num">07</span></div>
+        <div class="chapter-meta">
+          <h3>Powerful Speaking</h3>
+          <p class="ch-desc">Audience interaction, signposting, Magic Moments, body language, nerves, verbal redundancies, and Q&amp;A mastery.</p>
+        </div>
+      </div>
+      <div class="rules-list">
+        <div class="rule"><div class="rule-num">1</div><div class="rule-body"><div class="rule-title"><span class="keyword">Use four types of audience interaction — never just broadcast.</span></div><div class="rule-desc">Rhetorical questions (invite internal reflection). Show of hands (create group identity). Directed questions to named individuals (create accountability). Deliberate silence (allow processing). A presentation that uses none of these is a monologue; an audience that is only receiving is an audience that is drifting.</div></div></div>
+        <div class="rule"><div class="rule-num">2</div><div class="rule-body"><div class="rule-title"><span class="keyword">Signpost constantly — tell them where you are and where you're going.</span></div><div class="rule-desc">Opening signpost: "I'll cover three areas — X, Y, and Z." Mid-speech: "We've covered X. Now let's turn to Y." Closing signpost: "We've addressed X, Y, and Z. In conclusion…" Signposting is not repetitive; it is respectful. Audiences navigate better when they have a map.</div></div></div>
+        <div class="rule"><div class="rule-num">3</div><div class="rule-body"><div class="rule-title"><span class="keyword">Create at least one Magic Moment — something they will remember for months.</span></div><div class="rule-desc">A Magic Moment is a planned peak: a surprise statistic, a live demonstration, a bold visual, a moment of genuine emotion. Every presentation should have at least one. Design it in advance; don't leave it to chance.</div></div></div>
+        <div class="rule"><div class="rule-num">4</div><div class="rule-body"><div class="rule-title"><span class="keyword">Master the four body language essentials.</span></div><div class="rule-desc">Eye contact (hold it long enough to complete a thought). Posture (open, upright, grounded). Gesture (purposeful, not fidgety). Movement (deliberate, not pacing). Your body communicates before you speak — make sure it says the right thing.</div></div></div>
+        <div class="rule"><div class="rule-num">5</div><div class="rule-body"><div class="rule-title"><span class="keyword">Reframe nerves as energy — performance anxiety is fuel, not failure.</span></div><div class="rule-desc">The physiological symptoms of nerves and excitement are identical. The difference is the story you tell yourself. Nervousness means you care. An audience that senses preparation and genuine investment responds to it. Nervous speakers who have done the work come across as passionate.</div></div></div>
+        <div class="rule"><div class="rule-num">6</div><div class="rule-body"><div class="rule-title"><span class="keyword">Remove verbal redundancies — filler words undermine authority.</span></div><div class="rule-desc">Umm, erm, "sort of", "kind of", "basically", "you know what I mean": every verbal redundancy erodes credibility. Record a practice presentation, count the fillers, and eliminate them through deliberate pause. Silence is always more authoritative than filler.</div></div></div>
+        <div class="rule"><div class="rule-num">7</div><div class="rule-body"><div class="rule-title"><span class="keyword">Respect the clock — timing is a measure of respect for your audience.</span></div><div class="rule-desc">Running over time is not enthusiasm — it is disrespect. Every extra minute you take is a minute you steal from someone else. Know your material well enough to cut content in the moment if you need to. Always finish on time or early.</div></div></div>
+        <div class="rule"><div class="rule-num">8</div><div class="rule-body"><div class="rule-title"><span class="keyword">Master the Q&amp;A bridging formula.</span></div><div class="rule-desc">Acknowledge the question. Bridge: "What's important to understand is…" Deliver your message. The bridge moves you from their territory to yours without appearing to dodge. Prepare three bridge phrases that work for your subject and practise them until they're natural.</div></div></div>
+        <div class="rule"><div class="rule-num">9</div><div class="rule-body"><div class="rule-title"><span class="keyword">Use deliberate pause — silence is one of the most powerful tools in speaking.</span></div><div class="rule-desc">After your most important statement, stop. Wait three full seconds. Let it land. The impulse to fill silence immediately is almost universal; resisting it is the mark of a confident speaker. The audience uses the pause to feel the weight of what they've heard.</div></div></div>
+        <div class="rule"><div class="rule-num">10</div><div class="rule-body"><div class="rule-title"><span class="keyword">Preparation is the only secret — there are no naturally gifted speakers.</span></div><div class="rule-desc">Every speaker who appears effortless has prepared extensively. Know your material so well that you can deliver it in any order, cut it in half, or extend it by request. Preparation is what looks like confidence from the outside.</div></div></div>
+      </div>
+    </section>
+
+    <!-- ── Chapter 8 ─────────────────────────────────────── -->
+    <section class="chapter" id="ch8">
+      <div class="chapter-header">
+        <div class="chapter-num-block"><span class="ch-label">Ch</span><span class="ch-num">08</span></div>
+        <div class="chapter-meta">
+          <h3>The Online World</h3>
+          <p class="ch-desc">The Golden Rule of social media, bio strategy, platform focus, content strategy, photography, video, and handling hostility.</p>
+        </div>
+      </div>
+      <div class="rules-list">
+        <div class="rule"><div class="rule-num">1</div><div class="rule-body"><div class="rule-title"><span class="keyword">Give before you ask — the Golden Rule of every online platform.</span></div><div class="rule-desc">Earn the right to ask by first offering value: insight, information, entertainment, or connection. An account that only broadcasts what it wants people to do has no audience worth broadcasting to. Value first, ask second, always.</div></div></div>
+        <div class="rule"><div class="rule-num">2</div><div class="rule-body"><div class="rule-title"><span class="keyword">Always have three bio lengths ready.</span></div><div class="rule-desc">One line (for a Twitter/X or LinkedIn header). One paragraph (for a profile, a speaker introduction, a pitch deck). Full version (for a website bio or grant application). Your bio is the most-read document you will ever write. Neglecting it is a consistent and costly mistake.</div></div></div>
+        <div class="rule"><div class="rule-num">3</div><div class="rule-body"><div class="rule-title"><span class="keyword">Not every platform deserves your time — focus ruthlessly.</span></div><div class="rule-desc">A weak presence on five platforms is worse than a strong presence on two. Know where your audiences actually are, and be excellent there. Spreading thin is the default trap. Concentrated effort builds authority; dispersed effort builds noise.</div></div></div>
+        <div class="rule"><div class="rule-num">4</div><div class="rule-body"><div class="rule-title"><span class="keyword">A content strategy has four components — without all four, it isn't a strategy.</span></div><div class="rule-desc">Purpose (why you're publishing). Audience (exactly who you're publishing for). Format (what form the content takes). Frequency (how often and when). A plan that addresses all four can be measured and improved. A plan that skips one of them is a wish.</div></div></div>
+        <div class="rule"><div class="rule-num">5</div><div class="rule-body"><div class="rule-title"><span class="keyword">Your photograph is your handshake — bad photography is the most damaging error online.</span></div><div class="rule-desc">A blurry, poorly lit, or unprofessional profile photo communicates before you say a word — and what it communicates is that the details don't matter to you. Invest in a professional headshot. It is the single highest-return communication investment most professionals can make.</div></div></div>
+        <div class="rule"><div class="rule-num">6</div><div class="rule-body"><div class="rule-title"><span class="keyword">Video is the dominant online format — get the basics right.</span></div><div class="rule-desc">Light (face the light source, not the window). Sound (a clip-on microphone costs very little; bad audio costs everything). Angle (camera at eye level, never below). Background (uncluttered, relevant, or deliberately neutral). These four basics separate watchable from unwatchable.</div></div></div>
+        <div class="rule"><div class="rule-num">7</div><div class="rule-body"><div class="rule-title"><span class="keyword">Use AI as a collaborator, not a ghostwriter — you must own the content.</span></div><div class="rule-desc">AI can generate drafts, suggest structures, and overcome blank-page paralysis. But AI-generated content needs human refinement, genuine voice, and accountable authorship. Content that carries your name must reflect your thinking. AI drafts; you own.</div></div></div>
+        <div class="rule"><div class="rule-num">8</div><div class="rule-body"><div class="rule-title"><span class="keyword">Apply the 24-hour rule for anything sensitive.</span></div><div class="rule-desc">Never respond to online criticism, trolling, or provocation in the moment. Write your response, save it, and return to it the following day. If it still reads as measured and professional, send it. If it doesn't, you will be grateful you waited.</div></div></div>
+        <div class="rule"><div class="rule-num">9</div><div class="rule-body"><div class="rule-title"><span class="keyword">Long-form content builds deep authority — blogs still matter.</span></div><div class="rule-desc">A well-researched article of 800-1,500 words demonstrates expertise in a way that a social post never can. It is also searchable, shareable, and durable. One strong monthly blog post builds more authority over a year than a hundred weak social posts.</div></div></div>
+        <div class="rule"><div class="rule-num">10</div><div class="rule-body"><div class="rule-title"><span class="keyword">Turn comments into conversations — engagement compounds.</span></div><div class="rule-desc">Every comment is an opportunity to deepen a relationship. A reply that is genuine, specific, and adds value turns a passive follower into an engaged advocate. The algorithm rewards engagement; so does the human on the other end.</div></div></div>
+      </div>
+    </section>
+
+    <!-- ── Chapter 9 ─────────────────────────────────────── -->
+    <section class="chapter" id="ch9">
+      <div class="chapter-header">
+        <div class="chapter-num-block"><span class="ch-label">Ch</span><span class="ch-num">09</span></div>
+        <div class="chapter-meta">
+          <h3>Media Relations</h3>
+          <p class="ch-desc">Newsworthiness, the news release anatomy, handling media enquiries, the Message House, bridging, and soundbites.</p>
+        </div>
+      </div>
+      <div class="rules-list">
+        <div class="rule"><div class="rule-num">1</div><div class="rule-body"><div class="rule-title"><span class="keyword">Know what makes a story newsworthy before you pitch one.</span></div><div class="rule-desc">Timeliness, impact, novelty, human interest, conflict, and proximity: a story needs at least two of these to be publishable. Before contacting any journalist, ask honestly whether your news passes this test. Pitching stories that don't is how relationships with journalists end.</div></div></div>
+        <div class="rule"><div class="rule-num">2</div><div class="rule-body"><div class="rule-title"><span class="keyword">Master the anatomy of an effective news release.</span></div><div class="rule-desc">A compelling headline. The five Ws in the first paragraph (who, what, when, where, why). A strong quote from a named spokesperson. Supporting detail in subsequent paragraphs. A "notes to editors" section with background. A clear contact. Each element has a job; each missing element is a reason not to publish.</div></div></div>
+        <div class="rule"><div class="rule-num">3</div><div class="rule-body"><div class="rule-title"><span class="keyword">Timing is as important as content — know when to release.</span></div><div class="rule-desc">A brilliant story released on a Friday afternoon or during a major competing news event may not be published. Know your target outlet's publication rhythms, know the news calendar, and time your release to maximise coverage. Good timing can double your media impact at zero cost.</div></div></div>
+        <div class="rule"><div class="rule-num">4</div><div class="rule-body"><div class="rule-title"><span class="keyword">Handle unexpected media calls with STOP, THINK, RESPOND.</span></div><div class="rule-desc">When a journalist calls unannounced, you are never obliged to answer immediately. Take their name and number, say you'll call back shortly, prepare your key messages, and call them back. Five minutes of preparation is worth an hour of damage limitation.</div></div></div>
+        <div class="rule"><div class="rule-num">5</div><div class="rule-body"><div class="rule-title"><span class="keyword">Build your three-roomed Message House before any media engagement.</span></div><div class="rule-desc">The roof is your overarching message. The three rooms are your three supporting points (one per room). The foundations are the evidence that supports each room. In any interview, every answer should come from one of the three rooms. Know the house before you enter the interview.</div></div></div>
+        <div class="rule"><div class="rule-num">6</div><div class="rule-body"><div class="rule-title"><span class="keyword">Master bridging — the art of returning to your message.</span></div><div class="rule-desc">Acknowledge the question. Bridge: "What's most important here is…" / "That's a fair question, but the key point is…" Deliver your message. Bridging is not evasion; it is message discipline. A spokesperson who cannot bridge has no control over the interview.</div></div></div>
+        <div class="rule"><div class="rule-num">7</div><div class="rule-body"><div class="rule-title"><span class="keyword">Soundbites must be under 15 words — short, memorable, and quotable.</span></div><div class="rule-desc">Broadcasters use eight to twelve seconds of interview material. If your best point can't be said in fifteen words, it won't be broadcast. Prepare three soundbites for every media appearance: one for the main message, one for the human angle, one for the call to action.</div></div></div>
+        <div class="rule"><div class="rule-num">8</div><div class="rule-body"><div class="rule-title"><span class="keyword">Know the dirty tricks — and prepare for them.</span></div><div class="rule-desc">Leading questions that embed the premise you want to avoid. Negative phrasing ("So you're saying…"). Deliberate silence after your answer (wait them out). The "off the record" invitation (there is no such thing). Know these tactics so that encountering them in an interview is a recognition, not a surprise.</div></div></div>
+        <div class="rule"><div class="rule-num">9</div><div class="rule-body"><div class="rule-title"><span class="keyword">Prepare differently for video media — appearance and setting communicate before you speak.</span></div><div class="rule-desc">Clothing, background, eye-line, and lighting are all read before the audience hears a word. Run the pre-interview checklist: background clear and relevant, lighting front-facing, camera at eye level, clothing that conveys the right authority for the audience, no distractions visible.</div></div></div>
+        <div class="rule"><div class="rule-num">10</div><div class="rule-body"><div class="rule-title"><span class="keyword">Tone determines how your message is received — not just what you say.</span></div><div class="rule-desc">The same words delivered with authority land differently from the same words delivered with apology. Match your tone to the interview context: measured in a crisis, energetic for a feature, authoritative for an investigation. A wrong tone can undermine a perfect answer.</div></div></div>
+      </div>
+    </section>
+
+    <!-- ── Chapter 10 ─────────────────────────────────────── -->
+    <section class="chapter" id="ch10">
+      <div class="chapter-header">
+        <div class="chapter-num-block"><span class="ch-label">Ch</span><span class="ch-num">10</span></div>
+        <div class="chapter-meta">
+          <h3>Strategic Communication</h3>
+          <p class="ch-desc">SMART goals, strategic planning, proactive disclosure, crisis communication, and reputation recovery.</p>
+        </div>
+      </div>
+      <div class="rules-list">
+        <div class="rule"><div class="rule-num">1</div><div class="rule-body"><div class="rule-title"><span class="keyword">Begin with SMART communication goals — outcomes, not activities.</span></div><div class="rule-desc">The goal is never "issue a press release" or "update the website." The goal is a specific change in awareness, perception, or behaviour among a defined audience by a defined date. Measurable outcomes only. Activity without a measurable goal is expenditure without a return.</div></div></div>
+        <div class="rule"><div class="rule-num">2</div><div class="rule-body"><div class="rule-title"><span class="keyword">A strategy has seven components — plan all seven, not just the messages.</span></div><div class="rule-desc">Goals. Audiences. Messages (per audience). Channels (per audience). Timing. Budget. Evaluation criteria. A communication plan that lacks any of these seven is incomplete. The evaluation criteria matter most: how will you know if it worked?</div></div></div>
+        <div class="rule"><div class="rule-num">3</div><div class="rule-body"><div class="rule-title"><span class="keyword">Bad news does not improve with age — disclose proactively.</span></div><div class="rule-desc">Every day you delay disclosing a problem is a day during which journalists, regulators, or stakeholders may discover it independently. When you choose the moment of disclosure, you control the framing. When someone else chooses it, you don't. Proactive disclosure is always preferable to reactive damage limitation.</div></div></div>
+        <div class="rule"><div class="rule-num">4</div><div class="rule-body"><div class="rule-title"><span class="keyword">Kitchen-sink the bad news — release everything at once.</span></div><div class="rule-desc">When disclosing problems, tell the whole story once. A drip of revelations is always more damaging than the original problem, because each new disclosure becomes a fresh story and extends the news cycle. One comprehensive, honest disclosure is almost always recoverable; a sequence of partial disclosures rarely is.</div></div></div>
+        <div class="rule"><div class="rule-num">5</div><div class="rule-body"><div class="rule-title"><span class="keyword">Recognise the Dead Cat Drop — distraction as a communication tactic.</span></div><div class="rule-desc">When an organisation releases a deliberately controversial or distracting story to displace another story from the news agenda, that is a Dead Cat. Know when it is being used against you (changing the subject when you're pursuing an issue) and decide whether to pursue the real story or address the cat.</div></div></div>
+        <div class="rule"><div class="rule-num">6</div><div class="rule-body"><div class="rule-title"><span class="keyword">Follow the six-step crisis communication framework.</span></div><div class="rule-desc">Prepare (crisis plan before the crisis). Respond (acknowledge immediately, even if you don't yet have all the facts). Communicate (regular updates, honest about what you know and don't know). Monitor (track media, social, and stakeholder sentiment). Adapt (adjust as facts emerge). Review (learn from the crisis after it passes).</div></div></div>
+        <div class="rule"><div class="rule-num">7</div><div class="rule-body"><div class="rule-title"><span class="keyword">Acknowledge the problem before defending yourself.</span></div><div class="rule-desc">An organisation that reaches for defence before acknowledgement appears callous. In any crisis, your first statement must demonstrate that you understand what has happened and that you take it seriously. Empathy first. Facts and defence only after the human dimension has been acknowledged.</div></div></div>
+        <div class="rule"><div class="rule-num">8</div><div class="rule-body"><div class="rule-title"><span class="keyword">Reputation recovery is a long game — rebuild trust through consistent action.</span></div><div class="rule-desc">A reputation is not rebuilt with a single good statement. It is rebuilt through a sustained pattern of behaviour that contradicts the damage. Every commitment made in a crisis must be kept publicly and demonstrably. Actions communicate more credibly than any press release ever will.</div></div></div>
+        <div class="rule"><div class="rule-num">9</div><div class="rule-body"><div class="rule-title"><span class="keyword">Never bury bad news — it always emerges and doubles the damage.</span></div><div class="rule-desc">The ethical and practical case against burying bad news are the same: it always comes out, and when it does, the original problem is compounded by the cover-up. Organisations that have concealed problems lose not just the argument about the original issue but about their fundamental trustworthiness.</div></div></div>
+        <div class="rule"><div class="rule-num">10</div><div class="rule-body"><div class="rule-title"><span class="keyword">Strategic communication starts with the outcome and works backwards.</span></div><div class="rule-desc">Define the behaviour change you want to see. Identify the belief that needs to change to produce that behaviour. Identify the audience that holds that belief. Find the message that moves that belief in that audience. Choose the channel that reaches them. Only then write the content. This is strategy. Everything else is activity.</div></div></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// ── Theme toggle ───────────────────────────────────────────
+const root = document.documentElement;
+const btn  = document.getElementById('themeBtn');
+let theme  = 'dark';
+try { theme = localStorage.getItem('cc-theme') || 'dark'; } catch(e){}
+function applyTheme(t) {
+  root.setAttribute('data-theme', t);
+  btn.textContent = t === 'dark' ? '☀ Light' : '☾ Dark';
+  try { localStorage.setItem('cc-theme', t); } catch(e){}
+}
+applyTheme(theme);
+btn.addEventListener('click', () => { theme = theme === 'dark' ? 'light' : 'dark'; applyTheme(theme); });
+
+// ── Active nav on scroll ───────────────────────────────────
+const chapters = Array.from(document.querySelectorAll('.chapter'));
+const navItems = Array.from(document.querySelectorAll('.nav-item[data-target]'));
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navItems.forEach(n => n.classList.remove('active'));
+      const active = navItems.find(n => n.dataset.target === e.target.id);
+      if (active) active.classList.add('active');
+    }
+  });
+}, { threshold: 0.2 });
+chapters.forEach(ch => obs.observe(ch));
+
+// Smooth scroll on nav click
+navItems.forEach(n => {
+  n.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.getElementById(n.dataset.target);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
+
+</body></html>

@@ -1,0 +1,16 @@
+module:
+  id: "slack_connection"
+  name: "Slack Connection"
+  description: "Connect to the internal Slack app"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Slack Connection"
+    icon: "plug"
+    tabname: "slack_connection"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, httr2, DT]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

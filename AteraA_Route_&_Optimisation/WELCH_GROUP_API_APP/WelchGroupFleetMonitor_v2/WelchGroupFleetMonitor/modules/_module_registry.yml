@@ -1,0 +1,40 @@
+modules:
+  - module:
+      id: api_connection
+      name: "API Connection"
+      tabname: api_connection_tab
+      icon: plug
+      file: modules/api_connection.R
+      enabled: true
+
+  - module:
+      id: api_connection_v2
+      name: "API Connection v2"
+      tabname: api_connection_v2_tab
+      icon: wifi
+      file: modules/api_connection_v2.R
+      enabled: true
+
+  - module:
+      id: vehicle_data
+      name: "Vehicle Data"
+      tabname: vehicle_data_tab
+      icon: truck
+      file: modules/vehicle_data.R
+      enabled: true
+
+  - module:
+      id: vehicle_data_v2
+      name: "Vehicle Data v2"
+      tabname: vehicle_data_v2_tab
+      icon: tachometer
+      file: modules/vehicle_data_v2.R
+      enabled: true
+
+  - module:
+      id: book_improvements
+      name: "Book: Ch1/3/5/8/9 Improvements"
+      tabname: book_improvements_tab
+      icon: book
+      file: modules/book_improvements.R
+      enabled: true

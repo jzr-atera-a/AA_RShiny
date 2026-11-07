@@ -13,6 +13,7 @@ add_single_ui <- function(id) {
         
         textInput(ns("book_name"), "Book Name:", placeholder = "Enter book title"),
         textInput(ns("author"), "Author:", placeholder = "Enter author name"),
+        genre_topic_dropdown_ui(ns),
         textInput(ns("chapter"), "Chapter:", placeholder = "e.g., Chapter 01: Introduction"),
         textInput(ns("section"), "Section:", placeholder = "e.g., All Sections"),
         textAreaInput(ns("main_details"), "Main Details:", rows = 8, 

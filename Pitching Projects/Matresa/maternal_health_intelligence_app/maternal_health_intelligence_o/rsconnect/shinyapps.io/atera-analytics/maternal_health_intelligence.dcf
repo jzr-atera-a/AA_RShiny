@@ -1,0 +1,10 @@
+name: maternal_health_intelligence
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17884177
+bundleId: 12540181
+url: https://atera-analytics.shinyapps.io/maternal_health_intelligence/
+version: 1

@@ -1,0 +1,10 @@
+name: trading_analysis_f1
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17711534
+bundleId: 12422148
+url: https://atera-analytics.shinyapps.io/trading_analysis_f1/
+version: 1

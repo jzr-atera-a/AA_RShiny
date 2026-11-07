@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ML Design Patterns — Reference Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep:    #0A0A2E;
+    --blue-pri:   #1877F2;
+    --blue-sec:   #0A66C2;
+    --blue-pale:  #e8f0fe;
+    --blue-soft:  #c5d8fb;
+    --blue-glow:  rgba(24,119,242,0.25);
+    --white:      #ffffff;
+    --text-dark:  #0d1240;
+    --text-body:  #2d3a52;
+    --text-muted: #6b7fa8;
+    --green:      #16a34a;
+    --green-bg:   #f0fdf4;
+    --green-bd:   #86efac;
+    --amber:      #d97706;
+    --red:        #dc2626;
+    --red-bg:     #fef2f2;
+    --red-bd:     #fca5a5;
+    --border:     #c5d8fb;
+    --row-alt:    #f4f7fe;
+    --shadow:     0 8px 25px rgba(10,10,46,0.18);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: linear-gradient(160deg, #0A0A2E 0%, #1877F2 55%, #0A66C2 100%);
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: var(--text-body);
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #0A0A2E 0%, #1877F2 60%, #0A66C2 100%);
+    padding: 20px 24px 16px;
+    box-shadow: 0 4px 24px rgba(10,10,46,0.5);
+    position: sticky; top: 0; z-index: 100;
+    border-bottom: 2px solid rgba(255,255,255,0.15);
+  }
+  .header-inner { display: flex; align-items: center; gap: 24px; }
+  .header-title-block { flex: 1; }
+  .header-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px; letter-spacing: .22em;
+    text-transform: uppercase; color: rgba(255,255,255,0.55); margin-bottom: 4px;
+  }
+  h1 { font-size: 22px; font-weight: 800; color: #fff; line-height: 1; letter-spacing: -.4px; }
+  h1 span { color: #93c5fd; }
+  .header-sub { margin-top: 4px; font-size: 10.5px; color: rgba(255,255,255,0.6); font-style: italic; font-weight: 300; }
+  .header-stats { display: flex; gap: 8px; }
+  .hstat {
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 8px; padding: 7px 12px; text-align: center; color: #fff; min-width: 60px;
+  }
+  .hstat-n { font-size: 18px; font-weight: 800; line-height: 1; }
+  .hstat-l { font-size: 8px; text-transform: uppercase; letter-spacing: .1em; opacity: .65; margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+
+  /* LEGEND */
+  .legend {
+    background: rgba(255,255,255,0.07); border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 7px 24px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+  }
+  .legend-lbl { font-family: 'JetBrains Mono', monospace; font-size: 8px; text-transform: uppercase; letter-spacing: .15em; color: rgba(255,255,255,0.4); margin-right: 4px; }
+  .legend-chip { display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.18); border-radius: 10px; padding: 2px 9px; font-size: 9.5px; color: rgba(255,255,255,0.8); }
+  .legend-dot { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; }
+
+  /* MAIN */
+  main { padding: 14px 16px 40px; }
+
+  /* GROUP */
+  .group { margin-bottom: 16px; }
+  .group-hdr {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 12px; border-radius: 8px 8px 0 0;
+    color: #fff; font-weight: 700; font-size: 12.5px; letter-spacing: -.1px;
+  }
+  .group-num { font-family: 'JetBrains Mono', monospace; font-size: 8px; background: rgba(255,255,255,0.18); border-radius: 4px; padding: 2px 6px; letter-spacing: .08em; }
+  .group-cnt { margin-left: auto; font-size: 9.5px; font-weight: 400; opacity: .7; font-family: 'JetBrains Mono', monospace; }
+  .group-bar { width: 4px; height: 16px; border-radius: 2px; background: rgba(255,255,255,0.5); flex-shrink: 0; }
+
+  /* TABLE */
+  .tbl-wrap { border-radius: 0 0 8px 8px; overflow: hidden; box-shadow: var(--shadow); }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; background: #fff; }
+
+  /* Column widths calibrated for 1920px full screen */
+  col.c-name    { width: 8%; }
+  col.c-problem { width: 15%; }
+  col.c-uses    { width: 14%; }
+  col.c-models  { width: 12%; }
+  col.c-pros    { width: 14%; }
+  col.c-cons    { width: 14%; }
+  col.c-cx      { width: 5.5%; }
+  col.c-rels    { width: 13%; }
+
+  thead th {
+    padding: 7px 9px; text-align: left;
+    font-family: 'JetBrains Mono', monospace; font-size: 7.5px;
+    text-transform: uppercase; letter-spacing: .12em; font-weight: 600;
+    border-right: 1px solid rgba(255,255,255,0.12);
+    white-space: nowrap; color: #fff;
+  }
+  thead th:last-child { border-right: none; }
+
+  tbody tr { border-bottom: 1px solid #e8f0fe; }
+  tbody tr:nth-child(even) { background: #f4f7fe; }
+  tbody tr:hover { background: #dceafe; }
+  tbody tr:last-child { border-bottom: none; }
+
+  td { padding: 8px 9px; vertical-align: top; border-right: 1px solid #e8f0fe; line-height: 1.45; }
+  td:last-child { border-right: none; }
+
+  .pname { font-weight: 700; font-size: 11px; line-height: 1.2; }
+  .pid { font-family: 'JetBrains Mono', monospace; font-size: 7.5px; color: var(--text-muted); margin-top: 2px; }
+
+  .prose { font-size: 10px; color: var(--text-body); line-height: 1.5; }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 2px; }
+  .tag { font-family: 'JetBrains Mono', monospace; font-size: 8px; padding: 1px 5px; border-radius: 3px; border: 1px solid; line-height: 1.5; }
+  .t-use  { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+  .t-mod  { background: #f0f4ff; border-color: var(--blue-soft); color: var(--blue-sec); }
+  .t-pro  { background: var(--green-bg); border-color: var(--green-bd); color: #166534; }
+  .t-con  { background: var(--red-bg); border-color: var(--red-bd); color: #991b1b; }
+
+  .cx-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .cx-dots { display: flex; gap: 3px; }
+  .cd-on  { width: 8px; height: 8px; border-radius: 50%; }
+  .cd-off { width: 8px; height: 8px; border-radius: 50%; background: #d1d5db; }
+
+  .cx-lbl { font-family: 'JetBrains Mono', monospace; font-size: 7.5px; color: var(--text-muted); text-align: center; }
+
+  .rels { display: flex; flex-direction: column; gap: 3px; }
+  .rel { font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--text-muted); display: flex; align-items: flex-start; gap: 3px; line-height: 1.35; }
+  .rel-arr { font-weight: 700; flex-shrink: 0; }
+
+  /* GROUP COLOURS */
+  .g-data    .group-hdr { background: linear-gradient(135deg, #0A0A2E, #1877F2); }
+  .g-problem .group-hdr { background: linear-gradient(135deg, #0A2E1A, #16a34a); }
+  .g-repro   .group-hdr { background: linear-gradient(135deg, #2E1A00, #d97706); }
+  .g-resil   .group-hdr { background: linear-gradient(135deg, #2E0A2E, #9333ea); }
+  .g-resp    .group-hdr { background: linear-gradient(135deg, #2E0A0A, #dc2626); }
+  .g-train   .group-hdr { background: linear-gradient(135deg, #0A1E2E, #0ea5e9); }
+
+  .g-data    thead th { background: linear-gradient(135deg, #1877F2, #0A66C2); }
+  .g-problem thead th { background: linear-gradient(135deg, #166534, #16a34a); }
+  .g-repro   thead th { background: linear-gradient(135deg, #92400e, #d97706); }
+  .g-resil   thead th { background: linear-gradient(135deg, #6b21a8, #9333ea); }
+  .g-resp    thead th { background: linear-gradient(135deg, #991b1b, #dc2626); }
+  .g-train   thead th { background: linear-gradient(135deg, #075985, #0ea5e9); }
+
+  .g-data    .pname { color: #1877F2; }
+  .g-problem .pname { color: #16a34a; }
+  .g-repro   .pname { color: #d97706; }
+  .g-resil   .pname { color: #9333ea; }
+  .g-resp    .pname { color: #dc2626; }
+  .g-train   .pname { color: #0ea5e9; }
+
+  .g-data    .rel-arr { color: #1877F2; }
+  .g-problem .rel-arr { color: #16a34a; }
+  .g-repro   .rel-arr { color: #d97706; }
+  .g-resil   .rel-arr { color: #9333ea; }
+  .g-resp    .rel-arr { color: #dc2626; }
+  .g-train   .rel-arr { color: #0ea5e9; }
+
+  .g-data    .cd-on { background: #1877F2; }
+  .g-problem .cd-on { background: #16a34a; }
+  .g-repro   .cd-on { background: #d97706; }
+  .g-resil   .cd-on { background: #9333ea; }
+  .g-resp    .cd-on { background: #dc2626; }
+  .g-train   .cd-on { background: #0ea5e9; }
+
+  footer {
+    text-align: center; padding: 16px;
+    background: rgba(255,255,255,0.06); border-top: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.4); font-size: 9.5px;
+    font-family: 'JetBrains Mono', monospace; letter-spacing: .1em;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-title-block">
+      <div class="header-eyebrow">O'Reilly Media · 2020 · Reference Guide</div>
+      <h1>ML <span>Design</span> Patterns</h1>
+      <div class="header-sub">Lakshmanan, Robinson &amp; Munn — Solutions to Common Challenges in Data Preparation, Model Building &amp; MLOps</div>
+    </div>
+    <div class="header-stats">
+      <div class="hstat"><div class="hstat-n">30</div><div class="hstat-l">Patterns</div></div>
+      <div class="hstat"><div class="hstat-n">6</div><div class="hstat-l">Groups</div></div>
+      <div class="hstat"><div class="hstat-n">405</div><div class="hstat-l">Pages</div></div>
+      <div class="hstat"><div class="hstat-n">★4.5</div><div class="hstat-l">Rating</div></div>
+    </div>
+  </div>
+</header>
+
+<div class="legend">
+  <span class="legend-lbl">Groups:</span>
+  <span class="legend-chip"><span class="legend-dot" style="background:#1877F2"></span>Data Representation</span>
+  <span class="legend-chip"><span class="legend-dot" style="background:#16a34a"></span>Problem Representation</span>
+  <span class="legend-chip"><span class="legend-dot" style="background:#d97706"></span>Reproducibility</span>
+  <span class="legend-chip"><span class="legend-dot" style="background:#9333ea"></span>Resilience</span>
+  <span class="legend-chip"><span class="legend-dot" style="background:#dc2626"></span>Responsible AI</span>
+  <span class="legend-chip"><span class="legend-dot" style="background:#0ea5e9"></span>Modifying the Training Loop</span>
+</div>
+
+<main>
+
+<!-- ════════════════════════ GROUP 1: DATA REPRESENTATION ════════════════════════ -->
+<div class="group g-data">
+  <div class="group-hdr"><div class="group-bar"></div><span class="group-num">GROUP 01</span>Data Representation<span class="group-cnt">4 patterns</span></div>
+  <div class="tbl-wrap"><table>
+    <colgroup><col class="c-name"><col class="c-problem"><col class="c-uses"><col class="c-models"><col class="c-pros"><col class="c-cons"><col class="c-cx"><col class="c-rels"></colgroup>
+    <thead><tr><th>Pattern</th><th>Problem Solved</th><th>Real-World Use Cases</th><th>Primary ML Models / Tools</th><th>Advantages</th><th>Disadvantages</th><th>Complexity</th><th>Key Relationships</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><div class="pname">Hashed Features</div><div class="pid">DP-01</div></td>
+        <td><span class="prose">Handles very high-cardinality categoricals (millions of user/product IDs) without a fixed vocabulary by mapping values to a finite set of hash buckets.</span></td>
+        <td><div class="tags"><span class="tag t-use">E-commerce product IDs</span><span class="tag t-use">URL classification</span><span class="tag t-use">User session tracking</span><span class="tag t-use">Search query tokenisation</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">Wide &amp; Deep Networks</span><span class="tag t-mod">Logistic Regression</span><span class="tag t-mod">Gradient Boosted Trees</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Fixed memory footprint</span><span class="tag t-pro">No pre-built vocabulary</span><span class="tag t-pro">Graceful unseen-value handling</span><span class="tag t-pro">Deterministic &amp; fast</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Hash collisions reduce accuracy</span><span class="tag t-con">Not interpretable</span><span class="tag t-con">Bucket size requires tuning</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span><span class="cd-off"></span><span class="cd-off"></span></div><div class="cx-lbl">Low</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Embeddings (learn from hash)</div><div class="rel"><span class="rel-arr">→</span>Hyperparameter Tuning (bucket sz)</div><div class="rel"><span class="rel-arr">→</span>Repeatable Splitting (fingerprint)</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Embeddings</div><div class="pid">DP-02</div></td>
+        <td><span class="prose">Maps high-cardinality items to dense low-dimensional vectors encoding semantic similarity, allowing models to generalise across related entities.</span></td>
+        <td><div class="tags"><span class="tag t-use">Word2Vec / BERT NLP</span><span class="tag t-use">Recommendation systems</span><span class="tag t-use">Image feature extraction</span><span class="tag t-use">Graph node representations</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">Neural Networks (DNN)</span><span class="tag t-mod">Transformers (BERT / GPT)</span><span class="tag t-mod">Autoencoders</span><span class="tag t-mod">Matrix Factorization</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Encodes semantic similarity</span><span class="tag t-pro">Reduces dimensionality</span><span class="tag t-pro">Reusable across tasks</span><span class="tag t-pro">Handles sparsity well</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Requires large training data</span><span class="tag t-con">Dimension is a hyperparameter</span><span class="tag t-con">Cold-start problem</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span><span class="cd-off"></span></div><div class="cx-lbl">Medium</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Feature Store (store &amp; reuse)</div><div class="rel"><span class="rel-arr">→</span>Transfer Learning (pre-trained)</div><div class="rel"><span class="rel-arr">→</span>Hyperparameter Tuning (dim size)</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Feature Cross</div><div class="pid">DP-03</div></td>
+        <td><span class="prose">Explicitly creates interaction terms between features so linear models can learn non-linear relationships they otherwise cannot discover.</span></td>
+        <td><div class="tags"><span class="tag t-use">Ad CTR: city × device type</span><span class="tag t-use">Fare pricing: time × route</span><span class="tag t-use">Retail: season × category</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">Linear / Logistic Regression</span><span class="tag t-mod">Wide &amp; Deep Networks</span><span class="tag t-mod">Decision Trees (implicit)</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Boosts linear model accuracy</span><span class="tag t-pro">Encodes domain knowledge</span><span class="tag t-pro">Computationally cheap</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Combinatorial explosion risk</span><span class="tag t-con">Manual engineering required</span><span class="tag t-con">Use Embeddings to mitigate</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span><span class="cd-off"></span><span class="cd-off"></span></div><div class="cx-lbl">Low–Med</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Embeddings (avoid explosion)</div><div class="rel"><span class="rel-arr">→</span>Hashed Features (cross + hash)</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Multimodal Input</div><div class="pid">DP-04</div></td>
+        <td><span class="prose">Combines heterogeneous data types (text, images, tabular, audio) into a single model, leveraging richer signal from diverse sources.</span></td>
+        <td><div class="tags"><span class="tag t-use">Medical: image + patient notes</span><span class="tag t-use">Product: photo + description</span><span class="tag t-use">Video understanding: frames + audio</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">Multi-input DNNs</span><span class="tag t-mod">CLIP / Multimodal Transformers</span><span class="tag t-mod">Fusion Networks</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Leverages all available signals</span><span class="tag t-pro">Outperforms single-modality</span><span class="tag t-pro">Robust to missing modalities</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Complex architecture</span><span class="tag t-con">Data alignment challenges</span><span class="tag t-con">Higher training cost</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span></div><div class="cx-lbl">High</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Transform (per-modality pre-proc)</div><div class="rel"><span class="rel-arr">→</span>Embeddings (per modality)</div></div></td>
+      </tr>
+    </tbody>
+  </table></div>
+</div>
+
+<!-- ════════════════════════ GROUP 2: PROBLEM REPRESENTATION ════════════════════════ -->
+<div class="group g-problem">
+  <div class="group-hdr"><div class="group-bar"></div><span class="group-num">GROUP 02</span>Problem Representation<span class="group-cnt">6 patterns</span></div>
+  <div class="tbl-wrap"><table>
+    <colgroup><col class="c-name"><col class="c-problem"><col class="c-uses"><col class="c-models"><col class="c-pros"><col class="c-cons"><col class="c-cx"><col class="c-rels"></colgroup>
+    <thead><tr><th>Pattern</th><th>Problem Solved</th><th>Real-World Use Cases</th><th>Primary ML Models / Tools</th><th>Advantages</th><th>Disadvantages</th><th>Complexity</th><th>Key Relationships</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><div class="pname">Reframing</div><div class="pid">PR-01</div></td>
+        <td><span class="prose">Transforms the problem formulation (e.g. regression → classification) to better match the loss landscape and dataset characteristics, improving handling of edge cases.</span></td>
+        <td><div class="tags"><span class="tag t-use">Fraud: regression → classification</span><span class="tag t-use">Demand as ordinal ranking</span><span class="tag t-use">Age estimation as ordinal class</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">Classifiers (XGBoost, DNN)</span><span class="tag t-mod">Ranking Models (LambdaMART)</span><span class="tag t-mod">Ordinal Regression</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Improves rare-case handling</span><span class="tag t-pro">Unlocks better loss functions</span><span class="tag t-pro">Simplifies evaluation</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Requires domain insight</span><span class="tag t-con">May lose output precision</span><span class="tag t-con">Needs Fairness Lens audit</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span><span class="cd-off"></span><span class="cd-off"></span></div><div class="cx-lbl">Low–Med</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Cascade (rare cases)</div><div class="rel"><span class="rel-arr">→</span>Fairness Lens (bias check)</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Multilabel</div><div class="pid">PR-02</div></td>
+        <td><span class="prose">Addresses classification where each example can belong to multiple classes simultaneously, requiring independent sigmoid outputs per label rather than a single softmax.</span></td>
+        <td><div class="tags"><span class="tag t-use">Document tagging (news categories)</span><span class="tag t-use">Medical: multiple diagnoses</span><span class="tag t-use">Image scene labelling</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">DNN with Sigmoid outputs</span><span class="tag t-mod">BERT fine-tuned</span><span class="tag t-mod">Random Forest (OvR)</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Single model replaces many</span><span class="tag t-pro">Label correlations learned</span><span class="tag t-pro">Efficient inference</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Harder evaluation (macro/micro F1)</span><span class="tag t-con">Per-label class imbalance</span><span class="tag t-con">Threshold tuning per label</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span><span class="cd-off"></span></div><div class="cx-lbl">Medium</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Cascade (hierarchical labels)</div><div class="rel"><span class="rel-arr">→</span>Rebalancing (imbalanced labels)</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Ensembles</div><div class="pid">PR-03</div></td>
+        <td><span class="prose">Combines predictions from multiple diverse models via bagging, boosting, or stacking to reduce variance/bias and produce more robust results than any single model.</span></td>
+        <td><div class="tags"><span class="tag t-use">Kaggle competition winners</span><span class="tag t-use">Credit scoring (stability)</span><span class="tag t-use">Weather forecast ensembles</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">Random Forests (bagging)</span><span class="tag t-mod">XGBoost / LightGBM (boosting)</span><span class="tag t-mod">Stacked meta-learners</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Reduces overfitting</span><span class="tag t-pro">Increases confidence</span><span class="tag t-pro">Quantifies uncertainty</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Slower inference</span><span class="tag t-con">Higher compute &amp; memory</span><span class="tag t-con">Needs Explainable Predictions</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span><span class="cd-off"></span></div><div class="cx-lbl">Medium</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Explainable Predictions</div><div class="rel"><span class="rel-arr">→</span>Rebalancing (use all data)</div><div class="rel"><span class="rel-arr">→</span>Hyperparameter Tuning</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Cascade</div><div class="pid">PR-04</div></td>
+        <td><span class="prose">Chains multiple specialised models in sequence; earlier models gate or route data to later models, efficiently handling subpopulations and hierarchical decisions.</span></td>
+        <td><div class="tags"><span class="tag t-use">Two-stage detection (YOLO → Refine)</span><span class="tag t-use">Email: spam filter → topic</span><span class="tag t-use">Medical: screening → diagnosis</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">Any classifier chain</span><span class="tag t-mod">CNN → Classifier pipelines</span><span class="tag t-mod">Rule-based + ML hybrid</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Handles rare subclasses well</span><span class="tag t-pro">Each model stays specialised</span><span class="tag t-pro">Lower compute per query</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Error propagation through chain</span><span class="tag t-con">Complex training coordination</span><span class="tag t-con">Bridged Schema can simplify</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span></div><div class="cx-lbl">High</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Bridged Schema (replacement)</div><div class="rel"><span class="rel-arr">→</span>Reframing (rare cases)</div><div class="rel"><span class="rel-arr">→</span>Neutral Class</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Neutral Class</div><div class="pid">PR-05</div></td>
+        <td><span class="prose">Adds an explicit "uncertain / neutral" category to capture ambiguous examples at class boundaries, reducing forced-choice misclassification in noisy or subjective domains.</span></td>
+        <td><div class="tags"><span class="tag t-use">Sentiment: +ve / neutral / −ve</span><span class="tag t-use">Intent: matched / unclear / none</span><span class="tag t-use">Review moderation systems</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">Softmax Classifiers (3-class)</span><span class="tag t-mod">BERT / RoBERTa fine-tuned</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Handles label ambiguity</span><span class="tag t-pro">Reduces forced-choice errors</span><span class="tag t-pro">Improves confidence calibration</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Neutral boundary must be defined</span><span class="tag t-con">Bias can shift to neutral bucket</span><span class="tag t-con">Higher annotation cost</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span><span class="cd-off"></span><span class="cd-off"></span></div><div class="cx-lbl">Low–Med</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Reframing (problem framing)</div><div class="rel"><span class="rel-arr">→</span>Cascade (uncertain routing)</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Rebalancing</div><div class="pid">PR-06</div></td>
+        <td><span class="prose">Corrects class imbalance via oversampling (SMOTE), undersampling, or cost-sensitive weighting so models don't ignore minority classes like fraud or rare diseases.</span></td>
+        <td><div class="tags"><span class="tag t-use">Fraud detection (1:1000 ratio)</span><span class="tag t-use">Rare disease detection</span><span class="tag t-use">Manufacturing defect ID</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">XGBoost (scale_pos_weight)</span><span class="tag t-mod">SVM (class_weight param)</span><span class="tag t-mod">DNN (weighted loss function)</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Improves minority class recall</span><span class="tag t-pro">Multiple complementary techniques</span><span class="tag t-pro">Use all data via Ensembles</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Oversampling can overfit minority</span><span class="tag t-con">Undersampling loses majority data</span><span class="tag t-con">Threshold selection is tricky</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span><span class="cd-off"></span></div><div class="cx-lbl">Medium</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Ensembles (use all data)</div><div class="rel"><span class="rel-arr">→</span>Explainable Predictions</div><div class="rel"><span class="rel-arr">→</span>Cascade &amp; Reframing</div></div></td>
+      </tr>
+    </tbody>
+  </table></div>
+</div>
+
+<!-- ════════════════════════ GROUP 3: REPRODUCIBILITY ════════════════════════ -->
+<div class="group g-repro">
+  <div class="group-hdr"><div class="group-bar"></div><span class="group-num">GROUP 03</span>Reproducibility<span class="group-cnt">7 patterns</span></div>
+  <div class="tbl-wrap"><table>
+    <colgroup><col class="c-name"><col class="c-problem"><col class="c-uses"><col class="c-models"><col class="c-pros"><col class="c-cons"><col class="c-cx"><col class="c-rels"></colgroup>
+    <thead><tr><th>Pattern</th><th>Problem Solved</th><th>Real-World Use Cases</th><th>Primary ML Models / Tools</th><th>Advantages</th><th>Disadvantages</th><th>Complexity</th><th>Key Relationships</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><div class="pname">Transform</div><div class="pid">RE-01</div></td>
+        <td><span class="prose">Bakes pre-processing transforms directly into the saved model artifact, eliminating the training–serving skew caused by separate preprocessing pipelines.</span></td>
+        <td><div class="tags"><span class="tag t-use">TensorFlow Transform (tf.Transform)</span><span class="tag t-use">Normalisation in SavedModel</span><span class="tag t-use">Streaming inference features</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">TensorFlow / Keras</span><span class="tag t-mod">PyTorch TorchScript</span><span class="tag t-mod">Scikit-learn Pipelines</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Eliminates train-serve skew</span><span class="tag t-pro">Atomic versioning of transform + model</span><span class="tag t-pro">Enables streaming inference</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Adds artifact complexity</span><span class="tag t-con">Framework coupling</span><span class="tag t-con">Harder to update transforms alone</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span><span class="cd-off"></span></div><div class="cx-lbl">Medium</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Stateless Serving Function</div><div class="rel"><span class="rel-arr">→</span>Windowed Inference</div><div class="rel"><span class="rel-arr">→</span>Feature Store</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Repeatable Splitting</div><div class="pid">RE-02</div></td>
+        <td><span class="prose">Ensures deterministic train/val/test splits via hash-based partitioning (e.g. FARM_FINGERPRINT) rather than random splits, preventing data leakage across experimental runs.</span></td>
+        <td><div class="tags"><span class="tag t-use">BigQuery ML FARM_FINGERPRINT</span><span class="tag t-use">Chronological time-series splits</span><span class="tag t-use">A/B test holdout creation</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">All models (universal)</span><span class="tag t-mod">Time-series (LSTM, ARIMA)</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Fully reproducible experiments</span><span class="tag t-pro">Prevents data leakage</span><span class="tag t-pro">Works on distributed data</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Hash function choice matters</span><span class="tag t-con">May not balance classes perfectly</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span><span class="cd-off"></span><span class="cd-off"></span></div><div class="cx-lbl">Low</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Hashed Features (same fingerprint)</div><div class="rel"><span class="rel-arr">→</span>Hyperparameter Tuning (old examples)</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Bridged Schema</div><div class="pid">RE-03</div></td>
+        <td><span class="prose">Handles schema evolution by mapping between old and new feature schemas, letting models retrain on historical data without discarding it when columns are added or removed.</span></td>
+        <td><div class="tags"><span class="tag t-use">Feature deprecation in live systems</span><span class="tag t-use">Data warehouse column migration</span><span class="tag t-use">API versioning for ML features</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">All production models</span><span class="tag t-mod">TFX / Vertex AI pipelines</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Preserves historical training data</span><span class="tag t-pro">Enables gradual schema migration</span><span class="tag t-pro">Reduces retraining data cost</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Bridge logic maintenance burden</span><span class="tag t-con">Semantic mismatches if careless</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span><span class="cd-off"></span></div><div class="cx-lbl">Medium</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Hyperparameter Tuning (old examples)</div><div class="rel"><span class="rel-arr">→</span>Feature Store (version features)</div><div class="rel"><span class="rel-arr">→</span>Cascade (can replace)</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Windowed Inference</div><div class="pid">RE-04</div></td>
+        <td><span class="prose">Maintains a sliding window of recent streaming events at inference time so rolling-aggregate features (e.g. 30-min fraud windows) match how they were computed during training.</span></td>
+        <td><div class="tags"><span class="tag t-use">Real-time fraud (30-min window)</span><span class="tag t-use">User session behaviour scoring</span><span class="tag t-use">IoT sensor anomaly detection</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">LSTM / GRU (streaming)</span><span class="tag t-mod">Online Learning models</span><span class="tag t-mod">Apache Beam + TFX</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Matches train/serve feature logic</span><span class="tag t-pro">Handles temporal dependencies</span><span class="tag t-pro">Enables real-time ML</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Complex state management</span><span class="tag t-con">Latency overhead</span><span class="tag t-con">Requires streaming infrastructure</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span></div><div class="cx-lbl">High</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Feature Store (stateful features)</div><div class="rel"><span class="rel-arr">→</span>Two Phase Predictions</div><div class="rel"><span class="rel-arr">→</span>Transform</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Workflow Pipeline</div><div class="pid">RE-05</div></td>
+        <td><span class="prose">Encodes the full ML lifecycle (ingest → train → evaluate → deploy) as an automated, reusable pipeline with explicit dependency tracking, enabling full CI/CD for ML.</span></td>
+        <td><div class="tags"><span class="tag t-use">TFX / Kubeflow Pipelines</span><span class="tag t-use">MLflow / Vertex AI Pipelines</span><span class="tag t-use">Nightly automated retraining</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">Framework-agnostic</span><span class="tag t-mod">Kubeflow / Airflow / Vertex AI</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Full lineage tracking</span><span class="tag t-pro">Automated retraining triggers</span><span class="tag t-pro">CI/CD for ML</span><span class="tag t-pro">Compliance auditable</span></div></td>
+        <td><div class="tags"><span class="tag t-con">High setup investment</span><span class="tag t-con">Hard to debug distributed failures</span><span class="tag t-con">Infrastructure dependency</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span></div><div class="cx-lbl">High</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Continued Model Evaluation</div><div class="rel"><span class="rel-arr">→</span>Feature Store</div><div class="rel"><span class="rel-arr">→</span>Fairness Lens (incorporate)</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Feature Store</div><div class="pid">RE-06</div></td>
+        <td><span class="prose">Centralises feature computation, storage, and serving to guarantee consistency between training and inference, and enable feature reuse across teams and projects.</span></td>
+        <td><div class="tags"><span class="tag t-use">Feast / Vertex AI Feature Store</span><span class="tag t-use">Uber Michelangelo shared features</span><span class="tag t-use">Multi-team recommendation systems</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">All production models</span><span class="tag t-mod">Real-time + batch ML systems</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Eliminates train-serve skew at scale</span><span class="tag t-pro">Feature reuse across projects</span><span class="tag t-pro">Reduces time-to-model</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Infrastructure overhead</span><span class="tag t-con">Governance ownership needed</span><span class="tag t-con">Online retrieval latency</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span></div><div class="cx-lbl">High</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Embeddings (store pre-computed)</div><div class="rel"><span class="rel-arr">→</span>Windowed Inference (stateful)</div><div class="rel"><span class="rel-arr">→</span>Workflow Pipeline</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Model Versioning</div><div class="pid">RE-07</div></td>
+        <td><span class="prose">Maintains a registry of model versions with associated metadata (data snapshot, hyperparameters, metrics), enabling rollback, A/B testing, and regulatory auditability.</span></td>
+        <td><div class="tags"><span class="tag t-use">MLflow Model Registry</span><span class="tag t-use">TF Serving multi-version</span><span class="tag t-use">Blue/green model deployments</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">All deployed models</span><span class="tag t-mod">Champion-challenger setups</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Safe rollback capability</span><span class="tag t-pro">Shadow/canary deployments</span><span class="tag t-pro">Regulatory audit trail</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Storage costs for many versions</span><span class="tag t-con">Governance process required</span><span class="tag t-con">Lifecycle policy essential</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span><span class="cd-off"></span></div><div class="cx-lbl">Medium</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Continued Model Evaluation</div><div class="rel"><span class="rel-arr">→</span>Stateless Serving Function</div><div class="rel"><span class="rel-arr">→</span>Workflow Pipeline (lineage)</div></div></td>
+      </tr>
+    </tbody>
+  </table></div>
+</div>
+
+<!-- ════════════════════════ GROUP 4: RESILIENCE ════════════════════════ -->
+<div class="group g-resil">
+  <div class="group-hdr"><div class="group-bar"></div><span class="group-num">GROUP 04</span>Resilience<span class="group-cnt">5 patterns</span></div>
+  <div class="tbl-wrap"><table>
+    <colgroup><col class="c-name"><col class="c-problem"><col class="c-uses"><col class="c-models"><col class="c-pros"><col class="c-cons"><col class="c-cx"><col class="c-rels"></colgroup>
+    <thead><tr><th>Pattern</th><th>Problem Solved</th><th>Real-World Use Cases</th><th>Primary ML Models / Tools</th><th>Advantages</th><th>Disadvantages</th><th>Complexity</th><th>Key Relationships</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><div class="pname">Stateless Serving Function</div><div class="pid">RS-01</div></td>
+        <td><span class="prose">Designs inference endpoints with zero server-side session state — all context passed in the request — enabling horizontal scaling, fault tolerance, and reproducible responses.</span></td>
+        <td><div class="tags"><span class="tag t-use">REST API model endpoints</span><span class="tag t-use">Cloud Functions / Lambda serving</span><span class="tag t-use">Microservice ML inference</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">TF Serving / TorchServe</span><span class="tag t-mod">FastAPI + ONNX</span><span class="tag t-mod">Vertex AI Endpoints</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Infinitely horizontally scalable</span><span class="tag t-pro">Zero-downtime deployments</span><span class="tag t-pro">Reproducible per request</span></div></td>
+        <td><div class="tags"><span class="tag t-con">All context in each request</span><span class="tag t-con">Larger request payloads</span><span class="tag t-con">Tradeoff with Model Versioning</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span><span class="cd-off"></span><span class="cd-off"></span></div><div class="cx-lbl">Low–Med</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Model Versioning (alt approach)</div><div class="rel"><span class="rel-arr">→</span>Batch Serving (throughput tradeoff)</div><div class="rel"><span class="rel-arr">→</span>Transform (bake into serving)</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Batch Serving</div><div class="pid">RS-02</div></td>
+        <td><span class="prose">Pre-computes and caches predictions for all known inputs offline, trading response latency for throughput where predictions cover a fixed, queryable set of items.</span></td>
+        <td><div class="tags"><span class="tag t-use">Nightly recommendation pre-compute</span><span class="tag t-use">Risk score batch runs (banking)</span><span class="tag t-use">Product ranking for search index</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">Any model (inference phase)</span><span class="tag t-mod">Spark MLlib</span><span class="tag t-mod">BigQuery ML PREDICT</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Very low serving latency (cache hit)</span><span class="tag t-pro">High GPU/CPU utilisation</span><span class="tag t-pro">Predictable infrastructure cost</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Predictions can be stale</span><span class="tag t-con">Cannot handle novel inputs at serve time</span><span class="tag t-con">Storage overhead</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span><span class="cd-off"></span><span class="cd-off"></span></div><div class="cx-lbl">Low–Med</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Windowed Inference (ordered inputs)</div><div class="rel"><span class="rel-arr">→</span>Keyed Prediction (distributed)</div><div class="rel"><span class="rel-arr">→</span>Stateless Serving (latency tradeoff)</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Continued Model Evaluation</div><div class="pid">RS-03</div></td>
+        <td><span class="prose">Automates ongoing monitoring of deployed model performance on live data to detect distribution shift, concept drift, and accuracy degradation, triggering retraining or alerting.</span></td>
+        <td><div class="tags"><span class="tag t-use">Production drift dashboards</span><span class="tag t-use">Champion-challenger live evaluation</span><span class="tag t-use">Regulatory model monitoring (finance)</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">All production models</span><span class="tag t-mod">Evidently AI / Seldon</span><span class="tag t-mod">Vertex AI Model Monitoring</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Early detection of model degradation</span><span class="tag t-pro">Automated retraining triggers</span><span class="tag t-pro">Data quality monitoring</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Requires ground truth labels (delayed)</span><span class="tag t-con">Alert fatigue if thresholds wrong</span><span class="tag t-con">Needs live labelling infrastructure</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span></div><div class="cx-lbl">High</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Model Versioning (compare)</div><div class="rel"><span class="rel-arr">→</span>Fairness Lens (incorporate)</div><div class="rel"><span class="rel-arr">→</span>Workflow Pipeline (retrain trigger)</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Two Phase Predictions</div><div class="pid">RS-04</div></td>
+        <td><span class="prose">Splits inference into a fast lightweight Phase 1 (coarse retrieval/filtering) and a precise Phase 2 (expensive reranking), balancing latency with quality at billion-item scale.</span></td>
+        <td><div class="tags"><span class="tag t-use">Recommendation: recall → ranking</span><span class="tag t-use">Search: BM25 → neural reranker</span><span class="tag t-use">Ads: retrieval → auction scoring</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">ANN (FAISS / ScaNN) + DNN</span><span class="tag t-mod">BM25 + BERT reranker</span><span class="tag t-mod">Logistic Regression + XGBoost</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Scales to billions of candidates</span><span class="tag t-pro">Quality via expensive final ranker</span><span class="tag t-pro">Each phase independently tunable</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Phase 1 recall ceiling limits Phase 2</span><span class="tag t-con">Complex system design &amp; monitoring</span><span class="tag t-con">Two training datasets needed</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span></div><div class="cx-lbl">High</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Windowed Inference (batch phase)</div><div class="rel"><span class="rel-arr">→</span>Keyed Prediction (within phase)</div><div class="rel"><span class="rel-arr">→</span>Cascade (structural similarity)</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Keyed Prediction</div><div class="pid">RS-05</div></td>
+        <td><span class="prose">Attaches a client-provided passthrough key to each prediction request that is returned with the response, enabling correct reassembly of results in async distributed batch pipelines.</span></td>
+        <td><div class="tags"><span class="tag t-use">Distributed batch scoring pipelines</span><span class="tag t-use">Async ML API result correlation</span><span class="tag t-use">Multi-tenant prediction services</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">Batch APIs (Vertex AI, SageMaker)</span><span class="tag t-mod">TF Serving with metadata passthrough</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Parallel async batch inference</span><span class="tag t-pro">Correct reassembly at scale</span><span class="tag t-pro">Works with out-of-order responses</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Keys must be unique &amp; managed</span><span class="tag t-con">Adds payload overhead</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span><span class="cd-off"></span><span class="cd-off"></span></div><div class="cx-lbl">Low–Med</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Batch Serving (required for distributed)</div><div class="rel"><span class="rel-arr">→</span>Continued Model Evaluation (required)</div></div></td>
+      </tr>
+    </tbody>
+  </table></div>
+</div>
+
+<!-- ════════════════════════ GROUP 5: RESPONSIBLE AI ════════════════════════ -->
+<div class="group g-resp">
+  <div class="group-hdr"><div class="group-bar"></div><span class="group-num">GROUP 05</span>Responsible AI<span class="group-cnt">3 patterns</span></div>
+  <div class="tbl-wrap"><table>
+    <colgroup><col class="c-name"><col class="c-problem"><col class="c-uses"><col class="c-models"><col class="c-pros"><col class="c-cons"><col class="c-cx"><col class="c-rels"></colgroup>
+    <thead><tr><th>Pattern</th><th>Problem Solved</th><th>Real-World Use Cases</th><th>Primary ML Models / Tools</th><th>Advantages</th><th>Disadvantages</th><th>Complexity</th><th>Key Relationships</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><div class="pname">Heuristic Benchmark</div><div class="pid">RA-01</div></td>
+        <td><span class="prose">Establishes a simple rule-based or statistical baseline that any ML model must demonstrably outperform before deployment is justified, preventing over-engineering of already-solved problems.</span></td>
+        <td><div class="tags"><span class="tag t-use">Predict tomorrow = today's value</span><span class="tag t-use">Recommend most popular item</span><span class="tag t-use">Classify by keyword matching first</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">Rule-based / frequency baselines</span><span class="tag t-mod">Majority classifiers</span><span class="tag t-mod">Linear regression baseline</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Prevents unnecessary ML complexity</span><span class="tag t-pro">Rapid to implement &amp; communicate</span><span class="tag t-pro">Creates ML accountability</span></div></td>
+        <td><div class="tags"><span class="tag t-con">May be too simple for nuance</span><span class="tag t-con">Benchmark choice can bias evaluation</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-off"></span><span class="cd-off"></span><span class="cd-off"></span><span class="cd-off"></span></div><div class="cx-lbl">Very Low</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Explainable Predictions (baselines)</div><div class="rel"><span class="rel-arr">→</span>Continued Model Evaluation</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Explainable Predictions</div><div class="pid">RA-02</div></td>
+        <td><span class="prose">Provides human-interpretable explanations for model decisions using SHAP, LIME, or integrated gradients to satisfy regulatory requirements and build stakeholder trust.</span></td>
+        <td><div class="tags"><span class="tag t-use">GDPR "right to explanation" compliance</span><span class="tag t-use">Credit decision explainability</span><span class="tag t-use">Medical AI diagnosis rationale</span><span class="tag t-use">Model debugging &amp; bias detection</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">SHAP (tree + kernel explainer)</span><span class="tag t-mod">LIME (local approximation)</span><span class="tag t-mod">Integrated Gradients (DNN)</span><span class="tag t-mod">Attention maps (Transformers)</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Regulatory compliance</span><span class="tag t-pro">Reveals bias &amp; data issues</span><span class="tag t-pro">Builds stakeholder trust</span><span class="tag t-pro">Aids complex model debugging</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Explanations are approximations</span><span class="tag t-con">SHAP expensive for large models</span><span class="tag t-con">Post-hoc explanations may mislead</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span><span class="cd-off"></span></div><div class="cx-lbl">Medium</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Fairness Lens (one approach)</div><div class="rel"><span class="rel-arr">→</span>Ensembles (increases need)</div><div class="rel"><span class="rel-arr">→</span>Rebalancing (needed)</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Fairness Lens</div><div class="pid">RA-03</div></td>
+        <td><span class="prose">Applies structured fairness analysis across protected demographic attributes using metrics (demographic parity, equal opportunity) to detect and mitigate discriminatory model behaviour.</span></td>
+        <td><div class="tags"><span class="tag t-use">Hiring model bias audits</span><span class="tag t-use">Loan approval fairness (race/gender)</span><span class="tag t-use">Criminal recidivism scoring (COMPAS)</span><span class="tag t-use">Healthcare allocation equity</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">What-If Tool (Google)</span><span class="tag t-mod">Fairlearn / IBM AI Fairness 360</span><span class="tag t-mod">TensorFlow Model Analysis (TFMA)</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Detects hidden discrimination</span><span class="tag t-pro">Multiple fairness metrics</span><span class="tag t-pro">Legal/ethical risk reduction</span><span class="tag t-pro">Part of Workflow Pipeline</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Fairness metrics conflict (impossibility theorem)</span><span class="tag t-con">Requires demographic data</span><span class="tag t-con">Remediation may reduce accuracy</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span></div><div class="cx-lbl">High</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Explainable Predictions (component)</div><div class="rel"><span class="rel-arr">→</span>Reframing (inadvertent bias)</div><div class="rel"><span class="rel-arr">→</span>Continued Model Evaluation</div></div></td>
+      </tr>
+    </tbody>
+  </table></div>
+</div>
+
+<!-- ════════════════════════ GROUP 6: MODIFYING THE TRAINING LOOP ════════════════════════ -->
+<div class="group g-train">
+  <div class="group-hdr"><div class="group-bar"></div><span class="group-num">GROUP 06</span>Modifying the Training Loop<span class="group-cnt">5 patterns</span></div>
+  <div class="tbl-wrap"><table>
+    <colgroup><col class="c-name"><col class="c-problem"><col class="c-uses"><col class="c-models"><col class="c-pros"><col class="c-cons"><col class="c-cx"><col class="c-rels"></colgroup>
+    <thead><tr><th>Pattern</th><th>Problem Solved</th><th>Real-World Use Cases</th><th>Primary ML Models / Tools</th><th>Advantages</th><th>Disadvantages</th><th>Complexity</th><th>Key Relationships</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><div class="pname">Transfer Learning</div><div class="pid">TL-01</div></td>
+        <td><span class="prose">Leverages representations from a large general model and fine-tunes them for a domain-specific task, drastically reducing labelled data and compute requirements.</span></td>
+        <td><div class="tags"><span class="tag t-use">BERT fine-tuned for legal NLP</span><span class="tag t-use">ImageNet → medical imaging</span><span class="tag t-use">GPT fine-tuned for code completion</span><span class="tag t-use">ResNet → satellite image analysis</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">BERT / GPT / T5 (NLP)</span><span class="tag t-mod">ResNet / EfficientNet (Vision)</span><span class="tag t-mod">Whisper (Audio)</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Far less labelled data needed</span><span class="tag t-pro">Faster convergence</span><span class="tag t-pro">State-of-the-art baselines easily</span><span class="tag t-pro">Embeds domain knowledge</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Negative transfer if domains differ</span><span class="tag t-con">Large model memory footprint</span><span class="tag t-con">Catastrophic forgetting risk</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span><span class="cd-off"></span></div><div class="cx-lbl">Medium</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Embeddings (a form of)</div><div class="rel"><span class="rel-arr">→</span>Checkpoints (fine-tuning from)</div><div class="rel"><span class="rel-arr">→</span>Cascade (might require)</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Useful Overfitting</div><div class="pid">TL-02</div></td>
+        <td><span class="prose">Deliberately trains a model to perfectly memorise a small, deterministic dataset — appropriate when exact memorisation is desired (physics simulators, lookup tables) not generalisation.</span></td>
+        <td><div class="tags"><span class="tag t-use">Neural network ODE solvers</span><span class="tag t-use">Physics simulation surrogates</span><span class="tag t-use">Exact lookup table compression</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">Small DNNs / MLPs</span><span class="tag t-mod">Physics-Informed Neural Networks</span><span class="tag t-mod">Neural ODEs</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Perfect accuracy on known data</span><span class="tag t-pro">Compresses complex functions</span><span class="tag t-pro">Differentiable surrogate model</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Zero generalisation to unseen inputs</span><span class="tag t-con">Very narrow applicable scenarios</span><span class="tag t-con">Easy to misapply — understand context</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span><span class="cd-off"></span><span class="cd-off"></span></div><div class="cx-lbl">Low–Med</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Cascade (chained optimisation)</div><div class="rel"><span class="rel-arr">→</span>Checkpoints (save memorised state)</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Checkpoints</div><div class="pid">TL-03</div></td>
+        <td><span class="prose">Periodically saves model weights during training, enabling recovery from failures, early stopping at optimal validation performance, and warm-starting fine-tuned variants.</span></td>
+        <td><div class="tags"><span class="tag t-use">Multi-day LLM pretraining recovery</span><span class="tag t-use">Early stopping for regularisation</span><span class="tag t-use">Curriculum learning staged training</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">All deep learning models</span><span class="tag t-mod">TF ModelCheckpoint / PyTorch save</span><span class="tag t-mod">Keras callbacks</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Resilient to training failures</span><span class="tag t-pro">Enables optimal early stopping</span><span class="tag t-pro">Foundation for Transfer Learning</span><span class="tag t-pro">Training schedule experimentation</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Storage cost for large models</span><span class="tag t-con">Selection needs validation monitoring</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span><span class="cd-off"></span><span class="cd-off"></span></div><div class="cx-lbl">Low</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Transfer Learning (fine-tuning from)</div><div class="rel"><span class="rel-arr">→</span>Distribution Strategy (coordinate)</div><div class="rel"><span class="rel-arr">→</span>Model Versioning (checkpoint = version)</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Distribution Strategy</div><div class="pid">TL-04</div></td>
+        <td><span class="prose">Distributes training across multiple GPUs/TPUs or machines using data/model/pipeline parallelism to reduce wall-clock time for large model and dataset training.</span></td>
+        <td><div class="tags"><span class="tag t-use">LLM training on TPU pods</span><span class="tag t-use">Multi-GPU ResNet (data parallel)</span><span class="tag t-use">Federated learning (edge devices)</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">TF MirroredStrategy / MultiWorker</span><span class="tag t-mod">PyTorch DDP / FSDP</span><span class="tag t-mod">DeepSpeed / Megatron-LM</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Enables billion-parameter model training</span><span class="tag t-pro">Near-linear scaling (data parallel)</span><span class="tag t-pro">Reduces training wall-clock time</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Communication overhead (allreduce)</span><span class="tag t-con">Debugging across workers is hard</span><span class="tag t-con">LR / batch size rescaling required</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span></div><div class="cx-lbl">High</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Checkpoints (required at scale)</div><div class="rel"><span class="rel-arr">→</span>Hyperparameter Tuning (batch/LR rescale)</div></div></td>
+      </tr>
+      <tr>
+        <td><div class="pname">Hyperparameter Tuning</div><div class="pid">TL-05</div></td>
+        <td><span class="prose">Automates the search for optimal model hyperparameters (learning rate, depth, embedding size, regularisation) using Bayesian optimisation, grid/random search, or neural architecture search.</span></td>
+        <td><div class="tags"><span class="tag t-use">Vertex AI Vizier / Optuna</span><span class="tag t-use">NAS for efficient architectures</span><span class="tag t-use">Hash bucket &amp; embedding dim selection</span><span class="tag t-use">Ensemble weight optimisation</span></div></td>
+        <td><div class="tags"><span class="tag t-mod">Bayesian Optimisation (BO)</span><span class="tag t-mod">Population-Based Training (PBT)</span><span class="tag t-mod">Hyperband / ASHA</span><span class="tag t-mod">Neural Architecture Search (NAS)</span></div></td>
+        <td><div class="tags"><span class="tag t-pro">Finds configs beyond human intuition</span><span class="tag t-pro">Reproducible &amp; loggable</span><span class="tag t-pro">Generator of Ensembles</span></div></td>
+        <td><div class="tags"><span class="tag t-con">Computationally expensive</span><span class="tag t-con">Risk of overfitting to validation set</span><span class="tag t-con">Requires proper train/val/test discipline</span></div></td>
+        <td><div class="cx-wrap"><div class="cx-dots"><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-on"></span><span class="cd-off"></span></div><div class="cx-lbl">High</div></div></td>
+        <td><div class="rels"><div class="rel"><span class="rel-arr">→</span>Embeddings (dimension choice)</div><div class="rel"><span class="rel-arr">→</span>Hashed Features (bucket size)</div><div class="rel"><span class="rel-arr">→</span>Ensembles (as generator)</div><div class="rel"><span class="rel-arr">→</span>Bridged Schema (old examples)</div></div></td>
+      </tr>
+    </tbody>
+  </table></div>
+</div>
+
+</main>
+
+<footer>
+  ML Design Patterns &nbsp;·&nbsp; Lakshmanan, Robinson &amp; Munn &nbsp;·&nbsp; O'Reilly Media · October 2020 &nbsp;·&nbsp; 30 Patterns across 6 Groups &nbsp;·&nbsp; Reference compiled for educational purposes
+</footer>
+
+</body>
+</html>

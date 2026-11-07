@@ -1,0 +1,32 @@
+module:
+  id: "kg_about"
+  name: "About"
+  description: "Application information, schema, and delta-editing model documentation"
+  version: "1.0.0"
+  author: "Knowledge Graph Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "About"
+    icon: "info-circle"
+    tabname: "kg_about"
+    group: "Knowledge Graph"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: []
+
+  data:
+    required: []
+    optional: []

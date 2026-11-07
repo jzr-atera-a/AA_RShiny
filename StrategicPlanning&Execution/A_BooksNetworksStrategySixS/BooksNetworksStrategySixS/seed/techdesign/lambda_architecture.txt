@@ -1,0 +1,251 @@
+design_id: seed_lambda_architecture
+design_group: data_processing
+design_type: lambda_architecture
+title: Lambda Architecture
+variant: Batch, speed and serving layers
+summary: Lambda architecture processes the same data twice. A batch layer recomputes accurate views from the full immutable history, a speed layer computes low-latency approximate views from recent events, and a serving layer merges both so queries see complete and fresh results.
+when_to_use: You need both accurate historical results and second-level freshness, and batch and streaming engines already exist in your platform.
+when_not_to_use: One streaming engine can reprocess history; maintaining two code paths for the same logic is costly and error prone.
+complexity: High
+tags: lambda, batch, streaming, serving layer, master dataset
+
+@component
+id: C1
+label: Event Producers
+lane: Sources
+kind: external
+description: Applications, devices and databases that emit events.
+technologies: Apps, IoT, CDC
+attributes: N/A
+methods: N/A
+
+@component
+id: C2
+label: Message Broker
+lane: Ingestion
+kind: queue
+description: Durable log that receives every event and fans it out to both layers.
+technologies: Kafka, Kinesis, Pub/Sub
+attributes: N/A
+methods: N/A
+
+@component
+id: C3
+label: Master Dataset
+lane: Batch Layer
+kind: store
+description: Immutable append-only copy of all raw events; the source of truth.
+technologies: S3, HDFS, GCS
+attributes: N/A
+methods: N/A
+
+@component
+id: C4
+label: Batch Processing Job
+lane: Batch Layer
+kind: process
+description: Recomputes accurate views from the full history on a schedule.
+technologies: Spark, Hive, dbt
+attributes: N/A
+methods: N/A
+
+@component
+id: C5
+label: Batch Views
+lane: Serving Layer
+kind: store
+description: Precomputed, indexed results from the batch layer.
+technologies: BigQuery, Druid, HBase
+attributes: N/A
+methods: N/A
+
+@component
+id: C6
+label: Stream Processor
+lane: Speed Layer
+kind: process
+description: Processes new events as they arrive and updates incremental views.
+technologies: Flink, Spark Streaming, Storm
+attributes: N/A
+methods: N/A
+
+@component
+id: C7
+label: Real-time Views
+lane: Serving Layer
+kind: store
+description: Low-latency views covering only data not yet absorbed by the batch layer.
+technologies: Redis, Cassandra, Druid
+attributes: N/A
+methods: N/A
+
+@component
+id: C8
+label: Query Merger
+lane: Serving Layer
+kind: service
+description: Combines batch and real-time views into a single answer.
+technologies: Presto, Trino, custom API
+attributes: N/A
+methods: N/A
+
+@component
+id: C9
+label: Dashboards and APIs
+lane: Consumers
+kind: actor
+description: Analysts and applications that query the merged view.
+technologies: BI tools, REST
+attributes: N/A
+methods: N/A
+
+@component
+id: C10
+label: Reconciliation Monitor
+lane: Operations
+kind: monitor
+description: Compares real-time results with later batch results to detect divergence.
+technologies: Great Expectations, custom
+attributes: N/A
+methods: N/A
+
+@connection
+from: C1
+to: C2
+label: events
+type: event
+
+@connection
+from: C2
+to: C3
+label: append raw events
+type: data
+
+@connection
+from: C3
+to: C4
+label: full history
+type: data
+
+@connection
+from: C4
+to: C5
+label: recomputed views
+type: data
+
+@connection
+from: C2
+to: C6
+label: recent events
+type: event
+
+@connection
+from: C6
+to: C7
+label: incremental views
+type: data
+
+@connection
+from: C5
+to: C8
+label: batch results
+type: data
+
+@connection
+from: C7
+to: C8
+label: real-time results
+type: data
+
+@connection
+from: C8
+to: C9
+label: merged answer
+type: data
+
+@connection
+from: C5
+to: C10
+label: batch totals
+type: data
+
+@connection
+from: C7
+to: C10
+label: speed totals
+type: data
+
+@connection
+from: C10
+to: C6
+label: fix drift
+type: feedback
+
+@step
+order: 1
+text: Producers send every event to the broker.
+components: C1,C2
+
+@step
+order: 2
+text: The broker appends events to the immutable master dataset and also feeds the speed layer.
+components: C2,C3,C6
+
+@step
+order: 3
+text: The batch job periodically recomputes accurate views over all history.
+components: C3,C4,C5
+
+@step
+order: 4
+text: The stream processor keeps real-time views for events not yet in a batch.
+components: C6,C7
+
+@step
+order: 5
+text: A query merges batch and real-time views.
+components: C5,C7,C8
+
+@step
+order: 6
+text: Consumers get complete and fresh answers, and the monitor checks both layers agree.
+components: C8,C9,C10
+
+@tradeoff
+kind: pro
+text: Fault tolerant: batch recomputation repairs any streaming error or code bug.
+
+@tradeoff
+kind: pro
+text: Gives both low latency and high accuracy.
+
+@tradeoff
+kind: con
+text: The same business logic must be written and kept consistent in two systems.
+
+@tradeoff
+kind: con
+text: Operating two pipelines and a merge layer is complex.
+
+@tradeoff
+kind: risk
+text: Batch and speed results can diverge and confuse users.
+
+@tradeoff
+kind: cost
+text: Duplicated compute and storage for both layers.
+
+@tradeoff
+kind: scaling
+text: Scale each layer independently; batch scales with history size and speed with event rate.
+
+@reference
+title: Big Data: Principles and best practices of scalable realtime data systems
+author: Nathan Marz and James Warren
+url: N/A
+
+@reference
+title: Questioning the Lambda Architecture
+author: Jay Kreps
+url: https://www.oreilly.com/ideas/questioning-the-lambda-architecture
+

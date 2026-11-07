@@ -1,0 +1,29 @@
+# ============================================================================
+# MODULE REGISTRY
+# ============================================================================
+
+modules:
+  - id: dalle_settings
+    name: "DALL-E API Settings"
+    enabled: true
+    packages:
+      - httr
+      - jsonlite
+    menu:
+      label: "DALL-E API Settings"
+      tabname: "dalle_settings"
+      icon: "cog"
+  
+  - id: image_generation
+    name: "Image Generation"
+    enabled: true
+    packages:
+      - httr
+      - jsonlite
+      - shinyFiles
+      - magick
+      - base64enc
+    menu:
+      label: "Image Generation"
+      tabname: "image_generation"
+      icon: "image"

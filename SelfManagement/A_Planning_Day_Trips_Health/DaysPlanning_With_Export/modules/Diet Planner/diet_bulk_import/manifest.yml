@@ -1,0 +1,17 @@
+module:
+  id: "diet_bulk_import"
+  name: "Bulk Import"
+  description: "Parse and upload a day's diet log in bulk"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "Bulk Import"
+    icon: "file-import"
+    tabname: "diet_bulk_import"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, DT]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

@@ -1,0 +1,17 @@
+module:
+  id: "contacts_customise_communication"
+  name: "Customise Communication"
+  description: "Generate personalized outreach messages with an LLM"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "Customise Communication"
+    icon: "comments"
+    tabname: "contacts_customise_communication"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

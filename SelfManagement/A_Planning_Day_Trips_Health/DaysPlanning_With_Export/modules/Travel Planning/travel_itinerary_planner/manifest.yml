@@ -1,0 +1,42 @@
+module:
+  id: travel_itinerary_planner
+  name: "Travel Itinerary Planner"
+  enabled: true
+  priority: 2
+  description: "AI-powered travel itinerary planner with Claude"
+  
+  menu:
+    label: "Travel Itinerary Planner"
+    icon: "map"
+    tabname: "travel_itinerary_planner"
+    badge: {label: null, color: null}
+
+  # Module capabilities
+  features:
+    - "Destination-based attraction discovery"
+    - "Customizable attraction selection (20-50 places)"
+    - "Multi-day itinerary generation (1-7 days)"
+    - "Trip date range selection"
+    - "Constraint-based planning"
+    - "Time and schedule optimization"
+    - "Opening hours verification"
+    - "Transit routing suggestions"
+    - "Interactive Plotly scattermapbox map"
+    - "Numbered markers by visit order"
+    - "Click markers to see details"
+    - "Export as HTML with map"
+    - "Export as mobile-friendly PDF"
+    - "Export as iCalendar (.ics) for Outlook/Google Calendar"
+    - "Multiple download format support"
+
+  # Dependencies
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinyjs
+      - DT
+      - jsonlite
+      - rmarkdown
+      - tinytex
+      - plotly

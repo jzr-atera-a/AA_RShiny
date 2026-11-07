@@ -14,14 +14,19 @@ generate_summary_ui <- function(id) {
         fluidRow(
           column(6,
                  textInput(ns("book_title"), "Book Title:", placeholder = "e.g., Super Founders"),
-                 textInput(ns("book_author"), "Author Name:", placeholder = "e.g., Ali Tamaseb"),
-                 textInput(ns("book_genre"), "Genre/Category (Optional):", placeholder = "e.g., Business")
+                 textInput(ns("book_author"), "Author Name:", placeholder = "e.g., Ali Tamaseb")
           ),
           column(6,
-                 textAreaInput(ns("book_topic"), "Topic/Description (Optional):", rows = 3,
-                               placeholder = "Brief description of what the book is about")
+                 genre_topic_dropdown_ui(ns)
           )
         ),
+        
+        checkboxInput(ns("include_math"),
+                      "Include mathematical formulas & numeric/graph data",
+                      value = FALSE),
+        p(class = "text-muted", style = "margin-top: -10px; font-size: 0.9em;",
+          "Leave unchecked for books where formulas and numeric metrics wouldn't make sense ",
+          "(fiction, biography, philosophy, etc). When unchecked, those fields are saved blank."),
         
         hr(),
         

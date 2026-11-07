@@ -1,0 +1,91 @@
+# WP5 Atera Analytics - Module Registry
+# Updated: all 9 modules registered, IDs match filenames exactly
+
+app:
+  name: "Atera Analytics Integrated AV Suite"
+  version: "2.0.0"
+  description: "Isaac Sim PhysX Dual Vehicle Integration - Kia Niro EV + Renault E-Tech T"
+  author: "Atera Analytics"
+  project: "Innovate UK 10153306 - CAM Pathfinder One"
+
+modules:
+  - id: bigquery_connection
+    name: "BigQuery Connection"
+    description: "Connect to Google BigQuery and load EV charging point data"
+    enabled: true
+    menu:
+      label: "BigQuery Setup"
+      icon: "database"
+      tabname: "bigquery"
+
+  - id: road_network
+    name: "Road Network"
+    description: "Load and visualise OSM road network using dodgr/osmdata"
+    enabled: true
+    menu:
+      label: "Road Network"
+      icon: "project-diagram"
+      tabname: "roadnetwork"
+
+  - id: route_optimizer
+    name: "Route Optimizer"
+    description: "Optimise routes across the road network"
+    enabled: true
+    menu:
+      label: "Route Optimizer"
+      icon: "route"
+      tabname: "routeoptimizer"
+
+  - id: route_map
+    name: "Route Map"
+    description: "Leaflet map of optimised routes with charging infrastructure"
+    enabled: true
+    menu:
+      label: "Route Map"
+      icon: "map-marked-alt"
+      tabname: "routemap"
+
+  - id: omniverse_connection
+    name: "Omniverse Connection"
+    description: "HTTP connection to Isaac Sim Flask API - dual vehicle PhysX simulation"
+    enabled: true
+    menu:
+      label: "Isaac Sim"
+      icon: "cube"
+      tabname: "omniverse"
+
+  - id: scenario_manager
+    name: "Scenario Manager"
+    description: "Browse and manage Isaac Sim AV scenarios"
+    enabled: true
+    menu:
+      label: "Scenarios"
+      icon: "road"
+      tabname: "scenarios"
+
+  - id: route_preview
+    name: "Route Preview"
+    description: "Preview route quality, AV readiness and incidents on map"
+    enabled: true
+    menu:
+      label: "Route Preview"
+      icon: "map"
+      tabname: "routes"
+
+  - id: advanced_viz
+    name: "Advanced Visualization"
+    description: "Plotly charts of sensor and physics simulation data"
+    enabled: true
+    menu:
+      label: "Analytics"
+      icon: "chart-bar"
+      tabname: "advancedviz"
+
+  - id: metrics_statistics
+    name: "Metrics & Statistics"
+    description: "Statistical summary tables of simulation output"
+    enabled: true
+    menu:
+      label: "Metrics"
+      icon: "table"
+      tabname: "metrics"

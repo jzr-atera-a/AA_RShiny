@@ -1,0 +1,537 @@
+{
+  "type": "FeatureCollection",
+  "name": "m25_london_complete",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:EPSG::4326"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "m25_orbital",
+      "properties": {
+        "name": "M25 Ring",
+        "type": "highway",
+        "highway": "motorway",
+        "color": "#ff6600",
+        "width": 6,
+        "heatmap": true
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-0.00059, 0.00136], [-0.00057, 0.00138], [-0.00054, 0.00139], [-0.00049, 0.00140],
+          [-0.00045, 0.00138], [-0.00041, 0.00135], [-0.00036, 0.00130], [-0.00033, 0.00125],
+          [-0.00029, 0.00116], [-0.00026, 0.00112], [-0.00023, 0.00113], [-0.00021, 0.00117],
+          [-0.00016, 0.00125], [-0.00014, 0.00126], [-0.00009, 0.00127], [-0.00005, 0.00127],
+          [0.00000, 0.00127], [0.00004, 0.00130], [0.00007, 0.00135], [0.00010, 0.00139],
+          [0.00014, 0.00140], [0.00016, 0.00139], [0.00019, 0.00136], [0.00022, 0.00135],
+          [0.00023, 0.00135], [0.00027, 0.00132], [0.00031, 0.00127], [0.00034, 0.00117],
+          [0.00038, 0.00100], [0.00041, 0.00087], [0.00045, 0.00075], [0.00049, 0.00068],
+          [0.00052, 0.00064], [0.00057, 0.00057], [0.00061, 0.00043], [0.00064, 0.00000],
+          [0.00066, -0.00005], [0.00068, -0.00012], [0.00069, -0.00016], [0.00069, -0.00011],
+          [0.00069, -0.00016], [0.00068, -0.00023], [0.00068, -0.00026], [0.00064, -0.00030],
+          [0.00061, -0.00041], [0.00059, -0.00047], [0.00059, -0.00054], [0.00058, -0.00063],
+          [0.00056, -0.00068], [0.00055, -0.00074], [0.00052, -0.00078], [0.00050, -0.00080],
+          [0.00047, -0.00083], [0.00042, -0.00085], [0.00038, -0.00086], [0.00032, -0.00086],
+          [0.00029, -0.00087], [0.00023, -0.00092], [0.00018, -0.00099], [0.00014, -0.00125],
+          [0.00014, -0.00131], [0.00012, -0.00133], [0.00009, -0.00135], [0.00005, -0.00138],
+          [0.00000, -0.00139], [-0.00004, -0.00138], [-0.00008, -0.00133], [-0.00013, -0.00128],
+          [-0.00015, -0.00131], [-0.00021, -0.00138], [-0.00024, -0.00141], [-0.00027, -0.00143],
+          [-0.00032, -0.00144], [-0.00035, -0.00145], [-0.00039, -0.00146], [-0.00041, -0.00146],
+          [-0.00045, -0.00146], [-0.00050, -0.00144], [-0.00054, -0.00141], [-0.00059, -0.00135],
+          [-0.00062, -0.00132], [-0.00066, -0.00131], [-0.00069, -0.00128], [-0.00073, -0.00122],
+          [-0.00077, -0.00115], [-0.00079, -0.00113], [-0.00083, -0.00111], [-0.00086, -0.00106],
+          [-0.00088, -0.00099], [-0.00090, -0.00087], [-0.00092, -0.00078], [-0.00094, -0.00069],
+          [-0.00095, -0.00060], [-0.00097, -0.00054], [-0.00099, -0.00060],
+          [-0.00099, -0.00050], [-0.00098, -0.00043], [-0.00097, -0.00038], [-0.00096, -0.00033],
+          [-0.00095, -0.00039], [-0.00094, -0.00030], [-0.00092, -0.00021], [-0.00090, -0.00014],
+          [-0.00088, -0.00003], [-0.00087, 0.00003], [-0.00086, 0.00011], [-0.00086, 0.00016],
+          [-0.00085, 0.00021], [-0.00083, 0.00023], [-0.00081, 0.00021], [-0.00079, 0.00016],
+          [-0.00077, 0.00015], [-0.00076, 0.00018], [-0.00074, 0.00023], [-0.00072, 0.00030],
+          [-0.00070, 0.00036], [-0.00068, 0.00042], [-0.00068, 0.00049], [-0.00067, 0.00057],
+          [-0.00066, 0.00063], [-0.00065, 0.00070], [-0.00064, 0.00077], [-0.00063, 0.00084],
+          [-0.00061, 0.00090], [-0.00059, 0.00097], [-0.00058, 0.00104], [-0.00056, 0.00111],
+          [-0.00055, 0.00117], [-0.00054, 0.00124], [-0.00053, 0.00129], [-0.00052, 0.00133],
+          [-0.00061, 0.00135], [-0.00059, 0.00136]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "thames_river",
+      "properties": {
+        "name": "River Thames",
+        "type": "river",
+        "color": "#4a90e2",
+        "width": 4,
+        "opacity": 0.7
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-0.00108, 0.00018], [-0.00099, 0.00019], [-0.00090, 0.00020], [-0.00086, 0.00021],
+          [-0.00081, 0.00020], [-0.00076, 0.00019], [-0.00068, 0.00017], [-0.00063, 0.00014],
+          [-0.00058, 0.00013], [-0.00050, 0.00012], [-0.00045, 0.00010], [-0.00040, 0.00009],
+          [-0.00032, 0.00012], [-0.00027, 0.00014], [-0.00023, 0.00031], [-0.00018, 0.00032],
+          [-0.00014, 0.00032], [-0.00009, 0.00032], [-0.00004, 0.00031], [0.00000, 0.00030],
+          [0.00004, 0.00028], [0.00007, 0.00025], [0.00011, 0.00023], [0.00014, 0.00019],
+          [0.00018, 0.00015], [0.00022, 0.00012], [0.00025, 0.00007], [0.00029, 0.00003],
+          [0.00032, -0.00002], [0.00036, -0.00005], [0.00040, -0.00008]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "central_london",
+      "properties": {
+        "name": "Central London",
+        "type": "zone",
+        "zone_type": "urban",
+        "color": "#e0e0e0",
+        "opacity": 0.4
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-0.00045, -0.00009], [-0.00036, -0.00009], [-0.00027, -0.00005], [-0.00018, 0.00000],
+          [-0.00009, 0.00005], [0.00000, 0.00011], [0.00009, 0.00016], [0.00014, 0.00024],
+          [0.00018, 0.00033], [0.00014, 0.00042], [0.00009, 0.00048], [0.00004, 0.00054],
+          [-0.00004, 0.00054], [-0.00009, 0.00048], [-0.00018, 0.00042], [-0.00027, 0.00036],
+          [-0.00032, 0.00033], [-0.00040, 0.00024], [-0.00045, 0.00016], [-0.00049, 0.00005],
+          [-0.00045, -0.00009]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "m1_motorway",
+      "properties": {
+        "name": "M1 Motorway",
+        "type": "highway",
+        "highway": "motorway",
+        "designation": "M1",
+        "color": "#0066ff",
+        "width": 3
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-0.00059, 0.00136], [-0.00060, 0.00145], [-0.00062, 0.00153], [-0.00064, 0.00162], [-0.00065, 0.00171]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "m4_motorway",
+      "properties": {
+        "name": "M4 Motorway",
+        "type": "highway",
+        "highway": "motorway",
+        "designation": "M4",
+        "color": "#0066ff",
+        "width": 3
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-0.00088, 0.00012], [-0.00094, 0.00012], [-0.00099, 0.00011], [-0.00104, 0.00011],
+          [-0.00110, 0.00010], [-0.00117, 0.00010], [-0.00126, 0.00009]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "m3_motorway",
+      "properties": {
+        "name": "M3 Motorway",
+        "type": "highway",
+        "highway": "motorway",
+        "designation": "M3",
+        "color": "#0066ff",
+        "width": 3
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-0.00099, -0.00060], [-0.00104, -0.00067], [-0.00112, -0.00075], [-0.00117, -0.00082],
+          [-0.00122, -0.00090], [-0.00126, -0.00097]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "m11_motorway",
+      "properties": {
+        "name": "M11 Motorway",
+        "type": "highway",
+        "highway": "motorway",
+        "designation": "M11",
+        "color": "#0066ff",
+        "width": 3
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [0.00026, 0.00135], [0.00027, 0.00145], [0.00030, 0.00153], [0.00032, 0.00162], [0.00034, 0.00171]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "m20_motorway",
+      "properties": {
+        "name": "M20 Motorway",
+        "type": "highway",
+        "highway": "motorway",
+        "designation": "M20",
+        "color": "#0066ff",
+        "width": 3
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [0.00064, -0.00070], [0.00070, -0.00077], [0.00075, -0.00084], [0.00081, -0.00091],
+          [0.00086, -0.00097], [0.00091, -0.00104], [0.00097, -0.00111]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "m23_motorway",
+      "properties": {
+        "name": "M23 Motorway",
+        "type": "highway",
+        "highway": "motorway",
+        "designation": "M23",
+        "color": "#0066ff",
+        "width": 3
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-0.00034, -0.00111], [-0.00034, -0.00119], [-0.00035, -0.00126], [-0.00036, -0.00134], [-0.00037, -0.00142]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "m40_motorway",
+      "properties": {
+        "name": "M40 Motorway",
+        "type": "highway",
+        "highway": "motorway",
+        "designation": "M40",
+        "color": "#0066ff",
+        "width": 3
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-0.00095, 0.00054], [-0.00101, 0.00061], [-0.00106, 0.00068], [-0.00112, 0.00075],
+          [-0.00117, 0.00082], [-0.00122, 0.00089], [-0.00126, 0.00096]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "a1m_motorway",
+      "properties": {
+        "name": "A1(M) Motorway",
+        "type": "highway",
+        "highway": "trunk",
+        "designation": "A1(M)",
+        "color": "#ff9900",
+        "width": 2
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-0.00019, 0.00125], [-0.00020, 0.00134], [-0.00021, 0.00143], [-0.00022, 0.00152], [-0.00023, 0.00162]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "heathrow_airport",
+      "properties": {
+        "name": "Heathrow Airport",
+        "type": "waypoint",
+        "priority": "high",
+        "color": "#ffaa00"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.00082, 0.00011]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "gatwick_airport",
+      "properties": {
+        "name": "Gatwick Airport",
+        "type": "waypoint",
+        "priority": "high",
+        "color": "#ffaa00"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.00034, -0.00128]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "city_airport",
+      "properties": {
+        "name": "London City Airport",
+        "type": "waypoint",
+        "priority": "medium",
+        "color": "#ffaa00"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.00010, 0.00030]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "watford_town",
+      "properties": {
+        "name": "Watford",
+        "type": "waypoint",
+        "priority": "medium",
+        "color": "#00ff88"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.00071, 0.00105]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "st_albans_town",
+      "properties": {
+        "name": "St Albans",
+        "type": "waypoint",
+        "priority": "low",
+        "color": "#00ff88"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.00059, 0.00135]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "enfield_town",
+      "properties": {
+        "name": "Enfield",
+        "type": "waypoint",
+        "priority": "low",
+        "color": "#00ff88"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.00014, 0.00104]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "brentwood_town",
+      "properties": {
+        "name": "Brentwood",
+        "type": "waypoint",
+        "priority": "low",
+        "color": "#00ff88"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.00054, 0.00096]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dartford_town",
+      "properties": {
+        "name": "Dartford",
+        "type": "waypoint",
+        "priority": "medium",
+        "color": "#00ff88"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.00040, 0.00040]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "sevenoaks_town",
+      "properties": {
+        "name": "Sevenoaks",
+        "type": "waypoint",
+        "priority": "low",
+        "color": "#00ff88"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.00009, -0.00125]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "croydon_suburb",
+      "properties": {
+        "name": "Croydon",
+        "type": "waypoint",
+        "priority": "medium",
+        "color": "#00ff88"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.00018, -0.00058]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "guildford_town",
+      "properties": {
+        "name": "Guildford",
+        "type": "waypoint",
+        "priority": "low",
+        "color": "#00ff88"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.00101, -0.00111]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "windsor_town",
+      "properties": {
+        "name": "Windsor",
+        "type": "waypoint",
+        "priority": "low",
+        "color": "#00ff88"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.00108, 0.00022]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "uxbridge_suburb",
+      "properties": {
+        "name": "Uxbridge",
+        "type": "waypoint",
+        "priority": "low",
+        "color": "#00ff88"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.00086, 0.00049]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "slough_town",
+      "properties": {
+        "name": "Slough",
+        "type": "waypoint",
+        "priority": "low",
+        "color": "#00ff88"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.00107, 0.00046]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "woking_town",
+      "properties": {
+        "name": "Woking",
+        "type": "waypoint",
+        "priority": "low",
+        "color": "#00ff88"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.00100, -0.00085]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "epsom_town",
+      "properties": {
+        "name": "Epsom",
+        "type": "waypoint",
+        "priority": "low",
+        "color": "#00ff88"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.00049, -0.00075]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "westminster_landmark",
+      "properties": {
+        "name": "Westminster",
+        "type": "waypoint",
+        "priority": "high",
+        "color": "#ff3366"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.00023, 0.00031]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "the_city_district",
+      "properties": {
+        "name": "The City",
+        "type": "waypoint",
+        "priority": "high",
+        "color": "#ff3366"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.00017, 0.00035]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "canary_wharf_district",
+      "properties": {
+        "name": "Canary Wharf",
+        "type": "waypoint",
+        "priority": "high",
+        "color": "#ff3366"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.00004, 0.00030]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "north_indicator",
+      "properties": {
+        "name": "North ↑",
+        "type": "waypoint",
+        "priority": "high",
+        "color": "#ffffff"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.00135, 0.00135]
+      }
+    }
+  ]
+}

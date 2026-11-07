@@ -1,0 +1,49 @@
+# modules/_module_registry.yml
+# MTS Frontier AI Interview Prep Suite
+
+app:
+  name: "MTS Frontier AI — Interview Prep"
+  version: "1.0.0"
+
+modules:
+  intro:
+    enabled: true
+    priority: 10
+    name: "Welcome & Overview"
+    icon: "home"
+    tabname: "intro"
+
+  research_signal:
+    enabled: true
+    priority: 20
+    name: "Research Signal Judgment"
+    icon: "wave-square"
+    tabname: "research_signal"
+
+  data_design:
+    enabled: true
+    priority: 30
+    name: "ML-Oriented Data Design"
+    icon: "table"
+    tabname: "data_design"
+
+  ops_translation:
+    enabled: true
+    priority: 40
+    name: "Ops to Research Translation"
+    icon: "right-left"
+    tabname: "ops_translation"
+
+  stakeholder_judgment:
+    enabled: true
+    priority: 50
+    name: "Stakeholder Judgment"
+    icon: "comments"
+    tabname: "stakeholder_judgment"
+
+  practice_exercise:
+    enabled: true
+    priority: 60
+    name: "Practice & Exercise"
+    icon: "stopwatch"
+    tabname: "practice_exercise"

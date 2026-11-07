@@ -1,0 +1,63 @@
+{
+  "audience": "Executives & boards",
+  "themes": ["Governance & ethics", "AI & digital", "Leadership & teams"],
+  "profile": [
+    {"q": "Who", "a": "The author, writing individually for Corporate Governance and Ethics."},
+    {"q": "For whom", "a": "Meta's board and the stakeholders who can hold it to account: shareholders, employees, users and regulators."},
+    {"q": "What", "a": "Meta's governance and ethics when executive bonuses rose while staff were laid off, and when generative AI raised new risks on privacy, bias and misinformation."},
+    {"q": "When", "a": "Handed in on 3 March 2025, after early-2025 layoffs and bonus approvals, a similar 2023 restructuring, and content moderation changes from January 2025."},
+    {"q": "Where", "a": "Meta Platforms globally: Facebook, Instagram and WhatsApp."},
+    {"q": "Why", "a": "Pay and jobs moved in opposite directions, and founder control through dual-class shares limits the board's ability to correct that."},
+    {"q": "How", "a": "Reviews board structure and ownership, pay, employee relations and stakeholder engagement, applies three ethical frameworks to AI, and proposes eight governance controls and three reforms."}
+  ],
+  "headline": [
+    {"value": "~10x", "label": "Votes per founder share vs public share"},
+    {"value": "Up to 200%", "label": "Executive bonus as share of salary"},
+    {"value": "~5%", "label": "Workforce cut (per cited report)"},
+    {"value": "8", "label": "Governance controls proposed"}
+  ],
+  "facts": [
+    {"what": "Voting rights of founder (Class B) shares relative to public Class A shares", "value": "about 10x", "page": 63},
+    {"what": "Executive bonuses approved by the Compensation, Nominating and Governance Committee", "value": "up to 200% of salary", "page": 63},
+    {"what": "Share of workers laid off, per the NY Post report cited", "value": "5%", "page": 71},
+    {"what": "Content moderation changes noted", "value": "since January 2025", "page": 66},
+    {"what": "Ethical frameworks applied", "value": "3 (authenticity, normative, behavioural)", "page": 66},
+    {"what": "Controls proposed (internal + external)", "value": "4 + 4", "page": 67},
+    {"what": "Reforms for transparent governance", "value": "3", "page": 68}
+  ],
+  "charts": [
+    {"type": "bar", "title": "Votes per share", "labels": ["Public Class A share", "Founder Class B share"], "values": [1, 10],
+     "colors": ["#7f8c8d", "#1a3a6a"], "suffix": " votes",
+     "takeaway": "Founder control means every board-level fix the paper proposes depends on the founder agreeing to it. This is the constraint the recommendations do not resolve.",
+     "source": "Page 63."},
+    {"type": "versus", "title": "The conflict at the centre of the case", "mid": "2025",
+     "left": {"title": "Executives", "items": ["Bonuses up to 200% of salary approved", "Justified as securing long-term tech leadership", "Linked mainly to stock performance"]},
+     "right": {"title": "Employees", "items": ["Around 5% laid off, after a similar 2023 round", "Lower job security and morale", "Talent disruption as technology changes fast"]},
+     "takeaway": "The paper's argument: the same decision rewards one group and costs the other, so pay must be tied to employee, community and AI-ethics outcomes, not just the share price."},
+    {"type": "cards", "cols": 2, "title": "Eight controls to rebuild credibility",
+     "items": [
+       {"tag": "Internal", "title": "Board of directors", "text": "Tie executive pay to long-term, mission-linked metrics."},
+       {"tag": "Internal", "title": "Internal audit", "text": "Measure the effect of layoffs on remaining staff and AI's real productivity gains."},
+       {"tag": "Internal", "title": "Executive compensation", "text": "Link 200% bonuses to employee satisfaction, community engagement and AI ethics."},
+       {"tag": "Internal", "title": "Risk and compliance", "text": "Monitor workforce-reduction and public-perception risk."},
+       {"tag": "External", "title": "Shareholder activism", "text": "Engage investors who push for fair pay and ethical governance."},
+       {"tag": "External", "title": "Regulation", "text": "Comply with labour law as a floor for fair treatment."},
+       {"tag": "External", "title": "Media", "text": "Explain pay and layoff decisions transparently."},
+       {"tag": "External", "title": "External audit", "text": "Independent review of pay against corporate values."}
+     ]},
+    {"type": "table", "title": "Ethical issues, who they affect, and the lens applied",
+     "columns": ["Issue", "Who is affected", "Lens and response"],
+     "rows": [
+       ["Pay rising while jobs are cut", "Employees, shareholders", "Stakeholder capitalism: OKRs for the board"],
+       ["Data privacy (Cambridge Analytica)", "Users", "Authenticity: educate users, detect AI content"],
+       ["Algorithmic bias in news feeds", "Minority communities", "Normative: independent oversight, clear guidelines"],
+       ["AI moderation and misinformation", "Users, society, regulators", "Behavioural: AI literacy, social-good uses, multi-stakeholder governance"]
+     ]},
+    {"type": "steps", "title": "Three reforms for transparent governance",
+     "items": [
+       {"title": "Board independence", "text": "Appoint independent directors with expertise in digital ethics, AI governance and sustainability."},
+       {"title": "Stakeholder engagement", "text": "Bring employee, customer and community input into strategy, with a communication plan by audience and channel."},
+       {"title": "Sustainable practice", "text": "Multi-stakeholder AI governance beyond compliance, tracked with OKRs."}
+     ]}
+  ]
+}

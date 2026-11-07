@@ -1,0 +1,56 @@
+# modules/_module_registry.yml
+# Central Module Registry - THE CONTROL CENTER
+
+modules:
+  bigquery_auth:
+    enabled: true
+    priority: 1
+    description: "BigQuery authentication and configuration"
+
+  claude_api_config:
+    enabled: true
+    priority: 2
+    description: "Claude API credentials management"
+
+  generate_kg:
+    enabled: true
+    priority: 10
+    description: "AI-powered generation of a new knowledge graph (entities + relationships)"
+
+  edit_kg:
+    enabled: true
+    priority: 11
+    description: "AI-powered delta editing of an existing knowledge graph, with app-computed relationship cascade delete"
+
+  visualize_kg_d3:
+    enabled: true
+    priority: 12
+    description: "Interactive force-directed graph visualization via D3.js"
+
+  visualize_kg_cytoscape:
+    enabled: true
+    priority: 13
+    description: "Interactive graph visualization via Cytoscape.js"
+
+  browse_data:
+    enabled: true
+    priority: 14
+    description: "Browse and download all stored entity/relationship version rows"
+
+  about:
+    enabled: true
+    priority: 99
+    description: "Application information and schema"
+
+settings:
+  auto_install: false
+  check_versions: true
+  verbose: true
+  dev_mode: false
+
+app:
+  name: "Knowledge Graph Suite"
+  version: "1.0.0"
+  description: "AI-powered generation, editing, and visualization of knowledge graphs (typed entities + typed directed relationships), backed by an append-only versioned BigQuery table"
+  author: "Your Team"
+  table: "atera-2.Wonderfulp_March.knowledge_graph"

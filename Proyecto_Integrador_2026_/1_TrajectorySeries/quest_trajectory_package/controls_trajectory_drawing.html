@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Quest 3 - Robot Trajectory</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <style>
+            body { margin: 0; font-family: monospace; background: #000; color: #fff; }
+            #info {
+                position: absolute; top: 10px; width: 100%; text-align: center; z-index: 100;
+                background: rgba(0,0,0,0.9); padding: 15px; font-size: 13px;
+            }
+            .status-good { color: #0f0; }
+            .status-bad { color: #f00; }
+            .status-warning { color: #ff0; }
+            .status-approved { color: #ffa500; }
+        </style>
+    </head>
+    <body>
+        <div id="info">
+            <strong>Quest 3 Robot Trajectory</strong><br/>
+            Status: <span id="trajectory-status" class="status-warning">DRAWING</span> | 
+            Connected: <span id="conn-status" class="status-bad">NO</span> | 
+            Floor: <span id="floor-status" class="status-warning">Detecting...</span><br/>
+            Points: <span id="point-count">0</span> | Distance: <span id="path-distance">0.00</span>m<br/>
+            <small>RIGHT TRIGGER: Draw | GRIP: Approve | THUMBSTICK: Delete</small>
+        </div>
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+                    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+                }
+            }
+        </script>
+
+        <script type="module">
+            import * as THREE from 'three';
+            import { ARButton } from 'three/addons/webxr/ARButton.js';
+
+            // CONFIG
+            const JETSON_IP = '192.168.100.10';
+            const WS_PORT = 8443;
+            const FLOOR_OFFSET = 1.6;  // Floor is 1.6m below headset
+            const MIN_POINT_DISTANCE = 0.05;
+            const ROBOT_TURNING_RADIUS = 0.6;
+            
+            // STATE
+            let scene, camera, renderer;
+            let controller1;  // RIGHT controller
+            let websocket = null;
+            
+            let floorY = null;
+            let floorDetected = false;
+            let userX = 0, userZ = 0;  // Where user stands
+            
+            let trajectoryPoints = [];
+            let trajectoryLine = null;
+            let isDrawing = false;
+            let isApproved = false;
+            let totalDistance = 0;
+            
+            let controllerReticle;  // Shows where controller points
+            let raycaster;
+            let floorPlane;  // Invisible plane at floor level
+            
+            let lastGrip = false;
+            let lastThumbstick = false;
+
+            // ================================================================
+            // WEBSOCKET
+            // ================================================================
+            
+            function connectWebSocket() {
+                try {
+                    websocket = new WebSocket(`wss://${JETSON_IP}:${WS_PORT}`);
+                    
+                    websocket.onopen = () => {
+                        console.log('✓ Connected');
+                        document.getElementById('conn-status').textContent = 'YES';
+                        document.getElementById('conn-status').className = 'status-good';
+                    };
+                    
+                    websocket.onclose = () => {
+                        document.getElementById('conn-status').textContent = 'NO';
+                        document.getElementById('conn-status').className = 'status-bad';
+                        setTimeout(connectWebSocket, 2000);
+                    };
+                } catch (e) {
+                    console.error('WebSocket error:', e);
+                }
+            }
+
+            function sendData() {
+                if (!websocket || websocket.readyState !== WebSocket.OPEN) return;
+                
+                const data = {
+                    timestamp: Date.now(),
+                    trajectory: trajectoryPoints.length > 0 ? {
+                        points: trajectoryPoints.map(p => ({x: p.x, y: p.y, z: p.z})),
+                        distance: totalDistance,
+                        floorY: floorY,
+                        approved: isApproved
+                    } : null,
+                    approved: isApproved
+                };
+                
+                try {
+                    websocket.send(JSON.stringify(data));
+                } catch (e) {}
+            }
+
+            // ================================================================
+            // ROBOT CONSTRAINTS
+            // ================================================================
+            
+            function checkCurvature(p1, p2, p3) {
+                const a = p1.distanceTo(p2);
+                const b = p2.distanceTo(p3);
+                const c = p3.distanceTo(p1);
+                const s = (a + b + c) / 2;
+                const area = Math.sqrt(Math.max(0, s * (s - a) * (s - b) * (s - c)));
+                if (area < 0.001) return true;
+                const curvature = (4 * area) / (a * b * c);
+                const radius = curvature === 0 ? Infinity : 1 / curvature;
+                return radius >= ROBOT_TURNING_RADIUS;
+            }
+
+            // ================================================================
+            // TRAJECTORY
+            // ================================================================
+            
+            function addPoint(point) {
+                // Snap to floor
+                point.y = floorY;
+                
+                // Check distance
+                if (trajectoryPoints.length > 0) {
+                    const dist = point.distanceTo(trajectoryPoints[trajectoryPoints.length - 1]);
+                    if (dist < MIN_POINT_DISTANCE) return;
+                    totalDistance += dist;
+                }
+                
+                // Check curvature
+                if (trajectoryPoints.length >= 2) {
+                    if (!checkCurvature(trajectoryPoints[trajectoryPoints.length - 2], trajectoryPoints[trajectoryPoints.length - 1], point)) {
+                        console.log('⚠ Too sharp');
+                        return;
+                    }
+                }
+                
+                trajectoryPoints.push(point.clone());
+                document.getElementById('point-count').textContent = trajectoryPoints.length;
+                document.getElementById('path-distance').textContent = totalDistance.toFixed(2);
+                updateLine();
+            }
+
+            function updateLine() {
+                if (trajectoryLine) {
+                    scene.remove(trajectoryLine);
+                    trajectoryLine.geometry.dispose();
+                    trajectoryLine.material.dispose();
+                }
+                
+                if (trajectoryPoints.length < 2) return;
+                
+                const curve = new THREE.CatmullRomCurve3(trajectoryPoints);
+                const geometry = new THREE.TubeGeometry(curve, trajectoryPoints.length * 10, 0.02, 8, false);
+                const color = isApproved ? 0xffa500 : 0x00ff00;
+                const material = new THREE.MeshBasicMaterial({ color: color });
+                
+                trajectoryLine = new THREE.Mesh(geometry, material);
+                scene.add(trajectoryLine);
+            }
+
+            function deleteLast() {
+                if (trajectoryPoints.length === 0) return;
+                
+                const count = Math.min(10, trajectoryPoints.length);
+                for (let i = 0; i < count; i++) {
+                    trajectoryPoints.pop();
+                }
+                
+                totalDistance = 0;
+                for (let i = 1; i < trajectoryPoints.length; i++) {
+                    totalDistance += trajectoryPoints[i].distanceTo(trajectoryPoints[i - 1]);
+                }
+                
+                document.getElementById('point-count').textContent = trajectoryPoints.length;
+                document.getElementById('path-distance').textContent = totalDistance.toFixed(2);
+                updateLine();
+            }
+
+            function approve() {
+                if (trajectoryPoints.length < 5) return;
+                isApproved = true;
+                document.getElementById('trajectory-status').textContent = 'APPROVED';
+                document.getElementById('trajectory-status').className = 'status-approved';
+                updateLine();
+                sendData();
+                console.log('✓ APPROVED');
+            }
+
+            // ================================================================
+            // SETUP
+            // ================================================================
+            
+            function init() {
+                // Scene
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+                
+                // Light
+                const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
+                light.position.set(0.5, 1, 0.25);
+                scene.add(light);
+
+                // Renderer
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.xr.enabled = true;
+                document.body.appendChild(renderer.domElement);
+
+                // AR Button
+                document.body.appendChild(ARButton.createButton(renderer, { 
+                    requiredFeatures: ['local-floor'] 
+                }));
+
+                // RIGHT controller
+                controller1 = renderer.xr.getController(1);
+                scene.add(controller1);
+                
+                // Add ray line to controller
+                const rayGeometry = new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(0, 0, 0),
+                    new THREE.Vector3(0, 0, -3)
+                ]);
+                const rayLine = new THREE.Line(rayGeometry, new THREE.LineBasicMaterial({ color: 0x00ffff }));
+                controller1.add(rayLine);
+
+                // Reticle (where controller points on floor)
+                controllerReticle = new THREE.Mesh(
+                    new THREE.RingGeometry(0.1, 0.15, 32).rotateX(-Math.PI / 2),
+                    new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide })
+                );
+                controllerReticle.visible = false;
+                scene.add(controllerReticle);
+
+                // Raycaster
+                raycaster = new THREE.Raycaster();
+
+                renderer.setAnimationLoop(animate);
+                
+                console.log('✓ Init complete');
+            }
+
+            // ================================================================
+            // ANIMATION LOOP
+            // ================================================================
+            
+            let frameCount = 0;
+            
+            function animate() {
+                const session = renderer.xr.getSession();
+                
+                if (session) {
+                    frameCount++;
+                    
+                    const frame = renderer.xr.getFrame();
+                    const refSpace = renderer.xr.getReferenceSpace();
+                    
+                    // STEP 1: Detect floor (first frame only)
+                    if (!floorDetected && frame && refSpace) {
+                        const viewerPose = frame.getViewerPose(refSpace);
+                        if (viewerPose) {
+                            const headsetY = viewerPose.transform.position.y;
+                            floorY = headsetY - FLOOR_OFFSET;
+                            
+                            userX = viewerPose.transform.position.x;
+                            userZ = viewerPose.transform.position.z;
+                            
+                            floorDetected = true;
+                            
+                            console.log('✓ FLOOR DETECTED');
+                            console.log('  Headset Y:', headsetY.toFixed(2));
+                            console.log('  Floor Y:', floorY.toFixed(2));
+                            console.log('  User position: X=' + userX.toFixed(2) + ' Z=' + userZ.toFixed(2));
+                            
+                            document.getElementById('floor-status').textContent = 'Detected!';
+                            document.getElementById('floor-status').className = 'status-good';
+                            
+                            // Create floor plane (invisible, for raycasting)
+                            floorPlane = new THREE.Mesh(
+                                new THREE.PlaneGeometry(100, 100).rotateX(-Math.PI / 2),
+                                new THREE.MeshBasicMaterial({ visible: false })
+                            );
+                            floorPlane.position.y = floorY;
+                            scene.add(floorPlane);
+                            
+                            // Create floor grid
+                            const grid = new THREE.GridHelper(5, 20, 0x00ff00, 0x004400);
+                            grid.position.set(userX, floorY, userZ);
+                            scene.add(grid);
+                            console.log('✓ Grid created at user position');
+                        }
+                    }
+                    
+                    // STEP 2: Raycast from RIGHT controller to floor
+                    if (floorDetected && controller1 && floorPlane) {
+                        // Get controller world position and direction
+                        const tempMatrix = new THREE.Matrix4();
+                        tempMatrix.identity().extractRotation(controller1.matrixWorld);
+                        
+                        const rayOrigin = new THREE.Vector3();
+                        rayOrigin.setFromMatrixPosition(controller1.matrixWorld);
+                        
+                        const rayDirection = new THREE.Vector3(0, 0, -1);
+                        rayDirection.applyMatrix4(tempMatrix);
+                        
+                        raycaster.set(rayOrigin, rayDirection);
+                        
+                        const intersects = raycaster.intersectObject(floorPlane);
+                        
+                        if (intersects.length > 0) {
+                            const intersectPoint = intersects[0].point;
+                            
+                            // Show reticle
+                            controllerReticle.position.copy(intersectPoint);
+                            controllerReticle.visible = true;
+                            
+                            // STEP 3: Handle trigger
+                            const inputSources = session.inputSources;
+                            inputSources.forEach((source, index) => {
+                                if (index !== 1) return;  // RIGHT only
+                                
+                                const gamepad = source.gamepad;
+                                if (!gamepad) return;
+                                
+                                const trigger = gamepad.buttons[0] && gamepad.buttons[0].pressed;
+                                const grip = gamepad.buttons[1] && gamepad.buttons[1].pressed;
+                                const thumbstick = gamepad.buttons[3] && gamepad.buttons[3].pressed;
+                                
+                                // Draw
+                                if (!isApproved && trigger) {
+                                    if (!isDrawing) {
+                                        isDrawing = true;
+                                        console.log('✓ Drawing started');
+                                    }
+                                    addPoint(intersectPoint);
+                                } else {
+                                    if (isDrawing) {
+                                        isDrawing = false;
+                                        console.log('✓ Drawing stopped');
+                                        sendData();
+                                    }
+                                }
+                                
+                                // Approve
+                                if (grip && !lastGrip && !isApproved) {
+                                    approve();
+                                }
+                                lastGrip = grip;
+                                
+                                // Delete
+                                if (thumbstick && !lastThumbstick && !isApproved) {
+                                    deleteLast();
+                                }
+                                lastThumbstick = thumbstick;
+                            });
+                            
+                        } else {
+                            controllerReticle.visible = false;
+                        }
+                    }
+                    
+                    // Send data periodically
+                    if (frameCount % 3 === 0) {
+                        sendData();
+                    }
+                }
+                
+                renderer.render(scene, camera);
+            }
+
+            // ================================================================
+            // START
+            // ================================================================
+            
+            init();
+            connectWebSocket();
+            
+            console.log('=================================');
+            console.log('Quest 3 Trajectory Drawing');
+            console.log('=================================');
+            console.log('1. Start AR session');
+            console.log('2. Floor auto-detected 1.6m below headset');
+            console.log('3. Point RIGHT controller at floor');
+            console.log('4. Hold TRIGGER to draw');
+            console.log('5. Press GRIP to approve (orange)');
+            console.log('6. Press THUMBSTICK to delete last section');
+        </script>
+    </body>
+</html>

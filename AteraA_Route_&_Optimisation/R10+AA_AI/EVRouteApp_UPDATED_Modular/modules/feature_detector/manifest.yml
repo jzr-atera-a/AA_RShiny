@@ -1,0 +1,18 @@
+module:
+  id: "feature_detector"
+  name: "Feature Detector"
+  description: "Detect road features and POIs"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Feature Detector"
+    icon: "search-location"
+    tabname: "feature_detector"
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - sf
+      - osmdata
+      - dplyr
+      - DT

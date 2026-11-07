@@ -1,0 +1,10 @@
+name: crypto__equities_analysis
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17375926
+bundleId: 12014883
+url: https://atera-analytics.shinyapps.io/crypto__equities_analysis/
+version: 1

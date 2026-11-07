@@ -1,0 +1,172 @@
+/* ============================================================
+   Auth / Login Screen Styles
+   Appended to global.css: same DeepTech theme
+   ============================================================ */
+
+/* ── Full-screen login overlay ─────────────────────────────── */
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #020a1a 0%, #071a3e 55%, #0a2050 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  font-family: 'Inter', sans-serif;
+}
+
+.login-card {
+  background: rgba(10, 20, 55, 0.97);
+  border: 1px solid rgba(0, 191, 255, 0.25);
+  border-radius: 20px;
+  padding: 48px 44px 40px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.65);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 70% 20%, rgba(0, 191, 255, 0.07) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.login-badge {
+  background: rgba(0, 191, 255, 0.12);
+  border: 1px solid rgba(0, 191, 255, 0.35);
+  color: #00e5ff;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+  display: inline-block;
+  margin-bottom: 20px;
+}
+
+.login-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 6px;
+  line-height: 1.2;
+}
+
+.login-subtitle {
+  font-size: 13px;
+  color: rgba(173, 200, 255, 0.65);
+  margin: 0 0 32px;
+  line-height: 1.5;
+}
+
+.login-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #7aa8e0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.login-input {
+  width: 100%;
+  background: rgba(4, 13, 33, 0.90) !important;
+  border: 1px solid rgba(0, 191, 255, 0.25) !important;
+  border-radius: 10px !important;
+  color: #cdd9f5 !important;
+  font-size: 14px !important;
+  padding: 12px 16px !important;
+  outline: none !important;
+  transition: border-color 0.2s !important;
+  font-family: 'Inter', sans-serif !important;
+  box-sizing: border-box;
+}
+
+.login-input:focus {
+  border-color: rgba(0, 191, 255, 0.60) !important;
+  box-shadow: 0 0 0 3px rgba(0, 191, 255, 0.10) !important;
+}
+
+.login-input::placeholder { color: rgba(173, 200, 255, 0.35) !important; }
+
+.login-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #0055cc, #00bfff) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  color: #ffffff !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  padding: 13px !important;
+  cursor: pointer !important;
+  margin-top: 24px !important;
+  letter-spacing: 0.3px;
+  transition: opacity 0.2s, transform 0.1s !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+.login-btn:hover  { opacity: 0.88 !important; transform: translateY(-1px) !important; }
+.login-btn:active { transform: translateY(0) !important; }
+
+.login-error {
+  background: rgba(180, 40, 40, 0.18);
+  border: 1px solid rgba(231, 76, 60, 0.40);
+  border-left: 3px solid #e74c3c;
+  border-radius: 8px;
+  padding: 11px 14px;
+  margin-top: 16px;
+  font-size: 12.5px;
+  color: #f5b7b1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.login-footer {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(0, 191, 255, 0.12);
+  font-size: 11px;
+  color: rgba(173, 200, 255, 0.40);
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ── Attempt counter badge ─────────────────────────────────── */
+.attempt-badge {
+  display: inline-block;
+  background: rgba(231, 76, 60, 0.18);
+  border: 1px solid rgba(231, 76, 60, 0.35);
+  color: #f5b7b1;
+  border-radius: 6px;
+  padding: 2px 9px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  margin-left: 6px;
+}
+
+/* ── Session info bar (shown after login) ──────────────────── */
+.session-bar {
+  background: rgba(0, 191, 255, 0.08);
+  border-bottom: 1px solid rgba(0, 191, 255, 0.15);
+  padding: 6px 20px;
+  font-size: 11px;
+  color: #7aa8e0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.session-bar .session-email { color: #00e5ff; font-weight: 700; }
+.session-bar .session-dot   { color: rgba(0, 191, 255, 0.35); }

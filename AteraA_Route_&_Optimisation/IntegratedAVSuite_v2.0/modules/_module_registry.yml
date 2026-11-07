@@ -1,0 +1,90 @@
+# Integrated AV Suite - Module Registry
+# Updated with Metrics & Statistics Tab
+
+app:
+  name: "Integrated AV Development Suite"
+  version: "2.0.0"
+  description: "Complete AV development platform with BigQuery, Route Optimization, and Isaac Sim integration"
+  author: "Atera Analytics"
+
+modules:
+  - id: bigquery_connection
+    name: "BigQuery Setup"
+    description: "Configure Google Cloud BigQuery connection for CAM testbed data"
+    enabled: true
+    menu:
+      label: "BigQuery Setup"
+      icon: "database"
+      tabname: "bigquery"
+  
+  - id: road_network
+    name: "Road Network"
+    description: "Load and visualize OpenStreetMap road network data"
+    enabled: true
+    menu:
+      label: "Road Network"
+      icon: "project-diagram"
+      tabname: "network"
+  
+  - id: route_optimizer
+    name: "Route Optimizer"
+    description: "Calculate optimal EV routes with charging stations"
+    enabled: true
+    menu:
+      label: "Route Optimizer"
+      icon: "route"
+      tabname: "optimizer"
+  
+  - id: route_map
+    name: "Route Map"
+    description: "Interactive map visualization of optimized routes"
+    enabled: true
+    menu:
+      label: "Route Map"
+      icon: "map-marked-alt"
+      tabname: "routemap"
+  
+  - id: omniverse_connection
+    name: "Omniverse Connection"
+    description: "Connect to NVIDIA Isaac Sim with dual vehicle support and feature selection"
+    enabled: true
+    menu:
+      label: "Omniverse Connection"
+      icon: "cube"
+      tabname: "omniverse"
+  
+  - id: scenario_manager
+    name: "Scenario Manager"
+    description: "Browse, select, and manage Omniverse AV simulation scenarios"
+    enabled: true
+    menu:
+      label: "Scenarios"
+      icon: "road"
+      tabname: "scenarios"
+  
+  - id: route_preview
+    name: "Route Preview"
+    description: "Preview route quality, incidents, and AV readiness on maps"
+    enabled: true
+    menu:
+      label: "Route Preview"
+      icon: "map"
+      tabname: "routes"
+  
+  - id: advanced_viz
+    name: "Advanced Visualization"
+    description: "3D visualizations and advanced analytics"
+    enabled: true
+    menu:
+      label: "Advanced Viz"
+      icon: "chart-line"
+      tabname: "advviz"
+  
+  - id: metrics_statistics
+    name: "Metrics & Statistics"
+    description: "Comprehensive vehicle physics, sensor metrics, and scenario comparisons"
+    enabled: true
+    menu:
+      label: "Metrics & Statistics"
+      icon: "chart-bar"
+      tabname: "metrics"

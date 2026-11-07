@@ -1,0 +1,32 @@
+module:
+  id: "edit_mindmap"
+  name: "Edit Mind Map"
+  description: "AI-powered delta editing of an existing mind map, with app-computed cascade delete"
+  version: "1.0.0"
+  author: "Mind Map Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Edit Mind Map"
+    icon: "edit"
+    tabname: "edit_mindmap"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinyjs
+
+    package_versions: {}
+
+  api:
+    required: ["claude", "bigquery"]
+    optional: []
+
+  data:
+    required: []
+    optional: []

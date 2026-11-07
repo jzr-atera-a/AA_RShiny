@@ -1,0 +1,625 @@
+python3.13 trajectory_websocket_server_tracking_path.py
+======================================================================
+Meta Quest 3 Robot Control - WebSocket Server
+WITH AUTONOMOUS PATH FOLLOWING
+======================================================================
+
+Connecting to Arduino...
+✓ Found Arduino on /dev/ttyACM0
+  Arduino: Initializing MD22...
+  Arduino: MD22 found at 0x58
+  Arduino: Software version: 10
+  Arduino: Mode set to: 0
+  Arduino: Acceleration set to 10
+  Arduino: Both motors stopped
+  Arduino: MD22 initialized successfully!
+  Arduino:
+  Arduino: Arduino Dual Servo + MD22 Motor Controller Ready
+  Arduino: Commands: SERVO1:angle, SERVO2:angle, MOTORS:speed, M1_STOP, M2_STOP
+  Arduino: Servo1 (Pin 8): Range 40-140 degrees (RIGHT A/B buttons)
+  Arduino: Servo2 (Pin 9): Range 50-130 degrees (RIGHT joystick X - steering)
+  Arduino: Motors (MD22 via I2C): Speed 50-90% forward (LEFT joystick Y)
+  Arduino: MD22 Status: Connected
+  Arduino: Current state - Servo1: 90° | Servo2: 90° | Motor1: 0% | Motor2: 0%
+✓ Arduino connected successfully on /dev/ttyACM0
+
+✓ WebSocket server starting...
+
+Server Details:
+  - Port: 8444
+  - Protocol: WSS
+  - Local IP: 192.168.100.10
+  - Autonomous: ENABLED
+
+Quest 3 URL: wss://192.168.100.10:8444
+
+Press Ctrl+C to stop
+
+======================================================================
+
+Waiting for Quest 3 connection...
+
+
+============================================================
+[17:43:52.775] ✓ Quest 3 CONNECTED from 192.168.100.12:36020
+============================================================
+
+
+============================================================
+[17:44:08.773] ✓ Quest 3 CONNECTED from 192.168.100.12:42246
+============================================================
+
+[17:44:15.666] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#10)
+[17:44:15.666]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[17:44:16.158] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#10)
+[17:44:16.158]   📍 Position: (-23.3, 39.8) cm
+[17:44:16.158]   🧭 Heading: 180.0°
+[17:44:16.158]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[17:44:20.710] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#20)
+[17:44:20.710]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[17:44:21.147] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#20)
+[17:44:21.147]   📍 Position: (-23.3, 39.8) cm
+[17:44:21.147]   🧭 Heading: 180.0°
+[17:44:21.147]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[17:44:25.679] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#30)
+[17:44:25.679]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[17:44:26.149] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#30)
+[17:44:26.149]   📍 Position: (-23.3, 39.8) cm
+[17:44:26.149]   🧭 Heading: 180.0°
+[17:44:26.149]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[17:44:30.668] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#40)
+[17:44:30.668]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[17:44:31.574] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#40)
+[17:44:31.574]   📍 Position: (-23.3, 39.8) cm
+[17:44:31.574]   🧭 Heading: 180.0°
+[17:44:31.574]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[17:44:36.167] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#50)
+[17:44:36.167]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+
+============================================================
+STATISTICS (Uptime: 120.5s)
+============================================================
+Commands sent: 50
+Errors: 0
+Time since last command: 0.00s
+Autonomous mode: INACTIVE
+Differential mode: 0.25x
+Recent commands:
+  1. [17:44:31.585] ALL:M1:0:M2:0:S1:90:S2:90
+  2. [17:44:32.583] ALL:M1:0:M2:0:S1:90:S2:90
+  3. [17:44:32.759] ALL:M1:0:M2:0:S1:90:S2:90
+  4. [17:44:33.163] ALL:M1:0:M2:0:S1:90:S2:90
+  5. [17:44:33.663] ALL:M1:0:M2:0:S1:90:S2:90
+  6. [17:44:34.179] ALL:M1:0:M2:0:S1:90:S2:90
+  7. [17:44:34.682] ALL:M1:0:M2:0:S1:90:S2:90
+  8. [17:44:35.161] ALL:M1:0:M2:0:S1:90:S2:90
+  9. [17:44:35.663] ALL:M1:0:M2:0:S1:90:S2:90
+  10. [17:44:36.167] ALL:M1:0:M2:0:S1:90:S2:90
+============================================================
+
+[17:44:36.654] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#50)
+[17:44:36.654]   📍 Position: (-23.3, 39.8) cm
+[17:44:36.654]   🧭 Heading: 180.0°
+[17:44:36.654]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[17:44:41.155] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#60)
+[17:44:41.155]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[17:44:41.646] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#60)
+[17:44:41.646]   📍 Position: (-23.3, 39.8) cm
+[17:44:41.646]   🧭 Heading: 180.0°
+[17:44:41.646]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+
+============================================================
+[17:44:49.064] ✓ Quest 3 CONNECTED from 192.168.100.12:39594
+============================================================
+
+[17:44:56.407] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#70)
+[17:44:56.407]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[17:44:57.047] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#70)
+[17:44:57.047]   📍 Position: (-29.9, -72.9) cm
+[17:44:57.047]   🧭 Heading: 180.0°
+[17:44:57.047]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[17:45:01.425] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#80)
+[17:45:01.425]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[17:45:01.908] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#80)
+[17:45:01.908]   📍 Position: (-29.9, -72.9) cm
+[17:45:01.908]   🧭 Heading: 180.0°
+[17:45:01.908]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[17:45:06.411] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#90)
+[17:45:06.411]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[17:45:06.917] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#90)
+[17:45:06.917]   📍 Position: (-29.9, -72.9) cm
+[17:45:06.917]   🧭 Heading: 180.0°
+[17:45:06.917]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[17:45:11.419] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#100)
+[17:45:11.419]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+
+============================================================
+STATISTICS (Uptime: 155.7s)
+============================================================
+Commands sent: 100
+Errors: 0
+Time since last command: 0.00s
+Autonomous mode: INACTIVE
+Differential mode: 0.25x
+Recent commands:
+  1. [17:45:06.927] ALL:M1:0:M2:0:S1:90:S2:90
+  2. [17:45:07.418] ALL:M1:0:M2:0:S1:90:S2:90
+  3. [17:45:07.927] ALL:M1:0:M2:0:S1:90:S2:90
+  4. [17:45:08.425] ALL:M1:0:M2:0:S1:90:S2:90
+  5. [17:45:08.912] ALL:M1:0:M2:0:S1:90:S2:90
+  6. [17:45:09.455] ALL:M1:0:M2:0:S1:90:S2:90
+  7. [17:45:09.941] ALL:M1:0:M2:0:S1:90:S2:90
+  8. [17:45:10.430] ALL:M1:0:M2:0:S1:90:S2:90
+  9. [17:45:10.923] ALL:M1:0:M2:0:S1:90:S2:90
+  10. [17:45:11.419] ALL:M1:0:M2:0:S1:90:S2:90
+============================================================
+
+[17:45:11.910] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#100)
+[17:45:11.910]   📍 Position: (-29.9, -72.9) cm
+[17:45:11.910]   🧭 Heading: 180.0°
+[17:45:11.910]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[17:45:16.429] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#110)
+[17:45:16.429]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[17:45:16.954] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#110)
+[17:45:16.954]   📍 Position: (-29.9, -72.9) cm
+[17:45:16.954]   🧭 Heading: 180.0°
+[17:45:16.954]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[17:45:21.410] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#120)
+[17:45:21.410]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[17:45:21.896] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#120)
+[17:45:21.896]   📍 Position: (-29.9, -72.9) cm
+[17:45:21.896]   🧭 Heading: 180.0°
+[17:45:21.896]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[17:45:26.414] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#130)
+[17:45:26.414]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[17:45:26.921] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#130)
+[17:45:26.921]   📍 Position: (-29.9, -72.9) cm
+[17:45:26.921]   🧭 Heading: 180.0°
+[17:45:26.921]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[17:45:31.397] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#140)
+[17:45:31.397]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[17:45:31.917] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#140)
+[17:45:31.917]   📍 Position: (-29.9, -72.9) cm
+[17:45:31.917]   🧭 Heading: 180.0°
+[17:45:31.917]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[17:45:36.527] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#150)
+[17:45:36.527]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+
+============================================================
+STATISTICS (Uptime: 180.8s)
+============================================================
+Commands sent: 150
+Errors: 0
+Time since last command: 0.00s
+Autonomous mode: INACTIVE
+Differential mode: 0.25x
+Recent commands:
+  1. [17:45:31.923] ALL:M1:0:M2:0:S1:90:S2:90
+  2. [17:45:32.399] ALL:M1:0:M2:0:S1:90:S2:90
+  3. [17:45:32.934] ALL:M1:0:M2:0:S1:90:S2:90
+  4. [17:45:33.413] ALL:M1:0:M2:0:S1:90:S2:90
+  5. [17:45:33.959] ALL:M1:0:M2:0:S1:90:S2:90
+  6. [17:45:34.414] ALL:M1:0:M2:0:S1:90:S2:90
+  7. [17:45:34.943] ALL:M1:0:M2:0:S1:90:S2:90
+  8. [17:45:35.450] ALL:M1:0:M2:0:S1:90:S2:90
+  9. [17:45:35.895] ALL:M1:0:M2:0:S1:90:S2:90
+  10. [17:45:36.527] ALL:M1:0:M2:0:S1:90:S2:90
+============================================================
+
+[17:45:37.001] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#150)
+[17:45:37.001]   📍 Position: (-29.9, -72.9) cm
+[17:45:37.001]   🧭 Heading: 180.0°
+[17:45:37.001]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[17:45:41.436] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#160)
+[17:45:41.436]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[17:45:41.922] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#160)
+[17:45:41.922]   📍 Position: (-29.9, -72.9) cm
+[17:45:41.922]   🧭 Heading: 180.0°
+[17:45:41.922]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[17:45:46.411] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#170)
+[17:45:46.411]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[17:45:46.914] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#170)
+[17:45:46.914]   📍 Position: (-29.9, -72.9) cm
+[17:45:46.914]   🧭 Heading: 180.0°
+[17:45:46.914]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[17:45:59.978] ✓ Quest → Arduino: ALL:M1:80:M2:80:S1:90:S2:90 (#180)
+[17:45:59.978]   Arduino → Quest: OK:M1:80:M2:80:S1:90:S2:90
+[17:46:00.471] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#180)
+[17:46:00.471]   📍 Position: (-32.0, -70.5) cm
+[17:46:00.471]   🧭 Heading: 202.3°
+[17:46:00.471]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[17:46:04.984] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#190)
+[17:46:04.984]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[17:46:05.454] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#190)
+[17:46:05.454]   📍 Position: (-34.8, -64.8) cm
+[17:46:05.454]   🧭 Heading: 335.9°
+[17:46:05.454]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[17:46:26.885] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:50 (#200)
+[17:46:26.885]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+
+============================================================
+STATISTICS (Uptime: 231.2s)
+============================================================
+Commands sent: 200
+Errors: 0
+Time since last command: 0.00s
+Autonomous mode: INACTIVE
+Differential mode: 0.25x
+Recent commands:
+  1. [17:46:05.466] ALL:M1:0:M2:0:S1:90:S2:90
+  2. [17:46:05.981] ALL:M1:0:M2:0:S1:90:S2:90
+  3. [17:46:06.461] ALL:M1:0:M2:0:S1:90:S2:90
+  4. [17:46:06.961] ALL:M1:0:M2:0:S1:90:S2:90
+  5. [17:46:07.546] ALL:M1:0:M2:0:S1:90:S2:90
+  6. [17:46:07.970] ALL:M1:0:M2:0:S1:90:S2:90
+  7. [17:46:08.463] ALL:M1:0:M2:0:S1:90:S2:90
+  8. [17:46:08.965] ALL:M1:0:M2:0:S1:90:S2:90
+  9. [17:46:09.235] ALL:M1:0:M2:0:S1:90:S2:90
+  10. [17:46:26.885] ALL:M1:50:M2:63:S1:90:S2:50
+============================================================
+
+[17:46:27.014] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:50 (#210)
+[17:46:27.014]   Arduino → Quest: OK:M1:63:M2:50:S1:90:S2:130
+[17:46:27.230] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:50 (#220)
+[17:46:27.230]   Arduino → Quest: OK:M1:50:M2:63:S1:90:S2:50
+[17:46:27.613] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:50 (#230)
+[17:46:27.613]   Arduino → Quest: OK:M1:63:M2:50:S1:90:S2:130
+[17:46:28.118] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:50 (#240)
+[17:46:28.118]   Arduino → Quest: OK:M1:63:M2:50:S1:90:S2:130
+[17:46:28.621] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:50 (#250)
+[17:46:28.621]   Arduino → Quest: OK:M1:55:M2:55:S1:90:S2:100
+
+============================================================
+STATISTICS (Uptime: 232.9s)
+============================================================
+Commands sent: 250
+Errors: 0
+Time since last command: 0.00s
+Autonomous mode: INACTIVE
+Differential mode: 0.25x
+Recent commands:
+  1. [17:46:28.171] ALL:M1:63:M2:50:S1:90:S2:130
+  2. [17:46:28.224] ALL:M1:63:M2:50:S1:90:S2:130
+  3. [17:46:28.275] ALL:M1:63:M2:50:S1:90:S2:130
+  4. [17:46:28.400] ALL:M1:59:M2:51:S1:90:S2:116
+  5. [17:46:28.452] ALL:M1:63:M2:50:S1:90:S2:130
+  6. [17:46:28.456] ALL:M1:63:M2:50:S1:90:S2:130
+  7. [17:46:28.460] ALL:M1:50:M2:63:S1:90:S2:50
+  8. [17:46:28.561] ALL:M1:55:M2:55:S1:90:S2:100
+  9. [17:46:28.567] ALL:M1:63:M2:50:S1:90:S2:130
+  10. [17:46:28.621] ALL:M1:50:M2:63:S1:90:S2:50
+============================================================
+
+[17:46:29.349] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:50 (#260)
+[17:46:29.349]   Arduino → Quest: OK:M1:63:M2:50:S1:90:S2:130
+[17:46:30.257] ✓ Quest → Arduino: ALL:M1:63:M2:50:S1:90:S2:130 (#270)
+[17:46:30.257]   Arduino → Quest: OK:M1:50:M2:63:S1:90:S2:50
+[17:46:31.463] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:50 (#280)
+[17:46:31.463]   Arduino → Quest: OK:M1:63:M2:50:S1:90:S2:130
+[17:46:32.558] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:50 (#290)
+[17:46:32.558]   Arduino → Quest: OK:M1:50:M2:63:S1:90:S2:50
+[17:46:33.799] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:50 (#300)
+[17:46:33.799]   Arduino → Quest: OK:M1:63:M2:50:S1:90:S2:130
+
+============================================================
+STATISTICS (Uptime: 238.1s)
+============================================================
+Commands sent: 300
+Errors: 0
+Time since last command: 0.00s
+Autonomous mode: INACTIVE
+Differential mode: 0.25x
+Recent commands:
+  1. [17:46:32.642] ALL:M1:63:M2:50:S1:90:S2:130
+  2. [17:46:32.735] ALL:M1:63:M2:50:S1:90:S2:130
+  3. [17:46:32.860] ALL:M1:50:M2:63:S1:90:S2:50
+  4. [17:46:32.956] ALL:M1:50:M2:63:S1:90:S2:50
+  5. [17:46:33.084] ALL:M1:63:M2:50:S1:90:S2:130
+  6. [17:46:33.250] ALL:M1:63:M2:50:S1:90:S2:130
+  7. [17:46:33.390] ALL:M1:50:M2:63:S1:90:S2:50
+  8. [17:46:33.565] ALL:M1:63:M2:50:S1:90:S2:130
+  9. [17:46:33.658] ALL:M1:63:M2:50:S1:90:S2:130
+  10. [17:46:33.799] ALL:M1:50:M2:63:S1:90:S2:50
+============================================================
+
+[17:46:34.671] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#310)
+[17:46:34.671]   Arduino → Quest: OK:M1:50:M2:63:S1:90:S2:50
+^C
+
+======================================================================
+SHUTTING DOWN SERVER
+======================================================================
+
+============================================================
+STATISTICS (Uptime: 316.8s)
+============================================================
+Commands sent: 310
+Errors: 0
+Time since last command: 77.79s
+Autonomous mode: INACTIVE
+Differential mode: 0.25x
+Recent commands:
+  1. [17:46:33.819] ALL:M1:50:M2:63:S1:90:S2:50
+  2. [17:46:33.993] ALL:M1:50:M2:63:S1:90:S2:50
+  3. [17:46:34.062] ALL:M1:63:M2:50:S1:90:S2:130
+  4. [17:46:34.209] ALL:M1:50:M2:63:S1:90:S2:50
+  5. [17:46:34.294] ALL:M1:50:M2:63:S1:90:S2:50
+  6. [17:46:34.391] ALL:M1:63:M2:50:S1:90:S2:130
+  7. [17:46:34.472] ALL:M1:50:M2:63:S1:90:S2:50
+  8. [17:46:34.509] ALL:M1:50:M2:63:S1:90:S2:50
+  9. [17:46:34.556] ALL:M1:0:M2:0:S1:90:S2:90
+  10. [17:46:34.671] ALL:M1:0:M2:0:S1:90:S2:90
+============================================================
+
+
+Sending emergency stop...
+✓ Stop command sent
+✓ Arduino closed
+
+✓ Server stopped
+======================================================================
+
+joe@joe-desktop:~/Shared/4_AR_VR_robot_series/trajectory_6_quest_actuators_april$ python3.13 trajectory_websocket_server_tracking_path.py
+======================================================================
+Meta Quest 3 Robot Control - WebSocket Server
+WITH AUTONOMOUS PATH FOLLOWING
+======================================================================
+
+Connecting to Arduino...
+✓ Found Arduino on /dev/ttyACM0
+  Arduino: Initializing MD22...
+  Arduino: MD22 found at 0x58
+  Arduino: Software version: 10
+  Arduino: Mode set to: 0
+  Arduino: Acceleration set to 10
+  Arduino: Both motors stopped
+  Arduino: MD22 initialized successfully!
+  Arduino:
+  Arduino: Arduino Dual Servo + MD22 Motor Controller Ready
+  Arduino: Commands: SERVO1:angle, SERVO2:angle, MOTORS:speed, M1_STOP, M2_STOP
+  Arduino: Servo1 (Pin 8): Range 40-140 degrees (RIGHT A/B buttons)
+  Arduino: Servo2 (Pin 9): Range 50-130 degrees (RIGHT joystick X - steering)
+  Arduino: Motors (MD22 via I2C): Speed 50-90% forward (LEFT joystick Y)
+  Arduino: MD22 Status: Connected
+  Arduino: Current state - Servo1: 90° | Servo2: 90° | Motor1: 0% | Motor2: 0%
+✓ Arduino connected successfully on /dev/ttyACM0
+
+✓ WebSocket server starting...
+
+Server Details:
+  - Port: 8444
+  - Protocol: WSS
+  - Local IP: 192.168.100.10
+  - Autonomous: ENABLED
+
+Quest 3 URL: wss://192.168.100.10:8444
+
+Press Ctrl+C to stop
+
+======================================================================
+
+Waiting for Quest 3 connection...
+
+
+============================================================
+[18:06:41.603] ✓ Quest 3 CONNECTED from 192.168.100.12:45184
+============================================================
+
+
+============================================================
+[18:07:47.973] ✓ Quest 3 CONNECTED from 192.168.100.12:51412
+============================================================
+
+[18:07:54.823] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#10)
+[18:07:54.823]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[18:07:55.067] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#10)
+[18:07:55.067]   📍 Position: (0.0, 0.0) cm
+[18:07:55.067]   🧭 Heading: 0.0°
+[18:07:55.067]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[18:07:59.593] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#20)
+[18:07:59.593]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[18:08:00.079] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#20)
+[18:08:00.079]   📍 Position: (-51.1, 16.1) cm
+[18:08:00.079]   🧭 Heading: 180.0°
+[18:08:00.079]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[18:08:04.570] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#30)
+[18:08:04.570]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[18:08:05.089] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#30)
+[18:08:05.089]   📍 Position: (-51.1, 16.1) cm
+[18:08:05.089]   🧭 Heading: 180.0°
+[18:08:05.089]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[18:08:09.574] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#40)
+[18:08:09.574]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[18:08:10.091] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#40)
+[18:08:10.091]   📍 Position: (-51.1, 16.1) cm
+[18:08:10.091]   🧭 Heading: 180.0°
+[18:08:10.091]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[18:08:27.172] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#50)
+[18:08:27.172]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+
+============================================================
+STATISTICS (Uptime: 165.2s)
+============================================================
+Commands sent: 50
+Errors: 0
+Time since last command: 0.00s
+Autonomous mode: INACTIVE
+Differential mode: 0.25x
+Recent commands:
+  1. [18:08:10.095] ALL:M1:0:M2:0:S1:90:S2:90
+  2. [18:08:10.626] ALL:M1:0:M2:0:S1:90:S2:90
+  3. [18:08:11.105] ALL:M1:0:M2:0:S1:90:S2:90
+  4. [18:08:11.599] ALL:M1:0:M2:0:S1:90:S2:90
+  5. [18:08:12.072] ALL:M1:0:M2:0:S1:90:S2:90
+  6. [18:08:25.327] ALL:M1:0:M2:0:S1:90:S2:90
+  7. [18:08:25.845] ALL:M1:0:M2:0:S1:90:S2:90
+  8. [18:08:26.366] ALL:M1:0:M2:0:S1:90:S2:90
+  9. [18:08:26.837] ALL:M1:0:M2:0:S1:90:S2:90
+  10. [18:08:27.172] ALL:M1:0:M2:0:S1:90:S2:90
+============================================================
+
+[18:08:46.387] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:50 (#60)
+[18:08:46.387]   Arduino → Quest: OK:M1:63:M2:50:S1:90:S2:130
+[18:08:46.658] ✓ Quest → Arduino: ALL:M1:63:M2:50:S1:90:S2:130 (#70)
+[18:08:46.658]   Arduino → Quest: OK:M1:63:M2:50:S1:90:S2:130
+[18:08:46.898] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:50 (#80)
+[18:08:46.898]   Arduino → Quest: OK:M1:63:M2:50:S1:90:S2:130
+[18:08:47.357] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:50 (#90)
+[18:08:47.357]   Arduino → Quest: OK:M1:50:M2:63:S1:90:S2:50
+[18:08:47.979] ✓ Quest → Arduino: ALL:M1:63:M2:50:S1:90:S2:130 (#100)
+[18:08:47.979]   Arduino → Quest: OK:M1:63:M2:50:S1:90:S2:130
+
+============================================================
+STATISTICS (Uptime: 186.0s)
+============================================================
+Commands sent: 100
+Errors: 0
+Time since last command: 0.00s
+Autonomous mode: INACTIVE
+Differential mode: 0.25x
+Recent commands:
+  1. [18:08:47.443] ALL:M1:50:M2:63:S1:90:S2:50
+  2. [18:08:47.532] ALL:M1:63:M2:50:S1:90:S2:130
+  3. [18:08:47.561] ALL:M1:63:M2:50:S1:90:S2:130
+  4. [18:08:47.675] ALL:M1:63:M2:50:S1:90:S2:130
+  5. [18:08:47.679] ALL:M1:63:M2:50:S1:90:S2:130
+  6. [18:08:47.767] ALL:M1:50:M2:63:S1:90:S2:50
+  7. [18:08:47.830] ALL:M1:63:M2:50:S1:90:S2:130
+  8. [18:08:47.836] ALL:M1:63:M2:50:S1:90:S2:130
+  9. [18:08:47.943] ALL:M1:63:M2:50:S1:90:S2:130
+  10. [18:08:47.979] ALL:M1:63:M2:50:S1:90:S2:130
+============================================================
+
+[18:08:48.742] ✓ Quest → Arduino: ALL:M1:63:M2:50:S1:90:S2:130 (#110)
+[18:08:48.742]   Arduino → Quest: OK:M1:50:M2:63:S1:90:S2:50
+[18:08:49.533] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:50 (#120)
+[18:08:49.533]   Arduino → Quest: OK:M1:63:M2:50:S1:90:S2:130
+[18:08:50.436] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:50 (#130)
+[18:08:50.436]   Arduino → Quest: OK:M1:63:M2:50:S1:90:S2:130
+[18:08:51.542] ✓ Quest → Arduino: ALL:M1:62:M2:62:S1:90:S2:84 (#140)
+[18:08:51.542]   Arduino → Quest: OK:M1:50:M2:63:S1:90:S2:50
+[18:08:52.931] ✓ Quest → Arduino: ALL:M1:63:M2:50:S1:90:S2:130 (#150)
+[18:08:52.931]   Arduino → Quest: OK:M1:63:M2:50:S1:90:S2:130
+
+============================================================
+STATISTICS (Uptime: 190.9s)
+============================================================
+Commands sent: 150
+Errors: 0
+Time since last command: 0.00s
+Autonomous mode: INACTIVE
+Differential mode: 0.25x
+Recent commands:
+  1. [18:08:51.723] ALL:M1:60:M2:50:S1:90:S2:119
+  2. [18:08:51.822] ALL:M1:63:M2:50:S1:90:S2:130
+  3. [18:08:51.956] ALL:M1:50:M2:63:S1:90:S2:50
+  4. [18:08:52.082] ALL:M1:63:M2:50:S1:90:S2:130
+  5. [18:08:52.225] ALL:M1:63:M2:50:S1:90:S2:130
+  6. [18:08:52.459] ALL:M1:63:M2:50:S1:90:S2:130
+  7. [18:08:52.556] ALL:M1:50:M2:63:S1:90:S2:50
+  8. [18:08:52.675] ALL:M1:63:M2:50:S1:90:S2:130
+  9. [18:08:52.814] ALL:M1:50:M2:63:S1:90:S2:50
+  10. [18:08:52.931] ALL:M1:63:M2:50:S1:90:S2:130
+============================================================
+
+[18:08:53.950] ✓ Quest → Arduino: ALL:M1:63:M2:50:S1:90:S2:130 (#160)
+[18:08:53.950]   Arduino → Quest: OK:M1:50:M2:63:S1:90:S2:50
+
+============================================================
+[18:09:41.603] ✓ Quest 3 CONNECTED from 192.168.100.12:39390
+============================================================
+
+[18:09:46.150] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#170)
+[18:09:46.150]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[18:09:46.602] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#170)
+[18:09:46.602]   📍 Position: (-73.6, 0.1) cm
+[18:09:46.602]   🧭 Heading: 180.0°
+[18:09:46.602]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[18:09:51.145] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#180)
+[18:09:51.145]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[18:09:51.602] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#180)
+[18:09:51.602]   📍 Position: (-73.6, 0.1) cm
+[18:09:51.602]   🧭 Heading: 180.0°
+[18:09:51.602]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[18:09:56.132] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#190)
+[18:09:56.132]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[18:09:56.625] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#190)
+[18:09:56.625]   📍 Position: (-73.6, 0.1) cm
+[18:09:56.625]   🧭 Heading: 180.0°
+[18:09:56.625]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[18:10:01.193] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#200)
+[18:10:01.193]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+
+============================================================
+STATISTICS (Uptime: 259.2s)
+============================================================
+Commands sent: 200
+Errors: 0
+Time since last command: 0.00s
+Autonomous mode: INACTIVE
+Differential mode: 0.25x
+Recent commands:
+  1. [18:09:56.634] ALL:M1:0:M2:0:S1:90:S2:90
+  2. [18:09:57.115] ALL:M1:0:M2:0:S1:90:S2:90
+  3. [18:09:57.606] ALL:M1:0:M2:0:S1:90:S2:90
+  4. [18:09:58.136] ALL:M1:0:M2:0:S1:90:S2:90
+  5. [18:09:58.621] ALL:M1:0:M2:0:S1:90:S2:90
+  6. [18:09:59.150] ALL:M1:0:M2:0:S1:90:S2:90
+  7. [18:09:59.612] ALL:M1:0:M2:0:S1:90:S2:90
+  8. [18:10:00.105] ALL:M1:0:M2:0:S1:90:S2:90
+  9. [18:10:00.610] ALL:M1:0:M2:0:S1:90:S2:90
+  10. [18:10:01.193] ALL:M1:0:M2:0:S1:90:S2:90
+============================================================
+
+[18:10:22.191] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#210)
+[18:10:22.191]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[18:10:22.602] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#210)
+[18:10:22.602]   📍 Position: (-73.6, 0.1) cm
+[18:10:22.602]   🧭 Heading: 180.0°
+[18:10:22.602]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[18:10:27.096] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#220)
+[18:10:27.096]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[18:10:27.598] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#220)
+[18:10:27.598]   📍 Position: (-73.6, 0.1) cm
+[18:10:27.598]   🧭 Heading: 180.0°
+[18:10:27.598]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[18:10:32.110] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#230)
+[18:10:32.110]   Arduino → Quest: OK:M1:0:M2:0:S1:90:S2:90
+[18:10:32.602] ✓ Quest → Arduino: ALL:M1:0:M2:0:S1:90:S2:90 (#230)
+[18:10:32.602]   📍 Position: (-73.6, 0.1) cm
+[18:10:32.602]   🧭 Heading: 180.0°
+[18:10:32.602]   🚗 Motors: M1:0% M2:0% | Steer: S2:90°
+[18:10:47.328] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:50 (#240)
+[18:10:47.328]   Arduino → Quest: OK:M1:50:M2:63:S1:90:S2:50
+[18:10:47.598] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:50 (#250)
+[18:10:47.598]   Arduino → Quest: OK:M1:50:M2:63:S1:90:S2:50
+
+============================================================
+STATISTICS (Uptime: 305.6s)
+============================================================
+Commands sent: 250
+Errors: 0
+Time since last command: 0.00s
+Autonomous mode: INACTIVE
+Differential mode: 0.25x
+Recent commands:
+  1. [18:10:47.332] ALL:M1:50:M2:63:S1:90:S2:50
+  2. [18:10:47.335] ALL:M1:50:M2:63:S1:90:S2:50
+  3. [18:10:47.352] ALL:M1:58:M2:58:S1:90:S2:82
+  4. [18:10:47.423] ALL:M1:63:M2:50:S1:90:S2:130
+  5. [18:10:47.426] ALL:M1:63:M2:50:S1:90:S2:130
+  6. [18:10:47.457] ALL:M1:63:M2:50:S1:90:S2:130
+  7. [18:10:47.463] ALL:M1:63:M2:50:S1:90:S2:130
+  8. [18:10:47.514] ALL:M1:50:M2:63:S1:90:S2:50
+  9. [18:10:47.565] ALL:M1:50:M2:63:S1:90:S2:50
+  10. [18:10:47.598] ALL:M1:50:M2:63:S1:90:S2:50
+============================================================
+
+[18:10:48.091] ✓ Quest → Arduino: ALL:M1:63:M2:50:S1:90:S2:130 (#260)
+[18:10:48.091]   Arduino → Quest: OK:M1:50:M2:63:S1:90:S2:50
+[18:10:48.800] ✓ Quest → Arduino: ALL:M1:63:M2:50:S1:90:S2:130 (#270)
+[18:10:48.800]   Arduino → Quest: OK:M1:50:M2:63:S1:90:S2:50
+[18:10:50.296] ✓ Quest → Arduino: ALL:M1:50:M2:63:S1:90:S2:50 (#280)
+[18:10:50.296]   Arduino → Quest: OK:M1:63:M2:50:S1:90:S2:130
+[18:10:52.176] ✓ Quest → Arduino: ALL:M1:63:M2:50:S1:90:S2:130 (#290)
+[18:10:52.176]   Arduino → Quest: OK:M1:63:M2:50:S1:90:S2:130

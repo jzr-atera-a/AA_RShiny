@@ -1,0 +1,101 @@
+# modules/_module_registry.yml
+# AI Engineering Interview Prep Suite
+# Based on: AI Engineering: Building Applications with Foundation Models — Chip Huyen (O'Reilly, 2025)
+# Built for: VP of Research, Machine Learning — A1 (seeded by BJAK)
+
+app:
+  name: "AI Engineering Prep"
+  version: "1.0.0"
+  description: "AI Engineering interview preparation, mapped to the A1 VP of Research (ML) role"
+
+modules:
+  overview:
+    enabled: true
+    priority: 10
+    name: "Overview & Book Map"
+    icon: "home"
+    tabname: "overview"
+
+  job_mapping:
+    enabled: true
+    priority: 15
+    name: "A1 Job Mapping"
+    icon: "bullseye"
+    tabname: "job_mapping"
+
+  ch01_intro:
+    enabled: true
+    priority: 20
+    name: "Ch.1 Intro to AI Engineering"
+    icon: "rocket"
+    tabname: "ch01_intro"
+
+  ch02_foundation_models:
+    enabled: true
+    priority: 30
+    name: "Ch.2 Foundation Models"
+    icon: "cube"
+    tabname: "ch02_foundation_models"
+
+  ch03_evaluation_methodology:
+    enabled: true
+    priority: 40
+    name: "Ch.3 Evaluation Methodology"
+    icon: "balance-scale"
+    tabname: "ch03_evaluation_methodology"
+
+  ch04_evaluate_systems:
+    enabled: true
+    priority: 50
+    name: "Ch.4 Evaluating AI Systems"
+    icon: "check-double"
+    tabname: "ch04_evaluate_systems"
+
+  ch05_prompt_engineering:
+    enabled: true
+    priority: 60
+    name: "Ch.5 Prompt Engineering"
+    icon: "comment-dots"
+    tabname: "ch05_prompt_engineering"
+
+  ch06_rag_agents:
+    enabled: true
+    priority: 70
+    name: "Ch.6 RAG & Agents"
+    icon: "project-diagram"
+    tabname: "ch06_rag_agents"
+
+  ch07_finetuning:
+    enabled: true
+    priority: 80
+    name: "Ch.7 Finetuning"
+    icon: "sliders-h"
+    tabname: "ch07_finetuning"
+
+  ch08_dataset_engineering:
+    enabled: true
+    priority: 90
+    name: "Ch.8 Dataset Engineering"
+    icon: "database"
+    tabname: "ch08_dataset_engineering"
+
+  ch09_inference_optimization:
+    enabled: true
+    priority: 100
+    name: "Ch.9 Inference Optimization"
+    icon: "gauge-high"
+    tabname: "ch09_inference_optimization"
+
+  ch10_architecture_feedback:
+    enabled: true
+    priority: 110
+    name: "Ch.10 Architecture & Feedback"
+    icon: "sitemap"
+    tabname: "ch10_architecture_feedback"
+
+  practice:
+    enabled: true
+    priority: 120
+    name: "A1 Mock Interview"
+    icon: "clock"
+    tabname: "practice"

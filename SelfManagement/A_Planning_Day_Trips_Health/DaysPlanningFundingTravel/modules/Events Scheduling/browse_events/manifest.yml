@@ -1,0 +1,16 @@
+module:
+  id: "browse_events"
+  name: "Browse Events"
+  description: "Browse and download all stored events"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Browse Events"
+    icon: "table"
+    tabname: "browse_events"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, DT]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

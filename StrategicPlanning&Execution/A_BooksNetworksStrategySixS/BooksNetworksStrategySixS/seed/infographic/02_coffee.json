@@ -1,0 +1,180 @@
+{
+ "meta": {
+  "title": "A Cup of Coffee, Unpacked",
+  "subtitle": "From farm to cup: a quick visual tour. Illustrative figures for demonstration only.",
+  "kicker": "Everyday economics",
+  "hero_icons": [
+   "leaf",
+   "dollar"
+  ],
+  "theme": "sunrise",
+  "topic": "Seed example: illustrative figures",
+  "research": "none"
+ },
+ "sections": [
+  {
+   "id": "c1",
+   "type": "ranking",
+   "heading": "Who drinks the most?",
+   "intro": "Cups per person per year in sample countries.",
+   "items": [
+    {
+     "label": "Country A",
+     "value": 480,
+     "display": "480",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "label": "Country B",
+     "value": 410,
+     "display": "410",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "label": "Country C",
+     "value": 330,
+     "display": "330",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "label": "Country D",
+     "value": 250,
+     "display": "250",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "label": "Country E",
+     "value": 140,
+     "display": "140",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    }
+   ]
+  },
+  {
+   "id": "c2",
+   "type": "bar_chart",
+   "style": "bars",
+   "heading": "Where the price goes",
+   "intro": "Share of the shelf price, by step.",
+   "items": [
+    {
+     "label": "Grower",
+     "value": 10,
+     "display": "10%",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "label": "Exporter and shipping",
+     "value": 18,
+     "display": "18%",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "label": "Roaster",
+     "value": 27,
+     "display": "27%",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "label": "Retailer",
+     "value": 45,
+     "display": "45%",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    }
+   ]
+  },
+  {
+   "id": "c3",
+   "type": "region_map",
+   "heading": "Growing regions",
+   "intro": "Relative output by region (illustrative index).",
+   "items": [
+    {
+     "region": "south_america",
+     "value": 92,
+     "display": "92",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "region": "africa",
+     "value": 45,
+     "display": "45",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "region": "asia",
+     "value": 60,
+     "display": "60",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    },
+    {
+     "region": "north_america",
+     "value": 12,
+     "display": "12",
+     "confidence": "judgment",
+     "verified": "unchecked",
+     "source_ids": []
+    }
+   ]
+  },
+  {
+   "id": "c4",
+   "type": "steps",
+   "heading": "From cherry to cup",
+   "intro": "Five steps beans take.",
+   "items": [
+    {
+     "label": "Harvest",
+     "text": "Ripe cherries are picked by hand or machine."
+    },
+    {
+     "label": "Process",
+     "text": "Fruit is removed and the beans are dried."
+    },
+    {
+     "label": "Roast",
+     "text": "Heat develops flavour and colour."
+    },
+    {
+     "label": "Grind",
+     "text": "Size sets how fast water pulls out flavour."
+    },
+    {
+     "label": "Brew",
+     "text": "Water, time and temperature finish the job."
+    }
+   ]
+  },
+  {
+   "id": "c5",
+   "type": "callout",
+   "icon": "star",
+   "text": "Grind size and water temperature change the taste more than most people expect."
+  }
+ ],
+ "sources": []
+}

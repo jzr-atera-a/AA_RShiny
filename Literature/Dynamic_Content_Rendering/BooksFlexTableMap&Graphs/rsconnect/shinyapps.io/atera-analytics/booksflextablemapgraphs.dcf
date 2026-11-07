@@ -1,0 +1,10 @@
+name: booksflextablemapgraphs
+title:
+username: atera-analytics
+account: atera-analytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17805730
+bundleId: 12513527
+url: https://atera-analytics.shinyapps.io/booksflextablemapgraphs/
+version: 1

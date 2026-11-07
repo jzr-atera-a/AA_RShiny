@@ -1,0 +1,208 @@
+/* ==================================================================
+   TRADING ANALYSIS F1 — TEAL/NAVY THEME
+   Extracted verbatim from the original single-file app_ig_ta.R
+   ================================================================== */
+        /* Main body background with teal gradient */
+        .content-wrapper, .right-side {
+          background: linear-gradient(135deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+          min-height: 100vh;
+        }
+        
+        /* Sidebar styling with teal gradient */
+        .sidebar, .main-sidebar {
+          background: linear-gradient(180deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+        }
+        
+        .sidebar .sidebar-menu > li > a {
+          color: #ffffff !important;
+          border-left: 3px solid transparent;
+          transition: all 0.3s ease;
+        }
+        
+        .sidebar .sidebar-menu > li.active > a,
+        .sidebar .sidebar-menu > li:hover > a {
+          background: rgba(255, 255, 255, 0.15) !important;
+          border-left: 3px solid #00A39A !important;
+          color: #ffffff !important;
+        }
+        
+        /* Header/navbar with matching gradient */
+        .main-header, .main-header .navbar {
+          background: linear-gradient(135deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+          border-bottom: none;
+        }
+        
+        .main-header .navbar-nav > li > a {
+          color: #ffffff !important;
+        }
+        
+        /* Box styling with enhanced gradients */
+        .box {
+          background: rgba(255, 255, 255, 0.98) !important;
+          border: none !important;
+          border-radius: 12px !important;
+          box-shadow: 0 8px 25px rgba(0, 44, 60, 0.2) !important;
+          margin-bottom: 20px;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .box:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 35px rgba(0, 44, 60, 0.3) !important;
+        }
+        
+        /* Box headers with gradients */
+        .box-header {
+          background: linear-gradient(135deg, #008A82 0%, #00A39A 100%) !important;
+          color: white !important;
+          border-radius: 12px 12px 0 0 !important;
+          padding: 15px 20px;
+          border-bottom: none !important;
+        }
+        
+        .box-header > .box-title {
+          color: #ffffff !important;
+          font-weight: 600;
+          font-size: 16px;
+        }
+        
+        /* Box body styling */
+        .box-body {
+          background-color: #ffffff !important;
+          color: #2c3e50 !important;
+          padding: 20px;
+          border-radius: 0 0 12px 12px;
+        }
+        
+        /* Value boxes with enhanced gradients */
+        .small-box {
+          border-radius: 12px !important;
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+          transition: transform 0.2s ease;
+        }
+        
+        .small-box:hover {
+          transform: translateY(-3px);
+        }
+        
+        .small-box.bg-blue { 
+          background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important; 
+        }
+        
+        .small-box.bg-green { 
+          background: linear-gradient(135deg, #00A39A 0%, #008A82 100%) !important; 
+        }
+        
+        .small-box.bg-yellow { 
+          background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important; 
+        }
+        
+        .small-box.bg-red { 
+          background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important; 
+        }
+        
+        .small-box.bg-purple { 
+          background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%) !important; 
+        }
+        
+        .small-box.bg-teal { 
+          background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%) !important; 
+        }
+        
+        .small-box.bg-orange { 
+          background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%) !important; 
+        }
+        
+        /* Info boxes styling */
+        .info-box {
+          background: rgba(255, 255, 255, 0.98) !important;
+          border-radius: 12px !important;
+          box-shadow: 0 6px 20px rgba(0, 44, 60, 0.15) !important;
+          border-left: 4px solid #008A82;
+        }
+        
+        /* Status message styling */
+        .data-info {
+          background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%) !important;
+          color: #155724 !important;
+          padding: 15px;
+          border-radius: 12px !important;
+          border: none !important;
+          border-left: 4px solid #00A39A !important;
+          margin: 10px 0;
+          box-shadow: 0 4px 15px rgba(0, 163, 154, 0.2);
+        }
+        
+        .data-warning {
+          background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%) !important;
+          color: #856404 !important;
+          padding: 15px;
+          border-radius: 12px !important;
+          border: none !important;
+          border-left: 4px solid #f39c12 !important;
+          margin: 10px 0;
+          box-shadow: 0 4px 15px rgba(243, 156, 18, 0.2);
+        }
+        
+        /* Input and form styling */
+        .form-control {
+          border-radius: 8px !important;
+          border: 2px solid #ddd !important;
+          transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .form-control:focus {
+          border-color: #008A82 !important;
+          box-shadow: 0 0 0 3px rgba(0, 138, 130, 0.1) !important;
+        }
+        
+        /* Button styling with gradients */
+        .btn-primary {
+          background: linear-gradient(135deg, #008A82 0%, #00A39A 100%) !important;
+          border: none !important;
+          border-radius: 8px !important;
+          padding: 10px 20px;
+          font-weight: 600;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .btn-primary:hover {
+          background: linear-gradient(135deg, #006b63 0%, #007d75 100%) !important;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(0, 138, 130, 0.3);
+        }
+        
+        /* DataTable styling */
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+          background: linear-gradient(135deg, #008A82 0%, #00A39A 100%) !important;
+          border: none !important;
+          color: white !important;
+        }
+        
+        /* Spinner styling */
+        .spinner-border {
+          color: #008A82 !important;
+        }
+        
+        /* Logo styling */
+        .main-header .logo {
+          background: linear-gradient(135deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+          color: #ffffff !important;
+          border-bottom: none !important;
+          font-weight: 600;
+        }
+        
+        /* Scrollbar styling */
+        .box-body::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .box-body::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 3px;
+        }
+        
+        .box-body::-webkit-scrollbar-thumb {
+          background: linear-gradient(135deg, #008A82, #00A39A);
+          border-radius: 3px;
+        }

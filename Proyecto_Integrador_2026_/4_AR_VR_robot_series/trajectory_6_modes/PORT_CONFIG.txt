@@ -1,0 +1,56 @@
+# PORT CONFIGURATION - FIXED!
+
+## Servers Running on Different Ports:
+
+### HTTPS Server (serves HTML files):
+- **Port: 8443**
+- **Start:** `python https_server.py`
+- **URL:** `https://YOUR_IP:8443/trajectory_6modes.html`
+- **Purpose:** Serves the AR web app to Quest 3
+
+### WebSocket Server (receives commands from Quest):
+- **Port: 8444** ← CHANGED FROM 8443!
+- **Start:** `python trajectory_websocket_server.py`
+- **Purpose:** Receives controller tracking data, trajectory commands, etc.
+
+## How to Run Both:
+
+### Terminal 1 - HTTPS Server:
+```bash
+python https_server.py
+```
+
+### Terminal 2 - WebSocket Server (optional, only for Modes 1-5):
+```bash
+python trajectory_websocket_server.py
+```
+
+### Terminal 3 - Watch Debug Logs (optional):
+```bash
+tail -f ar_debug.log
+```
+
+## Important Notes:
+
+1. **Mode 0 only needs HTTPS server** - no websocket required
+2. **Modes 1-5 need BOTH servers** running
+3. **Ports are now different** - no more conflicts!
+4. **HTML updated** - connects to correct websocket port (8444)
+
+## Arduino Warning (IGNORE if you don't have Arduino):
+
+You'll see this warning on websocket server:
+```
+✗ Arduino connection failed: could not open port '/dev/ttyACM0'
+⚠ WARNING: Starting server WITHOUT Arduino connection
+```
+
+**This is NORMAL on Windows!** The Arduino path `/dev/ttyACM0` is Linux-style.
+- Server will work fine for receiving controller data
+- Just won't send commands to physical robot
+- Perfectly fine for testing AR modes
+
+## Fixed Issues:
+✅ Port conflict (both tried to use 8443)
+✅ Python 3.13 deprecation warning (asyncio.get_event_loop)
+✅ HTML now connects to correct websocket port

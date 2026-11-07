@@ -1,0 +1,44 @@
+# WP5 Omniverse AR Visualization - Module Registry
+
+app:
+  name: "WP5 Omniverse AR Visualization"
+  version: "1.0.0"
+  description: "NVIDIA Omniverse Isaac Sim integration with Meta Quest 3 AR"
+  author: "Atera Analytics"
+
+modules:
+  - id: omniverse_connection
+    name: "Omniverse Connection"
+    description: "Connect to NVIDIA Isaac Sim and load AV scenario data"
+    enabled: true
+    menu:
+      label: "Omniverse"
+      icon: "cube"
+      tabname: "omniverse"
+  
+  - id: scenario_manager
+    name: "Scenario Manager"
+    description: "Browse, select, and manage Omniverse AV simulation scenarios"
+    enabled: true
+    menu:
+      label: "Scenarios"
+      icon: "road"
+      tabname: "scenarios"
+  
+  - id: route_visualization
+    name: "Route Visualization"
+    description: "Preview route quality, incidents, and AV readiness on maps"
+    enabled: true
+    menu:
+      label: "Route Preview"
+      icon: "map"
+      tabname: "routes"
+  
+  - id: quest3_ar_viewer
+    name: "Quest 3 AR Viewer"
+    description: "Generate QR code and serve API for Meta Quest 3 WebXR"
+    enabled: true
+    menu:
+      label: "Quest 3 AR"
+      icon: "vr-cardboard"
+      tabname: "quest3"

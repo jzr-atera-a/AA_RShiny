@@ -1,0 +1,25 @@
+{
+  "root_folder": "C:/Media/2026 GreciaTurquiaEgiptoInglaterra",
+  "limit_per_country": 50,
+  "cost_per_photo": 5,
+  "currency": "MXN",
+  "grid_layout": "3x2",
+  "last_country": "Egipto 2026",
+  "last_subfolder": "Alejandria",
+  "country_limits": {
+    "Egipto 2026": 80,
+    "Grecia 2026": 60,
+    "Turquia 2026": 37
+  },
+  "inactive_places": ["Grecia 2026 || Atenas Centro", "Grecia 2026 || Atenas Colina Lycabettus", "Inglaterra 2026 || Cambridge Paco Amigos"],
+  "special_cap": 6,
+  "print_parent": "",
+  "print_mode": "replace",
+  "wm_enabled": false,
+  "wm_font": "atkinson",
+  "wm_size": 5,
+  "wm_bold": true,
+  "wm_style": "dark_box",
+  "places_applied_at": "2026-10-24 23:27",
+  "photo_scale": 60
+}

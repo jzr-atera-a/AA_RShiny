@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Slide 4 – Why this consortium?</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    width: 1333px;
+    height: 750px;
+    overflow: hidden;
+    background: #0c0f14;
+    font-family: 'DM Sans', sans-serif;
+    color: #b7b7b7;
+    position: relative;
+  }
+
+  /* Dot-grid background */
+  body::before {
+    content:'';
+    position:absolute; inset:0;
+    background-image: radial-gradient(circle, rgba(0,255,0,0.07) 1px, transparent 1px);
+    background-size: 38px 38px;
+    pointer-events:none; z-index:0;
+  }
+
+  .glow-tl {
+    position:absolute; top:-140px; left:-80px;
+    width:520px; height:380px;
+    background: radial-gradient(ellipse, rgba(0,255,0,0.08) 0%, transparent 68%);
+    pointer-events:none; z-index:0;
+  }
+  .glow-br {
+    position:absolute; bottom:-100px; right:-60px;
+    width:440px; height:320px;
+    background: radial-gradient(ellipse, rgba(255,192,0,0.07) 0%, transparent 68%);
+    pointer-events:none; z-index:0;
+  }
+
+  .slide {
+    position:relative; z-index:1;
+    width:1333px; height:750px;
+    padding: 30px 46px 24px 46px;
+    display:flex; flex-direction:column;
+    gap: 0;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding-bottom:14px;
+    border-bottom:1px solid rgba(0,255,0,0.2);
+    margin-bottom:18px;
+    flex-shrink:0;
+  }
+
+  .eyebrow {
+    font-family:'DM Mono', monospace;
+    font-size:11px; letter-spacing:3px;
+    color:rgba(0,255,0,0.5); text-transform:uppercase;
+    margin-bottom:4px;
+  }
+
+  h1 {
+    font-size:38px; font-weight:700;
+    color:#00ff00; letter-spacing:-0.5px; line-height:1;
+  }
+
+  .pill {
+    font-family:'DM Mono', monospace;
+    font-size:10px; letter-spacing:2px; text-transform:uppercase;
+    color:rgba(255,192,0,0.8);
+    border:1px solid rgba(255,192,0,0.35);
+    padding:6px 16px; border-radius:20px;
+    white-space:nowrap;
+  }
+
+  /* ── MAIN GRID ── */
+  /* 3 cols: left panel | thin divider | right panel */
+  .body {
+    flex:1;
+    display:grid;
+    grid-template-columns: 1fr 44px 2fr;
+    min-height:0;
+  }
+
+  .panel {
+    display:flex; flex-direction:column; gap:0;
+    min-height:0;
+  }
+
+  /* Panel section label */
+  .panel-label {
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:10px;
+    flex-shrink:0;
+  }
+
+  .panel-dot {
+    width:9px; height:9px; border-radius:50%; flex-shrink:0;
+  }
+  .dot-green { background:#00ff00; box-shadow:0 0 9px rgba(0,255,0,0.8); }
+  .dot-amber { background:#FFC000; box-shadow:0 0 9px rgba(255,192,0,0.8); }
+
+  .plabel-text {
+    font-size:11.5px; font-weight:700;
+    letter-spacing:2.5px; text-transform:uppercase;
+  }
+  .green-label { color:#00ff00; }
+  .amber-label { color:#FFC000; }
+
+  .plabel-sub {
+    font-size:10px; color:rgba(183,183,183,0.45);
+    letter-spacing:0.3px; margin-left:2px;
+  }
+
+  /* ── PARTNER CARDS ── */
+  .cards {
+    flex:1; display:flex; flex-direction:column; gap:8px; min-height:0;
+  }
+
+  .card {
+    flex:1;
+    border-radius:7px;
+    padding:0 22px 0 20px;
+    display:flex; align-items:center; gap:20px;
+    position:relative; overflow:hidden;
+    min-height:0;
+    border: 1px solid transparent;
+  }
+
+  /* Coloured filled backgrounds per partner */
+  .c-r10   { background: linear-gradient(135deg, rgba(124,87,220,0.55) 0%, rgba(90,55,170,0.45) 100%); border-color: rgba(167,139,250,0.4); }
+  .c-atera { background: linear-gradient(135deg, rgba(34,120,62,0.60) 0%,  rgba(22, 90,45,0.50) 100%); border-color: rgba(79,196,114,0.4); }
+  .c-halo  { background: linear-gradient(135deg, rgba(148,70,210,0.55) 0%, rgba(110,40,175,0.45) 100%); border-color: rgba(192,132,252,0.4); }
+  .c-volt  { background: linear-gradient(135deg, rgba(180,130,0,0.55) 0%,  rgba(140,95,0,0.45) 100%);  border-color: rgba(255,192,0,0.45); }
+  .c-berk  { background: linear-gradient(135deg, rgba(185,55,55,0.55) 0%,  rgba(145,30,30,0.45) 100%);  border-color: rgba(248,113,113,0.4); }
+  .c-welch { background: linear-gradient(135deg, rgba(37,99,190,0.55) 0%,  rgba(22,70,150,0.45) 100%);  border-color: rgba(96,165,250,0.4); }
+
+  /* Subtle inner shine top edge */
+  .card::after {
+    content:'';
+    position:absolute; left:0; right:0; top:0; height:1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.18) 50%, transparent 100%);
+  }
+
+  .card-name {
+    font-size:22px; font-weight:700;
+    letter-spacing:0.1px; white-space:normal;
+    width:155px; flex-shrink:0;
+    line-height:1.2;
+  }
+  /* All names white — contrast against colored bg */
+  .name-r10, .name-atera, .name-halo,
+  .name-volt, .name-berk, .name-welch { color: #ffffff; }
+
+  .card-desc {
+    flex:1;
+    font-size:16.5px; font-weight:400;
+    color: rgba(255,255,255,0.88);
+    line-height:1.35;
+  }
+
+  .badge {
+    font-family:'DM Mono', monospace;
+    font-size:10.5px; font-weight:600;
+    letter-spacing:0.8px; text-transform:uppercase;
+    padding:5px 13px; border-radius:4px;
+    white-space:nowrap; flex-shrink:0;
+  }
+  /* Badges: white bg with dark text for contrast on colored cards */
+  .b-ip   { background:rgba(255,255,255,0.18); color:#fff; border:1px solid rgba(255,255,255,0.35); }
+  .b-saas { background:rgba(255,255,255,0.18); color:#fff; border:1px solid rgba(255,255,255,0.35); }
+  .b-ods  { background:rgba(255,255,255,0.18); color:#fff; border:1px solid rgba(255,255,255,0.35); }
+  .b-val  { background:rgba(255,255,255,0.18); color:#fff; border:1px solid rgba(255,255,255,0.35); }
+
+  /* ── DIVIDER ── */
+  .divider {
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:8px;
+  }
+  .div-line {
+    flex:1; width:1px;
+    background:linear-gradient(to bottom,
+      transparent 0%,
+      rgba(255,255,255,0.09) 20%,
+      rgba(255,255,255,0.09) 80%,
+      transparent 100%);
+  }
+  .div-icon {
+    font-size:20px; color:rgba(255,192,0,0.5); line-height:1; flex-shrink:0;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    margin-top:14px; flex-shrink:0;
+    display:grid; grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+
+  .fitem {
+    display:flex; align-items:flex-start; gap:10px;
+    background:rgba(255,255,255,0.025);
+    border:1px solid rgba(255,255,255,0.065);
+    border-radius:5px; padding:10px 16px;
+  }
+
+  .ficon { font-size:15px; flex-shrink:0; margin-top:1px; }
+
+  .ftext {
+    font-size:12px; line-height:1.5;
+    color:rgba(200,200,200,0.7);
+  }
+  .ftext strong { font-weight:700; }
+  .fg { color:#00ff00; }
+  .fa { color:#FFC000; }
+
+</style>
+</head>
+<body>
+<div class="glow-tl"></div>
+<div class="glow-br"></div>
+<div class="slide">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <div class="eyebrow">04 — Consortium Rationale</div>
+      <h1>Why this consortium?</h1>
+    </div>
+    <div class="pill">One Integrated Project</div>
+  </div>
+
+  <!-- BODY: left | divider | right -->
+  <div class="body">
+
+    <!-- LEFT: Platform Development -->
+    <div class="panel">
+      <div class="panel-label">
+        <div class="panel-dot dot-green"></div>
+        <span class="plabel-text green-label">Platform Development</span>
+        <span class="plabel-sub">— Route10 builds &amp; owns the IP</span>
+      </div>
+      <div class="cards">
+
+        <div class="card c-r10">
+          <div class="card-name name-r10">Route10 AI</div>
+          <div class="card-desc">PAS&nbsp;1883 readiness engine, ODD scoring, API &amp; dashboard</div>
+          <div class="badge b-ip">Core IP</div>
+        </div>
+
+        <div class="card c-atera">
+          <div class="card-name name-atera">Atera Analytics</div>
+          <div class="card-desc">Route optimisation &amp; NUIC performance modelling</div>
+          <div class="badge b-saas">Joint SaaS</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- DIVIDER -->
+    <div class="divider">
+      <div class="div-line"></div>
+      <div class="div-icon">⟳</div>
+      <div class="div-line"></div>
+    </div>
+
+    <!-- RIGHT: Operational Validation -->
+    <div class="panel">
+      <div class="panel-label">
+        <div class="panel-dot dot-amber"></div>
+        <span class="plabel-text amber-label">Operational Validation</span>
+        <span class="plabel-sub">— Partners generate data that trains the platform</span>
+      </div>
+      <div class="cards">
+
+        <div class="card c-halo">
+          <div class="card-name name-halo">Halo</div>
+          <div class="card-desc">ADS integration — supplies ODD constraint &amp; performance data</div>
+          <div class="badge b-ods">ADS Data</div>
+        </div>
+
+        <div class="card c-volt">
+          <div class="card-name name-volt">Voltempo</div>
+          <div class="card-desc">NUIC operations — validates readiness scores vs. real interventions</div>
+          <div class="badge b-ods">NUIC Data</div>
+        </div>
+
+        <div class="card c-berk">
+          <div class="card-name name-berk">Berkeley</div>
+          <div class="card-desc">Vehicle integration &amp; sensor retrofit for test platform</div>
+          <div class="badge b-val">Test Rig</div>
+        </div>
+
+        <div class="card c-welch">
+          <div class="card-name name-welch">Welch</div>
+          <div class="card-desc">Live fleet telematics &amp; route ground-truth data</div>
+          <div class="badge b-val">Pilot Customer</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /body -->
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="fitem">
+      <div class="ficon">🔒</div>
+      <div class="ftext">
+        <strong class="fg">IP Ownership:</strong> Route10 retains core platform IP. Partner data shared under agreements — independent, non-competing exploitation pathways per partner.
+      </div>
+    </div>
+    <div class="fitem">
+      <div class="ficon">⟳</div>
+      <div class="ftext">
+        <strong class="fa">Feedback loop:</strong> Halo &amp; Voltempo trial data refines Route10 AI models — one integrated validation system, not two parallel projects.
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

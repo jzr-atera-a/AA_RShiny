@@ -1,0 +1,17 @@
+module:
+  id: "funding_visualizations"
+  name: "Visualizations"
+  description: "Filterable programme visualizations with date-range filters"
+  version: "1.0.0"
+  author: "Business Operations Suite Team"
+  enabled: true
+  menu:
+    label: "Visualizations"
+    icon: "chart-bar"
+    tabname: "funding_visualizations"
+    badge: {label: null, color: null}
+  dependencies:
+    packages: [shiny, shinydashboard, DT, plotly]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

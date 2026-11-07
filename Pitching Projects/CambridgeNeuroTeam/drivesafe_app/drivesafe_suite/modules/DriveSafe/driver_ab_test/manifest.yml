@@ -1,0 +1,16 @@
+module:
+  id: "driver_ab_test"
+  name: "Driver A/B Test"
+  description: "A/B analysis comparing OSA-treated vs untreated drivers across key safety and performance metrics"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "A/B Test"
+    icon: "flask"
+    tabname: "driver_ab_test"
+    badge: {label: "NEW", color: "green"}
+  dependencies:
+    packages: [shiny, shinydashboard, plotly, dplyr, DT]
+    package_versions: {}
+  api: {required: [], optional: []}
+  data: {required: [], optional: []}

@@ -1,0 +1,19 @@
+module:
+  id: "route_optimizer"
+  name: "Route Optimizer"
+  description: "Calculate optimal routes"
+  version: "1.0.0"
+  enabled: true
+  menu:
+    label: "Route Optimizer"
+    icon: "route"
+    tabname: "route_optimizer"
+  dependencies:
+    packages:
+      - osmdata
+      - dodgr
+      - sf
+      - dplyr
+      - magrittr
+      - tmaptools
+      - jsonlite

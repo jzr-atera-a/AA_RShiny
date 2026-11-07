@@ -1,0 +1,165 @@
+design_id: seed_strategy_pattern
+design_group: software_patterns
+design_type: strategy_pattern
+title: Strategy Pattern
+variant: Interchangeable algorithms behind an interface
+summary: Strategy defines a family of algorithms, puts each in its own class behind a common interface and makes them interchangeable. The context holds a reference to a strategy and delegates the work, so the algorithm can be chosen or swapped at runtime.
+when_to_use: Several variants of an algorithm exist, such as pricing, routing or sorting rules, and you want to switch them without conditionals.
+when_not_to_use: The algorithm never changes or there are only two trivial variants.
+complexity: Low
+tags: behavioral, gof, strategy, polymorphism
+
+@component
+id: C1
+label: Context
+lane: Concrete Classes
+kind: class
+description: Holds a strategy and delegates the work to it.
+technologies: N/A
+attributes: - strategy: Strategy
+methods: + setStrategy(s: Strategy): void; + doWork(): Result
+
+@component
+id: C2
+label: Strategy
+lane: Abstractions
+kind: interface
+description: Common interface for all algorithm variants.
+technologies: N/A
+attributes: N/A
+methods: + execute(data: Data): Result
+
+@component
+id: C3
+label: ConcreteStrategyA
+lane: Concrete Classes
+kind: class
+description: First algorithm variant.
+technologies: N/A
+attributes: N/A
+methods: + execute(data: Data): Result
+
+@component
+id: C4
+label: ConcreteStrategyB
+lane: Concrete Classes
+kind: class
+description: Second algorithm variant.
+technologies: N/A
+attributes: N/A
+methods: + execute(data: Data): Result
+
+@component
+id: C5
+label: ConcreteStrategyC
+lane: Concrete Classes
+kind: class
+description: Third algorithm variant.
+technologies: N/A
+attributes: - params: Params
+methods: + execute(data: Data): Result
+
+@component
+id: C6
+label: Client
+lane: Client
+kind: class
+description: Creates a strategy and passes it to the context.
+technologies: N/A
+attributes: N/A
+methods: + main(): void
+
+@connection
+from: C1
+to: C2
+label: has a
+type: aggregation
+
+@connection
+from: C3
+to: C2
+label: implements
+type: implements
+
+@connection
+from: C4
+to: C2
+label: implements
+type: implements
+
+@connection
+from: C5
+to: C2
+label: implements
+type: implements
+
+@connection
+from: C6
+to: C1
+label: uses
+type: uses
+
+@connection
+from: C6
+to: C3
+label: creates
+type: creates
+
+@step
+order: 1
+text: The client creates a concrete strategy.
+components: C6,C3
+
+@step
+order: 2
+text: The client gives the strategy to the context.
+components: C6,C1
+
+@step
+order: 3
+text: The context delegates the work through the Strategy interface.
+components: C1,C2
+
+@step
+order: 4
+text: The strategy can be swapped at runtime.
+components: C1,C4,C5
+
+@tradeoff
+kind: pro
+text: Removes large conditionals and isolates each algorithm.
+
+@tradeoff
+kind: pro
+text: Strategies can be swapped at runtime and tested alone.
+
+@tradeoff
+kind: con
+text: Clients must know the differences to choose a strategy.
+
+@tradeoff
+kind: con
+text: More objects than a simple function parameter.
+
+@tradeoff
+kind: risk
+text: Too many tiny strategies can fragment logic.
+
+@tradeoff
+kind: cost
+text: Extra classes and wiring.
+
+@tradeoff
+kind: scaling
+text: Use a registry or factory to select strategies by name or configuration.
+
+@reference
+title: Design Patterns: Elements of Reusable Object-Oriented Software
+author: Gamma, Helm, Johnson, Vlissides
+url: N/A
+
+@reference
+title: Refactoring Guru: Strategy
+author: Refactoring Guru
+url: https://refactoring.guru/design-patterns/strategy
+

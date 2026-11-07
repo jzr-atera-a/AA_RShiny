@@ -1,0 +1,57 @@
+# modules/_module_registry.yml
+# Central Module Registry — Events Scheduling DB
+# Change 'enabled: false' to disable any module
+# ===============================================
+
+modules:
+  bigquery_auth:
+    enabled: true
+    priority: 1
+    description: "BigQuery authentication and table configuration"
+
+  claude_api_config:
+    enabled: true
+    priority: 2
+    description: "Claude API credentials for AI event scanning"
+
+  scan_events:
+    enabled: true
+    priority: 10
+    description: "AI-powered city event scanning via Claude"
+
+  bulk_import_events:
+    enabled: true
+    priority: 11
+    description: "Parse and bulk-upload events text"
+
+  add_single_event:
+    enabled: true
+    priority: 12
+    description: "Manually add a single event"
+
+  browse_events:
+    enabled: true
+    priority: 13
+    description: "Browse and download all events"
+
+  visualizations_events:
+    enabled: true
+    priority: 14
+    description: "Map, calendar and list visualizations"
+
+  about:
+    enabled: true
+    priority: 99
+    description: "Application information and schema"
+
+settings:
+  auto_install: false
+  check_versions: true
+  verbose: true
+  dev_mode: false
+
+app:
+  name: "Events Scheduling DB"
+  version: "1.0.0"
+  description: "AI-powered city events database with map and calendar visualizations"
+  author: "Your Team"

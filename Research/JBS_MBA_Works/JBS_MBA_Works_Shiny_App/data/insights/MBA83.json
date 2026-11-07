@@ -1,0 +1,53 @@
+{
+  "audience": "Investors",
+  "themes": ["Finance & investment", "Sustainability & climate", "Risk & regulation"],
+  "profile": [
+    {"q": "Who", "a": "The author, writing individually for Behavioural Finance."},
+    {"q": "For whom", "a": "Managers of a retail mutual fund in the course's simulated scenario, choosing between polluting (P) and clean (C) US stocks."},
+    {"q": "What", "a": "Whether pollution is priced as a risk factor (compensation for exposure) or a behavioural factor (mispricing from investor preferences)."},
+    {"q": "When", "a": "Handed in on 28 February 2025, after the SEC's 2022 proposal on climate disclosure."},
+    {"q": "Where", "a": "US listed firms, within the UN SDG agenda and UK, US and EU regulation."},
+    {"q": "Why", "a": "Regulation and ESG fund flows are moving capital away from polluters; the fund must know whether the higher return on P stocks is a reward for risk or a mispricing to exploit or avoid."},
+    {"q": "How", "a": "Reviews regulation, sustainability rankings, mutual fund risk tools and factor models (Fama-French three- and five-factor) and concludes in favour of the risk explanation."}
+  ],
+  "headline": [
+    {"value": "Risk factor", "label": "The paper's verdict"},
+    {"value": "P > C", "label": "Expected return: polluters higher"},
+    {"value": "SDG 12, 13", "label": "Goals framing the pressure"},
+    {"value": "3 factors", "label": "Model used: market, size, value"}
+  ],
+  "facts": [
+    {"what": "UN goals cited as the policy pressure on polluters", "value": "SDG 12 and SDG 13", "page": 56},
+    {"what": "SEC proposal requiring climate-related disclosure", "value": "2022", "page": 57},
+    {"what": "Ranking used to screen sustainable firms", "value": "Corporate Knights Global 100", "page": 57},
+    {"what": "Factor model recommended", "value": "Fama-French three-factor (1993), with five-factor (2015) as extension", "page": 58},
+    {"what": "Scenario figures analysed in the text", "value": "none", "page": 58}
+  ],
+  "charts": [
+    {"type": "versus", "title": "Polluting and clean firms as the paper describes them", "mid": "P vs C",
+     "left": {"title": "Polluting firms (P)", "items": ["Higher expected returns", "Exposed to carbon pricing and stricter rules", "Litigation, carbon tax and reputational risk", "Screened out by ESG funds, facing divestment"]},
+     "right": {"title": "Clean firms (C)", "items": ["Benefit from rising ESG demand", "A 'green premium' that can lead to overvaluation", "Lower future returns as a result", "Lower regulatory and transition risk"]},
+     "takeaway": "The fund faces a trade-off between ethical alignment and return: P pays more, C carries less risk but may be over-priced."},
+    {"type": "steps", "title": "The causal chain behind the 'risk factor' verdict",
+     "items": [
+       {"title": "Policy tightens", "text": "SDG-driven rules, SEC disclosure and carbon pricing target high emitters."},
+       {"title": "Costs rise", "text": "Polluters pay for cleaner technology, compliance and reporting."},
+       {"title": "Profits become uncertain", "text": "Transition and climate risk weigh on profitability and valuation."},
+       {"title": "Investors demand more", "text": "Higher expected returns compensate for holding that exposure."},
+       {"title": "Pollution behaves as a priced risk", "text": "So the fund should model it with factor tools, not treat it as a bias to exploit."}
+     ]},
+    {"type": "bar", "horizontal": true, "title": "Weight of argument in the paper (points made for each explanation)",
+     "labels": ["Pollution as a risk factor", "Pollution as a behavioural factor"], "values": [6, 2],
+     "colors": ["#1a3a6a", "#E8A020"],
+     "text": ["6 points: regulation, carbon cost, transition risk, disclosure, divestment, litigation", "2 points: ESG sentiment, overvaluation of clean firms"],
+     "takeaway": "The verdict follows a one-sided case. The behavioural side gets two points, and the strongest evidence for it (investor preference lowering green returns) is in the reading list but not used.",
+     "source": "Count of the distinct arguments made on pages 56-59."},
+    {"type": "cards", "cols": 4, "title": "What the fund is told to do",
+     "items": [
+       {"title": "Model the risk", "text": "Use a factor model so returns are judged net of market, size and value."},
+       {"title": "Tilt, don't exclude", "text": "Lean towards low-carbon firms while keeping enough diversification."},
+       {"title": "Integrate ESG", "text": "Build pollution risk assessment into stock selection."},
+       {"title": "Watch for overvaluation", "text": "Use contrarian checks so clean stocks are not bought at a green premium."}
+     ]}
+  ]
+}

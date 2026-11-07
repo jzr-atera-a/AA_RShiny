@@ -1,0 +1,101 @@
+# modules/_module_registry.yml
+# Compelling Communication @ Atera Analytics
+# Based on Simon Hall, Cambridge University Press
+# Version 7.0
+
+app:
+  name: "Compelling Communication @ Atera Analytics"
+  version: "7.0.0"
+  description: "Communication frameworks from Simon Hall applied to Atera Analytics"
+
+modules:
+  app_guide:
+    enabled: true
+    priority: 5
+    name: "App Guide"
+    icon: "compass"
+    tabname: "app_guide"
+
+  overview:
+    enabled: true
+    priority: 10
+    name: "Overview"
+    icon: "home"
+    tabname: "overview"
+
+  ch1_foundations:
+    enabled: true
+    priority: 20
+    name: "Ch 1 - Foundations"
+    icon: "lightbulb"
+    tabname: "ch1"
+
+  ch2_writing:
+    enabled: true
+    priority: 30
+    name: "Ch 2 - Writing"
+    icon: "pen"
+    tabname: "ch2"
+
+  ch3_tricks:
+    enabled: true
+    priority: 40
+    name: "Ch 3 - Trade Tricks"
+    icon: "tools"
+    tabname: "ch3"
+
+  ch4_storytelling:
+    enabled: true
+    priority: 50
+    name: "Ch 4 - Storytelling"
+    icon: "book-open"
+    tabname: "ch4"
+
+  ch5_strategic_stories:
+    enabled: true
+    priority: 60
+    name: "Ch 5 - Strategic Stories"
+    icon: "chess"
+    tabname: "ch5"
+
+  ch6_public_speaking:
+    enabled: true
+    priority: 70
+    name: "Ch 6 - Public Speaking"
+    icon: "microphone"
+    tabname: "ch6"
+
+  ch7_powerful_speaking:
+    enabled: true
+    priority: 80
+    name: "Ch 7 - Powerful Speaking"
+    icon: "comments"
+    tabname: "ch7"
+
+  ch8_online_world:
+    enabled: true
+    priority: 90
+    name: "Ch 8 - Online World"
+    icon: "globe"
+    tabname: "ch8"
+
+  ch9_media:
+    enabled: true
+    priority: 100
+    name: "Ch 9 - Media"
+    icon: "newspaper"
+    tabname: "ch9"
+
+  ch10_strategic_comm:
+    enabled: true
+    priority: 110
+    name: "Ch 10 - Strategic Comms"
+    icon: "chess-king"
+    tabname: "ch10"
+
+  conclusion:
+    enabled: true
+    priority: 120
+    name: "Conclusion"
+    icon: "flag-checkered"
+    tabname: "conclusion"

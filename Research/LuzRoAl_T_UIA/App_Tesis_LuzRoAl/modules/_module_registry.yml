@@ -1,0 +1,80 @@
+# ============================================================================
+# MODULE REGISTRY
+# Order here = order of tabs in the sidebar
+# ============================================================================
+
+modules:
+  - id: claude_api
+    name: "Claude API"
+    enabled: true
+    packages:
+      - httr
+    menu:
+      label: "Conexión con Claude"
+      tabname: "claude_api"
+      icon: "robot"
+
+  - id: guia_tesis
+    name: "How to write a good thesis"
+    enabled: true
+    packages: []
+    menu:
+      label: "Cómo escribir una buena tesis"
+      tabname: "guia_tesis"
+      icon: "book-open"
+
+  - id: ideas
+    name: "Original ideas"
+    enabled: true
+    packages: []
+    menu:
+      label: "Mis ideas y temas"
+      tabname: "ideas"
+      icon: "lightbulb"
+
+  - id: bosquejo
+    name: "High-level outline"
+    enabled: true
+    packages: []
+    menu:
+      label: "Bosquejo de la tesis"
+      tabname: "bosquejo"
+      icon: "sitemap"
+
+  - id: introduccion
+    name: "Introduction"
+    enabled: true
+    packages: []
+    menu:
+      label: "Introducción"
+      tabname: "introduccion"
+      icon: "door-open"
+
+  - id: capitulos
+    name: "Chapters"
+    enabled: true
+    packages: []
+    menu:
+      label: "Capítulos"
+      tabname: "capitulos"
+      icon: "layer-group"
+
+  - id: conclusion
+    name: "Conclusion"
+    enabled: true
+    packages: []
+    menu:
+      label: "Conclusiones"
+      tabname: "conclusion"
+      icon: "flag-checkered"
+
+  - id: admin_settings
+    name: "Admin Settings"
+    enabled: true
+    packages:
+      - shinyFiles
+      - fs
+    menu:
+      label: "Administrador"
+      tabname: "admin_settings"
+      icon: "lock"

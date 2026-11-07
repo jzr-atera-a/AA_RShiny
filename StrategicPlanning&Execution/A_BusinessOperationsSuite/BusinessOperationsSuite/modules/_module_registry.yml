@@ -1,0 +1,588 @@
+# _module_registry.yml
+#
+# Single source of truth for sidebar structure.
+#
+#   groups:   each top-level group is a MAIN TAB in the sidebar.
+#   sections: inside a group, `sections:` bundles modules by common TOPIC. Each section is ONE sidebar item and its
+#             modules are shown as HORIZONTAL TABS in the page. To regroup, move a module id between `sections:` lists
+#             (keep it in the group's `modules:` list too). A module that no section lists keeps its own sidebar item;
+#             a group with a single section becomes a plain sidebar item. See R/utils_nav.R.
+#   bq_unit:  (optional, on a MODULE below) the BigQuery tables that tab reads when it is shown. They are checked and
+#             read only when the user actually opens THAT tab (not when the group/section is clicked), and only once per
+#             session. Tabs that merely write (inserts) verify their table on first use. Start-up just authenticates.
+#             Units are defined in APIManager (R/api_manager.R: bq_unit_tables):
+#               contacts -> business_contacts, contact_communications
+#               funding  -> funding_programmes
+#               canvases -> business_model_canvas, disciplined_entrepreneurship_canvas, disciplined_entrepreneurship_roadmap
+#   modules:  each module is backed by one `modules/<folder>/<file>.R` defining `<id>_ui()` and `<id>_server()`.
+#
+# Order matters: groups, sections and tabs appear in the order listed here.
+
+groups:
+  - id: api_settings
+    label: "API Settings"
+    icon: "key"
+    expanded: true
+    modules: [claude_config, bq_config, openai_api, debug_console]
+    sections:
+      - id: sec_api
+        label: "API Settings"
+        icon: "key"
+        modules: [claude_config, bq_config, openai_api, debug_console]
+        tab_labels: {claude_config: "Claude", bq_config: "BigQuery", openai_api: "OpenAI (Whisper + ChatGPT)", debug_console: "Debug Console"}
+
+  - id: communications
+    label: "Communications"
+    icon: "envelope"
+    expanded: false
+    modules: [smtp_config, process_contact, explore_contacts, customise_communication, send_email]
+    sections:
+      - id: sec_comm_contacts
+        label: "Contacts"
+        icon: "address-book"
+        modules: [process_contact, explore_contacts]
+        tab_labels: {process_contact: "Process Contact", explore_contacts: "Explore Contacts"}
+      - id: sec_comm_outreach
+        label: "Outreach"
+        icon: "paper-plane"
+        modules: [customise_communication, send_email, smtp_config]
+        tab_labels: {customise_communication: "Customise Message", send_email: "Send Email", smtp_config: "SMTP Settings"}
+
+  - id: funding_programmes
+    label: "Funding Programmes"
+    icon: "hand-holding-usd"
+    expanded: false
+    modules: [generate_programme, funding_bulk_import, funding_add_single, funding_browse, funding_visualizations, funding_about]
+    sections:
+      - id: sec_fund_find
+        label: "Find & Add"
+        icon: "search-dollar"
+        modules: [generate_programme, funding_bulk_import, funding_add_single]
+        tab_labels: {generate_programme: "Find Programmes", funding_bulk_import: "Bulk Import", funding_add_single: "Add Entry"}
+      - id: sec_fund_review
+        label: "Review"
+        icon: "table"
+        modules: [funding_browse, funding_visualizations, funding_about]
+        tab_labels: {funding_browse: "Browse Data", funding_visualizations: "Visualizations", funding_about: "About"}
+
+  - id: project_application
+    label: "Project Application"
+    icon: "clipboard-list"
+    expanded: false
+    modules: [project_details, business_case, team_impact, diagram_generator, claude_diagrams]
+    sections:
+      - id: sec_pa_sections
+        label: "Application Sections"
+        icon: "file-text"
+        modules: [project_details, business_case, team_impact]
+        tab_labels: {project_details: "1-3 Project Details", business_case: "9-13 Business Case", team_impact: "14-17 Team & Impact"}
+      - id: sec_pa_diagrams
+        label: "Diagrams"
+        icon: "diagram-project"
+        modules: [diagram_generator, claude_diagrams]
+        tab_labels: {diagram_generator: "Diagram Generator", claude_diagrams: "Claude Diagrams"}
+
+  - id: strategy_canvases
+    label: "Strategy Canvases"
+    icon: "th-large"
+    expanded: false
+    modules: [bm_canvas_generate, de_canvas_generate, de_roadmap_generate, bm_canvas_view, de_canvas_view, de_roadmap_view]
+    sections:
+      - id: sec_sc_bm
+        label: "Business Model Canvas"
+        icon: "th"
+        modules: [bm_canvas_generate, bm_canvas_view]
+        tab_labels: {bm_canvas_generate: "Generate", bm_canvas_view: "View Canvas"}
+      - id: sec_sc_de
+        label: "Disciplined Ent. Canvas"
+        icon: "layer-group"
+        modules: [de_canvas_generate, de_canvas_view]
+        tab_labels: {de_canvas_generate: "Generate", de_canvas_view: "View Canvas"}
+      - id: sec_sc_roadmap
+        label: "Disciplined Ent. Roadmap"
+        icon: "road"
+        modules: [de_roadmap_generate, de_roadmap_view]
+        tab_labels: {de_roadmap_generate: "Generate", de_roadmap_view: "View Roadmap"}
+
+  - id: gantt_to_tickets
+    label: "Gantt to Tickets"
+    icon: "tasks"
+    expanded: false
+    modules: [api_configuration, email_configuration, upload_gantt, review_edit, submit_boards, email_send, manage_contacts, email_contacts]
+    sections:
+      - id: sec_gantt_tasks
+        label: "Tasks"
+        icon: "tasks"
+        modules: [upload_gantt, review_edit, submit_boards]
+        tab_labels: {upload_gantt: "Upload Gantt", review_edit: "Review & Edit", submit_boards: "Submit to Boards"}
+      - id: sec_gantt_people
+        label: "Contacts & Email"
+        icon: "envelope"
+        modules: [manage_contacts, email_send, email_contacts]
+        tab_labels: {manage_contacts: "Manage Contacts", email_send: "Email Notifications", email_contacts: "Bulk Email"}
+      - id: sec_gantt_settings
+        label: "Settings"
+        icon: "gear"
+        modules: [api_configuration, email_configuration]
+        tab_labels: {api_configuration: "Trello & Jira", email_configuration: "Email (SMTP)"}
+
+  - id: audio_transcription
+    label: "Audio Transcription"
+    icon: "microphone"
+    expanded: false
+    modules: [video_extractor, converter, transcription, summary, bulk_analysis, analytics]
+    sections:
+      - id: sec_audio_prepare
+        label: "Prepare Audio"
+        icon: "scissors"
+        modules: [video_extractor, converter]
+        tab_labels: {video_extractor: "Video Audio Extractor", converter: "Converter & Splitter"}
+      - id: sec_audio_transcribe
+        label: "Transcribe & Summarise"
+        icon: "file-audio"
+        modules: [transcription, summary]
+        tab_labels: {transcription: "Transcription", summary: "Summary"}
+      - id: sec_audio_analyse
+        label: "Analysis"
+        icon: "chart-bar"
+        modules: [bulk_analysis, analytics]
+        tab_labels: {bulk_analysis: "Bulk Text Analysis", analytics: "Analytics Dashboard"}
+
+  - id: receipt_processor
+    label: "Receipt Processor"
+    icon: "receipt"
+    expanded: false
+    modules: [receipt_settings, receipt_pdf_converter, receipt_to_pdf_converter, receipt_upload, receipt_data_view, receipt_categorize]
+    sections:
+      - id: sec_rc_settings
+        label: "Settings"
+        icon: "cog"
+        modules: [receipt_settings]
+      - id: sec_rc_prepare
+        label: "Prepare Files"
+        icon: "file-image"
+        modules: [receipt_pdf_converter, receipt_to_pdf_converter]
+        tab_labels: {receipt_pdf_converter: "PDF to JPG", receipt_to_pdf_converter: "Convert to PDF"}
+      - id: sec_rc_process
+        label: "Process & Review"
+        icon: "upload"
+        modules: [receipt_upload, receipt_data_view, receipt_categorize]
+        tab_labels: {receipt_upload: "Upload Receipts", receipt_data_view: "View Processed Data", receipt_categorize: "Categorize"}
+
+  - id: visual_media
+    label: "Visual Media"
+    icon: "photo-video"
+    expanded: false
+    modules: [pdf_splitter, pdf_merger, pdf_text_extractor, image_to_pdf, image_generation, further_context]
+    sections:
+      - id: sec_vm_pdf
+        label: "PDF Tools"
+        icon: "file-pdf"
+        modules: [pdf_splitter, pdf_merger, pdf_text_extractor, image_to_pdf]
+        tab_labels: {pdf_splitter: "Splitter", pdf_merger: "Merger", pdf_text_extractor: "Text Extractor", image_to_pdf: "Image to PDF"}
+      - id: sec_vm_ai
+        label: "AI Images"
+        icon: "image"
+        modules: [image_generation, further_context]
+        tab_labels: {image_generation: "Image Generation", further_context: "Further Context"}
+
+modules:
+  claude_config:
+    enabled: true
+    label: "Claude API Config"
+    icon: "robot"
+    folder: "API Settings"
+    file: "claude_config"
+
+  chatgpt_config:
+    enabled: true
+    label: "ChatGPT API Config"
+    icon: "brain"
+    folder: "API Settings"
+    file: "chatgpt_config"
+
+  bq_config:
+    enabled: true
+    label: "BigQuery Config"
+    icon: "database"
+    folder: "API Settings"
+    file: "bq_config"
+
+  debug_console:
+    enabled: true
+    label: "Debug Console"
+    icon: "terminal"
+    folder: "API Settings"
+    file: "debug_console"
+
+  openai_api:
+    enabled: true
+    label: "OpenAI API (Whisper + ChatGPT)"
+    icon: "robot"
+    folder: "API Settings"
+    file: "openai_api"
+
+  openai_base:
+    enabled: false
+    label: "OpenAI API Base (Shared - Utility Only)"
+    icon: "cogs"
+    folder: "API Settings"
+    file: "openai_base"
+
+  whisper_api:
+    enabled: false
+    label: "Whisper API Settings (DEPRECATED - use openai_api)"
+    icon: "microphone"
+    folder: "API Settings"
+    file: "whisper_api"
+
+  chatgpt_api:
+    enabled: false
+    label: "ChatGPT API Settings (DEPRECATED - use openai_api)"
+    icon: "brain"
+    folder: "API Settings"
+    file: "chatgpt_api"
+
+  smtp_config:
+    enabled: true
+    label: "SMTP Configuration"
+    icon: "cog"
+    folder: "Communications"
+    file: "smtp_config"
+
+  process_contact:
+    enabled: true
+    label: "Process Contact"
+    icon: "user-plus"
+    folder: "Communications"
+    file: "process_contact"
+
+  explore_contacts:
+    enabled: true
+    bq_unit: contacts
+    label: "Explore Contacts"
+    icon: "search"
+    folder: "Communications"
+    file: "explore_contacts"
+
+  customise_communication:
+    enabled: true
+    bq_unit: contacts
+    label: "Customise Communication"
+    icon: "comments"
+    folder: "Communications"
+    file: "customise_communication"
+
+  send_email:
+    enabled: true
+    label: "Send Email"
+    icon: "envelope"
+    folder: "Communications"
+    file: "send_email"
+
+  generate_programme:
+    enabled: true
+    bq_unit: funding
+    label: "Find Programmes"
+    icon: "search-dollar"
+    folder: "Funding Programmes"
+    file: "generate_programme"
+
+  funding_bulk_import:
+    enabled: true
+    label: "Bulk Import"
+    icon: "file-import"
+    folder: "Funding Programmes"
+    file: "funding_bulk_import"
+
+  funding_add_single:
+    enabled: true
+    bq_unit: funding
+    label: "Add Single Entry"
+    icon: "plus-circle"
+    folder: "Funding Programmes"
+    file: "funding_add_single"
+
+  funding_browse:
+    enabled: true
+    label: "Browse Data"
+    icon: "table"
+    folder: "Funding Programmes"
+    file: "funding_browse"
+
+  funding_visualizations:
+    enabled: true
+    bq_unit: funding
+    label: "Visualizations"
+    icon: "chart-bar"
+    folder: "Funding Programmes"
+    file: "funding_visualizations"
+
+  funding_about:
+    enabled: true
+    label: "About"
+    icon: "info-circle"
+    folder: "Funding Programmes"
+    file: "funding_about"
+
+  project_details:
+    enabled: true
+    label: "Project Details"
+    icon: "file-text"
+    folder: "Project Application"
+    file: "project_details"
+
+  business_case:
+    enabled: true
+    label: "Business Case"
+    icon: "briefcase"
+    folder: "Project Application"
+    file: "business_case"
+
+  team_impact:
+    enabled: true
+    label: "Team & Impact"
+    icon: "users"
+    folder: "Project Application"
+    file: "team_impact"
+
+  diagram_generator:
+    enabled: true
+    label: "Diagram Generator"
+    icon: "chart-line"
+    folder: "Project Application"
+    file: "diagram_generator"
+
+  claude_diagrams:
+    enabled: true
+    label: "Claude Diagrams"
+    icon: "diagram-project"
+    folder: "Project Application"
+    file: "claude_diagrams"
+
+  bm_canvas_generate:
+    enabled: true
+    label: "Generate BM Canvas"
+    icon: "file-import"
+    folder: "Strategy Canvases"
+    file: "bm_canvas_generate"
+
+  de_canvas_generate:
+    enabled: true
+    label: "Generate DE Canvas"
+    icon: "file-upload"
+    folder: "Strategy Canvases"
+    file: "de_canvas_generate"
+
+  de_roadmap_generate:
+    enabled: true
+    label: "Generate DE Roadmap"
+    icon: "route"
+    folder: "Strategy Canvases"
+    file: "de_roadmap_generate"
+
+  bm_canvas_view:
+    enabled: true
+    bq_unit: canvases
+    label: "Business Model Canvas"
+    icon: "th"
+    folder: "Strategy Canvases"
+    file: "bm_canvas_view"
+
+  de_canvas_view:
+    enabled: true
+    bq_unit: canvases
+    label: "Disciplined Ent. Canvas"
+    icon: "layer-group"
+    folder: "Strategy Canvases"
+    file: "de_canvas_view"
+
+  de_roadmap_view:
+    enabled: true
+    bq_unit: canvases
+    label: "Disciplined Ent. Roadmap"
+    icon: "road"
+    folder: "Strategy Canvases"
+    file: "de_roadmap_view"
+
+  api_configuration:
+    enabled: true
+    label: "API Configuration"
+    icon: "key"
+    folder: "Gantt to Tickets"
+    file: "api_configuration"
+
+  email_configuration:
+    enabled: true
+    label: "Email Configuration"
+    icon: "envelope"
+    folder: "Gantt to Tickets"
+    file: "email_configuration"
+
+  upload_gantt:
+    enabled: true
+    label: "Upload Gantt Chart"
+    icon: "upload"
+    folder: "Gantt to Tickets"
+    file: "upload_gantt"
+
+  review_edit:
+    enabled: true
+    label: "Review & Edit Tasks"
+    icon: "list-check"
+    folder: "Gantt to Tickets"
+    file: "review_edit"
+
+  submit_boards:
+    enabled: true
+    label: "Submit to Boards"
+    icon: "paper-plane"
+    folder: "Gantt to Tickets"
+    file: "submit_boards"
+
+  email_send:
+    enabled: true
+    label: "Send Email Notifications"
+    icon: "mail-bulk"
+    folder: "Gantt to Tickets"
+    file: "email_send"
+
+  manage_contacts:
+    enabled: true
+    label: "Manage Contacts"
+    icon: "address-book"
+    folder: "Gantt to Tickets"
+    file: "manage_contacts"
+
+  email_contacts:
+    enabled: true
+    label: "Email Contacts"
+    icon: "envelope-open-text"
+    folder: "Gantt to Tickets"
+    file: "email_contacts"
+
+  video_extractor:
+    enabled: true
+    label: "Video Audio Extractor"
+    icon: "video"
+    folder: "Audio Transcription"
+    file: "video_extractor"
+
+  converter:
+    enabled: true
+    label: "Audio Converter & Splitter"
+    icon: "scissors"
+    folder: "Audio Transcription"
+    file: "converter"
+
+  transcription:
+    enabled: true
+    label: "Audio Transcription"
+    icon: "file-audio"
+    folder: "Audio Transcription"
+    file: "transcription"
+
+  summary:
+    enabled: true
+    label: "Transcription Summary"
+    icon: "file-alt"
+    folder: "Audio Transcription"
+    file: "summary"
+
+  bulk_analysis:
+    enabled: true
+    label: "Bulk Text Analysis"
+    icon: "folder-open"
+    folder: "Audio Transcription"
+    file: "bulk_analysis"
+
+  analytics:
+    enabled: true
+    label: "Analytics Dashboard"
+    icon: "chart-bar"
+    folder: "Audio Transcription"
+    file: "analytics"
+
+  receipt_settings:
+    enabled: true
+    label: "Settings"
+    icon: "cog"
+    folder: "Receipt Processor"
+    file: "receipt_settings"
+
+  receipt_pdf_converter:
+    enabled: true
+    label: "PDF to JPG Converter"
+    icon: "file-image"
+    folder: "Receipt Processor"
+    file: "receipt_pdf_converter"
+
+  receipt_to_pdf_converter:
+    enabled: true
+    label: "Convert to PDF"
+    icon: "file-pdf"
+    folder: "Receipt Processor"
+    file: "receipt_to_pdf_converter"
+
+  receipt_upload:
+    enabled: true
+    label: "Upload Receipts"
+    icon: "upload"
+    folder: "Receipt Processor"
+    file: "receipt_upload"
+
+  receipt_data_view:
+    enabled: true
+    label: "View Processed Data"
+    icon: "table"
+    folder: "Receipt Processor"
+    file: "receipt_data_view"
+
+  receipt_categorize:
+    enabled: true
+    label: "Categorize Receipts"
+    icon: "tags"
+    folder: "Receipt Processor"
+    file: "receipt_categorize"
+
+  pdf_splitter:
+    enabled: true
+    label: "PDF Splitter"
+    icon: "cut"
+    folder: "Visual Media"
+    file: "pdf_splitter"
+
+  pdf_merger:
+    enabled: true
+    label: "PDF Merger"
+    icon: "puzzle-piece"
+    folder: "Visual Media"
+    file: "pdf_merger"
+
+  pdf_text_extractor:
+    enabled: true
+    label: "Text Extractor"
+    icon: "file-alt"
+    folder: "Visual Media"
+    file: "pdf_text_extractor"
+
+  image_to_pdf:
+    enabled: true
+    label: "Image to PDF"
+    icon: "images"
+    folder: "Visual Media"
+    file: "image_to_pdf"
+
+  image_generation:
+    enabled: true
+    label: "Image Generation"
+    icon: "image"
+    folder: "Visual Media"
+    file: "image_generation"
+
+  further_context:
+    enabled: true
+    label: "Further Context"
+    icon: "edit"
+    folder: "Visual Media"
+    file: "further_context"

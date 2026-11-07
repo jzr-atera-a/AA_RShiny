@@ -1,0 +1,58 @@
+# modules/_module_registry.yml
+# Central Module Registry - THE CONTROL CENTER
+# Change 'enabled: false' to disable any module
+# =============================================
+
+modules:
+  bigquery_auth:
+    enabled: true
+    priority: 1
+    description: "BigQuery authentication and configuration"
+
+  claude_api_config:
+    enabled: true
+    priority: 2
+    description: "Claude API credentials management"
+
+  generate_programme:
+    enabled: true
+    priority: 10
+    description: "AI-assisted grant/incubator/competition discovery"
+
+  bulk_import:
+    enabled: true
+    priority: 11
+    description: "Parse and upload programmes in bulk"
+
+  add_single:
+    enabled: true
+    priority: 12
+    description: "Add a single programme entry manually"
+
+  browse_data:
+    enabled: true
+    priority: 13
+    description: "Browse and download all saved programmes"
+
+  visualizations:
+    enabled: true
+    priority: 14
+    description: "Filterable programme visualizations with date-range filters"
+
+  about:
+    enabled: true
+    priority: 99
+    description: "Application information and schema"
+
+settings:
+  auto_install: false
+  check_versions: true
+  verbose: true
+  dev_mode: false
+
+app:
+  name: "Funding Programmes Suite"
+  version: "1.0.0"
+  description: "AI-assisted discovery and tracking of grants, incubators, accelerators, and competitions"
+  author: "Your Team"
+  table: "atera-2.business_strategy.funding_programmes"

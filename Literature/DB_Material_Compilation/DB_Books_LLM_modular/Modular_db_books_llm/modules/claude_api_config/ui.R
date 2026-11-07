@@ -25,32 +25,34 @@ claude_api_config_ui <- function(id) {
                  selectInput(ns("model"),
                              "Model:",
                              choices = c(
-                               "Claude Sonnet 4.5 (Recommended)" = "claude-sonnet-4-20250514",
-                               "Claude Sonnet 3.5" = "claude-3-5-sonnet-20241022",
-                               "Claude Opus 3" = "claude-3-opus-20240229"
+                               "Claude Sonnet 4.6 (Recommended)" = "claude-sonnet-4-6",
+                               "Claude Opus 4.8 (Most Capable)" = "claude-opus-4-8",
+                               "Claude Haiku 4.5 (Fastest)" = "claude-haiku-4-5-20251001"
                              ),
-                             selected = "claude-sonnet-4-20250514"),
+                             selected = "claude-sonnet-4-6"),
                  
                  numericInput(ns("max_tokens"),
                               "Max Tokens:",
                               value = 16000,
                               min = 1000,
-                              max = 32000,
+                              max = 64000,
                               step = 1000),
                  
                  numericInput(ns("timeout"),
                               "Request Timeout (seconds):",
                               value = 300,
                               min = 60,
-                              max = 600,
+                              max = 1800,
                               step = 30),
                  
                  div(class = "alert alert-info",
                      style = "margin-top: 10px;",
-                     tags$strong("Timeout Info:"), br(),
-                     "Longer summaries may need more time.", br(),
-                     "Default: 300 seconds (5 minutes)", br(),
-                     "Increase if you get timeout errors.")
+                     tags$strong("Timeout & Max Tokens Info:"), br(),
+                     "Longer or multi-chapter summaries may need both a higher timeout and a higher Max Tokens value.", br(),
+                     "Defaults: 300 sec timeout, 16,000 max tokens.", br(),
+                     "Increase timeout if you get timeout errors.", br(),
+                     "Increase Max Tokens if the generated summary is missing its later chapters or the status shows a truncation warning - that means the response hit the Max Tokens ceiling before finishing, not a timeout. ",
+                     "Sonnet 4.6's exact per-response ceiling isn't identical across all sources; 64,000 here is set conservatively below the lowest figure reported, so raising this slider as high as it goes should be safe.")
           ),
           column(6,
                  h5("Actions:"),

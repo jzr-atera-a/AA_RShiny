@@ -1,0 +1,33 @@
+module:
+  id: "visualize_mindmap"
+  name: "Visualize Mind Map"
+  description: "Interactive collapsible mind map rendered with D3.js (tidy-tree layout), with cross-links, zoom/pan, and click-to-collapse"
+  version: "1.0.0"
+  author: "Mind Map Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Visualize Mind Map"
+    icon: "project-diagram"
+    tabname: "visualize_mindmap"
+    group: "Mind Map"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - jsonlite
+
+    package_versions: {}
+
+  api:
+    required: ["bigquery"]
+    optional: []
+
+  data:
+    required: []
+    optional: []

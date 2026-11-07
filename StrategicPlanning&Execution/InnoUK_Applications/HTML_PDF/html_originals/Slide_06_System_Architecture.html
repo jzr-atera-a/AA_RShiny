@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Slide 6 – System Architecture & Data Integration</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    width: 1333px;
+    height: 750px;
+    overflow: hidden;
+    background: #0c0f14;
+    font-family: 'DM Sans', sans-serif;
+    color: #b7b7b7;
+    position: relative;
+  }
+
+  /* Dot-grid background */
+  body::before {
+    content:'';
+    position:absolute; inset:0;
+    background-image: radial-gradient(circle, rgba(0,255,0,0.06) 1px, transparent 1px);
+    background-size: 38px 38px;
+    pointer-events:none; z-index:0;
+  }
+  .glow-tl {
+    position:absolute; top:-140px; left:-80px; width:520px; height:380px;
+    background: radial-gradient(ellipse, rgba(0,255,0,0.08) 0%, transparent 68%);
+    pointer-events:none; z-index:0;
+  }
+  .glow-br {
+    position:absolute; bottom:-100px; right:-60px; width:440px; height:320px;
+    background: radial-gradient(ellipse, rgba(255,192,0,0.07) 0%, transparent 68%);
+    pointer-events:none; z-index:0;
+  }
+
+  .slide {
+    position:relative; z-index:1;
+    width:1333px; height:750px;
+    padding: 28px 46px 22px 46px;
+    display:flex; flex-direction:column;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding-bottom:13px;
+    border-bottom:1px solid rgba(0,255,0,0.2);
+    margin-bottom:16px;
+    flex-shrink:0;
+  }
+  .eyebrow {
+    font-family:'DM Mono', monospace;
+    font-size:11px; letter-spacing:3px;
+    color:rgba(0,255,0,0.5); text-transform:uppercase; margin-bottom:4px;
+  }
+  h1 {
+    font-size:36px; font-weight:700;
+    color:#00ff00; letter-spacing:-0.5px; line-height:1;
+  }
+  .pill {
+    font-family:'DM Mono', monospace;
+    font-size:10px; letter-spacing:2px; text-transform:uppercase;
+    color:rgba(255,192,0,0.8);
+    border:1px solid rgba(255,192,0,0.35);
+    padding:6px 16px; border-radius:20px; white-space:nowrap;
+  }
+
+  /* ══════════════════════════════════
+     MAIN 4-COLUMN ARCHITECTURE GRID
+     Inputs | Engine | Outputs | Integration
+     + narrow arrow connectors between
+  ══════════════════════════════════ */
+  .arch {
+    flex:1; min-height:0;
+    display:grid;
+    grid-template-columns: 1fr 28px 1.15fr 28px 1fr 28px 1fr;
+    gap:0;
+    align-items:stretch;
+  }
+
+  /* ── ARROW CONNECTORS ── */
+  .arrow-col {
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:0; padding-top:36px; /* align to below panel headers */
+  }
+  .arrow-body {
+    flex:1; width:2px;
+    background: linear-gradient(to bottom,
+      transparent 0%, rgba(255,255,255,0.15) 20%,
+      rgba(255,255,255,0.15) 80%, transparent 100%);
+    position:relative;
+  }
+  /* arrow chevron */
+  .arrow-body::after {
+    content:'▶';
+    position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    font-size:13px; color:rgba(255,255,255,0.25);
+    writing-mode:horizontal-tb;
+  }
+
+  /* ── LAYER PANEL ── */
+  .layer {
+    display:flex; flex-direction:column;
+    border-radius:8px; overflow:hidden;
+    border:1px solid rgba(255,255,255,0.08);
+  }
+
+  .layer-head {
+    padding: 10px 14px 9px;
+    display:flex; align-items:center; gap:9px;
+    flex-shrink:0;
+  }
+  .lh-dot {
+    width:8px; height:8px; border-radius:50%; flex-shrink:0;
+  }
+  .layer-title {
+    font-family:'DM Mono', monospace;
+    font-size:11.5px; font-weight:500;
+    letter-spacing:2.5px; text-transform:uppercase;
+    line-height:1;
+  }
+  .layer-sub {
+    font-size:10.5px; color:rgba(255,255,255,0.4);
+    letter-spacing:0.2px; margin-top:1px;
+  }
+
+  .layer-body {
+    flex:1; display:flex; flex-direction:column;
+    gap:6px; padding:8px 10px 10px;
+    background: rgba(0,0,0,0.25);
+    min-height:0;
+  }
+
+  /* ── INPUT LAYER — blue-teal ── */
+  .l-input .layer-head   { background: linear-gradient(135deg, rgba(30,90,160,0.7) 0%, rgba(18,65,120,0.6) 100%); }
+  .l-input               { border-color: rgba(96,165,250,0.3); }
+  .l-input .lh-dot       { background:#60a5fa; box-shadow:0 0 7px rgba(96,165,250,0.8); }
+  .l-input .layer-title  { color:#60a5fa; }
+
+  /* ── ENGINE LAYER — green ── */
+  .l-engine .layer-head  { background: linear-gradient(135deg, rgba(10,100,50,0.75) 0%, rgba(5,70,30,0.65) 100%); }
+  .l-engine              { border-color: rgba(0,255,0,0.3); }
+  .l-engine .lh-dot      { background:#00ff00; box-shadow:0 0 7px rgba(0,255,0,0.8); }
+  .l-engine .layer-title { color:#00ff00; }
+
+  /* ── OUTPUT LAYER — amber ── */
+  .l-output .layer-head  { background: linear-gradient(135deg, rgba(160,110,0,0.70) 0%, rgba(120,80,0,0.60) 100%); }
+  .l-output              { border-color: rgba(255,192,0,0.3); }
+  .l-output .lh-dot      { background:#FFC000; box-shadow:0 0 7px rgba(255,192,0,0.8); }
+  .l-output .layer-title { color:#FFC000; }
+
+  /* ── INTEGRATION LAYER — purple ── */
+  .l-integ .layer-head   { background: linear-gradient(135deg, rgba(110,60,190,0.70) 0%, rgba(80,35,150,0.60) 100%); }
+  .l-integ               { border-color: rgba(167,139,250,0.3); }
+  .l-integ .lh-dot       { background:#a78bfa; box-shadow:0 0 7px rgba(167,139,250,0.8); }
+  .l-integ .layer-title  { color:#a78bfa; }
+
+  /* ── ITEM CHIPS ── */
+  .chip {
+    flex:1; min-height:0;
+    border-radius:6px; padding:0 12px;
+    font-size:15.5px; font-weight:500; line-height:1.35;
+    display:flex; align-items:center; gap:10px;
+  }
+  .chip-icon { font-size:18px; flex-shrink:0; }
+
+  /* Input chips — blue */
+  .l-input .chip {
+    background: rgba(30,90,180,0.35);
+    border:1px solid rgba(96,165,250,0.2);
+    color: rgba(255,255,255,0.85);
+  }
+  /* Engine chips — green */
+  .l-engine .chip {
+    background: rgba(0,100,40,0.40);
+    border:1px solid rgba(0,255,0,0.18);
+    color: rgba(255,255,255,0.88);
+  }
+  /* Output chips — amber */
+  .l-output .chip {
+    background: rgba(160,110,0,0.38);
+    border:1px solid rgba(255,192,0,0.2);
+    color: rgba(255,255,255,0.88);
+  }
+  /* Integration chips — purple */
+  .l-integ .chip {
+    background: rgba(100,55,180,0.38);
+    border:1px solid rgba(167,139,250,0.22);
+    color: rgba(255,255,255,0.88);
+  }
+
+  /* ── BOTTOM STRIP: loop + metric ── */
+  .bottom {
+    margin-top:12px; flex-shrink:0;
+    display:grid; grid-template-columns: 1fr 1fr;
+    gap:10px;
+  }
+
+  .bitem {
+    display:flex; align-items:flex-start; gap:10px;
+    background:rgba(255,255,255,0.025);
+    border:1px solid rgba(255,255,255,0.07);
+    border-radius:5px; padding:9px 14px;
+  }
+  .bicon { font-size:17px; flex-shrink:0; margin-top:1px; }
+  .btext { font-size:13.5px; line-height:1.5; color:rgba(210,210,210,0.75); }
+  .btext strong { font-weight:700; }
+  .fg { color:#00ff00; }
+  .fa { color:#FFC000; }
+
+</style>
+</head>
+<body>
+<div class="glow-tl"></div>
+<div class="glow-br"></div>
+<div class="slide">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <div class="eyebrow">06 — Technical Architecture</div>
+      <h1>System Architecture &amp; Data Integration</h1>
+    </div>
+    <div class="pill">PAS 1883 Common Language</div>
+  </div>
+
+  <!-- 4-LAYER ARCHITECTURE -->
+  <div class="arch">
+
+    <!-- ══ LAYER 1: DATA INPUTS ══ -->
+    <div class="layer l-input">
+      <div class="layer-head">
+        <div class="lh-dot"></div>
+        <div>
+          <div class="layer-title">Data Inputs</div>
+          <div class="layer-sub">Multi-source fusion</div>
+        </div>
+      </div>
+      <div class="layer-body">
+        <div class="chip"><span class="chip-icon">📡</span>Welch fleet telematics &amp; dashcam footage</div>
+        <div class="chip"><span class="chip-icon">🛰️</span>Satellite &amp; drone imagery (national scale)</div>
+        <div class="chip"><span class="chip-icon">🗺️</span>OS / HD mapping &amp; GIS datasets</div>
+        <div class="chip"><span class="chip-icon">🚗</span>Voltempo NUIC operational data</div>
+        <div class="chip"><span class="chip-icon">🤖</span>Halo ADS performance envelope</div>
+        <div class="chip"><span class="chip-icon">🌦️</span>Historic weather &amp; incident records</div>
+      </div>
+    </div>
+
+    <!-- Arrow 1→2 -->
+    <div class="arrow-col">
+      <div class="arrow-body"></div>
+    </div>
+
+    <!-- ══ LAYER 2: ROUTE10 AI ENGINE ══ -->
+    <div class="layer l-engine">
+      <div class="layer-head">
+        <div class="lh-dot"></div>
+        <div>
+          <div class="layer-title">Route10 AI Engine</div>
+          <div class="layer-sub">Core IP — Route10 owned</div>
+        </div>
+      </div>
+      <div class="layer-body">
+        <div class="chip"><span class="chip-icon">⚙️</span>Multi-source data fusion pipeline</div>
+        <div class="chip"><span class="chip-icon">📋</span>PAS 1883 ODD attribute classification</div>
+        <div class="chip"><span class="chip-icon">🧠</span>ML readiness scoring models</div>
+        <div class="chip"><span class="chip-icon">🔄</span>Atera Analytics route optimisation integration</div>
+        <div class="chip"><span class="chip-icon">🔗</span>Production API output layer</div>
+        <div class="chip"><span class="chip-icon">📊</span>Continuous learning &amp; model refinement</div>
+      </div>
+    </div>
+
+    <!-- Arrow 2→3 -->
+    <div class="arrow-col">
+      <div class="arrow-body"></div>
+    </div>
+
+    <!-- ══ LAYER 3: OUTPUTS ══ -->
+    <div class="layer l-output">
+      <div class="layer-head">
+        <div class="lh-dot"></div>
+        <div>
+          <div class="layer-title">Platform Outputs</div>
+          <div class="layer-sub">Customer-ready &amp; regulator-ready</div>
+        </div>
+      </div>
+      <div class="layer-body">
+        <div class="chip"><span class="chip-icon">🎯</span>Route-level ODD readiness scores</div>
+        <div class="chip"><span class="chip-icon">🗺️</span>ODD constraint maps (PAS 1883 aligned)</div>
+        <div class="chip"><span class="chip-icon">📁</span>ADS safety case evidence packs</div>
+        <div class="chip"><span class="chip-icon">📊</span>Fleet operator SaaS dashboard</div>
+        <div class="chip"><span class="chip-icon">🔌</span>Insurer &amp; OEM risk scoring API</div>
+        <div class="chip"><span class="chip-icon">📝</span>Regulatory-ready audit trail</div>
+      </div>
+    </div>
+
+    <!-- Arrow 3→4 -->
+    <div class="arrow-col">
+      <div class="arrow-body"></div>
+    </div>
+
+    <!-- ══ LAYER 4: PARTNER INTEGRATION ══ -->
+    <div class="layer l-integ">
+      <div class="layer-head">
+        <div class="lh-dot"></div>
+        <div>
+          <div class="layer-title">Partner Integration</div>
+          <div class="layer-sub">Outputs feed each partner</div>
+        </div>
+      </div>
+      <div class="layer-body">
+        <div class="chip"><span class="chip-icon">🟡</span><span><strong style="color:#FFC000">Voltempo</strong> — readiness scores feed NUIC route planning</span></div>
+        <div class="chip"><span class="chip-icon">🟣</span><span><strong style="color:#c084fc">Halo</strong> — ODD constraints feed ADS deployment decisions</span></div>
+        <div class="chip"><span class="chip-icon">🔵</span><span><strong style="color:#60a5fa">Welch</strong> — validated routes optimise live fleet ops</span></div>
+        <div class="chip"><span class="chip-icon">🟢</span><span><strong style="color:#4fc472">Atera Analytics</strong> — readiness data enhances NUIC modelling</span></div>
+        <div class="chip" style="border-color:rgba(255,192,0,0.4); background:rgba(255,192,0,0.1);">
+          <span class="chip-icon">⟳</span>
+          <span style="color:#FFC000; font-size:15px; font-weight:600;">Trial data feeds back → refines AI models</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /arch -->
+
+  <!-- BOTTOM STRIP -->
+  <div class="bottom">
+    <div class="bitem">
+      <div class="bicon">📋</div>
+      <div class="btext">
+        <strong class="fg">PAS 1883 as common language:</strong> Classifies infrastructure using the same ODD taxonomy that ADS operators use for vehicle capabilities — no proprietary ADS data sharing required.
+      </div>
+    </div>
+    <div class="bitem">
+      <div class="bicon">✅</div>
+      <div class="btext">
+        <strong class="fa">Validation target:</strong> 85% agreement between AI-predicted ODD constraints and Voltempo operational NUIC interventions, validated across a minimum of 500km of routes.
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

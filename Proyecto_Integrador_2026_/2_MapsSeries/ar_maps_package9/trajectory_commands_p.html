@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Quest 3 - Trajectory with Maps</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <style>
+            body { margin: 0; font-family: monospace; background: #000; color: #fff; }
+            #info {
+                position: absolute; top: 10px; width: 100%; text-align: center; z-index: 100;
+                background: rgba(0,0,0,0.9); padding: 15px; font-size: 13px;
+            }
+            .status-good { color: #0f0; }
+            .status-bad { color: #f00; }
+            .status-warning { color: #ff0; }
+            .status-approved { color: #ffa500; }
+            .status-sent { color: #00ffff; }
+        </style>
+    </head>
+    <body>
+        <div id="info">
+            <strong>Quest 3 Trajectory + Maps</strong><br/>
+            Status: <span id="trajectory-status" class="status-warning">DRAWING</span> | 
+            Connected: <span id="conn-status" class="status-bad">NO</span> | 
+            Floor: <span id="floor-status" class="status-warning">Detecting...</span> | 
+            Map: <span id="map-status" class="status-warning">None</span><br/>
+            Points: <span id="point-count">0</span> | Distance: <span id="path-distance">0.00</span>m<br/>
+            <small>TRIGGER: Draw | GRIP: Approve | A: Send | B: M25 | THUMBSTICK: Delete</small>
+        </div>
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+                    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+                }
+            }
+        </script>
+
+        <script type="module">
+            import * as THREE from 'three';
+            import { ARButton } from 'three/addons/webxr/ARButton.js';
+
+            // CONFIG
+            const JETSON_IP = '192.168.100.10';
+            const WS_PORT = 8443;
+            const FLOOR_OFFSET = 1.6;
+            const MIN_POINT_DISTANCE = 0.05;
+            const ROBOT_TURNING_RADIUS = 0.5;
+            const MAP_SIZE = 2.1;  // 2.1×2.1 meters (70% of 3m)
+            
+            // STATE
+            let scene, camera, renderer, controller0, controller1, websocket = null;
+            let floorY = null, floorDetected = false, userX = 0, userZ = 0;
+            let trajectoryPoints = [], trajectoryLine = null, totalDistance = 0;
+            let isDrawing = false, isApproved = false, isSent = false;
+            let controllerReticle, raycaster, floorPlane;
+            let lastGrip = false, lastThumbstick = false, lastAButton = false, lastBButton = false, lastTrigger = false, lastLeftTrigger = false;
+            
+            // MAP STATE
+            let mapPlane = null;
+            
+            // 3D CHART STATE (with time-series data)
+            let chart3D = null;
+            let chart3DLine = null;
+            let chart3DData = [];
+            const CHART_3D_SIZE = 1.5; // Size of 3D chart
+            const CHART_3D_Y_OFFSET = 2.0; // 2 meters above map
+            const MAX_3D_POINTS = 50;
+            let currentTime = 0;
+            
+            // CONTROL PANEL STATE
+            let controlPanel = null;
+            let controlMode = 2; // 1=Manual, 2=User Trajectory, 3=M25, 4=Track Robot
+            let panelButtons = [];
+            const PANEL_SIZE = 0.4;
+            let approvePressed = false;
+            
+            // ROBOT TRACKING STATE
+            let isTrackingRobot = false;
+            let triangleMarker = null;
+            let robotIcon = null;
+            let trackingInterval = null;
+            let lastXButton = false;
+
+            // WEBSOCKET
+            function connectWebSocket() {
+                websocket = new WebSocket(`wss://${JETSON_IP}:${WS_PORT}`);
+                websocket.onopen = () => {
+                    document.getElementById('conn-status').textContent = 'YES';
+                    document.getElementById('conn-status').className = 'status-good';
+                };
+                websocket.onclose = () => {
+                    document.getElementById('conn-status').textContent = 'NO';
+                    document.getElementById('conn-status').className = 'status-bad';
+                    setTimeout(connectWebSocket, 2000);
+                };
+                websocket.onmessage = (event) => {
+                    const response = JSON.parse(event.data);
+                    if (response.type === 'commands_ready') {
+                        document.getElementById('exec-progress').textContent = `0/${response.command_count}`;
+                    } else if (response.type === 'M25_COMMAND') {
+                        // Update 3D chart with real M25 trajectory data
+                        updateM25Chart(response.data);
+                    } else if (response.type === 'M25_COMPLETE') {
+                        console.log('✓ M25 trajectory complete!');
+                        document.getElementById('trajectory-status').textContent = 'M25 COMPLETE';
+                        document.getElementById('trajectory-status').className = 'status-good';
+                    }
+                };
+            }
+
+            function updateM25Chart(commandData) {
+                if (!chart3DLine) return;
+                
+                // commandData: {time, speed_cm_s, distance_to_dest_m}
+                const newData = {
+                    time: commandData.time,
+                    speed: commandData.speed_cm_s,
+                    distToDest: commandData.distance_to_dest_m
+                };
+                
+                // Shift data
+                chart3DData.shift();
+                chart3DData.push(newData);
+                
+                // Find max values for auto-scaling
+                let maxSpeed = 0;
+                let maxDist = 0;
+                chart3DData.forEach(d => {
+                    if (d.speed > maxSpeed) maxSpeed = d.speed;
+                    if (d.distToDest > maxDist) maxDist = d.distToDest;
+                });
+                
+                // Update 3D line geometry using TUBE
+                const points = [];
+                const axisRange = CHART_3D_SIZE / 2;
+                
+                chart3DData.forEach((data, i) => {
+                    // X-axis: Time (normalized 0 to 1)
+                    const x = (i / (MAX_3D_POINTS - 1)) * CHART_3D_SIZE - axisRange;
+                    // Y-axis: Speed (normalized to max speed)
+                    const y = maxSpeed > 0 ? (data.speed / maxSpeed) * axisRange : 0;
+                    // Z-axis: Distance to destination (normalized to max distance)
+                    const z = maxDist > 0 ? (data.distToDest / maxDist) * axisRange : 0;
+                    points.push(new THREE.Vector3(x, y, z));
+                });
+                
+                // Create new curve and tube geometry (GREEN, 1cm radius)
+                const curve = new THREE.CatmullRomCurve3(points);
+                const newTubeGeometry = new THREE.TubeGeometry(curve, 50, 0.01, 8, false);
+                
+                // Replace geometry
+                chart3DLine.geometry.dispose();
+                chart3DLine.geometry = newTubeGeometry;
+            }
+
+            function sendTrajectory() {
+                if (!websocket || !isApproved || trajectoryPoints.length < 5) return;
+                websocket.send(JSON.stringify({
+                    command: 'GENERATE_COMMANDS',
+                    trajectory: {
+                        points: trajectoryPoints.map(p => ({x: p.x, y: p.y, z: p.z})),
+                        distance: totalDistance,
+                        floorY: floorY
+                    }
+                }));
+                isSent = true;
+                document.getElementById('trajectory-status').textContent = 'SENT';
+            }
+
+            function sendM25Trajectory() {
+                if (!websocket) {
+                    console.log('WebSocket not connected');
+                    return;
+                }
+                
+                // Send command to execute M25 trajectory
+                websocket.send(JSON.stringify({
+                    command: 'EXECUTE_M25',
+                    start_location: 'Sevenoaks',
+                    direction: 'clockwise'
+                }));
+                
+                console.log('✓ M25 trajectory command sent (starting from Sevenoaks, clockwise)');
+            }
+
+            // MAP FUNCTIONS
+            async function loadGeoJSONMap() {
+                const response = await fetch('sample_campus_map.geojson');
+                const geojson = await response.json();
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = canvas.height = 2048;
+                const ctx = canvas.getContext('2d');
+                
+                // BLACK Background like heatmap
+                ctx.fillStyle = '#0a0f1f';
+                ctx.fillRect(0, 0, 2048, 2048);
+                
+                // Helper function - CORRECTED ASPECT RATIO (wider E-W)
+                function coordToPixel(lon, lat) {
+                    // M25 is wider East-West, so stretch longitude more
+                    const lonRange = 0.003 * 1.4; // 40% wider horizontally
+                    const latRange = 0.003;
+                    const x = (lon + 0.0015 * 1.4) / lonRange * 2048;
+                    const y = 2048 - (lat + 0.0015) / latRange * 2048;
+                    return [x, y];
+                }
+                
+                // 1. Draw HEATMAP for M25
+                const m25 = geojson.features.find(f => f.properties.heatmap);
+                if (m25 && m25.geometry.type === 'LineString') {
+                    const coords = m25.geometry.coordinates;
+                    // Draw heatmap blobs
+                    for (let i = 1; i < coords.length - 1; i++) {
+                        const [x, y] = coordToPixel(coords[i][0], coords[i][1]);
+                        const gradient = ctx.createRadialGradient(x, y, 0, x, y, 80);
+                        // Color based on position (simple approximation)
+                        const ratio = i / coords.length;
+                        let color;
+                        if (ratio < 0.25 || ratio > 0.75) {
+                            color = 'rgba(0, 255, 0, 0.3)'; // Green - easy
+                        } else if (ratio < 0.4 || ratio > 0.6) {
+                            color = 'rgba(255, 255, 0, 0.3)'; // Yellow - moderate
+                        } else {
+                            color = 'rgba(255, 102, 0, 0.3)'; // Orange - challenging
+                        }
+                        gradient.addColorStop(0, color);
+                        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                        ctx.fillStyle = gradient;
+                        ctx.beginPath();
+                        ctx.arc(x, y, 80, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+                
+                // 2. Draw Polygon features (Central London)
+                geojson.features.forEach(f => {
+                    if (f.geometry.type === 'Polygon') {
+                        ctx.fillStyle = f.properties.color || '#ccc';
+                        ctx.globalAlpha = f.properties.opacity || 0.4;
+                        ctx.beginPath();
+                        f.geometry.coordinates[0].forEach((c, i) => {
+                            const [x, y] = coordToPixel(c[0], c[1]);
+                            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                        });
+                        ctx.fill();
+                        ctx.globalAlpha = 1;
+                    }
+                });
+                
+                // 3. Draw LineString features (rivers, motorways)
+                geojson.features.forEach(f => {
+                    if (f.geometry.type === 'LineString') {
+                        ctx.strokeStyle = f.properties.color || '#333';
+                        ctx.lineWidth = f.properties.width || 4;
+                        ctx.lineCap = 'round';
+                        ctx.lineJoin = 'round';
+                        ctx.globalAlpha = f.properties.opacity || 1.0;
+                        
+                        // Add glow for M25
+                        if (f.properties.heatmap) {
+                            ctx.shadowColor = f.properties.color;
+                            ctx.shadowBlur = 15;
+                        }
+                        
+                        ctx.beginPath();
+                        f.geometry.coordinates.forEach((c, i) => {
+                            const [x, y] = coordToPixel(c[0], c[1]);
+                            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                        });
+                        ctx.stroke();
+                        ctx.shadowBlur = 0;
+                        ctx.globalAlpha = 1;
+                        
+                        // Label motorways
+                        if (f.properties.designation && f.geometry.coordinates.length > 0) {
+                            const [x, y] = coordToPixel(f.geometry.coordinates[0][0], f.geometry.coordinates[0][1]);
+                            ctx.fillStyle = f.properties.color;
+                            ctx.font = 'bold 24px Arial';
+                            ctx.fillText(f.properties.designation, x + 10, y - 10);
+                        }
+                    }
+                });
+                
+                // 4. Draw Point features (towns, airports)
+                geojson.features.forEach(f => {
+                    if (f.geometry.type === 'Point') {
+                        const [x, y] = coordToPixel(f.geometry.coordinates[0], f.geometry.coordinates[1]);
+                        
+                        // Draw dot with glow
+                        ctx.fillStyle = f.properties.color || '#00ff88';
+                        ctx.shadowColor = f.properties.color || '#00ff88';
+                        ctx.shadowBlur = 8;
+                        ctx.beginPath();
+                        ctx.arc(x, y, 12, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                        
+                        // White outline
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                        
+                        // Label
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 20px Arial';
+                        ctx.shadowColor = '#000000';
+                        ctx.shadowBlur = 4;
+                        ctx.fillText(f.properties.name, x + 15, y + 5);
+                        ctx.shadowBlur = 0;
+                    }
+                });
+                
+                // 5. Draw "LONDON" label in center
+                const [centerX, centerY] = coordToPixel(-0.00023, 0.00031);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 60px Arial';
+                ctx.textAlign = 'center';
+                ctx.shadowColor = '#000000';
+                ctx.shadowBlur = 8;
+                ctx.fillText('LONDON', centerX, centerY);
+                ctx.shadowBlur = 0;
+                ctx.textAlign = 'left';
+                
+                // 6. Draw North indicator
+                const [northX, northY] = coordToPixel(0.00135, 0.00135);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 30px Arial';
+                ctx.fillText('↑ N', northX - 30, northY + 10);
+                
+                document.getElementById('map-status').textContent = 'Loaded';
+                document.getElementById('map-status').className = 'status-good';
+                
+                return new THREE.CanvasTexture(canvas);
+            }
+
+            function createMapPlane(texture) {
+                texture.minFilter = THREE.LinearFilter;
+                texture.magFilter = THREE.LinearFilter;
+                
+                const geometry = new THREE.PlaneGeometry(MAP_SIZE, MAP_SIZE);
+                geometry.rotateX(-Math.PI / 2);
+                
+                const material = new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    opacity: 0.7
+                });
+                
+                mapPlane = new THREE.Mesh(geometry, material);
+                mapPlane.position.set(userX, floorY + 0.001, userZ);
+                scene.add(mapPlane);
+                
+                // Create 3D chart with time-series above the map
+                create3DChart();
+                
+                // Create control panel at NE corner of map
+                createControlPanel();
+            }
+            
+            // 3D CHART FUNCTIONS
+            function create3DChart() {
+                // Initialize chart data
+                chart3DData = [];
+                for (let i = 0; i < MAX_3D_POINTS; i++) {
+                    chart3DData.push({
+                        time: i,
+                        speed: 0,
+                        steering: 0
+                    });
+                }
+                
+                // Create 3D chart container group
+                chart3D = new THREE.Group();
+                chart3D.position.set(userX, floorY + CHART_3D_Y_OFFSET, userZ);
+                scene.add(chart3D);
+                
+                // Create axes
+                const axisLength = CHART_3D_SIZE / 2;
+                const axisGeometry = new THREE.BufferGeometry();
+                
+                // X-axis (Time) - Red
+                const xAxisGeometry = new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(-axisLength, 0, 0),
+                    new THREE.Vector3(axisLength, 0, 0)
+                ]);
+                const xAxis = new THREE.Line(xAxisGeometry, new THREE.LineBasicMaterial({ color: 0xff0000 }));
+                chart3D.add(xAxis);
+                
+                // Y-axis (Speed) - Green
+                const yAxisGeometry = new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(0, -axisLength, 0),
+                    new THREE.Vector3(0, axisLength, 0)
+                ]);
+                const yAxis = new THREE.Line(yAxisGeometry, new THREE.LineBasicMaterial({ color: 0x00ff00 }));
+                chart3D.add(yAxis);
+                
+                // Z-axis (Steering) - Blue
+                const zAxisGeometry = new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(0, 0, -axisLength),
+                    new THREE.Vector3(0, 0, axisLength)
+                ]);
+                const zAxis = new THREE.Line(zAxisGeometry, new THREE.LineBasicMaterial({ color: 0x0000ff }));
+                chart3D.add(zAxis);
+                
+                // Create grid planes (semi-transparent)
+                const gridMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0x333333, 
+                    transparent: true, 
+                    opacity: 0.1,
+                    side: THREE.DoubleSide
+                });
+                
+                // XY plane (Time-Speed)
+                const xyPlane = new THREE.Mesh(
+                    new THREE.PlaneGeometry(CHART_3D_SIZE, CHART_3D_SIZE),
+                    gridMaterial.clone()
+                );
+                chart3D.add(xyPlane);
+                
+                // XZ plane (Time-Steering)
+                const xzPlane = new THREE.Mesh(
+                    new THREE.PlaneGeometry(CHART_3D_SIZE, CHART_3D_SIZE),
+                    gridMaterial.clone()
+                );
+                xzPlane.rotation.x = -Math.PI / 2;
+                chart3D.add(xzPlane);
+                
+                // Create axis labels
+                createAxisLabel('Time →', new THREE.Vector3(axisLength + 0.1, 0, 0), 0xff0000);
+                createAxisLabel('Speed cm/s ↑', new THREE.Vector3(0, axisLength + 0.1, 0), 0x00ff00);
+                createAxisLabel('Dist to Dest m', new THREE.Vector3(0, 0, axisLength + 0.1), 0x0000ff);
+                
+                // Create 3D line for time-series data using TUBE (GREEN, 1cm diameter)
+                const dummyPoints = [];
+                for (let i = 0; i < MAX_3D_POINTS; i++) {
+                    const axisRange = CHART_3D_SIZE / 2;
+                    const x = (i / (MAX_3D_POINTS - 1)) * CHART_3D_SIZE - axisRange;
+                    dummyPoints.push(new THREE.Vector3(x, 0, 0));
+                }
+                const dummyCurve = new THREE.CatmullRomCurve3(dummyPoints);
+                const tubeGeometry = new THREE.TubeGeometry(dummyCurve, 50, 0.01, 8, false);  // 0.01 = 1cm radius
+                const tubeMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0x00ff00  // GREEN
+                });
+                chart3DLine = new THREE.Mesh(tubeGeometry, tubeMaterial);
+                chart3D.add(chart3DLine);
+                console.log('✓ 3D green line (tube) created - 1cm diameter');
+                
+                // Initialize with zero data (will update from M25 commands)
+                for (let i = 0; i < MAX_3D_POINTS; i++) {
+                    chart3DData[i] = {
+                        time: i * 0.2,
+                        speed: 0,
+                        distToDest: 0
+                    };
+                }
+            }
+            
+            function createAxisLabel(text, position, color) {
+                // Create canvas for text
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 64;
+                const ctx = canvas.getContext('2d');
+                
+                ctx.fillStyle = `#${color.toString(16).padStart(6, '0')}`;
+                ctx.font = 'bold 32px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(text, 128, 32);
+                
+                const texture = new THREE.CanvasTexture(canvas);
+                const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+                const sprite = new THREE.Sprite(spriteMaterial);
+                sprite.position.copy(position);
+                sprite.scale.set(0.3, 0.075, 1);
+                chart3D.add(sprite);
+            }
+            
+            // CONTROL PANEL FUNCTIONS
+            function createControlPanel() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 800;  // Taller for 4 options
+                
+                drawControlPanel(canvas);
+                
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.minFilter = THREE.LinearFilter;
+                texture.magFilter = THREE.LinearFilter;
+                
+                // Panel size: 0.6m wide × 0.9375m tall (taller for 4 modes)
+                const geometry = new THREE.PlaneGeometry(0.6, 0.9375);
+                const material = new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    opacity: 1.0,
+                    side: THREE.DoubleSide
+                });
+                
+                controlPanel = new THREE.Mesh(geometry, material);
+                
+                // Position at NORTH side of map, 1.4m above floor (chest/eye level)
+                const mapRadius = MAP_SIZE / 2;
+                controlPanel.position.set(
+                    userX,                      // Center X
+                    floorY + 1.4,              // 1.4m above floor
+                    userZ + mapRadius + 0.3    // NORTH side
+                );
+                
+                // Rotate to face south (toward center where user stands)
+                controlPanel.rotation.y = Math.PI;  // 180 degrees
+                
+                scene.add(controlPanel);
+                console.log('✓ Control panel created - NORTH side, facing center:', controlPanel.position);
+                
+                // Store button hit areas for interaction (UV coordinates)
+                // Canvas 800px tall, UV from 0.0 (bottom) to 1.0 (top)
+                // Mode 1: y=120 (±30) → UV 0.8125-0.8875
+                // Mode 2: y=240 (±30) → UV 0.6625-0.7375
+                // Mode 3: y=360 (±30) → UV 0.5125-0.5875
+                // Mode 4: y=480 (±30) → UV 0.3625-0.4375
+                // APPROVE: y=680-740 → UV 0.075-0.15
+                panelButtons = [
+                    { mode: 1, y1: 0.8125, y2: 0.8875 },
+                    { mode: 2, y1: 0.6625, y2: 0.7375 },
+                    { mode: 3, y1: 0.5125, y2: 0.5875 },
+                    { mode: 4, y1: 0.3625, y2: 0.4375 }
+                ];
+            }
+            
+            function drawControlPanel(canvas) {
+                const ctx = canvas.getContext('2d');
+                
+                // GRAY BACKGROUND
+                ctx.fillStyle = '#888888';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Border
+                ctx.strokeStyle = '#333333';
+                ctx.lineWidth = 6;
+                ctx.strokeRect(3, 3, canvas.width - 6, canvas.height - 6);
+                
+                // Title
+                ctx.fillStyle = '#000000';  // BLACK text
+                ctx.font = 'bold 32px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('ROBOT CONTROL', canvas.width / 2, 45);
+                
+                // Divider
+                ctx.strokeStyle = '#444444';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(30, 70);
+                ctx.lineTo(canvas.width - 30, 70);
+                ctx.stroke();
+                
+                // Mode options with radio buttons
+                const modes = [
+                    {
+                        title: 'Manual Control',
+                        desc: 'Use joystick',
+                        y: 120,
+                        mode: 1
+                    },
+                    {
+                        title: 'User Trajectory',
+                        desc: 'Draw with trigger',
+                        y: 240,
+                        mode: 2
+                    },
+                    {
+                        title: 'M25 Highway',
+                        desc: 'Auto from Sevenoaks',
+                        y: 360,
+                        mode: 3
+                    },
+                    {
+                        title: 'Track Robot',
+                        desc: 'Follow triangle marker',
+                        y: 480,
+                        mode: 4
+                    }
+                ];
+                
+                modes.forEach((mode) => {
+                    const isActive = controlMode === mode.mode;
+                    
+                    // Radio button (circle)
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(50, mode.y, 15, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    // Fill radio if selected
+                    if (isActive) {
+                        ctx.fillStyle = '#000000';
+                        ctx.beginPath();
+                        ctx.arc(50, mode.y, 10, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    
+                    // Option text
+                    ctx.fillStyle = '#000000';  // BLACK text
+                    ctx.font = 'bold 28px Arial';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(mode.title, 85, mode.y);
+                    
+                    // Description
+                    ctx.font = '20px Arial';
+                    ctx.fillStyle = '#222222';
+                    ctx.fillText(mode.desc, 85, mode.y + 30);
+                });
+                
+                // APPROVE BUTTON at bottom
+                const buttonY = 680;
+                // Dark grey (#333) when pressed, medium grey (#444) when not pressed
+                ctx.fillStyle = approvePressed ? '#333333' : '#444444';
+                ctx.fillRect(80, buttonY, canvas.width - 160, 60);
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(80, buttonY, canvas.width - 160, 60);
+                
+                ctx.fillStyle = '#FFFFFF';  // White text on button
+                ctx.font = 'bold 30px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('APPROVE', canvas.width / 2, buttonY + 40);
+                
+                if (controlPanel && controlPanel.material && controlPanel.material.map) {
+                    controlPanel.material.map.needsUpdate = true;
+                }
+            }
+            
+            function checkControlPanelInteraction(controller) {
+                if (!controlPanel || !controller) return;
+                
+                // Ray from controller
+                const tempMatrix = new THREE.Matrix4();
+                tempMatrix.identity().extractRotation(controller.matrixWorld);
+                
+                const rayOrigin = new THREE.Vector3();
+                rayOrigin.setFromMatrixPosition(controller.matrixWorld);
+                
+                const rayDirection = new THREE.Vector3(0, 0, -1);
+                rayDirection.applyMatrix4(tempMatrix);
+                
+                raycaster.set(rayOrigin, rayDirection);
+                const intersects = raycaster.intersectObject(controlPanel);
+                
+                if (intersects.length > 0) {
+                    const uv = intersects[0].uv;
+                    
+                    // Check APPROVE button (canvas y=680-740 → UV 0.075-0.15)
+                    if (uv.y >= 0.075 && uv.y <= 0.15) {
+                        // Set pressed state and redraw
+                        approvePressed = true;
+                        drawControlPanel(controlPanel.material.map.image);
+                        
+                        console.log('✓ APPROVE button clicked - Current mode:', controlMode);
+                        
+                        // Send mode selection to WebSocket (ONLY ONCE)
+                        if (websocket && websocket.readyState === WebSocket.OPEN) {
+                            const modeNames = {1: 'Manual Control', 2: 'User Trajectory', 3: 'M25 Highway'};
+                            websocket.send(JSON.stringify({
+                                command: 'MODE_SELECTED',
+                                mode: controlMode,
+                                mode_name: modeNames[controlMode],
+                                timestamp: Date.now()
+                            }));
+                            console.log('→ Sent to WebSocket:', modeNames[controlMode]);
+                            
+                            // If Mode 3 (M25 Highway), execute M25 trajectory
+                            if (controlMode === 3) {
+                                websocket.send(JSON.stringify({
+                                    command: 'EXECUTE_M25',
+                                    start_location: 'Sevenoaks',
+                                    direction: 'clockwise'
+                                }));
+                                console.log('→ Executing M25 trajectory');
+                            }
+                            
+                            // If Mode 4 (Track Robot), start robot tracking
+                            if (controlMode === 4) {
+                                startRobotTracking();
+                                console.log('→ Starting robot tracking');
+                            }
+                        }
+                        
+                        // Update status
+                        document.getElementById('trajectory-status').textContent = `MODE ${controlMode} APPROVED`;
+                        document.getElementById('trajectory-status').className = 'status-approved';
+                        
+                        // Reset button color after 300ms
+                        setTimeout(() => {
+                            approvePressed = false;
+                            drawControlPanel(controlPanel.material.map.image);
+                        }, 300);
+                        
+                        return;
+                    }
+                    
+                    // Check radio buttons
+                    panelButtons.forEach(button => {
+                        if (uv.y >= button.y1 && uv.y <= button.y2) {
+                            if (controlMode !== button.mode) {
+                                controlMode = button.mode;
+                                drawControlPanel(controlPanel.material.map.image);
+                                console.log(`✓ Radio button ${button.mode} selected`);
+                                
+                                // Update trajectory status based on mode
+                                const modeTexts = {
+                                    1: 'MANUAL',
+                                    2: 'DRAWING', 
+                                    3: 'M25 READY'
+                                };
+                                document.getElementById('trajectory-status').textContent = modeTexts[controlMode];
+                                document.getElementById('trajectory-status').className = 'status-warning';
+                            }
+                        }
+                    });
+                }
+            }
+
+            // ROBOT TRACKING FUNCTIONS
+            function startRobotTracking() {
+                if (isTrackingRobot) return;
+                isTrackingRobot = true;
+                
+                // Create triangle marker icon on map
+                const triangleGeometry = new THREE.ConeGeometry(0.05, 0.1, 3);
+                triangleGeometry.rotateX(Math.PI / 2);
+                const triangleMaterial = new THREE.MeshBasicMaterial({ color: 0xff00ff, side: THREE.DoubleSide });
+                triangleMarker = new THREE.Mesh(triangleGeometry, triangleMaterial);
+                triangleMarker.position.set(userX, floorY + 0.18, userZ);  // 18cm above floor
+                scene.add(triangleMarker);
+                
+                // Create robot icon above triangle
+                const robotGeometry = new THREE.ConeGeometry(0.08, 0.15, 4);
+                robotGeometry.rotateX(Math.PI / 2);
+                const robotMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                robotIcon = new THREE.Mesh(robotGeometry, robotMaterial);
+                robotIcon.position.set(userX, floorY + 0.18, userZ);
+                scene.add(robotIcon);
+                
+                console.log('✓ Robot tracking started');
+                
+                // Start tracking loop (simulated - WebXR image tracking would go here)
+                trackingInterval = setInterval(updateRobotTracking, 200);
+            }
+            
+            function stopRobotTracking() {
+                if (!isTrackingRobot) return;
+                isTrackingRobot = false;
+                
+                if (trackingInterval) {
+                    clearInterval(trackingInterval);
+                    trackingInterval = null;
+                }
+                
+                if (triangleMarker) {
+                    scene.remove(triangleMarker);
+                    triangleMarker = null;
+                }
+                
+                if (robotIcon) {
+                    scene.remove(robotIcon);
+                    robotIcon = null;
+                }
+                
+                console.log('✓ Robot tracking stopped');
+                
+                if (websocket && websocket.readyState === WebSocket.OPEN) {
+                    websocket.send(JSON.stringify({
+                        command: 'TRACKING_STOPPED'
+                    }));
+                }
+            }
+            
+            function updateRobotTracking() {
+                // SIMULATED tracking - In real implementation, get from WebXR tracked-images
+                // For now, simulate movement for demonstration
+                const time = Date.now() / 1000;
+                const simX = Math.sin(time * 0.3) * 0.5;  // ±50cm oscillation
+                const simZ = Math.cos(time * 0.3) * 0.5;
+                const simHeading = (time * 30) % 360;  // Rotating
+                
+                // Update marker positions
+                if (triangleMarker) {
+                    triangleMarker.position.set(userX + simX, floorY + 0.18, userZ + simZ);
+                    triangleMarker.rotation.y = (simHeading + 180) * Math.PI / 180;  // Triangle points to rear
+                }
+                
+                if (robotIcon) {
+                    robotIcon.position.set(userX + simX, floorY + 0.18, userZ + simZ);
+                    robotIcon.rotation.y = simHeading * Math.PI / 180;  // Robot front (inverted 180°)
+                }
+                
+                // Calculate position relative to map center in cm
+                const posX_cm = simX * 100;
+                const posZ_cm = simZ * 100;
+                const distFromCenter = Math.sqrt(posX_cm * posX_cm + posZ_cm * posZ_cm);
+                
+                // Send to WebSocket
+                if (websocket && websocket.readyState === WebSocket.OPEN) {
+                    websocket.send(JSON.stringify({
+                        command: 'ROBOT_POSITION',
+                        data: {
+                            x_cm: posX_cm,
+                            z_cm: posZ_cm,
+                            heading_deg: simHeading,
+                            distance_from_center_cm: distFromCenter,
+                            timestamp: time
+                        }
+                    }));
+                }
+                
+                // Update 3D chart with robot tracking data
+                updateRobotChart(time, distFromCenter, simHeading);
+            }
+            
+            function updateRobotChart(time, distFromCenter, heading) {
+                if (!chart3DLine) return;
+                
+                const newData = {
+                    time: time,
+                    speed: distFromCenter,  // Using distance for Y-axis
+                    distToDest: heading     // Using heading for Z-axis
+                };
+                
+                chart3DData.shift();
+                chart3DData.push(newData);
+                
+                // Auto-scale
+                let maxDist = 0;
+                let maxHeading = 360;
+                chart3DData.forEach(d => {
+                    if (d.speed > maxDist) maxDist = d.speed;
+                });
+                
+                const points = [];
+                const axisRange = CHART_3D_SIZE / 2;
+                
+                chart3DData.forEach((data, i) => {
+                    const x = (i / (MAX_3D_POINTS - 1)) * CHART_3D_SIZE - axisRange;
+                    const y = maxDist > 0 ? (data.speed / maxDist) * axisRange : 0;
+                    const z = (data.distToDest / maxHeading) * axisRange;
+                    points.push(new THREE.Vector3(x, y, z));
+                });
+                
+                const curve = new THREE.CatmullRomCurve3(points);
+                const newTubeGeometry = new THREE.TubeGeometry(curve, 50, 0.01, 8, false);
+                
+                chart3DLine.geometry.dispose();
+                chart3DLine.geometry = newTubeGeometry;
+            }
+
+            // TRAJECTORY
+            function checkCurvature(p1, p2, p3) {
+                const a = p1.distanceTo(p2), b = p2.distanceTo(p3), c = p3.distanceTo(p1);
+                const s = (a + b + c) / 2;
+                const area = Math.sqrt(Math.max(0, s * (s - a) * (s - b) * (s - c)));
+                if (area < 0.001) return true;
+                const curvature = (4 * area) / (a * b * c);
+                return curvature === 0 || 1 / curvature >= ROBOT_TURNING_RADIUS;
+            }
+
+            function addPoint(point) {
+                point.y = floorY;
+                if (trajectoryPoints.length > 0) {
+                    const dist = point.distanceTo(trajectoryPoints[trajectoryPoints.length - 1]);
+                    if (dist < MIN_POINT_DISTANCE) return;
+                    totalDistance += dist;
+                }
+                if (trajectoryPoints.length >= 2) {
+                    if (!checkCurvature(trajectoryPoints[trajectoryPoints.length - 2], trajectoryPoints[trajectoryPoints.length - 1], point)) return;
+                }
+                trajectoryPoints.push(point.clone());
+                document.getElementById('point-count').textContent = trajectoryPoints.length;
+                document.getElementById('path-distance').textContent = totalDistance.toFixed(2);
+                updateLine();
+            }
+
+            function updateLine() {
+                if (trajectoryLine) {
+                    scene.remove(trajectoryLine);
+                    trajectoryLine.geometry.dispose();
+                    trajectoryLine.material.dispose();
+                }
+                if (trajectoryPoints.length < 2) return;
+                const curve = new THREE.CatmullRomCurve3(trajectoryPoints);
+                const geometry = new THREE.TubeGeometry(curve, trajectoryPoints.length * 10, 0.02, 8, false);
+                const color = isApproved ? 0xffa500 : 0x00ff00;
+                trajectoryLine = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color }));
+                scene.add(trajectoryLine);
+            }
+
+            function deleteLast() {
+                const count = Math.min(10, trajectoryPoints.length);
+                for (let i = 0; i < count; i++) trajectoryPoints.pop();
+                totalDistance = 0;
+                for (let i = 1; i < trajectoryPoints.length; i++) {
+                    totalDistance += trajectoryPoints[i].distanceTo(trajectoryPoints[i - 1]);
+                }
+                document.getElementById('point-count').textContent = trajectoryPoints.length;
+                document.getElementById('path-distance').textContent = totalDistance.toFixed(2);
+                updateLine();
+            }
+
+            function approve() {
+                if (trajectoryPoints.length < 5) return;
+                isApproved = true;
+                document.getElementById('trajectory-status').textContent = 'APPROVED';
+                document.getElementById('trajectory-status').className = 'status-approved';
+                updateLine();
+            }
+
+            // INIT
+            function init() {
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+                
+                const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
+                scene.add(light);
+
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.xr.enabled = true;
+                document.body.appendChild(renderer.domElement);
+
+                document.body.appendChild(ARButton.createButton(renderer, { 
+                    requiredFeatures: ['local-floor']
+                }));
+
+                // LEFT controller (index 0) for panel interaction
+                controller0 = renderer.xr.getController(0);
+                scene.add(controller0);
+                
+                const rayGeometry0 = new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -3)
+                ]);
+                controller0.add(new THREE.Line(rayGeometry0, new THREE.LineBasicMaterial({ color: 0xff00ff })));
+
+                // RIGHT controller (index 1) for drawing trajectory
+                controller1 = renderer.xr.getController(1);
+                scene.add(controller1);
+                
+                const rayGeometry = new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -3)
+                ]);
+                controller1.add(new THREE.Line(rayGeometry, new THREE.LineBasicMaterial({ color: 0x00ffff })));
+
+                controllerReticle = new THREE.Mesh(
+                    new THREE.RingGeometry(0.1, 0.15, 32).rotateX(-Math.PI / 2),
+                    new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide })
+                );
+                controllerReticle.visible = false;
+                scene.add(controllerReticle);
+
+                raycaster = new THREE.Raycaster();
+                renderer.setAnimationLoop(animate);
+            }
+
+            // ANIMATE
+            function animate() {
+                const session = renderer.xr.getSession();
+                
+                if (session) {
+                    const frame = renderer.xr.getFrame();
+                    const refSpace = renderer.xr.getReferenceSpace();
+                    
+                    // Floor detection
+                    if (!floorDetected && frame && refSpace) {
+                        const viewerPose = frame.getViewerPose(refSpace);
+                        if (viewerPose) {
+                            floorY = viewerPose.transform.position.y - FLOOR_OFFSET;
+                            userX = viewerPose.transform.position.x;
+                            userZ = viewerPose.transform.position.z;
+                            floorDetected = true;
+                            
+                            document.getElementById('floor-status').textContent = 'Detected';
+                            document.getElementById('floor-status').className = 'status-good';
+                            
+                            floorPlane = new THREE.Mesh(
+                                new THREE.PlaneGeometry(100, 100).rotateX(-Math.PI / 2),
+                                new THREE.MeshBasicMaterial({ visible: false })
+                            );
+                            floorPlane.position.y = floorY;
+                            scene.add(floorPlane);
+                            
+                            const grid = new THREE.GridHelper(5, 20, 0x00ff00, 0x004400);
+                            grid.position.set(userX, floorY, userZ);
+                            scene.add(grid);
+                            
+                            // AUTO-LOAD GEOJSON MAP
+                            loadGeoJSONMap().then(texture => {
+                                createMapPlane(texture);
+                                document.getElementById('map-status').textContent = 'GeoJSON';
+                                document.getElementById('map-status').className = 'status-good';
+                                console.log('✓ Map loaded automatically');
+                            }).catch(err => {
+                                console.error('✗ Map load failed:', err);
+                                document.getElementById('map-status').textContent = 'ERROR';
+                                document.getElementById('map-status').className = 'status-bad';
+                            });
+                        }
+                    }
+                    
+                    // LEFT CONTROLLER - Panel interaction
+                    if (floorDetected && controller0 && controlPanel) {
+                        const inputSources = session.inputSources;
+                        inputSources.forEach((source, index) => {
+                            if (index !== 0) return;  // LEFT controller
+                            const gamepad = source.gamepad;
+                            if (!gamepad) return;
+                            
+                            const leftTrigger = gamepad.buttons[0] && gamepad.buttons[0].pressed;
+                            const xButton = gamepad.buttons[4] && gamepad.buttons[4].pressed;
+                            
+                            // Only trigger on PRESS (not while held)
+                            if (leftTrigger && !lastLeftTrigger) {
+                                checkControlPanelInteraction(controller0);
+                            }
+                            lastLeftTrigger = leftTrigger;
+                            
+                            // X button stops robot tracking
+                            if (xButton && !lastXButton && isTrackingRobot) {
+                                stopRobotTracking();
+                            }
+                            lastXButton = xButton;
+                        });
+                    }
+                    
+                    // Controller input
+                    if (floorDetected && controller1 && floorPlane) {
+                        const tempMatrix = new THREE.Matrix4();
+                        tempMatrix.identity().extractRotation(controller1.matrixWorld);
+                        
+                        const rayOrigin = new THREE.Vector3();
+                        rayOrigin.setFromMatrixPosition(controller1.matrixWorld);
+                        
+                        const rayDirection = new THREE.Vector3(0, 0, -1);
+                        rayDirection.applyMatrix4(tempMatrix);
+                        
+                        raycaster.set(rayOrigin, rayDirection);
+                        const intersects = raycaster.intersectObject(floorPlane);
+                        
+                        if (intersects.length > 0) {
+                            const intersectPoint = intersects[0].point;
+                            controllerReticle.position.copy(intersectPoint);
+                            controllerReticle.visible = true;
+                            
+                            const inputSources = session.inputSources;
+                            inputSources.forEach((source, index) => {
+                                if (index !== 1) return;
+                                const gamepad = source.gamepad;
+                                if (!gamepad) return;
+                                
+                                const trigger = gamepad.buttons[0] && gamepad.buttons[0].pressed;
+                                const grip = gamepad.buttons[1] && gamepad.buttons[1].pressed;
+                                const thumbstick = gamepad.buttons[3] && gamepad.buttons[3].pressed;
+                                const aButton = gamepad.buttons[4] && gamepad.buttons[4].pressed;
+                                const bButton = gamepad.buttons[5] && gamepad.buttons[5].pressed;
+                                
+                                // Check control panel interaction on trigger
+                                if (trigger && !lastTrigger) {
+                                    checkControlPanelInteraction(controller1);
+                                }
+                                lastTrigger = trigger;
+                                
+                                // Only allow mode-specific actions
+                                if (controlMode === 2) {
+                                    // Mode 2: User Trajectory
+                                    if (!isApproved && trigger) {
+                                        if (!isDrawing) isDrawing = true;
+                                        addPoint(intersectPoint);
+                                    } else if (isDrawing) isDrawing = false;
+                                    
+                                    // Approve
+                                    if (grip && !lastGrip && !isApproved) approve();
+                                    lastGrip = grip;
+                                    
+                                    // Delete
+                                    if (thumbstick && !lastThumbstick && !isApproved) deleteLast();
+                                    lastThumbstick = thumbstick;
+                                    
+                                    // Send user trajectory
+                                    if (aButton && !lastAButton && isApproved && !isSent) sendTrajectory();
+                                    lastAButton = aButton;
+                                }
+                                
+                                if (controlMode === 3) {
+                                    // Mode 3: M25 Highway
+                                    if (bButton && !lastBButton) sendM25Trajectory();
+                                    lastBButton = bButton;
+                                }
+                                
+                                // Mode 1 (Manual) would handle joystick input here
+                                // (Not implemented in this version)
+                            });
+                        } else {
+                            controllerReticle.visible = false;
+                        }
+                    }
+                }
+                
+                renderer.render(scene, camera);
+            }
+
+            init();
+            connectWebSocket();
+        </script>
+    </body>
+</html>

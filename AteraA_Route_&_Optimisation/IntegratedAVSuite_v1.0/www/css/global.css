@@ -1,0 +1,243 @@
+/* ====================================
+   CORPORATE TEAL/CYAN THEME
+   EV Route Optimizer v3.0
+   ==================================== */
+
+/* Main Backgrounds */
+.content-wrapper, .right-side {
+  background: linear-gradient(135deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+  min-height: 100vh;
+}
+.sidebar, .main-sidebar {
+  background: linear-gradient(180deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+}
+
+/* Sidebar Menu */
+.sidebar .sidebar-menu > li > a {
+  color: #ffffff !important;
+  border-left: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+.sidebar .sidebar-menu > li.active > a,
+.sidebar .sidebar-menu > li:hover > a {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-left: 3px solid #00A39A !important;
+}
+
+/* Header */
+.main-header, .main-header .navbar {
+  background: linear-gradient(135deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+}
+.main-header .logo {
+  background: linear-gradient(135deg, #002C3C 0%, #008A82 50%, #00A39A 100%) !important;
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+/* Boxes */
+.box {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 25px rgba(0, 44, 60, 0.2) !important;
+  margin-bottom: 20px;
+  transition: transform 0.2s ease;
+}
+.box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(0, 44, 60, 0.3) !important;
+}
+.box-header {
+  background: linear-gradient(135deg, #008A82 0%, #00A39A 100%) !important;
+  color: white !important;
+  border-radius: 12px 12px 0 0 !important;
+  padding: 15px 20px;
+}
+.box-header > .box-title {
+  color: #ffffff !important;
+  font-weight: 600;
+  font-size: 16px;
+}
+.box-body {
+  background-color: #ffffff !important;
+  padding: 20px;
+}
+
+/* Status Boxes */
+.status-success {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%) !important;
+  color: #155724 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #00A39A !important;
+  margin: 10px 0;
+}
+.status-error {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%) !important;
+  color: #721c24 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #e74c3c !important;
+  margin: 10px 0;
+}
+.status-info {
+  background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%) !important;
+  color: #0c5460 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #17a2b8 !important;
+  margin: 10px 0;
+}
+.status-warning {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%) !important;
+  color: #856404 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #f39c12 !important;
+  margin: 10px 0;
+}
+
+/* Connection Status - EV Route Specific */
+.connection-success {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%) !important;
+  color: #155724 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #00A39A !important;
+  margin: 10px 0;
+  box-shadow: 0 4px 15px rgba(0, 163, 154, 0.2);
+}
+.connection-error {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%) !important;
+  color: #721c24 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #e74c3c !important;
+  margin: 10px 0;
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.2);
+}
+.connection-warning {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%) !important;
+  color: #856404 !important;
+  padding: 15px;
+  border-radius: 12px !important;
+  border-left: 4px solid #f39c12 !important;
+  margin: 10px 0;
+  box-shadow: 0 4px 15px rgba(243, 156, 18, 0.2);
+}
+
+/* Form Controls */
+.form-control {
+  border-radius: 8px !important;
+  border: 2px solid #ddd !important;
+  transition: border-color 0.3s ease;
+}
+.form-control:focus {
+  border-color: #008A82 !important;
+  box-shadow: 0 0 0 3px rgba(0, 138, 130, 0.1) !important;
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, #008A82 0%, #00A39A 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+  font-weight: 600;
+  transition: transform 0.2s ease;
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #006b63 0%, #007d75 100%) !important;
+  transform: translateY(-1px);
+}
+.btn-success {
+  background: linear-gradient(135deg, #00A39A 0%, #008A82 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+  font-weight: 600;
+}
+.btn-info {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+  font-weight: 600;
+}
+.btn-danger {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+}
+.btn-warning {
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: white !important;
+}
+
+/* Small Boxes (Value Boxes) */
+.small-box {
+  border-radius: 12px !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+  transition: transform 0.2s ease;
+}
+.small-box:hover {
+  transform: translateY(-3px);
+}
+.small-box.bg-aqua { 
+  background: linear-gradient(135deg, #00A39A 0%, #008A82 100%) !important; 
+}
+.small-box.bg-blue { 
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%) !important; 
+}
+.small-box.bg-green { 
+  background: linear-gradient(135deg, #27ae60 0%, #229954 100%) !important; 
+}
+.small-box.bg-yellow { 
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important; 
+}
+.small-box.bg-red { 
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important; 
+}
+
+/* Leaflet Map */
+.leaflet-container {
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Progress Bars */
+.progress {
+  height: 25px;
+  border-radius: 8px;
+  background: #ecf0f1;
+}
+.progress-bar {
+  background: linear-gradient(135deg, #008A82 0%, #00A39A 100%) !important;
+  border-radius: 8px;
+}
+
+/* Text Areas */
+textarea.form-control {
+  min-height: 100px;
+}
+
+/* Alerts */
+.alert-info {
+  background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%) !important;
+  border-left: 4px solid #17a2b8 !important;
+  border-radius: 8px;
+}
+
+/* Loading Spinner */
+#loading_spinner {
+  color: #008A82;
+}
+
+/* Helper Text */
+.text-muted {
+  color: #7f8c8d !important;
+  font-size: 12px;
+}

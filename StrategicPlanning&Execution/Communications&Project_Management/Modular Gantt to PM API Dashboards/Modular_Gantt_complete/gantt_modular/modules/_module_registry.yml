@@ -1,0 +1,62 @@
+# modules/_module_registry.yml
+# Central Module Registry for Gantt to Tickets Converter
+# Change 'enabled: false' to disable any module
+# =======================================================
+
+modules:
+  # API Configuration Modules (Load First)
+  api_configuration:
+    enabled: true
+    priority: 1
+    description: "Trello and Jira API credentials management"
+  
+  email_configuration:
+    enabled: true
+    priority: 2
+    description: "SMTP email setup and configuration"
+  
+  # Core Feature Modules
+  upload_gantt:
+    enabled: true
+    priority: 10
+    description: "Upload and preview Gantt chart Excel files"
+  
+  review_edit:
+    enabled: true
+    priority: 11
+    description: "Review and edit tasks before submission"
+  
+  submit_boards:
+    enabled: true
+    priority: 12
+    description: "Submit tasks to Trello and Jira boards"
+  
+  email_send:
+    enabled: true
+    priority: 13
+    description: "Send email notifications to assignees"
+  
+  # Contact Management Modules
+  manage_contacts:
+    enabled: true
+    priority: 20
+    description: "Add and manage contact database"
+  
+  email_contacts:
+    enabled: true
+    priority: 21
+    description: "Filter and email contacts from database"
+
+# Global Settings
+settings:
+  auto_install: false
+  check_versions: true
+  verbose: true
+  dev_mode: false
+
+# Application Metadata
+app:
+  name: "Gantt to Tickets Converter"
+  version: "1.0.0"
+  description: "Convert Gantt charts to Trello/Jira tickets with email notifications"
+  author: "Your Team"

@@ -1,0 +1,104 @@
+====================================================================================================
+  QUEST 3 AR ROBOT CONTROL - DEBUG SESSION
+  Started: 2026-03-15 17:06:52
+  Platform: Windows 11
+====================================================================================================
+
+[17:06:53.005] [INIT] Server starting...
+[17:06:53.005] [INIT] Platform: Windows
+[17:06:53.005] [INIT] Arduino connected: False
+[17:08:07.947] [INFO] Quest 3 connected from 192.168.101.105
+[17:08:07.947] [INFO] Active connections: 1
+[17:08:08.619] [TRACK] Mode 4 tracking: X=-2.8cm, Z=-31.4cm, Heading=269.6°
+[17:08:18.418] [TRACK] Mode 4 tracking: X=-2.8cm, Z=-31.4cm, Heading=269.6°
+[17:08:24.028] [TRACK] Mode 4 tracking: X=-2.8cm, Z=-31.4cm, Heading=269.6°
+[17:08:27.838] [INFO] Quest 3 connected from 192.168.101.105
+[17:08:27.838] [INFO] Active connections: 1
+[17:08:33.952] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.8°
+[17:08:34.152] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.8°
+[17:08:38.360] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.8°
+[17:08:38.956] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.8°
+[17:08:39.154] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.8°
+[17:08:39.572] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.8°
+[17:08:39.774] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.8°
+[17:08:44.952] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.7°
+[17:08:46.751] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.7°
+[17:08:48.955] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.7°
+[17:08:49.152] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.7°
+[17:08:49.361] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.7°
+[17:08:50.952] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.7°
+[17:08:55.564] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.7°
+[17:08:55.753] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.7°
+[17:08:56.352] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.7°
+[17:08:57.751] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.7°
+[17:08:58.158] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.7°
+[17:08:58.561] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.7°
+[17:08:58.766] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.7°
+[17:08:59.963] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.7°
+[17:09:01.970] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.7°
+[17:09:02.569] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.7°
+[17:09:02.757] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.7°
+[17:09:04.154] [TRACK] Mode 4 tracking: X=-10.5cm, Z=-33.9cm, Heading=66.7°
+[17:09:06.969] [TRACK] Mode 4 tracking: X=-21.7cm, Z=-25.6cm, Heading=50.0°
+[17:09:07.951] [TRACK] Mode 4 tracking: X=-22.6cm, Z=-25.5cm, Heading=51.3°
+[17:09:08.750] [TRACK] Mode 4 tracking: X=-22.5cm, Z=-25.6cm, Heading=51.9°
+[17:09:10.095] [TRACK] Mode 4 tracking: X=-22.5cm, Z=-25.6cm, Heading=51.9°
+[17:09:13.752] [TRACK] Mode 4 tracking: X=-16.3cm, Z=-26.2cm, Heading=50.7°
+[17:09:15.150] [TRACK] Mode 4 tracking: X=-16.3cm, Z=-26.2cm, Heading=50.7°
+[17:09:17.949] [TRACK] Mode 4 tracking: X=-16.3cm, Z=-26.2cm, Heading=50.7°
+[17:09:18.349] [TRACK] Mode 4 tracking: X=-17.4cm, Z=-26.7cm, Heading=50.8°
+[17:09:21.552] [TRACK] Mode 4 tracking: X=-18.2cm, Z=-26.6cm, Heading=51.7°
+[17:09:24.351] [TRACK] Mode 4 tracking: X=-18.2cm, Z=-26.6cm, Heading=51.7°
+[17:09:25.715] [TRACK] Mode 4 tracking: X=-18.2cm, Z=-26.6cm, Heading=51.7°
+[17:09:28.149] [TRACK] Mode 4 tracking: X=-18.2cm, Z=-26.6cm, Heading=51.7°
+[17:09:29.149] [TRACK] Mode 4 tracking: X=-18.2cm, Z=-26.6cm, Heading=51.7°
+[17:09:35.551] [TRACK] Mode 4 tracking: X=-18.2cm, Z=-26.6cm, Heading=51.7°
+[17:09:37.347] [TRACK] Mode 4 tracking: X=-18.2cm, Z=-26.6cm, Heading=51.7°
+[17:09:37.549] [TRACK] Mode 4 tracking: X=-18.2cm, Z=-26.6cm, Heading=51.7°
+[17:09:37.950] [TRACK] Mode 4 tracking: X=-18.2cm, Z=-26.6cm, Heading=51.7°
+[17:09:40.350] [TRACK] Mode 4 tracking: X=-18.2cm, Z=-26.6cm, Heading=51.7°
+[17:09:41.350] [TRACK] Mode 4 tracking: X=-18.2cm, Z=-26.6cm, Heading=51.7°
+[17:09:46.745] [INFO] Quest 3 connected from 192.168.101.105
+[17:09:46.746] [INFO] Active connections: 1
+[17:09:55.295] [TRACK] Mode 4 tracking: X=1.5cm, Z=-16.8cm, Heading=12.4°
+[17:09:56.896] [TRACK] Mode 4 tracking: X=1.5cm, Z=-16.8cm, Heading=12.5°
+[17:09:57.896] [TRACK] Mode 4 tracking: X=1.5cm, Z=-16.8cm, Heading=12.5°
+[17:10:05.313] [TRACK] Mode 4 tracking: X=1.5cm, Z=-16.8cm, Heading=10.6°
+[17:10:10.700] [TRACK] Mode 4 tracking: X=1.6cm, Z=-16.7cm, Heading=9.4°
+[17:10:11.920] [TRACK] Mode 4 tracking: X=1.4cm, Z=-17.0cm, Heading=355.7°
+[17:10:13.095] [TRACK] Mode 4 tracking: X=1.4cm, Z=-17.0cm, Heading=356.0°
+[17:10:14.100] [TRACK] Mode 4 tracking: X=1.4cm, Z=-17.0cm, Heading=355.8°
+[17:10:16.303] [TRACK] Mode 4 tracking: X=2.0cm, Z=-16.4cm, Heading=26.5°
+[17:10:16.499] [TRACK] Mode 4 tracking: X=1.9cm, Z=-16.4cm, Heading=25.5°
+[17:10:18.501] [TRACK] Mode 4 tracking: X=1.0cm, Z=-19.2cm, Heading=288.1°
+[17:10:22.301] [TRACK] Mode 4 tracking: X=1.5cm, Z=-17.1cm, Heading=327.6°
+[17:10:24.701] [TRACK] Mode 4 tracking: X=2.0cm, Z=-16.5cm, Heading=9.3°
+[17:10:25.098] [TRACK] Mode 4 tracking: X=1.9cm, Z=-16.5cm, Heading=5.0°
+[17:10:27.897] [TRACK] Mode 4 tracking: X=2.0cm, Z=-21.4cm, Heading=264.5°
+[17:10:29.300] [TRACK] Mode 4 tracking: X=3.8cm, Z=-21.8cm, Heading=233.7°
+[17:10:30.498] [TRACK] Mode 4 tracking: X=5.5cm, Z=-20.6cm, Heading=168.3°
+[17:10:35.898] [TRACK] Mode 4 tracking: X=-4.1cm, Z=-27.6cm, Heading=214.8°
+[17:10:36.498] [TRACK] Mode 4 tracking: X=-4.2cm, Z=-26.0cm, Heading=217.5°
+[17:10:40.101] [TRACK] Mode 4 tracking: X=-4.1cm, Z=-25.9cm, Heading=216.2°
+[17:10:42.100] [TRACK] Mode 4 tracking: X=-3.1cm, Z=-26.4cm, Heading=191.2°
+[17:10:44.097] [TRACK] Mode 4 tracking: X=-3.0cm, Z=-26.3cm, Heading=186.7°
+[17:10:45.098] [TRACK] Mode 4 tracking: X=-3.0cm, Z=-26.3cm, Heading=186.7°
+[17:10:46.698] [TRACK] Mode 4 tracking: X=-2.7cm, Z=-25.9cm, Heading=187.1°
+[17:10:49.700] [TRACK] Mode 4 tracking: X=-2.6cm, Z=-25.7cm, Heading=187.8°
+[17:10:52.700] [TRACK] Mode 4 tracking: X=-2.8cm, Z=-26.1cm, Heading=188.5°
+[17:10:53.097] [TRACK] Mode 4 tracking: X=-2.8cm, Z=-26.1cm, Heading=188.5°
+[17:10:54.697] [TRACK] Mode 4 tracking: X=-2.9cm, Z=-27.6cm, Heading=191.4°
+[17:10:55.097] [TRACK] Mode 4 tracking: X=-2.9cm, Z=-27.6cm, Heading=191.4°
+[17:10:56.498] [TRACK] Mode 4 tracking: X=-2.5cm, Z=-30.4cm, Heading=191.2°
+[17:11:02.698] [TRACK] Mode 4 tracking: X=-5.0cm, Z=-17.0cm, Heading=192.1°
+[17:11:03.302] [TRACK] Mode 4 tracking: X=-6.2cm, Z=-11.1cm, Heading=191.6°
+[17:11:06.100] [TRACK] Mode 4 tracking: X=-7.2cm, Z=-4.6cm, Heading=191.2°
+[17:11:07.853] [MODE] MODE 2 ACTIVATED: User Trajectory
+[17:11:15.936] [MODE] MODE 1 ACTIVATED: Manual Control
+[17:17:53.742] [INFO] Quest 3 connected from 192.168.101.105
+[17:17:53.742] [INFO] Active connections: 1
+[17:34:15.357] [SHUTDOWN] Server stopped by user (Ctrl+C)
+
+====================================================================================================
+  Session ended: 2026-03-15 17:34:15
+====================================================================================================

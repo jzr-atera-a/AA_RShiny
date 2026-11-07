@@ -1,0 +1,420 @@
+/* ============================================================
+   Machine Learning for Algorithmic Trading — Stefan Jansen
+   Theme: Teal/Turquoise Professional
+   Colors: #008A82 → #00A39A · Accent: #FF6B35
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --primary:    #008A82;
+  --secondary:  #00A39A;
+  --dark:       #002C3C;
+  --light:      #E8F6F5;
+  --accent1:    #FF6B35;
+  --accent2:    #F7931E;
+  --bg-base:    #0D1117;
+  --bg-surface: #161B22;
+  --bg-card:    #1C2128;
+  --border:     #30363D;
+  --text-1:     #E6EDF3;
+  --text-2:     #8B949E;
+  --text-3:     #6E7681;
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body:    'Inter', system-ui, sans-serif;
+  --font-code:    'JetBrains Mono', 'Fira Code', monospace;
+  --radius:       10px;
+}
+
+/* ── Base ──────────────────────────────────────────────────── */
+body, .content-wrapper, .right-side {
+  background: var(--bg-base) !important;
+  font-family: var(--font-body) !important;
+  color: var(--text-1) !important;
+}
+
+/* ── Sidebar ───────────────────────────────────────────────── */
+.main-sidebar, .sidebar {
+  background: linear-gradient(180deg, var(--dark) 0%, var(--primary) 60%, var(--secondary) 100%) !important;
+}
+
+.sidebar .sidebar-menu > li > a {
+  color: var(--light) !important;
+  border-left: 3px solid transparent;
+  transition: all 0.2s;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.sidebar .sidebar-menu > li.active > a,
+.sidebar .sidebar-menu > li:hover > a {
+  background: rgba(255, 107, 53, 0.15) !important;
+  border-left: 3px solid var(--accent1) !important;
+  color: white !important;
+  font-weight: 600;
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+.main-header, .main-header .navbar {
+  background: linear-gradient(135deg, var(--dark) 0%, var(--primary) 100%) !important;
+  border-bottom: 2px solid var(--secondary) !important;
+}
+
+.main-header .logo {
+  background: var(--dark) !important;
+  color: var(--light) !important;
+  font-weight: 700 !important;
+  font-family: var(--font-display) !important;
+  font-size: 16px !important;
+  border-right: 1px solid var(--secondary) !important;
+}
+
+/* ── Sidebar book badge ────────────────────────────────────── */
+.sidebar-book-badge {
+  padding: 16px 14px 12px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 8px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.book-chip {
+  background: var(--accent1);
+  color: white;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 9px;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 1.2px;
+  font-family: var(--font-code);
+  margin-bottom: 8px;
+}
+
+.book-authors {
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  margin-top: 6px;
+  font-family: var(--font-display);
+}
+
+.book-pub {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* ── Chapter Hero ──────────────────────────────────────────── */
+.chapter-hero {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  padding: 40px 30px;
+  border-radius: var(--radius);
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px rgba(0, 138, 130, 0.3);
+}
+
+.hero-chapter-num {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+.hero-title {
+  color: white;
+  font-size: 36px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  font-family: var(--font-display);
+  line-height: 1.2;
+}
+
+.hero-subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.badge-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.hero-badge {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* ── Stats Cards ───────────────────────────────────────────── */
+.stat-card {
+  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-surface) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s;
+  margin-bottom: 20px;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 138, 130, 0.2);
+  border-color: var(--primary);
+}
+
+.stat-value {
+  display: block;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 6px;
+  font-family: var(--font-display);
+}
+
+.stat-label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+/* ── Boxes ─────────────────────────────────────────────────── */
+.box {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.box-header {
+  background: var(--bg-surface) !important;
+  color: var(--text-1) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.box.box-solid.box-info > .box-header {
+  background: var(--primary) !important;
+  color: white !important;
+}
+
+.box.box-solid.box-warning > .box-header {
+  background: var(--accent2) !important;
+  color: white !important;
+}
+
+.box.box-solid.box-success > .box-header {
+  background: var(--secondary) !important;
+  color: white !important;
+}
+
+.box.box-solid.box-danger > .box-header {
+  background: var(--accent1) !important;
+  color: white !important;
+}
+
+/* ── Framework Cards ───────────────────────────────────────── */
+.framework-card {
+  background: rgba(0, 138, 130, 0.05);
+  border-left: 4px solid var(--primary);
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: 4px;
+}
+
+.framework-card h5 {
+  color: var(--primary);
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.framework-card p {
+  color: var(--text-1);
+  margin-bottom: 0;
+  line-height: 1.6;
+}
+
+.framework-card ul, .framework-card ol {
+  color: var(--text-1);
+  margin-bottom: 0;
+  padding-left: 20px;
+}
+
+/* ── Tip/Info Boxes ────────────────────────────────────────── */
+.tip-box {
+  background: rgba(255, 193, 7, 0.1);
+  border-left: 4px solid var(--accent2);
+  padding: 14px;
+  margin: 16px 0;
+  border-radius: 4px;
+  color: var(--text-1);
+}
+
+.info-box-plain {
+  background: rgba(23, 162, 184, 0.1);
+  border-left: 4px solid var(--secondary);
+  padding: 14px;
+  margin: 16px 0;
+  border-radius: 4px;
+  color: var(--text-1);
+}
+
+.success-box {
+  background: rgba(40, 167, 69, 0.1);
+  border-left: 4px solid #28a745;
+  padding: 14px;
+  margin: 16px 0;
+  border-radius: 4px;
+  color: var(--text-1);
+}
+
+/* ── Tables ────────────────────────────────────────────────── */
+.algo-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+}
+
+.algo-table thead {
+  background: var(--primary);
+  color: white;
+}
+
+.algo-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  border: 1px solid var(--border);
+}
+
+.algo-table td {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  color: var(--text-1);
+}
+
+.algo-table tbody tr:nth-child(even) {
+  background: rgba(0, 138, 130, 0.05);
+}
+
+.algo-table tbody tr:hover {
+  background: rgba(0, 138, 130, 0.1);
+}
+
+/* ── Tab Boxes ─────────────────────────────────────────────── */
+.nav-tabs-custom {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.nav-tabs-custom > .nav-tabs > li.active > a {
+  background: var(--primary) !important;
+  color: white !important;
+  border-top: 2px solid var(--accent1) !important;
+}
+
+.nav-tabs-custom > .nav-tabs > li > a {
+  color: var(--text-2) !important;
+}
+
+.nav-tabs-custom > .nav-tabs > li > a:hover {
+  background: rgba(0, 138, 130, 0.1) !important;
+  color: var(--text-1) !important;
+}
+
+/* ── Python Placeholder ────────────────────────────────────── */
+.python-placeholder {
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(247, 147, 30, 0.1) 100%);
+  border: 2px dashed var(--accent1);
+  border-radius: var(--radius);
+  padding: 60px 40px;
+  text-align: center;
+  margin: 40px 0;
+}
+
+.placeholder-icon {
+  font-size: 72px;
+  margin-bottom: 20px;
+}
+
+.python-placeholder h3 {
+  color: var(--accent1);
+  font-family: var(--font-display);
+  font-size: 28px;
+  margin-bottom: 16px;
+}
+
+.python-placeholder p {
+  color: var(--text-2);
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.python-placeholder ul {
+  display: inline-block;
+  text-align: left;
+  color: var(--text-1);
+  font-size: 14px;
+  margin: 0;
+}
+
+/* ── Plotly Charts ─────────────────────────────────────────── */
+.plotly {
+  background: var(--bg-card) !important;
+  border-radius: var(--radius);
+}
+
+/* ── DataTables ────────────────────────────────────────────── */
+.dataTables_wrapper {
+  color: var(--text-1) !important;
+}
+
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+  background: var(--bg-surface) !important;
+  color: var(--text-1) !important;
+  border: 1px solid var(--border) !important;
+}
+
+table.dataTable {
+  background: var(--bg-card) !important;
+  color: var(--text-1) !important;
+}
+
+table.dataTable thead th {
+  background: var(--primary) !important;
+  color: white !important;
+  border-bottom: 2px solid var(--secondary) !important;
+}
+
+table.dataTable tbody tr:hover {
+  background: rgba(0, 138, 130, 0.1) !important;
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 28px;
+  }
+  
+  .stat-value {
+    font-size: 24px;
+  }
+  
+  .chapter-hero {
+    padding: 30px 20px;
+  }
+}

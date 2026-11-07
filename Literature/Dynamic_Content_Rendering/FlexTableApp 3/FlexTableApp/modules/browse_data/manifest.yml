@@ -1,0 +1,32 @@
+module:
+  id: "browse_data"
+  name: "Browse Data"
+  description: "Browse and download all stored rows (raw delimited backup)"
+  version: "1.0.0"
+  author: "Flex Table Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Browse Data"
+    icon: "table"
+    tabname: "browse_data"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - DT
+
+    package_versions: {}
+
+  api:
+    required: ["bigquery"]
+    optional: []
+
+  data:
+    required: []
+    optional: []

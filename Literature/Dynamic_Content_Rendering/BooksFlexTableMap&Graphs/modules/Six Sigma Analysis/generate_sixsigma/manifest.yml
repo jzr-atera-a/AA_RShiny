@@ -1,0 +1,34 @@
+module:
+  id: "generate_sixsigma"
+  name: "Generate Six Sigma Diagram"
+  description: "AI-powered Six Sigma diagram generation (Fishbone, Pareto, Control Chart, CTQ Tree, FMEA, etc.) via Claude"
+  version: "1.0.0"
+  author: "Six Sigma Analysis Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Generate Diagram"
+    icon: "magic"
+    tabname: "generate_sixsigma"
+    group: "Six Sigma Analysis"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinyjs
+      - DT
+
+    package_versions: {}
+
+  api:
+    required: ["claude"]
+    optional: ["bigquery"]
+
+  data:
+    required: []
+    optional: []
