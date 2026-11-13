@@ -1,0 +1,390 @@
+design_id: seed_realtime_ml_pipeline
+design_group: ml_genai
+design_type: realtime_ml_pipeline
+title: Real-Time ML Pipeline with Feature Store
+variant: Online inference with training-serving consistency
+summary: A production ML system that serves predictions in milliseconds. Streaming and batch pipelines compute features into an offline and an online feature store so training and serving see identical definitions. Models are tracked in a registry, served behind a gateway, monitored for drift, and retrained automatically.
+when_to_use: Predictions must be fresh and fast, for example fraud scoring, recommendations, pricing or personalisation.
+when_not_to_use: Daily or weekly scoring is enough; a batch pipeline is simpler and cheaper.
+complexity: High
+tags: mlops, feature store, online inference, drift, retraining
+
+@component
+id: C1
+label: Event Streams
+lane: Data Sources
+kind: queue
+description: Clicks, transactions and sensor events arriving continuously.
+technologies: Kafka, Kinesis, Pub/Sub
+attributes: N/A
+methods: N/A
+
+@component
+id: C2
+label: Operational Databases
+lane: Data Sources
+kind: store
+description: Transactional systems holding entities and reference data.
+technologies: Postgres, DynamoDB
+attributes: N/A
+methods: N/A
+
+@component
+id: C3
+label: Data Warehouse
+lane: Data Sources
+kind: store
+description: Historical data used to build training sets.
+technologies: BigQuery, Snowflake
+attributes: N/A
+methods: N/A
+
+@component
+id: C4
+label: Stream Feature Pipeline
+lane: Feature Engineering
+kind: process
+description: Computes fresh aggregates such as clicks in the last 5 minutes.
+technologies: Flink, Spark Streaming
+attributes: N/A
+methods: N/A
+
+@component
+id: C5
+label: Batch Feature Pipeline
+lane: Feature Engineering
+kind: process
+description: Computes heavy historical features on a schedule.
+technologies: Spark, dbt
+attributes: N/A
+methods: N/A
+
+@component
+id: C6
+label: Offline Feature Store
+lane: Feature Store
+kind: store
+description: Point-in-time correct feature history for training.
+technologies: Parquet on S3, Feast
+attributes: N/A
+methods: N/A
+
+@component
+id: C7
+label: Online Feature Store
+lane: Feature Store
+kind: store
+description: Low-latency key-value lookup of the latest features at serving time.
+technologies: Redis, DynamoDB, Feast
+attributes: N/A
+methods: N/A
+
+@component
+id: C8
+label: Training Job
+lane: Training and Registry
+kind: process
+description: Builds a point-in-time training set, trains and validates the model.
+technologies: PyTorch, XGBoost, SageMaker
+attributes: N/A
+methods: N/A
+
+@component
+id: C9
+label: Experiment Tracking
+lane: Training and Registry
+kind: service
+description: Records parameters, metrics and artifacts for every run.
+technologies: MLflow, Weights and Biases
+attributes: N/A
+methods: N/A
+
+@component
+id: C10
+label: Model Registry
+lane: Training and Registry
+kind: store
+description: Versioned models with stages, lineage and approval status.
+technologies: MLflow Registry, Vertex AI
+attributes: N/A
+methods: N/A
+
+@component
+id: C11
+label: Client App
+lane: Online Serving
+kind: actor
+description: The product that requests a prediction.
+technologies: Mobile app, backend service
+attributes: N/A
+methods: N/A
+
+@component
+id: C12
+label: Inference Gateway
+lane: Online Serving
+kind: gateway
+description: Routes requests, handles A/B tests and canary rollouts.
+technologies: Envoy, API Gateway
+attributes: N/A
+methods: N/A
+
+@component
+id: C13
+label: Model Server
+lane: Online Serving
+kind: model
+description: Loads the approved model, fetches features and returns the prediction.
+technologies: Triton, TorchServe, KServe
+attributes: N/A
+methods: N/A
+
+@component
+id: C14
+label: Prediction Cache
+lane: Online Serving
+kind: cache
+description: Reuses recent predictions for repeated requests.
+technologies: Redis
+attributes: N/A
+methods: N/A
+
+@component
+id: C15
+label: Prediction and Label Logs
+lane: Monitoring and Feedback
+kind: store
+description: Logs inputs, predictions and later ground-truth labels.
+technologies: Kafka to warehouse
+attributes: N/A
+methods: N/A
+
+@component
+id: C16
+label: Drift and Quality Monitor
+lane: Monitoring and Feedback
+kind: monitor
+description: Compares live data and accuracy with training baselines and alerts on drift.
+technologies: Evidently, Arize
+attributes: N/A
+methods: N/A
+
+@component
+id: C17
+label: Retrain Trigger
+lane: Monitoring and Feedback
+kind: process
+description: Starts retraining on schedule, drift alert or accuracy drop.
+technologies: Airflow, Kubeflow Pipelines
+attributes: N/A
+methods: N/A
+
+@connection
+from: C1
+to: C4
+label: events
+type: data
+
+@connection
+from: C2
+to: C5
+label: entity data
+type: data
+
+@connection
+from: C3
+to: C5
+label: history
+type: data
+
+@connection
+from: C4
+to: C6
+label: feature history
+type: data
+
+@connection
+from: C4
+to: C7
+label: fresh features
+type: data
+
+@connection
+from: C5
+to: C6
+label: batch features
+type: data
+
+@connection
+from: C5
+to: C7
+label: materialise
+type: data
+
+@connection
+from: C6
+to: C8
+label: training set
+type: data
+
+@connection
+from: C8
+to: C9
+label: runs and metrics
+type: data
+
+@connection
+from: C8
+to: C10
+label: candidate model
+type: data
+
+@connection
+from: C10
+to: C13
+label: approved model
+type: control
+
+@connection
+from: C11
+to: C12
+label: request
+type: data
+
+@connection
+from: C12
+to: C14
+label: cache lookup
+type: control
+
+@connection
+from: C12
+to: C13
+label: route
+type: data
+
+@connection
+from: C7
+to: C13
+label: online features
+type: data
+
+@connection
+from: C13
+to: C12
+label: prediction
+type: data
+
+@connection
+from: C12
+to: C11
+label: response
+type: data
+
+@connection
+from: C13
+to: C15
+label: log prediction
+type: event
+
+@connection
+from: C15
+to: C16
+label: live data
+type: data
+
+@connection
+from: C16
+to: C17
+label: drift alert
+type: event
+
+@connection
+from: C17
+to: C8
+label: retrain
+type: feedback
+
+@step
+order: 1
+text: Events and batch data flow into the stream and batch feature pipelines.
+components: C1,C2,C3,C4,C5
+
+@step
+order: 2
+text: Features are written to the offline store for training and the online store for serving.
+components: C4,C5,C6,C7
+
+@step
+order: 3
+text: A training job builds a point-in-time training set and trains a model.
+components: C6,C8,C9
+
+@step
+order: 4
+text: The validated model is registered and approved for deployment.
+components: C8,C10
+
+@step
+order: 5
+text: The model server loads the approved model behind the inference gateway.
+components: C10,C13,C12
+
+@step
+order: 6
+text: A client request arrives; the gateway checks the cache and the model server fetches online features.
+components: C11,C12,C14,C13,C7
+
+@step
+order: 7
+text: Predictions are returned and logged with later labels.
+components: C13,C12,C11,C15
+
+@step
+order: 8
+text: The monitor detects drift and the retrain trigger restarts training.
+components: C16,C17,C8
+
+@tradeoff
+kind: pro
+text: Fresh features and fast predictions improve accuracy for time-sensitive decisions.
+
+@tradeoff
+kind: pro
+text: One feature definition for training and serving prevents training-serving skew.
+
+@tradeoff
+kind: con
+text: Many moving parts: streaming, two stores, registry and monitoring.
+
+@tradeoff
+kind: con
+text: Needs strong MLOps practice and on-call ownership.
+
+@tradeoff
+kind: risk
+text: Online and offline features drifting apart silently breaks predictions.
+
+@tradeoff
+kind: cost
+text: Always-on streaming and low-latency stores cost more than batch jobs.
+
+@tradeoff
+kind: scaling
+text: Scale the online store and model servers horizontally; keep p99 latency budgets explicit.
+
+@reference
+title: Designing Machine Learning Systems
+author: Chip Huyen
+url: N/A
+
+@reference
+title: Machine Learning Design Patterns
+author: Lakshmanan, Robinson and Munn
+url: N/A
+
+@reference
+title: Hidden Technical Debt in Machine Learning Systems
+author: Sculley et al.
+url: N/A
+

@@ -87,7 +87,8 @@ cc_bq_backend <- function(api) list(
       bigrquery::bq_project_query(api$bq_project_id, sprintf("ALTER TABLE `%s` %s", full, paste(sprintf("ADD COLUMN IF NOT EXISTS %s %s", tb$added, vapply(tb$cols[tb$added], cc_bq_type, "")), collapse = ", "))); up() }) else up()
     invisible(nrow(df)) },
   read = function(name) { tb <- cc_tables[[name]]
-    bigrquery::bq_table_download(bigrquery::bq_project_query(api$bq_project_id, sprintf("SELECT * FROM `%s.%s.%s`", api$bq_project_id, api$bq_dataset_id, tb$table))) })
+    tryCatch(bigrquery::bq_table_download(bigrquery::bq_project_query(api$bq_project_id, sprintf("SELECT * FROM `%s.%s.%s`", api$bq_project_id, api$bq_dataset_id, tb$table))),
+      error = function(e) if (grepl("notFound|was not found", conditionMessage(e))) { cat("[C.C]", tb$table, "not created yet: read as empty (it is created by the first save)\n"); cc_coerce(name, NULL) } else stop(e)) })   # ********
 cc_mem_backend <- function() { db <- new.env(parent = emptyenv())   # tests and "no BigQuery yet"
   list(connected = function() TRUE, ensure = function() invisible(TRUE),
        write = function(name, df) { assign(name, rbind(if (exists(name, envir = db)) get(name, envir = db) else NULL, df), envir = db); invisible(nrow(df)) },
@@ -121,7 +122,8 @@ cc_json <- function(x) as.character(jsonlite::toJSON(x, auto_unbox = TRUE, null 
 # uses GBPUSD and divides. Returns list(rate, epic, how, time) or rate NA when no FX market answers.
 cc_fx_rate <- function(client, from, to) {
   if (is.na(from) || is.na(to) || identical(from, to)) return(list(rate = 1, epic = NA_character_, how = "same currency", time = Sys.time()))
-  for (ep in c(paste0(from, to), paste0(to, from))) {
+  eps <- c(paste0(from, to), paste0(to, from)); if (to %in% c("GBP", "EUR", "AUD", "NZD") && !from %in% c("GBP", "EUR")) eps <- rev(eps)   # ******** GBPUSD exists, USDGBP does not
+  for (ep in eps) {
     m <- tryCatch(client$market(ep), error = function(e) NULL); if (is.null(m)) next
     f <- cc_market_facts(m); mid <- mean(c(f$bid, f$offer), na.rm = TRUE); if (!is.finite(mid) || mid <= 0) next
     inv <- ep == paste0(to, from)

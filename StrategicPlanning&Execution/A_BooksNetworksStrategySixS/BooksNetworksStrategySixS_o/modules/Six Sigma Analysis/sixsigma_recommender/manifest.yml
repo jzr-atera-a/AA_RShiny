@@ -1,0 +1,33 @@
+module:
+  id: "sixsigma_recommender"
+  name: "Six Sigma Tool Recommender"
+  description: "AI-powered tool recommender - describe a Six Sigma problem, get the top N best-fit tools ranked with reasoning and drawbacks"
+  version: "1.0.0"
+  author: "Six Sigma Analysis Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Tool Recommender"
+    icon: "lightbulb"
+    tabname: "sixsigma_recommender"
+    group: "Six Sigma Analysis"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - DT
+
+    package_versions: {}
+
+  api:
+    required: ["claude"]
+    optional: []
+
+  data:
+    required: []
+    optional: []

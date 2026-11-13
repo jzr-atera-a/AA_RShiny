@@ -1,0 +1,32 @@
+module:
+  id: "debug_console"
+  name: "Debug Console"
+  description: "Live, copy-friendly mirror of every cat()/print() the app writes - built for copying long console output from a phone browser"
+  version: "1.0.0"
+  author: "API Configuration Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Debug Console"
+    icon: "terminal"
+    tabname: "debug_console"
+    group: "API Configuration"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: []
+
+  data:
+    required: []
+    optional: []

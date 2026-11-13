@@ -107,7 +107,7 @@ techdesign_library_server <- function(id, api_manager) {
         api_manager$bq_insert_techdesign(row)
         draw(techdesign_from_row(row)); load_versions(current_id())
         set_status("status-success", sprintf("Restored row %s as the newest version.", rid))
-      }, error = function(e) set_status("status-error", paste("Restore failed:", e$message)))
+      }, error = function(e) set_status("status-error", paste("Restore failed:", app_err_text(e))))
     })
 
     observeEvent(input$delete, {
@@ -125,7 +125,7 @@ techdesign_library_server <- function(id, api_manager) {
       tryCatch({
         api_manager$bq_insert_techdesign(row)
         set_status("status-success", "Design deleted.")
-      }, error = function(e) set_status("status-error", paste("Delete failed:", e$message)))
+      }, error = function(e) set_status("status-error", paste("Delete failed:", app_err_text(e))))
     })
 
     output$status <- renderUI(tags$div())

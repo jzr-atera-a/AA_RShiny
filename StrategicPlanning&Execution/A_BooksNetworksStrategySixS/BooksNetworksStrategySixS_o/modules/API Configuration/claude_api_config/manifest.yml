@@ -1,0 +1,35 @@
+module:
+  id: "claude_api_config"
+  name: "Editing Tool API Configuration"
+  description: "Configure Anthropic Editing Tool API credentials"
+  version: "1.0.0"
+  author: "Mind Map Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Editing Tool API Config"
+    icon: "robot"
+    tabname: "claude_api_config"
+    group: "API Configuration"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - httr
+      - jsonlite
+      - curl
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: []
+
+  data:
+    required: []
+    optional: []

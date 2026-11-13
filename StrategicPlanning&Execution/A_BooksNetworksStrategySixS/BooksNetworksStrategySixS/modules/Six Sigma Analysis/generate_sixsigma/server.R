@@ -74,7 +74,7 @@ generate_sixsigma_server <- function(id, api_manager) {
         output$preview_table <- DT::renderDataTable({})
         if (!quiet) {
           output$status <- renderUI({
-            tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Parse issue (blocking): ", e$message)
+            tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Parse issue (blocking): ", app_err_text(e))
           })
         }
       })
@@ -182,7 +182,7 @@ generate_sixsigma_server <- function(id, api_manager) {
 
       }, error = function(e) {
         shinyjs::hide("loading_spinner")
-        error_message <- e$message
+        error_message <- app_err_text(e)
         cat(sprintf("❌ [Six Sigma Analysis][DEBUG] Generation failed: %s\n", error_message))
         output$status <- renderUI({
           tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Generation Failed",
@@ -231,9 +231,9 @@ generate_sixsigma_server <- function(id, api_manager) {
 
       }, error = function(e) {
         output$status <- renderUI({
-          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", e$message)
+          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", app_err_text(e))
         })
-        showNotification(paste("Error:", e$message), type = "error")
+        showNotification(paste("Error:", app_err_text(e)), type = "error")
       })
     })
 

@@ -78,6 +78,18 @@ cc_plan_check <- function(p) {
   ms <- if (is.finite(p$min_stop_atr)) p$min_stop_atr else NA_real_
   out[[length(out) + 1]] <- row("Stop far enough from the entry (x ATR) ******", if (!is.finite(ms) || ms <= 0 || !is.finite(p$stop_dist) || !is.finite(p$atr) || p$atr <= 0) NA else p$stop_dist >= ms * p$atr - 1e-9,
     if (!is.finite(ms) || ms <= 0) "no minimum set" else if (!is.finite(p$stop_dist) || !is.finite(p$atr)) "stop or ATR not known yet" else sprintf("stop %.3f from the entry = %.2f ATR; plan minimum %.2f ATR (ATR %.3f)", p$stop_dist, p$stop_dist / p$atr, ms, p$atr))
+  # ********** today's Morning Sheet: your own morning reading of this market says no trade
+  msr <- as.character(p$ms_regime %||% "")[1]
+  out[[length(out) + 1]] <- row("Morning Sheet allows this market today **********", if (!nzchar(msr)) NA else !identical(msr, "UNCLEAR_NO_TRADE"),
+    if (!nzchar(msr)) "no Morning Sheet reading for this market today" else if (identical(msr, "UNCLEAR_NO_TRADE")) "your Morning Sheet marks it UNCLEAR: no trade (2 of your last losses were taken against it)" else paste("Morning Sheet regime:", msr))
+  # ********** risk in money in line with your own recent trades: one oversized loss cancels many wins
+  ur <- cc_n1(p$usual_risk); rk <- cc_n1(p$risk_money)
+  out[[length(out) + 1]] <- row("Risk in line with your recent trades **********", if (!is.finite(ur) || ur <= 0 || !is.finite(rk)) NA else rk <= 3 * ur + 1e-9 && rk >= ur / 3 - 1e-9,
+    if (!is.finite(ur) || ur <= 0) "fewer than 3 recent trades to compare" else if (!is.finite(rk)) "risk not known yet" else sprintf("this trade risks %.2f; your recent trades risked about %.2f (median): %s", rk, ur,
+      if (rk > 3 * ur) "more than 3 times as much, a loss here cancels several wins" else if (rk < ur / 3) "less than a third, a win here will not cover a usual loss" else "comparable"))
+  mx <- cc_n1(p$max_stop_atr)   # ******** entry close to the set-up: the stop (beyond the level that cancels it) at most x ATR away; further = entering after the move
+  out[[length(out) + 1]] <- row("Entry close to the set-up (stop at most x ATR) ********", if (!is.finite(mx) || mx <= 0 || !is.finite(p$stop_dist) || !is.finite(p$atr) || p$atr <= 0) NA else p$stop_dist <= mx * p$atr + 1e-9,
+    if (!is.finite(mx) || mx <= 0) "no maximum set" else if (!is.finite(p$stop_dist) || !is.finite(p$atr)) "stop or ATR not known yet" else sprintf("stop %.3f away = %.2f ATR; plan maximum %.2f ATR%s", p$stop_dist, p$stop_dist / p$atr, mx, if (p$stop_dist > mx * p$atr) ": price has already moved away from the set-up level, wait for a pull-back" else ""))
   st <- p$setups %||% character(0); st <- st[nzchar(st)]
   out[[length(out) + 1]] <- row("Set-up allowed by the plan *", if (!length(st)) NA else (p$strategy %||% "") %in% st, if (!length(st)) "no list set (any set-up)" else sprintf("this deal: %s; allowed: %s", p$strategy_label %||% p$strategy %||% "-", paste(p$setup_labels %||% st, collapse = ", ")))
   mr <- cc_n1(p$max_loss_row); lr <- cc_n1(p$loss_row); if (!is.finite(lr)) lr <- 0
@@ -90,8 +102,25 @@ cc_plan_check <- function(p) {
   r5 <- p$r5; out[[length(out) + 1]] <- row("Rule of Five time-frames (major trend) ****", if (is.null(r5)) NA else r5$ok, if (is.null(r5)) "chart not loaded" else r5$text)
   rules <- p$rules %||% character(0); ticks <- p$ticks %||% logical(0)
   for (i in seq_along(rules)) if (nzchar(trimws(rules[i]))) out[[length(out) + 1]] <- row(paste0("Plan point ", i, ": ", rules[i]), isTRUE(ticks[i]), if (isTRUE(ticks[i])) "ticked" else "not ticked")
-  do.call(rbind, out)
+  cc_plan_modes(do.call(rbind, out), p$modes)
 }
+
+# ******* Block / Warn / Off per rule (Setup). Only the rules in cc_plan_mode_rules can be changed; the money rules
+# (daily loss, deals per day, size, open-risk cap) and your own plan points always block.
+cc_plan_mode_rules <- c(ms = "Morning Sheet allows this market today", sizecons = "Risk in line with your recent trades", chase = "Entry close to the set-up", regime = "Market regime (ADX)", r5 = "Rule of Five time-frames", news = "High-impact news in the holding time",
+                        session = "Trading session (UK time)", stopatr = "Stop far enough from the entry", setup = "Set-up allowed by the plan",
+                        corr = "Correlated open risk", lossrow = "Losses in a row today", market = "Market allowed by the plan")
+cc_plan_mode_choices <- c("Block (order refused)" = "block", "Warn (amber, order allowed)" = "warn", "Off (not checked)" = "off")
+cc_plan_modes <- function(pc, modes = NULL) {
+  if (is.null(pc) || !nrow(pc)) return(pc); pc$mode <- rep("block", nrow(pc))
+  for (k in names(cc_plan_mode_rules)) { m <- tolower(as.character(modes[[k]] %||% "block")[1]); if (!m %in% c("warn", "off")) next
+    i <- startsWith(pc$rule, cc_plan_mode_rules[[k]]); if (!any(i)) next
+    pc$mode[i] <- m
+    if (m == "off") { pc$detail[i] <- paste0("switched off in Setup (", pc$detail[i], ")"); pc$ok[i] <- NA } }
+  pc
+}
+cc_plan_hard <- function(pc) if (is.null(pc) || !nrow(pc)) logical(0) else !is.na(pc$ok) & !pc$ok & (pc$mode %||% rep("block", nrow(pc))) == "block"
+cc_plan_warn <- function(pc) if (is.null(pc) || !nrow(pc)) logical(0) else !is.na(pc$ok) & !pc$ok & (pc$mode %||% rep("block", nrow(pc))) == "warn"
 
 # ---- 2. backtest of each pattern on the loaded chart (the scan's own history) and the trade blotter -----------------
 cc_backtest <- function(scan) {
@@ -212,3 +241,10 @@ cc_corr <- function(a, b) { if (is.null(a) || is.null(b) || nrow(a) < 20 || nrow
   m <- merge(data.frame(time = a$time, x = a$close), data.frame(time = b$time, y = b$close), by = "time"); if (nrow(m) < 20) return(NA_real_)
   m <- utils::tail(m[order(m$time), ], 101); stats::cor(diff(log(m$x)), diff(log(m$y)), use = "complete.obs") }
 cc_setup_choices <- c("Pattern from the matrix" = "PATTERN", "Pivot Point Bounce" = "PIVOT_BOUNCE", "Holy Grail" = "HOLY_GRAIL", "Straddle" = "STRADDLE", "Opening-range breakout" = "ORB", "Other" = "OTHER")
+
+# ******** the set-up of a scenario, from its pattern keys, name and reasons (rule, course and Claude scenarios alike)
+cc_scen_setup <- function(sc) { if (is.null(sc) || !NROW(sc)) return(character(0)); g <- function(k) { v <- sc[[k]]; if (is.null(v)) rep("", NROW(sc)) else ifelse(is.na(v), "", as.character(v)) }
+  t <- tolower(paste(g("keys"), g("id"), g("basis")))   # Claude rows: OTHER (their reasons may mention a pivot without being the set-up)
+  ifelse(g("source") %in% "Claude", "OTHER", ifelse(grepl("pivot", t), "PIVOT_BOUNCE", ifelse(grepl("holy.?grail", t), "HOLY_GRAIL", ifelse(grepl("straddle", t), "STRADDLE",
+    ifelse(grepl("(^|[^a-z])orb([^a-z_]|_up|_down|$)|opening.range", t), "ORB", "PATTERN"))))) }
+cc_chart_label <- function(res) { x <- c(MINUTE = "1 Min", MINUTE_5 = "5 Min", MINUTE_15 = "15 Min", MINUTE_30 = "30 Min", HOUR = "1 Hour", HOUR_4 = "4 Hour", DAY = "Daily")[res]; if (is.na(x)) as.character(res) else unname(x) }

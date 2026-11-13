@@ -1,0 +1,548 @@
+# modules/_module_registry.yml
+# Central Module Registry - THE CONTROL CENTER (Unified Suite)
+# Change 'enabled: false' to disable any module. Priority controls
+# ordering WITHIN each sidebar group. Group membership/order/expanded
+# state is controlled by the top-level `groups:` list below, mirroring
+# the proven-working pattern (confirmed via a live screenshot) used by
+# the ML System Design Prep reference app: each group lists its member
+# module ids explicitly, and global.R's create_ui() builds one
+# collapsible menuItem() per group with menuSubItem() children via
+# do.call(), exactly as that reference does.
+
+groups:
+  - id: api_config
+    label: "API Configuration"
+    icon: "key"
+    expanded: true
+    modules: [api_hub_conn]
+
+  - id: book_summary
+    label: "Book Summary"
+    icon: "book"
+    expanded: false
+    modules: [bk_hub_create, bk_hub_explore, books_about]
+
+  - id: flex_table
+    label: "Flex Table"
+    icon: "table"
+    expanded: false
+    modules: [fx_hub_create, fx_hub_explore, flex_table_about]
+
+  - id: mind_map
+    label: "Mind Map"
+    icon: "share-nodes"
+    expanded: false
+    modules: [mm_hub_create, mm_hub_explore, mindmap_about]
+
+  - id: knowledge_graph
+    label: "Knowledge Graph"
+    icon: "diagram-project"
+    expanded: false
+    modules: [kg_hub_create, kg_hub_explore, kg_about]
+
+  - id: sankey_graph
+    label: "Sankey Graph"
+    icon: "water"
+    expanded: false
+    modules: [sk_hub_create, sk_hub_explore, sankey_about]
+
+  - id: strategic_analysis
+    label: "Strategic Analysis"
+    icon: "chess"
+    expanded: false
+    modules: [sa_hub_learn, sa_hub_create, sa_hub_explore, business_consulting, diagram_about]
+
+  - id: six_sigma_analysis
+    label: "Six Sigma Analysis"
+    icon: "microscope"
+    expanded: false
+    modules: [ss_hub_learn, ss_hub_create, ss_hub_explore, sixsigma_about]
+
+  - id: technical_designs
+    label: "Technical Designs"
+    icon: "sitemap"
+    expanded: false
+    modules: [td_hub_arch, td_hub_algo, td_hub_social, td_hub_manage, td_hub_studio, techdesign_about]
+
+modules:
+  # ---- API Configuration (shared by all three suites) ----
+  bigquery_auth:
+    enabled: true
+    priority: 1
+    description: "BigQuery authentication - one connection, three tables"
+
+  claude_api_config:
+    enabled: true
+    priority: 2
+    description: "Editing Tool API credentials management"
+
+  debug_console:
+    enabled: true
+    priority: 2.5
+    description: "Live, copy-friendly mirror of every cat()/print() the app writes - built for copying long console output from a phone browser"
+
+  # ---- Book Summary ----
+  generate_summary:
+    enabled: true
+    priority: 3
+    description: "AI-powered book summary generation"
+
+  books_bulk_import:
+    enabled: true
+    priority: 4
+    description: "Parse and upload book summaries in bulk"
+
+  add_single:
+    enabled: true
+    priority: 5
+    description: "Add an individual book summary entry"
+
+  books_browse:
+    enabled: true
+    priority: 6
+    description: "Browse and download all stored book summaries"
+
+  visualizations:
+    enabled: true
+    priority: 7
+    description: "Rich data visualizations with charts for book summaries"
+
+  books_about:
+    enabled: true
+    priority: 8
+    description: "Book Summary schema and query-writing guide"
+
+  # ---- Flex Table ----
+  generate_table:
+    enabled: true
+    priority: 10
+    description: "AI-powered flexible comparison table generation"
+
+  bulk_import:
+    enabled: true
+    priority: 11
+    description: "Parse and upload generated tables in bulk"
+
+  add_entry:
+    enabled: true
+    priority: 12
+    description: "Manually add a single row with custom columns"
+
+  table_viewer:
+    enabled: true
+    priority: 13
+    description: "Render stored tables as a scrollable comparison grid"
+
+  flex_table_browse:
+    enabled: true
+    priority: 14
+    description: "Browse and download all stored table rows"
+
+  flex_table_about:
+    enabled: true
+    priority: 15
+    description: "Flex Table schema and query-writing guide"
+
+  # ---- Mind Map ----
+  generate_mindmap:
+    enabled: true
+    priority: 20
+    description: "AI-powered generation of a new mind map"
+
+  edit_mindmap:
+    enabled: true
+    priority: 21
+    description: "Delta editing of an existing mind map, with cascade delete"
+
+  visualize_mindmap:
+    enabled: true
+    priority: 22
+    description: "Interactive collapsible mind map via D3.js"
+
+  message_hierarchy:
+    enabled: true
+    priority: 22.5
+    description: "Pyramid-principle message structure for talks (stored in the mind map table, category MessageHierarchy)"
+
+  mindmap_browse:
+    enabled: true
+    priority: 23
+    description: "Browse and download all stored node version rows"
+
+  mindmap_about:
+    enabled: true
+    priority: 24
+    description: "Mind Map schema and delta-editing model documentation"
+
+  # ---- Knowledge Graph ----
+  generate_kg:
+    enabled: true
+    priority: 30
+    description: "AI-powered generation of a new knowledge graph"
+
+  edit_kg:
+    enabled: true
+    priority: 31
+    description: "Delta editing with app-computed relationship cascade delete"
+
+  visualize_kg_d3:
+    enabled: true
+    priority: 32
+    description: "Force-directed graph visualization via D3.js"
+
+  visualize_kg_cytoscape:
+    enabled: true
+    priority: 33
+    description: "Graph visualization via Cytoscape.js"
+
+  kg_browse:
+    enabled: true
+    priority: 34
+    description: "Browse and download all stored entity/relationship version rows"
+
+  kg_about:
+    enabled: true
+    priority: 35
+    description: "Knowledge Graph schema documentation"
+
+  # ---- Sankey Graph ----
+  generate_sankey:
+    enabled: true
+    priority: 36
+    description: "AI-powered Sankey flow diagram generation via the Editing Tool, rendered with D3's d3-sankey layout"
+
+  sankey_bulk_import:
+    enabled: true
+    priority: 37
+    description: "Paste or receive-from-Generate Sankey node/link text, parse, preview, upload"
+
+  sankey_visualizations:
+    enabled: true
+    priority: 38
+    description: "Render a selected Sankey graph with D3's d3-sankey (explicit column alignment, skip-ahead links supported)"
+
+  sankey_browse:
+    enabled: true
+    priority: 38.5
+    description: "Browse saved Sankey graphs and download the raw node/link rows"
+
+  sankey_about:
+    enabled: true
+    priority: 38.8
+    description: "Schema documentation for sankey_graphs and the delimiter convention"
+
+  # ---- Strategic Analysis ----
+  diagram_tool_guide:
+    enabled: true
+    priority: 39
+    description: "Reference guide to all Strategic Analysis diagram types - what each is for and when to ask the Editing Tool for it"
+
+  diagram_recommender:
+    enabled: true
+    priority: 39.5
+    description: "AI-powered framework recommender - describe a strategic problem, get the top N best-fit frameworks ranked with reasoning and drawbacks"
+
+  generate_diagram:
+    enabled: true
+    priority: 40
+    description: "AI-powered strategy diagram generation (SWOT, PESTEL, Five Forces, etc.) via the Editing Tool"
+
+  diagram_bulk_import:
+    enabled: true
+    priority: 41
+    description: "Paste or receive-from-Generate diagram component text, parse, preview, upload"
+
+  diagram_add_single:
+    enabled: true
+    priority: 42
+    description: "Manually add a single diagram component row, bypassing generation"
+
+  diagram_browse:
+    enabled: true
+    priority: 43
+    description: "Browse saved diagrams and download the raw component rows"
+
+  diagram_visualizations:
+    enabled: true
+    priority: 44
+    description: "Render a selected diagram using the type-appropriate generic renderer"
+
+  business_consulting:
+    enabled: true
+    priority: 44.5
+    description: "Build a Flex-Table-formatted business consulting case from an existing Strategic Analysis diagram and/or Six Sigma tool, plus user context, via the Editing Tool"
+
+  diagram_about:
+    enabled: true
+    priority: 45
+    description: "Schema documentation for strategy_diagrams and the delimiter convention"
+
+  # ---- Six Sigma Analysis ----
+  sixsigma_tool_guide:
+    enabled: true
+    priority: 49
+    description: "Reference guide to all Six Sigma diagram types organized by DMAIC phase - what each is for and when to ask the Editing Tool for it"
+
+  sixsigma_recommender:
+    enabled: true
+    priority: 49.5
+    description: "AI-powered tool recommender - describe a Six Sigma problem, get the top N best-fit tools ranked with reasoning and drawbacks"
+
+  generate_sixsigma:
+    enabled: true
+    priority: 50
+    description: "AI-powered Six Sigma diagram generation (Fishbone, Pareto, Control Chart, CTQ Tree, FMEA, etc.) via the Editing Tool"
+
+  sixsigma_bulk_import:
+    enabled: true
+    priority: 51
+    description: "Paste or receive-from-Generate Six Sigma diagram component text, parse, preview, upload"
+
+  sixsigma_add_single:
+    enabled: true
+    priority: 52
+    description: "Manually add a single Six Sigma diagram component row, bypassing generation"
+
+  sixsigma_browse:
+    enabled: true
+    priority: 53
+    description: "Browse saved Six Sigma diagrams and download the raw component rows"
+
+  sixsigma_visualizations:
+    enabled: true
+    priority: 54
+    description: "Render a selected Six Sigma diagram using the type-appropriate professional renderer"
+
+  sixsigma_about:
+    enabled: true
+    priority: 55
+    description: "Schema documentation for six_sigma_diagrams and the delimiter convention"
+
+  # ---- Technical Designs (one table, one row per design) ----
+  td_hub_arch:
+    enabled: true
+    priority: 70
+    description: "Hub: architectures and patterns"
+
+  td_hub_algo:
+    enabled: true
+    priority: 71
+    description: "Hub: algorithms"
+
+  td_hub_social:
+    enabled: true
+    priority: 72
+    description: "Hub: social dynamics"
+
+  td_hub_manage:
+    enabled: true
+    priority: 73
+    description: "Hub: library and editing"
+
+  td_hub_studio:
+    enabled: true
+    priority: 74
+    description: "Hub: studios"
+
+  techdesign_algo_handbook:
+    enabled: true
+    priority: 75
+    description: "Algorithm handbook (child of the algorithms hub)"
+
+  techdesign_ml:
+    enabled: true
+    priority: 80
+    description: "ML / GenAI architecture diagrams"
+
+  techdesign_data:
+    enabled: true
+    priority: 81
+    description: "Data processing architecture diagrams"
+
+  techdesign_patterns:
+    enabled: true
+    priority: 82
+    description: "Software design pattern class diagrams"
+
+  techdesign_algorithm:
+    enabled: true
+    priority: 79
+    description: "Algorithm Selector: LeetCode patterns for the Meta interview, drawn as interactive networks"
+
+  techdesign_soc_guide:
+    enabled: true
+    priority: 83
+    description: "Social dynamics algorithms"
+
+  techdesign_soc_handbook:
+    enabled: true
+    priority: 89
+    description: "Social dynamics handbook"
+
+  techdesign_soc_influence:
+    enabled: true
+    priority: 84
+    description: "Social dynamics algorithms"
+
+  techdesign_soc_romantic:
+    enabled: true
+    priority: 85
+    description: "Social dynamics algorithms"
+
+  techdesign_soc_business:
+    enabled: true
+    priority: 86
+    description: "Social dynamics algorithms"
+
+  techdesign_soc_investors:
+    enabled: true
+    priority: 87
+    description: "Social dynamics algorithms"
+
+  techdesign_soc_collab:
+    enabled: true
+    priority: 88
+    description: "Social dynamics algorithms"
+
+  techdesign_guide:
+    enabled: true
+    priority: 77
+    description: "Design guide with offline examples"
+
+  techdesign_recommender:
+    enabled: true
+    priority: 78
+    description: "Design recommender"
+
+  techdesign_bulk_import:
+    enabled: true
+    priority: 83
+    description: "Bulk import of designs"
+
+  techdesign_library:
+    enabled: true
+    priority: 84
+    description: "Design library and version history"
+
+  techdesign_editor:
+    enabled: true
+    priority: 85
+    description: "Table-based design editor"
+
+  techdesign_matrix:
+    enabled: true
+    priority: 88
+    description: "Dual-hierarchy evidence matrix researched on the web"
+
+  techdesign_infographic:
+    enabled: true
+    priority: 89
+    description: "Infographic posters with sourced research and PDF/HTML/JPEG/GIF/PNG download"
+
+  techdesign_compare:
+    enabled: true
+    priority: 86
+    description: "Compare two designs"
+
+  techdesign_about:
+    enabled: true
+    priority: 87
+    description: "About Technical Designs"
+
+  api_hub_conn:
+    enabled: true
+    priority: 0.5
+    description: "Hub: API connections"
+
+  # ---- Hubs of the other suites (related tabs as horizontal sub-tabs) ----
+  bk_hub_create:
+    enabled: true
+    priority: 101
+    description: "Hub: Create and Add (Book Summary)"
+
+  bk_hub_explore:
+    enabled: true
+    priority: 102
+    description: "Hub: Browse and Visualise (Book Summary)"
+
+  fx_hub_create:
+    enabled: true
+    priority: 103
+    description: "Hub: Create and Add (Flex Table)"
+
+  fx_hub_explore:
+    enabled: true
+    priority: 104
+    description: "Hub: View and Browse (Flex Table)"
+
+  mm_hub_create:
+    enabled: true
+    priority: 105
+    description: "Hub: Create and Edit (Mind Map)"
+
+  mm_hub_explore:
+    enabled: true
+    priority: 106
+    description: "Hub: Visualise and Browse (Mind Map)"
+
+  kg_hub_create:
+    enabled: true
+    priority: 107
+    description: "Hub: Create and Edit (Knowledge Graph)"
+
+  kg_hub_explore:
+    enabled: true
+    priority: 108
+    description: "Hub: Visualise and Browse (Knowledge Graph)"
+
+  sk_hub_create:
+    enabled: true
+    priority: 109
+    description: "Hub: Create and Import (Sankey Graph)"
+
+  sk_hub_explore:
+    enabled: true
+    priority: 110
+    description: "Hub: Visualise and Browse (Sankey Graph)"
+
+  sa_hub_learn:
+    enabled: true
+    priority: 111
+    description: "Hub: Learn and Choose (Strategic Analysis)"
+
+  sa_hub_create:
+    enabled: true
+    priority: 112
+    description: "Hub: Create and Add (Strategic Analysis)"
+
+  sa_hub_explore:
+    enabled: true
+    priority: 113
+    description: "Hub: Browse and Visualise (Strategic Analysis)"
+
+  ss_hub_learn:
+    enabled: true
+    priority: 114
+    description: "Hub: Learn and Choose (Six Sigma Analysis)"
+
+  ss_hub_create:
+    enabled: true
+    priority: 115
+    description: "Hub: Create and Add (Six Sigma Analysis)"
+
+  ss_hub_explore:
+    enabled: true
+    priority: 116
+    description: "Hub: Browse and Visualise (Six Sigma Analysis)"
+
+settings:
+  auto_install: false
+  check_versions: true
+  verbose: true
+  dev_mode: false
+
+app:
+  name: "BooksNetworksStrategySixS"
+  version: "1.3.0"
+  description: "Seven AI-powered BigQuery-backed data suites in one app: book summaries, flexible comparison tables, mind maps, knowledge graphs, AI-generated Sankey flow diagrams, AI-generated strategy diagrams, and AI-generated Six Sigma diagrams - sharing one Editing Tool API connection and one BigQuery connection across seven tables in the same project/dataset"
+  author: "Your Team"

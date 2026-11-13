@@ -35,7 +35,7 @@ techdesign_compare_server <- function(id, api_manager) {
         if (nrow(r$table) == 0) stop("The Editing Tool's answer contained no comparison rows.")
         claude_cmp(r)
         set_status("status-success", sprintf("The Editing Tool added %d comparison rows.", nrow(r$table)))
-      }, error = function(e) set_status("status-error", paste("Failed:", e$message)))
+      }, error = function(e) set_status("status-error", paste("Failed:", app_err_text(e))))
     })
 
     html_table <- function(df, hdr) {

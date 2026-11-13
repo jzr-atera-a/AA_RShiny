@@ -158,7 +158,7 @@ techdesign_editor_server <- function(id, api_manager) {
         rv$undo <- before
         set_state(d, rv$edit_id)
         set_status("status-success", sprintf("The Editing Tool updated the design (%d components, %d connections). Review it, then save.", nrow(d$components), nrow(d$connections)))
-      }, error = function(e) set_status("status-error", paste("Editing Tool change failed:", e$message)))
+      }, error = function(e) set_status("status-error", paste("Editing Tool change failed:", app_err_text(e))))
     })
     observeEvent(input$undo, {
       if (is.null(rv$undo)) { showNotification("Nothing to undo.", type = "warning"); return() }
@@ -178,7 +178,7 @@ techdesign_editor_server <- function(id, api_manager) {
         set_status("status-success", sprintf("Saved '%s' as %s (design_id: %s).", d$meta$title,
                                              if (is.null(eid)) "a new design" else "a new version", did))
         showNotification("Design saved", type = "message")
-      }, error = function(e) set_status("status-error", paste("Save failed:", e$message)))
+      }, error = function(e) set_status("status-error", paste("Save failed:", app_err_text(e))))
     }
     observeEvent(input$save_version, do_save(FALSE))
     observeEvent(input$save_copy, do_save(TRUE))

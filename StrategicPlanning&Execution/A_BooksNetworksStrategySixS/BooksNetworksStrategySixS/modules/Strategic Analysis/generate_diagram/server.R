@@ -56,6 +56,13 @@ generate_diagram_server <- function(id, api_manager) {
       api_manager$set_pending_diagram_selection(NULL)
     }, ignoreNULL = TRUE, ignoreInit = TRUE)
 
+    # Decision tree extras: the node table writes back into the text box, so Parse & Upload saves what is shown
+    dt_wb <- dt_workbench_server(input, output, session, api_manager, set_text = function(txt) {
+      updateTextAreaInput(session, "diagram_text_edit", value = txt)
+      run_parse_preview(txt, quiet = TRUE)
+    })
+    is_tree_text <- function(text) grepl("^\\s*\\[decision_tree\\]", text %||% "")
+
     run_parse_preview <- function(text, quiet = FALSE) {
       if (trimws(text) == "") {
         parsed_preview(NULL)
@@ -90,7 +97,7 @@ generate_diagram_server <- function(id, api_manager) {
         output$preview_table <- DT::renderDataTable({})
         if (!quiet) {
           output$status <- renderUI({
-            tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Parse issue (blocking): ", e$message)
+            tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Parse issue (blocking): ", app_err_text(e))
           })
         }
       })
@@ -134,7 +141,7 @@ generate_diagram_server <- function(id, api_manager) {
         domain = cdt$domain,
         topic = cdt$topic,
         title_hint = title_hint,
-        user_request = input$user_request,
+        user_request = if (identical(diagram_type, "decision_tree")) paste0(input$user_request, dt_settings_request(input)) else input$user_request,
         rules_count = if (identical(diagram_type, "rules_table")) (input$rules_count %||% 6) else NULL,
         outcome = if (identical(diagram_type, "rules_table")) (input$rules_outcome %||% "") else "",
         reference = if (identical(diagram_type, "rules_table")) (input$rules_reference %||% "") else ""
@@ -189,6 +196,8 @@ generate_diagram_server <- function(id, api_manager) {
         shinyjs::hide("loading_spinner")
 
         run_parse_preview(diagram_text, quiet = TRUE)
+        if (identical(diagram_type, "decision_tree")) tryCatch(dt_wb$load_text(diagram_text, from_draft = TRUE),
+          error = function(e) cat("[DecisionTree] could not load the generated tree:", app_err_text(e), "\n"))
 
         truncation_note <- if (was_truncated) {
           tagList(tags$br(), tags$span(style = "color: #f39c12;",
@@ -204,7 +213,7 @@ generate_diagram_server <- function(id, api_manager) {
 
       }, error = function(e) {
         shinyjs::hide("loading_spinner")
-        error_message <- e$message
+        error_message <- app_err_text(e)
         cat(sprintf("❌ [Strategic Analysis][DEBUG] Generation failed: %s\n", error_message))
         output$status <- renderUI({
           tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Generation Failed",
@@ -216,6 +225,8 @@ generate_diagram_server <- function(id, api_manager) {
 
     observeEvent(input$reparse, {
       run_parse_preview(input$diagram_text_edit)
+      if (is_tree_text(input$diagram_text_edit)) tryCatch(dt_wb$load_text(input$diagram_text_edit),
+        error = function(e) showNotification(paste("Decision tree table not updated:", app_err_text(e)), type = "warning"))
     })
 
     observeEvent(input$copy_to_bulk, {
@@ -253,9 +264,9 @@ generate_diagram_server <- function(id, api_manager) {
 
       }, error = function(e) {
         output$status <- renderUI({
-          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", e$message)
+          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", app_err_text(e))
         })
-        showNotification(paste("Error:", e$message), type = "error")
+        showNotification(paste("Error:", app_err_text(e)), type = "error")
       })
     })
 

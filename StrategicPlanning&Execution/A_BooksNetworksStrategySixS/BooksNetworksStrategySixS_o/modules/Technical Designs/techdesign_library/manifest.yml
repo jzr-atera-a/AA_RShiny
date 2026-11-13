@@ -1,0 +1,35 @@
+module:
+  id: "techdesign_library"
+  name: "Design Library"
+  description: "Browse and visualize all saved designs, version history, restore, delete, handoffs"
+  version: "1.0.0"
+  author: "Technical Designs Suite"
+
+  enabled: true
+
+  menu:
+    label: "Design Library"
+    icon: "layer-group"
+    tabname: "techdesign_library"
+    group: "Technical Designs"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinyjs
+      - jsonlite
+      - DT
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: ["claude", "bigquery"]
+
+  data:
+    required: []
+    optional: []

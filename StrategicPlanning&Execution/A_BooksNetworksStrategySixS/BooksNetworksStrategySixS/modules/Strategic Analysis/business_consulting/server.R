@@ -92,7 +92,7 @@ business_consulting_server <- function(id, api_manager) {
         })
         cat(sprintf("🖇️  [Business Consulting][DEBUG] Loaded Strategy Diagram: %s (%d rows)\n", input$sd_diagram_id, nrow(components)))
       }, error = function(e) {
-        output$sd_status <- renderUI({ tags$div(class = "status-error", "Error: ", e$message) })
+        output$sd_status <- renderUI({ tags$div(class = "status-error", "Error: ", app_err_text(e)) })
       })
     })
 
@@ -170,7 +170,7 @@ business_consulting_server <- function(id, api_manager) {
         })
         cat(sprintf("🖇️  [Business Consulting][DEBUG] Loaded Six Sigma Tool: %s (%d rows)\n", input$ss_diagram_id, nrow(components)))
       }, error = function(e) {
-        output$ss_status <- renderUI({ tags$div(class = "status-error", "Error: ", e$message) })
+        output$ss_status <- renderUI({ tags$div(class = "status-error", "Error: ", app_err_text(e)) })
       })
     })
 
@@ -209,7 +209,7 @@ business_consulting_server <- function(id, api_manager) {
         generated_case_df(NULL)
         output$preview_table <- DT::renderDataTable({})
         output$generate_status <- renderUI({
-          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Parse issue: ", e$message)
+          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Parse issue: ", app_err_text(e))
         })
       })
     }
@@ -293,11 +293,11 @@ business_consulting_server <- function(id, api_manager) {
 
       }, error = function(e) {
         shinyjs::hide("loading_spinner")
-        cat(sprintf("❌ [Business Consulting][DEBUG] Generation failed: %s\n", e$message))
+        cat(sprintf("❌ [Business Consulting][DEBUG] Generation failed: %s\n", app_err_text(e)))
         output$generate_status <- renderUI({
-          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Generation Failed: ", e$message)
+          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Generation Failed: ", app_err_text(e))
         })
-        showNotification(paste("Error:", e$message), type = "error", duration = 15)
+        showNotification(paste("Error:", app_err_text(e)), type = "error", duration = 15)
       })
     })
 

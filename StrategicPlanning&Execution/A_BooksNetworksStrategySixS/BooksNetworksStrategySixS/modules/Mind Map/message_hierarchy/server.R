@@ -82,9 +82,9 @@ message_hierarchy_server <- function(id, api_manager) {
       }, error = function(e) {
         shinyjs::hide("loading_spinner")
         output$gen_status <- renderUI({
-          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Generation failed: ", e$message)
+          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Generation failed: ", app_err_text(e))
         })
-        showNotification(paste("Error:", e$message), type = "error", duration = 15)
+        showNotification(paste("Error:", app_err_text(e)), type = "error", duration = 15)
       })
     })
 
@@ -156,9 +156,9 @@ message_hierarchy_server <- function(id, api_manager) {
         showNotification(sprintf("✓ Uploaded %d node(s)!", n), type = "message")
       }, error = function(e) {
         output$gen_status <- renderUI({
-          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", e$message)
+          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", app_err_text(e))
         })
-        showNotification(paste("Error:", e$message), type = "error")
+        showNotification(paste("Error:", app_err_text(e)), type = "error")
       })
     })
 

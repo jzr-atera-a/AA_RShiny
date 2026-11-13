@@ -1,0 +1,33 @@
+module:
+  id: "sixsigma_bulk_import"
+  name: "Six Sigma Bulk Import"
+  description: "Paste or receive-from-Generate Six Sigma diagram component text, parse, preview, upload"
+  version: "1.0.0"
+  author: "Six Sigma Analysis Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Bulk Import"
+    icon: "file-import"
+    tabname: "sixsigma_bulk_import"
+    group: "Six Sigma Analysis"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - DT
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: ["bigquery"]
+
+  data:
+    required: []
+    optional: []

@@ -825,3 +825,84 @@ table.flex-comparison-table tbody tr:hover th.row-index-cell {
 /* light alert boxes: dark text (AdminLTE makes alert text white) */
 .alert-info, .alert-info *, .alert-warning, .alert-warning *, .alert-success, .alert-success * { color: #1b3a40 !important; }
 .alert-info a, .alert-warning a { color: #00695c !important; }
+
+/* ---------- Decision trees (R/utils_decision_tree.R) ---------- */
+.dt-svg-wrap { overflow-x: auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 6px; margin-bottom: 14px; }
+.dt-svg-wrap svg { display: block; margin: 0 auto; }
+.dt-empty { padding: 30px; text-align: center; color: #64748b; }
+.dt-reco-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch; margin: 6px 0 12px; }
+.dt-reco { flex: 1 1 300px; background: linear-gradient(135deg, #00897b, #26a69a); color: #fff; border-radius: 12px; padding: 14px 18px; }
+.dt-reco-label { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; opacity: .9; }
+.dt-reco-main { font-size: 22px; font-weight: 800; line-height: 1.25; margin: 4px 0; color: #fff; }
+.dt-reco-sub { font-size: 13.5px; color: #e0f2f1; }
+.dt-kpis { flex: 2 1 420px; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.dt-kpi { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 14px; display: flex; flex-direction: column; justify-content: center; }
+.dt-kpi span { font-size: 12px; color: #64748b; }
+.dt-kpi b { font-size: 19px; color: #0f172a; }
+.dt-kpi b.neg { color: #b91c1c; }
+.dt-plan { background: #f8fafc; border-left: 4px solid #00897b; border-radius: 6px; padding: 8px 14px; margin-bottom: 12px; color: #1f2937; }
+.dt-plan ol { margin: 4px 0 0 0; padding-left: 20px; }
+.dt-h { margin: 18px 0 6px; font-weight: 700; color: #0f172a; }
+.dt-muted { color: #64748b; font-size: 12.5px; }
+.dt-table-wrap { overflow-x: auto; }
+table.dt-table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; }
+table.dt-table th { background: #00695c; color: #fff; text-align: left; padding: 7px 9px; font-weight: 600; white-space: nowrap; }
+table.dt-table td { border-bottom: 1px solid #e5e7eb; padding: 6px 9px; color: #1f2937; vertical-align: top; }
+table.dt-table tr.dt-hl td { background: #e0f2f1; font-weight: 600; color: #004d40; }
+table.dt-table tr.dt-hl td:first-child { box-shadow: inset 4px 0 0 #00897b; }
+table.dt-table tr:nth-child(even):not(.dt-hl) td { background: #f5f9f9; }
+.dt-steps { margin-top: 12px; }
+.dt-steps summary { cursor: pointer; font-weight: 600; color: #00695c; }
+.dt-steps pre { white-space: pre-wrap; font-size: 12.5px; background: #f8fafc; border: 1px solid #e2e8f0; color: #1f2937; }
+.dt-ok, .dt-err, .dt-warn { border-radius: 6px; padding: 7px 11px; margin: 4px 0; font-size: 13px; }
+.dt-ok { background: #ecfdf5; color: #065f46 !important; border: 1px solid #a7f3d0; }
+.dt-err { background: #fef2f2; color: #991b1b !important; border: 1px solid #fecaca; }
+.dt-warn { background: #fffbeb; color: #92400e !important; border: 1px solid #fde68a; }
+.dt-ok *, .dt-err *, .dt-warn * { color: inherit !important; }
+.dt-explain { background: #ffffff; border: 1px solid #d5e6e4; border-left: 4px solid #00897b; border-radius: 8px; padding: 12px 16px; color: #1f2937; }
+.dt-explain p { margin: 0 0 8px; }
+.dt-help h4 { margin-top: 4px; font-weight: 700; }
+.dt-help .dt-legend-chip { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-right: 6px; }
+.dt-node-table .dataTables_wrapper td { font-size: 12.5px; }
+.dt-toolbar { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+
+.dt-btn-danger { color: #c62828 !important; border: 1.5px solid #e6a5a5 !important; background: #fff !important; }
+.dt-btn-danger:hover { background: #fdecec !important; border-color: #c62828 !important; }
+.dt-reco { background: linear-gradient(135deg, #004d5a, #00897b) !important; box-shadow: 0 6px 16px rgba(0,77,90,.25); }
+.dt-kpi { border-color: #d5e6e4 !important; border-top: 3px solid #26a69a !important; }
+.dt-plan { background: #f2f9f8 !important; }
+.dt-svg-wrap { border-color: #d5e6e4 !important; }
+.dt-help > summary { color: #00695c; }
+
+/* ====================================
+   Shared polish (all suites)
+   ==================================== */
+/* plain buttons: white with a teal outline instead of grey */
+.btn-default:not(.btn-primary):not(.btn-success):not(.btn-info):not(.btn-warning):not(.btn-danger) { background: #ffffff !important; color: #00695c !important; border: 1.5px solid #9fd3cd !important; border-radius: 8px !important; font-weight: 600; }
+.btn-default:not(.btn-primary):not(.btn-success):not(.btn-info):not(.btn-warning):not(.btn-danger):hover, .btn-default:not(.btn-primary):not(.btn-success):not(.btn-info):not(.btn-warning):not(.btn-danger):focus { background: #e0f2f1 !important; border-color: #00897b !important; color: #004d40 !important; }
+/* tabs inside a box (tabsetPanel): teal instead of Bootstrap blue */
+.box-body .nav-tabs { border-bottom: 2px solid #b2dfdb; }
+.box-body .nav-tabs > li > a { color: #00695c; font-weight: 600; border-radius: 8px 8px 0 0; }
+.box-body .nav-tabs > li > a:hover { background: #e0f2f1; border-color: transparent; color: #004d40; }
+.box-body .nav-tabs > li.active > a, .box-body .nav-tabs > li.active > a:hover, .box-body .nav-tabs > li.active > a:focus { color: #ffffff; background: #00897b; border: 1px solid #00897b; }
+.box-body a:not(.btn):not([role=tab]) { color: #00796b; }
+/* DataTables (DT): teal header line, teal selection, teal pagination */
+table.dataTable thead th, table.dataTable thead td { color: #12303a; border-bottom: 2px solid #00897b !important; background: #f2f9f8; }
+table.dataTable tbody tr.selected > *, table.dataTable tbody tr.selected td { box-shadow: inset 0 0 0 9999px rgba(0,137,123,.16) !important; color: #00332c !important; }
+table.dataTable.stripe tbody tr.odd, table.dataTable.display tbody tr.odd { background-color: #f7fbfb; }
+table.dataTable.hover tbody tr:hover, table.dataTable.display tbody tr:hover { background-color: #eaf5f4 !important; }
+.dataTables_wrapper .dataTables_paginate .paginate_button.current, .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover { background: #00897b !important; color: #fff !important; border: 1px solid #00897b !important; border-radius: 6px; }
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover { background: #e0f2f1 !important; color: #004d40 !important; border: 1px solid #b2dfdb !important; }
+.dataTables_wrapper .dataTables_filter input { border: 1.5px solid #cfe3e1; border-radius: 6px; }
+/* checkboxes, radios and sliders in the theme colour */
+input[type=checkbox], input[type=radio] { accent-color: #00897b; }
+.irs--shiny .irs-bar, .irs--shiny .irs-single, .irs--shiny .irs-from, .irs--shiny .irs-to { background: #00897b !important; border-color: #00897b !important; }
+.irs--shiny .irs-handle { border-color: #00897b !important; }
+.btn.btn-default.dt-btn-danger:not(.btn-primary) { color: #c62828 !important; border: 1.5px solid #e6a5a5 !important; background: #fff !important; }
+.btn.btn-default.dt-btn-danger:not(.btn-primary):hover { background: #fdecec !important; border-color: #c62828 !important; color: #b71c1c !important; }
+.dt-toolbar { align-items: center; }
+/* Generate Diagram: optional decision tree settings */
+.dt-settings { border: 1px solid #b2dfdb; border-left: 4px solid #00897b; border-radius: 10px; background: #f5fbfa; padding: 10px 14px; margin: 4px 0 14px; }
+.dt-settings > summary { cursor: pointer; color: #00695c; font-size: 14px; }
+.dt-settings[open] > summary { margin-bottom: 10px; }
+.dt-settings-body .dt-help { background: #fff; border: 1px solid #d5e6e4; border-radius: 8px; padding: 8px 12px; }

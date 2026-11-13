@@ -97,6 +97,8 @@ suppressPackageStartupMessages({
 
 source("R/module_loader.R")
 source("R/utils_common.R")
+source("R/utils_decision_tree.R")
+source("R/utils_dt_workbench.R")
 source("R/utils_api.R")
 source("R/utils_local_creds.R")
 source("R/utils_bq_lazy.R")

@@ -2625,7 +2625,9 @@ DIAGRAM_FIELDS <- c(
   "label_text", "sub_text", "items_packed",
   "value_numeric", "value_axis", "series_name", "unit_label",
   "axis_type", "axis_min", "axis_max", "metric_name",
-  "color_hint", "icon_name"
+  "color_hint", "icon_name",
+  # decision trees (see R/utils_decision_tree.R)
+  "node_id", "parent_id", "branch_label", "probability", "cash_flow"
 )
 
 # ============================================================
@@ -2671,7 +2673,7 @@ DIAGRAM_TYPES_BY_GROUP <- list(
                               "porters_generic_strategies", "tows_matrix",
                               "blue_ocean_errc", "value_curve"),
   business_model_design   = c("business_model_canvas", "lean_canvas"),
-  decision_making_process = c("frame_diagnose_choose_act", "pdca_cycle", "weighted_decision_matrix"),
+  decision_making_process = c("frame_diagnose_choose_act", "pdca_cycle", "weighted_decision_matrix", "decision_tree"),
   organizational_alignment = c("mckinsey_7s", "raci_matrix"),
   timing_lifecycle        = c("disruptive_innovation", "product_lifecycle",
                               "technology_adoption_lifecycle", "trend_to_commoditization",
@@ -2698,6 +2700,7 @@ DIAGRAM_TYPE_LABELS <- c(
   frame_diagnose_choose_act = "Frame-Diagnose-Choose-Act Process",
   pdca_cycle = "PDCA Cycle (Plan-Do-Check-Act)",
   weighted_decision_matrix = "Weighted Decision Matrix",
+  decision_tree = "Decision Tree (expected value)",
   mckinsey_7s = "McKinsey 7S Framework",
   raci_matrix = "RACI Matrix",
   disruptive_innovation = "Disruptive Innovation Curve",
@@ -2729,7 +2732,7 @@ DIAGRAM_RENDER_SHAPE <- c(
   porters_generic_strategies = "quadrant", tows_matrix = "table",
   blue_ocean_errc = "grid", value_curve = "line_chart",
   business_model_canvas = "business_model_canvas", lean_canvas = "business_model_canvas",
-  frame_diagnose_choose_act = "linear_flow", pdca_cycle = "radial", weighted_decision_matrix = "table",
+  frame_diagnose_choose_act = "linear_flow", pdca_cycle = "radial", weighted_decision_matrix = "table", decision_tree = "decision_tree",
   mckinsey_7s = "network", raci_matrix = "table",
   disruptive_innovation = "line_chart", product_lifecycle = "line_chart",
   technology_adoption_lifecycle = "bar_chart", trend_to_commoditization = "bar_chart",
@@ -2857,6 +2860,33 @@ framework_specific_guidance <- function(diagram_type, rules_count = NULL, outcom
       'Header cells: (1,2)=label_text "Strengths", (1,3)=label_text "Weaknesses", ',
       '(2,1)=label_text "Opportunities", (3,1)=label_text "Threats", (1,1)=label_text "N/A" (blank corner). ',
       'Each interior cell\'s items_packed lists 2-3 specific strategic actions.\n\n'
+    ),
+    "decision_tree" = paste0(
+      'FRAMEWORK = Decision Tree (expected monetary value). Model the decision in the user request as a tree read ',
+      'left to right, with three node types: decision_node (a square: a point where the decision maker chooses ONE ',
+      'branch), chance_node (a circle: an uncertain event outside the decision maker\'s control) and end_node (a ',
+      'triangle: a final outcome with a payoff). Rules:\n',
+      '(1) Exactly one root node, normally a decision_node, with [parent_id]: N/A and [branch_label]: N/A.\n',
+      '(2) Every other node names its parent in [parent_id] and the label of the branch leading INTO it in ',
+      '[branch_label] (the option chosen, or the event that happened).\n',
+      '(3) Branches leaving a chance_node carry [probability] as a decimal between 0 and 1, and the probabilities of ',
+      'the branches leaving ONE chance_node MUST add up to exactly 1 (and cover every possibility). Branches leaving a ',
+      'decision_node use [probability]: N/A.\n',
+      '(4) [cash_flow] is the money paid (negative) or received (positive) at the moment that branch is taken - e.g. ',
+      'an investment cost on a decision branch. Use 0 when nothing is paid. Costs already spent before the decision ',
+      '(sunk costs) are NOT included.\n',
+      '(5) Every end_node gives its final payoff in [value_numeric] EXCLUDING the cash flows already recorded on the ',
+      'branches above it (the app adds them up along the path). An end_node\'s own [cash_flow] is 0: never repeat the ',
+      'payoff in [cash_flow], or it is counted twice.\n',
+      '(6) Every path must finish at an end_node; end_nodes have no children; every decision_node has at least two ',
+      'options (include "Do nothing" / the status quo when it is a real option); every chance_node has at least two outcomes.\n',
+      '(7) Do NOT calculate expected values, totals or the best option - the app does all of the arithmetic.\n',
+      '(8) Numeric fields hold plain numbers only: no currency symbols, no thousands separators, no % signs (write ',
+      '0.4, not 40%; write -800000, not -800k).\n',
+      '(9) In [items_packed] give the assumption behind this node\'s numbers in one or two short items; start an item ',
+      'with "Estimate:" when you made the figure up rather than taking it from the user.\n',
+      '(10) Use short ids: D1, D2 ... for decision nodes, C1, C2 ... for chance nodes, E1, E2 ... for end nodes. ',
+      'Output nodes depth-first: a parent before its children, siblings in [sequence_order] order.\n\n'
     ),
     "weighted_decision_matrix" = paste0(
       'FRAMEWORK = Weighted Decision Matrix. Header row (grid_row=1): blank corner cell, then one cell per ',
@@ -3039,6 +3069,21 @@ diagram_type_instructions <- function(diagram_type, diagram_group, category, dom
   )
 
   shape_block <- switch(shape,
+    "decision_tree" = paste0(
+      'Title block (exactly one, first):\n[component_type]: title\n[layout_role]: title\n[label_text]: <diagram title>\n',
+      '[sub_text]: <the decision question in one sentence>\n[unit_label]: <currency code, e.g. GBP, USD, EUR>\n',
+      '[metric_name]: <maximise for profits / value, minimise for costs>\n\n',
+      'Then for EACH node:\n[component_type]: <decision_node|chance_node|end_node>\n[layout_role]: node\n',
+      '[node_id]: <short unique id>\n[parent_id]: <node_id of the parent, or N/A for the root>\n',
+      '[branch_label]: <label of the branch from the parent into this node, N/A for the root>\n',
+      '[probability]: <decimal 0-1 when the parent is a chance_node, else N/A>\n',
+      '[cash_flow]: <signed plain number paid or received when this branch is taken, 0 if none, N/A for the root; always 0 for an end_node>\n',
+      '[sequence_order]: <1..n, order among its siblings, top to bottom>\n',
+      '[label_text]: <short node name: the choice to be made, the uncertain event, or the outcome (e.g. "Profit")>\n',
+      '[sub_text]: <one short line of context, else N/A>\n',
+      '[value_numeric]: <end_node only: the final payoff as a plain signed number, else N/A>\n',
+      '[items_packed]: <assumption 1>', sep, '<assumption 2> (N/A if none)\n'
+    ),
     "rules_table" = paste0(
       'For EACH rule output one block:\n',
       '[component_type]: table_cell\n[layout_role]: grid_cell\n',
@@ -3346,10 +3391,13 @@ parse_diagram_text <- function(text, diagram_id, is_template = FALSE, source_dia
     label_text = character(), sub_text = character(), items_packed = character(),
     value_numeric = numeric(), value_axis = character(), series_name = character(), unit_label = character(),
     axis_type = character(), axis_min = numeric(), axis_max = numeric(), metric_name = character(),
-    color_hint = character(), icon_name = character(), created_by = character(),
+    color_hint = character(), icon_name = character(),
+    node_id = character(), parent_id = character(), branch_label = character(), probability = numeric(), cash_flow = numeric(),
+    expected_value = numeric(), created_by = character(),
     stringsAsFactors = FALSE
   )
 
+  na_chr <- function(x) if (is.null(x) || !has_real_value(x)) NA_character_ else trimws(as.character(x))
   na_int <- function(x) suppressWarnings(as.integer(x %||% NA))
   na_num <- function(x) suppressWarnings(as.numeric(x %||% NA))
 
@@ -3368,9 +3416,23 @@ parse_diagram_text <- function(text, diagram_id, is_template = FALSE, source_dia
       axis_type = b$axis_type %||% NA_character_, axis_min = na_num(b$axis_min), axis_max = na_num(b$axis_max),
       metric_name = b$metric_name %||% NA_character_,
       color_hint = b$color_hint %||% NA_character_, icon_name = b$icon_name %||% NA_character_,
+      node_id = na_chr(b$node_id), parent_id = na_chr(b$parent_id), branch_label = na_chr(b$branch_label),
+      probability = dt_num(b$probability %||% NA)[1], cash_flow = dt_num(b$cash_flow %||% NA)[1],
+      expected_value = NA_real_,
       created_by = created_by,
       stringsAsFactors = FALSE
     ))
+  }
+  # decision trees: lenient number reading ("-800k", "40%") for the payoff too, and the expected values stored as a snapshot
+  if (identical(diagram_type, "decision_tree")) {
+    raw_v <- vapply(blocks, function(b) b$value_numeric %||% NA_character_, "")
+    df$value_numeric <- dt_num(raw_v)
+    dbl <- tryCatch(dt_double_counted(sub("_node$", "", df$component_type), df$cash_flow, df$value_numeric), error = function(e) integer(0))
+    if (length(dbl)) {
+      cat(sprintf("[Decision tree] %d end node(s) repeated the payoff in cash_flow - set to 0 so it is counted once\n", length(dbl)))
+      df$cash_flow[dbl] <- 0
+    }
+    df <- tryCatch(dt_snapshot_values(df), error = function(e) df)
   }
   df
 }
@@ -3379,7 +3441,10 @@ parse_diagram_text <- function(text, diagram_id, is_template = FALSE, source_dia
 # rendering. Empty/NA/"N/A" -> character(0).
 diagram_unpack_items <- function(items_packed) {
   if (!has_real_value(items_packed)) return(character(0))
-  trimws(strsplit(items_packed, DIAG_ITEM_SEP, fixed = TRUE)[[1]])
+  # the Editing Tool sometimes shortens the separator to a bare "|||" - accept both
+  sep <- if (grepl(DIAG_ITEM_SEP, items_packed, fixed = TRUE) || !grepl("|||", items_packed, fixed = TRUE)) DIAG_ITEM_SEP else "|||"
+  x <- trimws(strsplit(items_packed, sep, fixed = TRUE)[[1]])
+  x[nzchar(x)]
 }
 
 # ============================================================
@@ -3460,6 +3525,8 @@ render_diagram <- function(components_df, diagram_type) {
   if (nrow(components_df) == 0) {
     return(tags$div(class = "status-warning", "No components found for this diagram."))
   }
+
+  if (identical(shape, "decision_tree")) return(render_decision_tree(components_df))
 
   html_family <- c("grid", "quadrant", "table", "stacked_list", "linear_flow", "business_model_canvas", "value_chain", "rules_table")
   svg_family <- c("radial", "network")
@@ -5843,6 +5910,7 @@ DIAGRAM_TYPE_SHORT_DESC <- c(
   frame_diagnose_choose_act = "Structures a specific strategic decision step by step.",
   pdca_cycle = "Runs a continuous-improvement loop (Plan-Do-Check-Act).",
   weighted_decision_matrix = "Compares options against multiple weighted criteria with raw scores laid out clearly.",
+  decision_tree = "Lays out a sequence of decisions and uncertain outcomes with probabilities and payoffs, calculates the expected value of every option, recommends the best route and shows how sure you need to be (critical probabilities, risk of loss).",
   mckinsey_7s = "Assesses whether an organization's structure, systems, and culture align with its strategy.",
   raci_matrix = "Clarifies who is Responsible, Accountable, Consulted, and Informed across a set of tasks.",
   disruptive_innovation = "Shows how a disruptor's performance trajectory could overtake an incumbent's.",
@@ -6216,6 +6284,10 @@ export_capture_wrapper <- function(ns, content, export_title) {
 # real one over time.
 summarize_diagram_for_consulting <- function(components_df) {
   if (is.null(components_df) || nrow(components_df) == 0) return(NULL)
+  if (identical(components_df$diagram_type[1], "decision_tree")) {
+    x <- dt_rows_to_nodes(components_df)
+    return(dt_summary_text(x$nodes, x$meta))
+  }
 
   title <- if (has_real_value(components_df$title[1])) components_df$title[1] else "Untitled diagram"
   framework <- DIAGRAM_TYPE_LABELS[[components_df$diagram_type[1]]] %||% components_df$diagram_type[1]
@@ -6316,7 +6388,7 @@ build_claude_attachments <- function(files, sort_by_name = TRUE) {
         if (!requireNamespace("magick", quietly = TRUE)) {
           stop(sprintf("'%s' needs conversion (format or size) but the 'magick' package is not installed. Use JPEG, PNG, GIF, WEBP or PDF files under 3.5 MB.", nm))
         }
-        img <- tryCatch(magick::image_read(path), error = function(e) stop(sprintf("Could not read '%s' as an image: %s", nm, e$message)))
+        img <- tryCatch(magick::image_read(path), error = function(e) stop(sprintf("Could not read '%s' as an image: %s", nm, app_err_text(e))))
         img <- img[1]  # first frame / page only
         info <- magick::image_info(img)
         if (max(info$width, info$height) > 2000) img <- magick::image_resize(img, "2000x2000>")

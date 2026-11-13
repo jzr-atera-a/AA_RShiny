@@ -1,0 +1,52 @@
+# tests/test_desk_guided.R - the three-screen Trading Desk ********: step status, every piece placed once, Trade Log
+suppressMessages({ library(shiny); library(shinydashboard); source("global.R"); for (f in list.files("modules", pattern = "\\.R$", full.names = TRUE)) source(f) })
+pass <- 0L; fail <- 0L; ok <- function(c, m) { if (isTRUE(c)) { pass <<- pass + 1L; cat("  ok  ", m, "\n") } else { fail <<- fail + 1L; cat("  FAIL", m, "\n") } }
+now <- as.POSIXct("2026-11-06 15:00", tz = "Europe/London")
+s0 <- desk_guided_status(now = now)
+ok(!s0$g1$done && !s0$g2$done && !s0$g3$done && grepl("No Morning Sheet", s0$g1$text), "nothing saved: every step open")
+ms <- data.frame(sheet_id = c("a", "b"), sheet_date = as.Date(c("2026-11-05", "2026-11-06")))
+sg <- data.frame(call_id = "c", saved_at = as.POSIXct("2026-11-06 09:00", tz = "UTC"), morning_sheet_used = TRUE, history_asked = TRUE)
+tr <- data.frame(trade_id = c("t1", "t2", "t3"), status = c("CLOSED", "OPEN", "CLOSED"), placed_ts = as.POSIXct(c("2026-11-06 08:00", "2026-11-06 10:00", "2026-11-04 08:00"), tz = "UTC"),
+                 exit_ts = as.POSIXct(c("2026-11-06 11:00", NA, "2026-11-04 12:00"), tz = "UTC"), saved_at = Sys.time(), lessons = c(NA, NA, "x"), analysis = c(NA, NA, NA), stringsAsFactors = FALSE)
+s <- desk_guided_status(ms, sg, tr, now)
+ok(s$g1$done, "today's Morning Sheet found")
+ok(s$g2$done && grepl("used the Morning Sheet and included past trades", s$g2$text), "today's recommendation and its options shown")
+ok(!s$g3$done && s$g3$open == 1 && s$g3$closed == 1 && s$g3$reviewed == 0, "1 open, 1 closed today (yesterday's not counted), not reviewed yet")
+tr$lessons[1] <- "Stop too tight"; s <- desk_guided_status(ms, sg, tr, now); ok(s$g3$done && s$g3$reviewed == 1, "reviewed in the Journal: step 3 done")
+ui <- as.character(trading_desk_ui())
+tr_p <- desk_parts(trading_records_ui("trading_records", parts = TRUE)); cc_p <- desk_parts(cc_trading_records_ui("cc_records", parts = TRUE))
+src <- list(ms = tr_p[[2]], mk = cc_p[[2]], po = cc_p[[3]], ps = cc_p[[4]], jn = cc_p[[5]])
+for (g in names(src)) ok(identical(as.integer(sort(unlist(desk_chunks[[g]], use.names = FALSE))), seq_along(src[[g]]$children)), paste("every piece of", g, "is placed once (nothing left out)"))
+keys <- c(unlist(lapply(desk_chunks, names)), "mk4")
+for (k in keys) ok(lengths(regmatches(ui, gregexpr(paste0('id="desk-sec-', k, '"'), ui))) == 1, paste("piece", k, "is on the desk exactly once"))
+ok(lengths(regmatches(ui, gregexpr('id="cc_records-p_claude"', ui))) == 1, "the recommendation button is not duplicated")
+for (id in c("trading_records-ms_save", "trading_records-ms_yahoo", "cc_records-c_load", "cc_records-p_hist_use", "cc_records-p_claude", "cc_records-pos_be", "cc_records-j_save", "cc_records-j_drop")) ok(lengths(regmatches(ui, gregexpr(paste0('id="', id, '"'), ui))) == 1, paste(id, "present once"))
+ok(all(sapply(c(desk_steps, "D. Trade Log", "E. Statistics & Backtest", "Setup"), function(x) grepl(paste0('data-value="', htmltools::htmlEscape(x), '"'), ui, fixed = TRUE))) && !grepl("Guided Desk", ui), "tabs A-G and Setup; no Guided Desk")
+ok(!any(sapply(c("2. Morning Sheet", "4. Plan &amp; Order", "5. Positions &amp; Sync", "6. Journal &amp; Trade Sheet", "10. Currency &amp; Budget", "11. Schema &amp; SQL", "12. Backtest"), function(x) grepl(paste0('data-value="', x), ui, fixed = TRUE))), "the old tabs 2-6 and 10-12 are gone (8 tabs instead of 14)")
+ok(lengths(regmatches(ui, gregexpr('id="cc_records-tl_table"', ui))) == 1, "the Trade Log is on the desk")
+st <- cc_make_store(cc_mem_backend()); st$write("trades", cc_coerce("trades", tr[1, c("trade_id", "status", "placed_ts", "exit_ts", "saved_at")]))
+testServer(function(input, output, session) trading_desk_server(input, session, output, cc_store = st, now_fn = function() now), {
+  session$setInputs(`trading_records-tabs` = "C. Review")
+  ok(grepl("1 closed today", as.character(output$desk_g3$html)), "status read from the store on the A / B / C screens")
+  ok(grepl("No Morning Sheet", as.character(output$desk_g1$html)) && grepl("Review", as.character(output$desk_progress$html)), "progress bar and step 1 shown")
+})
+cat("Trade Log ********\n")
+tt <- data.frame(trade_id = c("T1", "T2", "T3", "T4"), saved_at = as.POSIXct("2026-11-09 12:00", tz = "UTC"), status = c("CLOSED", "CLOSED", "OPEN", "EXPIRED"), epic = "OIL_BRENT", market_name = "Brent",
+  direction = c("BUY", "SELL", "SELL", "BUY"), order_type = c("MARKET", "MARKET", "MARKET", "STOP"), size = c(2, 1, 1, 3), order_level = c(95.00, 93.92, 94, 93.6), entry_level = c(95.02, 93.947, 94, NA),
+  stop_initial = c(94.50, 96.765, 96, 93.3), stop_level = c(94.50, 96.765, 96, 93.3), target_level = c(95.80, 89.669, 92, 94.2), placed_ts = as.POSIXct(c("2026-11-05 07:00", "2026-11-09 11:35", "2026-11-09 13:00", "2026-11-04 04:10"), tz = "UTC"),
+  entry_ts = as.POSIXct(c("2026-11-05 07:00", "2026-11-09 11:35", "2026-11-09 13:00", NA), tz = "UTC"), exit_ts = as.POSIXct(c("2026-11-05 08:30", "2026-11-09 15:05", NA, NA), tz = "UTC"),
+  exit_level = c(94.48, 89.70, NA, NA), exit_code = c("S1", "T", "", ""), pnl_account_booked = c(-0.8, 3.1, NA, NA), risk_account = c(0.75, 2.08, 1.5, 0.7), purpose = c("PRACTICE", "ASSESSED", "ASSESSED", "PRACTICE"), strategy = c("PATTERN", "PIVOT_BOUNCE", "PIVOT_BOUNCE", "ORB"), stringsAsFactors = FALSE)
+rg <- data.frame(range_id = "x", saved_at = Sys.time(), epic = "OIL_BRENT", range_date = as.Date("2026-11-09"), low = 94.8, high = 95.6, range_pts = 0.8, stringsAsFactors = FALSE)
+lg <- cc_trade_log(tt, rg); ok(nrow(lg) == 4 && identical(lg$kind, c("DEAL", "DEAL", "DEAL", "ORDER")[match(lg$trade_id, tt$trade_id)]), "deals and orders in one log; the STOP order is an order")
+r2 <- lg[lg$trade_id == "T2", ]; ok(r2$tgt_hit == 1 && r2$stop_hit == 0 && r2$tgt_time == "15:05" && r2$tgt_dur == "03:30" && abs(r2$slip_entry - (-0.027)) < 1e-9 && abs(r2$slip_exit - 0.031) < 1e-9, "target hit, exit time, duration, slippage (entry better by 0.027, exit 0.031 short of the target)")
+ok(abs(r2$range_pts - 0.8) < 1e-9 && is.na(lg$range_pts[lg$trade_id == "T1"]), "the day's overnight range joins by market and date")
+r1 <- lg[lg$trade_id == "T1", ]; ok(r1$stop_hit == 1 && r1$stop_dur == "01:30" && abs(r1$slip_exit - 0.02) < 1e-9 && abs(r1$r_mult - (-0.8 / 0.75)) < 1e-9, "stop hit with 0.02 slippage and R")
+tot <- cc_trade_log_totals(lg); ok(tot$deals == 3 && tot$orders == 1 && tot$closed == 2 && tot$stops == 1 && tot$targets == 1 && abs(tot$final - 2.3) < 1e-9 && abs(tot$hit_rate - 0.5) < 1e-9 && abs(tot$total_loss + 0.8) < 1e-9, "totals: hit rate, total loss / profit, final P/L")
+tt2 <- tt; tt2$warnings <- c("", "Plan deviation (rule on Warn): Market regime.", "", ""); tt2$risk_account[1] <- 55; tt2$pnl_account_booked[1] <- -55
+rp <- cc_trade_log_report(cc_trade_log(tt2, rg)); ok(rp$total_r > 0 && rp$total_money < 0 && any(grepl("Fix the SIZE", rp$messages)), "********** report: positive in R, negative in money -> the size is named as the cause")
+ok(any(grepl("varied", rp$messages)) && all(c("Set-up", "Entry time (UK)", "Plan") %in% rp$table$by) && any(rp$table$group == "Plan deviation (rule on Warn)"), "report by set-up, entry time and plan deviation; risk spread flagged")
+ok(grepl("what the record shows", as.character(cc_trade_log_report_html(rp))) && is.null(cc_trade_log_report(NULL)), "report renders; empty log is safe")
+h <- as.character(cc_trade_log_html(lg, tot)); ok(grepl("OVERNIGHT RANGE", h) && grepl("Hit rate", h) && grepl("50.0% of 2 closed", h) && grepl("BUY DETAILS", h), "rendered in the tracking-sheet layout")
+b <- data.frame(time = as.POSIXct(c("2026-11-08 21:45", "2026-11-08 22:00", "2026-11-09 03:00", "2026-11-09 05:45", "2026-11-09 06:00"), tz = "Europe/London"), open = 1, high = c(99, 95.2, 95.6, 95.1, 98), low = c(90, 94.9, 94.8, 95.0, 91), close = 1)
+o <- cc_overnight_range(b, "2026-11-09"); ok(o$low == 94.8 && o$high == 95.6 && o$n_candles == 3, "overnight range uses 22:00-06:00 UK only")
+cat(sprintf("\n%d passed, %d failed\n", pass, fail)); if (fail) quit(status = 1)

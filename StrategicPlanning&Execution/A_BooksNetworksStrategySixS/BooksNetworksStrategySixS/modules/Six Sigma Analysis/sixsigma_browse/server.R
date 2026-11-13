@@ -39,8 +39,8 @@ sixsigma_browse_server <- function(id, api_manager) {
                    sprintf(" Loaded %d diagram(s), %d component row(s)", nrow(catalog), nrow(components)))
         })
       }, error = function(e) {
-        output$status <- renderUI({ tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", e$message) })
-        showNotification(paste("Error:", e$message), type = "error")
+        output$status <- renderUI({ tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", app_err_text(e)) })
+        showNotification(paste("Error:", app_err_text(e)), type = "error")
       })
     }
 

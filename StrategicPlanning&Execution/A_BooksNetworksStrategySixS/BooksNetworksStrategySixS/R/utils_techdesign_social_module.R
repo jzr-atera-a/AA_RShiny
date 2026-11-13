@@ -68,7 +68,7 @@ social_tab_server <- function(id, api_manager, aud) {
         d$meta$variant <- SOC_AUDIENCES[[aud]]
         tailored(d)
         set_status("status-success", "fa fa-check-circle", sprintf("Tailored: %d boxes, %d connections. Save it to keep this version.", nrow(d$components), nrow(d$connections)))
-      }, error = function(e) { set_status("status-error", "fa fa-times-circle", paste("Failed:", e$message)); showNotification(paste("Error:", e$message), type = "error", duration = 12) })
+      }, error = function(e) { set_status("status-error", "fa fa-times-circle", paste("Failed:", app_err_text(e))); showNotification(paste("Error:", app_err_text(e)), type = "error", duration = 12) })
     })
 
     observeEvent(input$save, {
@@ -82,7 +82,7 @@ social_tab_server <- function(id, api_manager, aud) {
         saved_once(c(saved_once(), did))
         set_status("status-success", "fa fa-check-circle", sprintf("Saved '%s' (design_id: %s). Find it in Technical Designs > Library.", d$meta$title, did))
         showNotification("Design saved", type = "message")
-      }, error = function(e) { set_status("status-error", "fa fa-times-circle", paste("Save failed:", e$message)); showNotification(paste("Error:", e$message), type = "error", duration = 12) })
+      }, error = function(e) { set_status("status-error", "fa fa-times-circle", paste("Save failed:", app_err_text(e))); showNotification(paste("Error:", app_err_text(e)), type = "error", duration = 12) })
     })
 
     output$status <- renderUI(tags$div())

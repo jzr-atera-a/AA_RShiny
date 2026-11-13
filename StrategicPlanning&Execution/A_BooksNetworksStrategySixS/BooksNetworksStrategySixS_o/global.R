@@ -1,0 +1,298 @@
+# ── Debug console capture ───────────────────────────────────────────────
+# Mirrors every cat()/print() this app writes into an in-memory buffer,
+# read by the Debug Console tab (API Configuration group). This must run
+# BEFORE anything else in this file, so every module's own startup
+# cat() calls (module discovery, package loading, etc.) get captured
+# too, not just output from requests made after the app finishes
+# loading. Deliberately captures stdout only (cat()/print()), not R's
+# message()/warning()/error stream - sinking that stream risks silently
+# hiding real errors from the actual console, so it's left alone; check
+# the real console for those.
+.debug_log_max_lines <- 5000
+
+# The buffer and its connection are named for THIS app and the connection is remembered in an R option
+# (options survive the rm(list = ls()) in app.R). Every start of the app closes the previous capture of this
+# app and opens a fresh, empty one, so the Debug Console only ever shows the current run: nothing left over
+# from an earlier run, and nothing from any other app that was open in the same R session.
+.sixs_log_var <- "sixs_debug_log_buffer"
+.sixs_log_close <- function() {
+  con <- getOption("sixs.debug_conn")
+  if (!is.null(con)) {
+    if (isTRUE(tryCatch(isOpen(con), error = function(e) FALSE))) {
+      if (sink.number() > 0) try(sink(type = "output"), silent = TRUE)
+      try(close(con), silent = TRUE)
+    }
+    options(sixs.debug_conn = NULL)
+  }
+}
+.sixs_log_open <- function() {
+  assign(.sixs_log_var, character(0), envir = .GlobalEnv)
+  con <- textConnection(.sixs_log_var, open = "w", local = FALSE)
+  options(sixs.debug_conn = con)
+  sink(con, type = "output", split = TRUE)
+  invisible(con)
+}
+.sixs_log_close(); .sixs_log_open()
+cat("✓ [Debug Console] Log capture started for this run of the app\n")
+
+get_debug_log_lines <- function() {
+  raw <- tryCatch(get(.sixs_log_var, envir = .GlobalEnv), error = function(e) character(0))
+  if (length(raw) > .debug_log_max_lines) raw <- tail(raw, .debug_log_max_lines)
+  raw
+}
+
+clear_debug_log <- function() {
+  .sixs_log_close(); .sixs_log_open()
+  invisible(TRUE)
+}
+
+# global.R - Global Configuration
+# UNIFIED SUITE: Flex Table + Mind Map + Knowledge Graph v1.0
+# =============================================================
+# One app, one shared BigQuery connection and one shared Claude API
+# connection (grouped under "API Configuration" in the sidebar), with
+# each of the three original apps' tabs grouped under their own named
+# section ("Flex Table", "Mind Map", "Knowledge Graph"). See
+# R/utils_api.R for how one shared APIManager class serves three
+# separate BigQuery tables, and R/module_loader.R for the recursive
+# module-discovery fix that lets modules live inside these grouped
+# subfolders (modules/"Flex Table"/generate_table/manifest.yml etc)
+# instead of assuming a flat modules/<id>/ layout.
+
+cat("\n╔══════════════════════════════════════════════╗\n")
+cat("║  UNIFIED SUITE - INIT                         ║\n")
+cat("║  Flex Table + Mind Map + Knowledge Graph      ║\n")
+cat("╚══════════════════════════════════════════════╝\n\n")
+
+suppressPackageStartupMessages({
+  library(shiny)
+  library(shinydashboard)
+  library(R6)
+  library(yaml)
+  library(purrr)
+})
+
+# ============================================================
+# DEPLOYMENT DEPENDENCY DECLARATIONS - DO NOT REMOVE
+# ============================================================
+# rsconnect's static dependency scanner can only see literal
+# library()/pkg::fn() calls, not packages named inside YAML manifests,
+# so every package any module needs (across all three sub-suites) is
+# declared here explicitly. No graph/table visualization R package is
+# needed anywhere - D3, Cytoscape.js are all loaded client-side via
+# CDN (see create_ui() below) and driven by raw HTML/JS embedded from
+# R; the Flex Table's comparison grid is plain HTML/CSS.
+suppressPackageStartupMessages({
+  library(shinyjs)
+  library(httr)
+  library(curl)
+  library(jsonlite)
+  library(bigrquery)
+  library(DT)
+  library(plotly)
+  library(dplyr)
+  library(stringr)
+  library(tidyr)
+})
+
+source("R/module_loader.R")
+source("R/utils_common.R")
+source("R/utils_api.R")
+source("R/utils_local_creds.R")
+source("R/utils_bq_lazy.R")
+source("R/utils_techdesign_catalog.R")
+source("R/utils_techdesign_catalog_zalgo.R")
+source("R/utils_techdesign_catalog_zsocial.R")
+source("R/utils_techdesign_parse.R")
+source("R/utils_techdesign_render.R")
+source("R/utils_techdesign_module.R")
+source("R/utils_techdesign_actions.R")
+source("R/utils_td_hubs.R")
+source("R/utils_techdesign_social_module.R")
+source("R/utils_techdesign_social_handbook.R")
+source("R/utils_techdesign_algo_handbook.R")
+source("R/utils_claude_stream.R")
+source("R/utils_techdesign_matrix.R")
+source("R/utils_techdesign_matrix_render.R")
+# NOTE: the infographic files are numbered (x1..x5) because Shiny also auto-loads every file in R/ in alphabetical order,
+# and each of these needs the one before it (icons, themes and block tables are defined in x1).
+source("R/utils_x1_infographic_render.R")
+source("R/utils_x2_infographic_blocks.R")
+source("R/utils_x3_infographic_dash.R")
+source("R/utils_x4_infographic_flow.R")
+source("R/utils_x5_infographic.R")
+
+api_manager <- APIManager$new()
+
+# Icon fallback only used if a group in the registry's `groups:` list
+# is missing its own `icon:` field.
+DEFAULT_GROUP_ICON <- "folder"
+
+create_ui <- function(module_loader) {
+
+  enabled_modules <- module_loader$get_enabled_modules()
+  registry <- module_loader$registry
+
+  # ---- Build tab items (flat, unaffected by grouping) ----
+  all_tabs <- list()
+  for (module in enabled_modules) {
+    module_id <- module$module$id
+    ui_function_name <- paste0(module_id, "_ui")
+    tabname <- module$module$menu$tabname %||% module_id
+    if (module_id %in% TD_HUB_CHILD_IDS) next   # shown inside its hub (R/utils_td_hubs.R)
+
+    if (exists(ui_function_name, envir = .GlobalEnv)) {
+      ui_function <- get(ui_function_name, envir = .GlobalEnv)
+      all_tabs[[length(all_tabs) + 1]] <- tabItem(tabName = tabname, ui_function(module_id))
+    } else {
+      all_tabs[[length(all_tabs) + 1]] <- tabItem(
+        tabName = tabname,
+        fluidRow(box(title = paste("Module:", module$module$name), status = "warning", solidHeader = TRUE, width = 12,
+                    h4("This module is enabled but not yet implemented"),
+                    p("Module ID:", module_id), p("Expected UI function:", ui_function_name)))
+      )
+    }
+  }
+
+  # ---- Build GROUPED, COLLAPSIBLE sidebar menu ----
+  # Mirrors the proven-working ML System Design Prep reference app
+  # exactly: groups are defined as a top-level `groups:` list in the
+  # registry (each with an explicit `modules: [id, id, ...]` member
+  # list), NOT as a per-module field. For each group, filter its
+  # declared member ids against the currently-enabled modules, build
+  # one menuSubItem() per surviving member, then build the group's
+  # menuItem() via do.call() splicing those sub-items in as `...` -
+  # the exact same construction (including startExpanded) as the
+  # confirmed-working reference.
+  groups <- registry$groups
+  enabled_ids <- sapply(enabled_modules, function(m) m$module$id)
+
+  if (!is.null(groups)) {
+    menu_items <- lapply(groups, function(g) {
+      group_mods <- g$modules[g$modules %in% enabled_ids]
+      if (length(group_mods) == 0) return(NULL)
+
+      if (length(group_mods) == 1 && group_mods %in% names(TD_HUBS)) {   # a group with one hub is a plain sidebar item
+        m1 <- enabled_modules[[which(enabled_ids == group_mods)]]
+        return(menuItem(g$label, tabName = m1$module$menu$tabname, icon = icon(g$icon %||% DEFAULT_GROUP_ICON)))
+      }
+      sub_items <- lapply(group_mods, function(mid) {
+        m <- enabled_modules[[which(enabled_ids == mid)]]
+        menuSubItem(m$module$menu$label, tabName = m$module$menu$tabname, icon = icon(m$module$menu$icon))
+      })
+
+      do.call(menuItem, c(
+        list(text = g$label, icon = icon(g$icon %||% DEFAULT_GROUP_ICON),
+             startExpanded = isTRUE(g$expanded)),
+        sub_items
+      ))
+    })
+    menu_items <- menu_items[!sapply(menu_items, is.null)]
+  } else {
+    # Fallback: no groups defined in the registry - flat menu, same as
+    # every one of the three original standalone apps.
+    menu_items <- lapply(enabled_modules, function(m) {
+      menuItem(m$module$menu$label, tabName = m$module$menu$tabname, icon = icon(m$module$menu$icon))
+    })
+  }
+
+  dashboardPage(
+    dashboardHeader(title = module_loader$registry$app$name %||% "Unified Suite"),
+
+    dashboardSidebar(
+      sidebarMenu(id = "sidebar_menu", do.call(tagList, menu_items)),
+      tags$div(id = "sidebar_status_dock", app_api_status_ui(), app_bq_checks_ui())
+    ),
+
+    dashboardBody(
+      shinyjs::useShinyjs(),
+
+      tags$head(
+        tags$link(rel = "stylesheet", type = "text/css", href = paste0("css/global.css?v=", tryCatch(format(file.mtime("www/css/global.css"), "%Y%m%d%H%M%S"), error = function(e) "1"))),
+        tags$meta(charset = "UTF-8"),
+        tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0"),
+
+        # D3.js - Mind Map's tidy-tree visualizer + Knowledge Graph's force-directed visualizer
+        tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"),
+        # d3-sankey - Sankey Graph's flow-diagram layout plugin (computes node y-positions/
+        # heights and link curve widths from link values; does not ship with core d3)
+        tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/d3-sankey/0.12.3/d3-sankey.min.js"),
+        # Cytoscape.js - Knowledge Graph's second visualization tab
+        tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"),
+        # MathJax - LaTeX rendering shared by all three suites
+        tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-AMS-MML_HTMLorMML"),
+
+        # Diagram/table export (Strategic Analysis, Six Sigma, and Flex
+        # Table's Visualizations tabs) - captures whatever is actually
+        # rendered in the browser (HTML/CSS grid, hand-built SVG, or
+        # Plotly charts alike) rather than redrawing it, so the exported
+        # file matches what's on screen regardless of which of this app's
+        # several rendering technologies produced it.
+        tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"),
+        tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js"),
+        # pptxgenjs isn't distributed via cdnjs; jsDelivr (pointed at its
+        # GitHub releases) is its own official CDN distribution channel.
+        tags$script(src = "https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"),
+        tags$script(src = paste0("js/app_boot.js?v=", tryCatch(format(file.mtime("www/js/app_boot.js"), "%Y%m%d%H%M%S"), error = function(e) "1"))),
+        tags$script(src = "js/diagram_export.js"),
+        # version tag = file time, so a browser never keeps an old copy of the export code
+        tags$script(src = paste0("js/infographic_export.js?v=", tryCatch(format(file.mtime("www/js/infographic_export.js"), "%Y%m%d%H%M%S"), error = function(e) "1"))),
+
+        tags$script(HTML("
+          if (typeof MathJax !== 'undefined') {
+            MathJax.Hub.Config({
+              tex2jax: {
+                inlineMath: [['$','$'], ['\\\\(','\\\\)']],
+                displayMath: [['$$','$$'], ['\\\\[','\\\\]']],
+                processEscapes: true
+              },
+              'HTML-CSS': { linebreaks: { automatic: true } },
+              SVG: { linebreaks: { automatic: true } }
+            });
+          }
+        "))
+      ),
+
+      do.call(tabItems, all_tabs)
+    )
+  )
+}
+
+# Module servers are built ON DEMAND: only the API tabs and the Debug Console at start-up; every other module's server is built the first
+# time its tab is opened (or when its tab group is clicked, which builds the whole group). Building all 69 at start cost several seconds.
+APP_EAGER_MODULES <- c("bigquery_auth", "claude_api_config", "debug_console")
+
+create_server <- function(module_loader, api_manager, session) {
+  enabled <- module_loader$get_enabled_modules()
+  ids <- vapply(enabled, function(m) m$module$id, "")
+  built <- new.env()
+  groups <- list()   # group label -> module ids (registry order)
+  for (g in (module_loader$registry$groups %||% list())) groups[[as.character(g$label)]] <- intersect(unlist(g$modules), ids)
+
+  build <- function(id) {
+    if (is.null(id) || !nzchar(id) || !(id %in% ids) || exists(id, envir = built, inherits = FALSE)) return(invisible(FALSE))
+    assign(id, TRUE, envir = built)
+    fn <- paste0(id, "_server")
+    if (exists(fn, envir = .GlobalEnv)) {
+      t0 <- Sys.time()
+      tryCatch(get(fn, envir = .GlobalEnv)(id, api_manager), error = function(e) cat("[Startup] module", id, "failed to start:", conditionMessage(e), "\n"))
+      dt <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
+      if (dt > 0.5) cat(sprintf("[Startup] module %s built in %.1f s\n", id, dt))
+    }
+    for (kid in vapply(TD_HUBS[[id]]$children %||% list(), function(x) x$id, "")) build(kid)   # a hub builds its sub-tabs too
+    invisible(TRUE)
+  }
+
+  t_all <- Sys.time()
+  for (id in intersect(APP_EAGER_MODULES, ids)) build(id)
+  cat(sprintf("[Startup] %d of %d module servers built at start-up (%.2f s); the rest are built when their tab group or tab is opened\n",
+              length(intersect(APP_EAGER_MODULES, ids)), length(ids), as.numeric(difftime(Sys.time(), t_all, units = "secs"))))
+
+  group_built <- function(label) all(vapply(groups[[label]] %||% character(0), function(id) exists(id, envir = built, inherits = FALSE), TRUE))
+  list(build = build, group_built = group_built, build_group = function(label) { n <- 0L; for (id in groups[[label]] %||% character(0)) if (isTRUE(build(id))) n <- n + 1L; n },
+       group_labels = names(groups))
+}
+
+`%||%` <- function(x, y) if (is.null(x)) y else x
+
+cat("✓ Global configuration complete\n\n")

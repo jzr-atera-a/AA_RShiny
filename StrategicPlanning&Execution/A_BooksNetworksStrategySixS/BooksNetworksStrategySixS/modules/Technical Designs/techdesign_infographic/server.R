@@ -48,7 +48,7 @@ techdesign_infographic_server <- function(id, api_manager) {
     })
     draw <- function(d) {
       current(d)
-      lay <- tryCatch(ig_layout(d), error = function(e) { showNotification(paste("Layout problem:", e$message), type = "error"); NULL })
+      lay <- tryCatch(ig_layout(d), error = function(e) { showNotification(paste("Layout problem:", app_err_text(e)), type = "error"); NULL })
       if (is.null(lay)) return(invisible(NULL))
       layout_pages(lay$pages); layout_notes(lay$notes)
       fm <- ig_format_id(d$meta$format)
@@ -71,7 +71,7 @@ techdesign_infographic_server <- function(id, api_manager) {
     observeEvent(input$load_seed, {
       sd <- input$seed %||% ""
       if (!nzchar(sd) || !file.exists(sd)) { showNotification("No example selected.", type = "warning"); return() }
-      tryCatch(load_seed(sd), error = function(e) showNotification(paste("Could not load the example:", e$message), type = "error"))
+      tryCatch(load_seed(sd), error = function(e) showNotification(paste("Could not load the example:", app_err_text(e)), type = "error"))
     })
 
     # live theme switch (no API call)
@@ -113,15 +113,15 @@ techdesign_infographic_server <- function(id, api_manager) {
         show_text(d); draw(d); updateSelectInput(session, "theme", selected = d$meta$theme)
         set_status(if (length(d$warnings) > 0 || length(layout_notes()) > 0) "status-warning" else "status-success", "fa fa-check-circle", paste(summary_msg(d), "Review it, download it, or 'Save to BigQuery'."), warn_ui(d))
       }, error = function(e) {
-        set_status("status-error", "fa fa-times-circle", paste("Failed:", e$message))
-        showNotification(paste("Error:", e$message), type = "error", duration = 12)
+        set_status("status-error", "fa fa-times-circle", paste("Failed:", app_err_text(e)))
+        showNotification(paste("Error:", app_err_text(e)), type = "error", duration = 12)
       })
     })
 
     observeEvent(input$preview, {
       if (nchar(trimws(input$gen_text %||% "")) == 0) { showNotification("The text box is empty.", type = "warning"); return() }
       tryCatch({ d <- parse_infographic_text(input$gen_text); draw(d); sync_layout_inputs(d); set_status("status-success", "fa fa-check-circle", summary_msg(d), warn_ui(d)) },
-               error = function(e) set_status("status-error", "fa fa-times-circle", paste("Parse problem:", e$message)))
+               error = function(e) set_status("status-error", "fa fa-times-circle", paste("Parse problem:", app_err_text(e))))
     })
 
     observeEvent(input$save, {
@@ -133,7 +133,7 @@ techdesign_infographic_server <- function(id, api_manager) {
         editing_id(did); draw(d); want_sel(did)
         set_status("status-success", "fa fa-check-circle", sprintf("Saved '%s' (design_id: %s). It is now selected in the Saved Infographics list below.", d$meta$title, did), warn_ui(d))
         showNotification("Infographic saved to BigQuery", type = "message")
-      }, error = function(e) { set_status("status-error", "fa fa-times-circle", paste("Save failed:", e$message)); showNotification(paste("Error:", e$message), type = "error", duration = 12) })
+      }, error = function(e) { set_status("status-error", "fa fa-times-circle", paste("Save failed:", app_err_text(e))); showNotification(paste("Error:", app_err_text(e)), type = "error", duration = 12) })
     })
 
     output$dl_json <- downloadHandler(filename = function() paste0("infographic_", format(Sys.Date(), "%Y%m%d"), ".json"),
@@ -158,7 +158,7 @@ techdesign_infographic_server <- function(id, api_manager) {
       if (!nzchar(sid)) { showNotification("Select a saved infographic first.", type = "warning"); return(NULL) }
       row <- api_manager$bq_get_techdesign(sid)
       if (nrow(row) == 0) { showNotification("Could not load that infographic.", type = "error"); return(NULL) }
-      tryCatch(list(design = infographic_from_row(row), id = sid), error = function(e) { showNotification(e$message, type = "error"); NULL })
+      tryCatch(list(design = infographic_from_row(row), id = sid), error = function(e) { showNotification(app_err_text(e), type = "error"); NULL })
     }
     observeEvent(input$load_view, {
       sel <- fetch_selected(); if (is.null(sel)) return()
@@ -177,7 +177,7 @@ techdesign_infographic_server <- function(id, api_manager) {
     observeEvent(input$confirm_delete, {
       removeModal(); row <- api_manager$bq_get_techdesign(input$saved_id %||% ""); if (nrow(row) == 0) return()
       row$change_type <- "delete"; row$id <- NULL; row$created_at <- NULL
-      tryCatch({ api_manager$bq_insert_techdesign(row); showNotification("Infographic deleted.", type = "message") }, error = function(e) showNotification(paste("Error:", e$message), type = "error"))
+      tryCatch({ api_manager$bq_insert_techdesign(row); showNotification("Infographic deleted.", type = "message") }, error = function(e) showNotification(paste("Error:", app_err_text(e)), type = "error"))
     })
 
     output$status <- renderUI(tags$div())

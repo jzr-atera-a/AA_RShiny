@@ -58,7 +58,7 @@ ok(!cc_suggest_parse("sorry", f)$ok, "an unreadable reply is reported, not guess
 ok(cc_yahoo_symbol("OIL_BRENT") == "BZ=F" && cc_yahoo_symbol("X", "US Crude Oil") == "CL=F" && is.na(cc_yahoo_symbol("ZZZ", "Unknown")), "Yahoo symbols matched to Capital.com markets")
 cat("Trading Desk parts\n")
 tp <- desk_tabbox(TRUE, width = 12, id = "x", tabPanel("A", "a"), tabPanel("B", "b")); ok(inherits(tp, "desk_parts") && length(tp) == 2, "a module's tabs can be handed to the Trading Desk")
-ok(length(desk_parts(cc_trading_records_ui("cc_records", parts = TRUE))) == 9, "the Capital.com screen gives its 9 tabs (new: 9. Backtest & Blotter *)")
+ok(length(desk_parts(cc_trading_records_ui("cc_records", parts = TRUE))) == 10, "the Capital.com screen gives its 10 tabs (new: Trade Log ********)")
 
 cat("The tab: scenarios, Claude with the Morning Sheet, order sent at the price of the moment\n")
 src <- readLines("tests/test_cc_api_records.R"); eval(parse(text = src[grep("^js <- ", src):(grep("^cat\\(\"Credentials file", src) - 1)]))
@@ -91,7 +91,8 @@ testServer(cc_trading_records_server, args = list(client = cl, store = store, fe
   session$setInputs(p_rrr = 2.5, p_build = 2); sc <- scen(); ok(all(sc$rrr >= 2.5 - 1e-6) && grepl("Reward:Risk of 2.50", scen_msg()[[2]]), "box 2's minimum (changed to 2.5) is used for the scenarios")
   session$setInputs(p_rrr = 1.5, p_build = 3); sc <- scen()
   ok(all(is.finite(sc$meas_p) | sc$meas_n == 0) && any(sc$meas_n > 50), "each scenario has a measured chance with its n")
-  session$setInputs(p_show_bad = TRUE); x <- as.character(output$p_scen); ok(grepl("Stop vs now", x) && grepl("Chance target first: measured", x) && grepl("Claude", x), "table shows levels vs now and both chances")
+  sv <- scen(); ok(all(c("evidence", "be_pct", "ev_record", "setup_n") %in% names(sv)) && all(abs(sv$be_pct - 100 / (1 + sv$rrr)) < 1e-6) && all(nzchar(sv$evidence)), "********** every scenario (rules and Claude) carries its break-even and evidence verdict")
+  session$setInputs(p_show_bad = TRUE); x <- as.character(output$p_scen); ok(grepl("Stop vs now", x) && grepl("Baseline: any moment, after spread (not a forecast)", x, fixed = TRUE) && grepl("Evidence", x) && grepl("Break-even needed", x) && grepl("Claude", x), "table shows levels vs now, the evidence, break-even, the baseline and the estimate")
   ui <- paste(as.character(output$p_ms_ui), collapse = ""); ok(grepl("found in BigQuery", ui) && grepl("p_ms_use", ui), "today's Morning Sheet found: the option is on")
   session$setInputs(p_ms_use = "yes", p_claude = 1); sc2 <- scen()
   ok(any(grepl("OPEC unchanged", prompts)) && grepl("AND the Morning Sheet", tail(prompts, 1)), "Claude received today's Morning Sheet")
@@ -129,7 +130,7 @@ testServer(cc_trading_records_server, args = list(client = cl, store = store, fe
   fake$clear(); session$setInputs(o_send = 2, o_confirm = 2); calls <- fake$calls()
   ok(!any(vapply(calls, function(z) grepl("workingorders", z$url), TRUE)) && any(vapply(calls, function(z) z$method == "POST" && grepl("/positions$", z$url), TRUE)), "the SELL goes as a deal (POST /positions), never a working order")
   session$setInputs(o_dir = "BUY", o_stop = 63.70, o_target = 64.90, o_ok = TRUE)
-  ok(any(grepl("below your minimum", ticket()$errors)), "a deal below the minimum Reward:Risk is blocked in the ticket")
+  ok(any(grepl("below the minimum", ticket()$errors)), "a deal below the minimum Reward:Risk is blocked in the ticket")
   ui <- paste(as.character(output$o_result), collapse = ""); ok(grepl("Deal opened", ui) && grepl("Trades", ui), "the result says the deal is open and in Trades")
   # course study plan: plan rules on the ticket, Rule of Five tick boxes, reason to break, PLAN_CHECK saved
   session$setInputs(s_pl_markets = "GOLD", s_pl_r1 = "Trade with the trend", o_dir = "SELL", o_stop = 66.1234, o_target = 61.9876, o_ok = TRUE, o_break = "")

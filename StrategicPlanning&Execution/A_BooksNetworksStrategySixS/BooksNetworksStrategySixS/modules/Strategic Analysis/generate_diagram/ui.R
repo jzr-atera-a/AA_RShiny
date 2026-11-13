@@ -42,6 +42,10 @@ generate_diagram_ui <- function(id) {
                                     placeholder = "e.g., Never Split the Difference"))
               ))
         ),
+        conditionalPanel(
+          condition = sprintf("input['%s'] == 'decision_tree'", ns("diagram_type_select")),
+          dt_settings_ui(ns)
+        ),
         textInput(ns("title_hint"), "Diagram Title (optional):",
                  placeholder = "Leave blank to let the Editing Tool choose one"),
         textAreaInput(ns("user_request"), "Describe what you want the diagram to cover: *", height = "120px",
@@ -82,6 +86,12 @@ generate_diagram_ui <- function(id) {
         br(),
         DT::dataTableOutput(ns("preview_table"))
       )
+    ),
+
+    # Decision trees only: edit every node and see expected values, risk and critical probabilities
+    conditionalPanel(
+      condition = sprintf("input['%s'] == 'decision_tree'", ns("diagram_type_select")),
+      fluidRow(dt_workbench_ui(ns))
     )
   )
 }

@@ -1,0 +1,33 @@
+module:
+  id: "sk_hub_create"
+  name: "Create and Import"
+  description: "Hub: Create and Import"
+  version: "1.0.0"
+  author: "Sankey Graph Suite"
+
+  enabled: true
+
+  menu:
+    label: "Create and Import"
+    icon: "magic"
+    tabname: "sk_hub_create"
+    group: "Sankey Graph"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinyjs
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: ["claude", "bigquery"]
+
+  data:
+    required: []
+    optional: []

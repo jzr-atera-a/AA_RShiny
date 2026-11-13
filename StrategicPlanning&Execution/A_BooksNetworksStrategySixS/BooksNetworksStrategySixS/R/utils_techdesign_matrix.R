@@ -70,7 +70,7 @@ tdm_extract_json <- function(text) {
   }
   if (is.na(end)) stop("The JSON in the response is incomplete (it was probably cut off by the token limit).")
   js <- paste(chars[a:end], collapse = "")
-  out <- tryCatch(jsonlite::fromJSON(js, simplifyVector = FALSE), error = function(e) stop("Invalid JSON: ", e$message))
+  out <- tryCatch(jsonlite::fromJSON(js, simplifyVector = FALSE), error = function(e) stop("Invalid JSON: ", app_err_text(e)))
   if (!is.list(out)) stop("The JSON is not an object.")
   out
 }
@@ -583,7 +583,7 @@ tdm_run_pipeline <- function(api, topic, n_rows = 14, n_cols = 8, tree_mode = "c
   skeleton <- jsonlite::toJSON(c(pj[c("title", "subtitle", "row_axis", "col_axis", "score_definition", "rows", "cols")],
                                  if (!is.null(pj$row_tree)) list(row_tree = pj$row_tree), if (!is.null(pj$col_tree)) list(col_tree = pj$col_tree)),
                                auto_unbox = TRUE)
-  d <- tryCatch(parse_matrix_text(as.character(skeleton)), error = function(e) stop("The plan could not be parsed: ", e$message))
+  d <- tryCatch(parse_matrix_text(as.character(skeleton)), error = function(e) stop("The plan could not be parsed: ", app_err_text(e)))
   d$cells <- d$cells[0, , drop = FALSE]   # the skeleton has no real cells yet (parse fills a blank grid)
   d$meta$topic <- topic
   d$meta$tree_mode <- tree_mode

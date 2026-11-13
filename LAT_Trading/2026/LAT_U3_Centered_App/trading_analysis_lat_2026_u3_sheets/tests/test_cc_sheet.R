@@ -1,6 +1,6 @@
 # tests/test_cc_sheet.R - the Individual Trade Sheet for a closed Capital.com trade (your trade of 2 Nov 2026)
 suppressMessages({ library(TTR); library(zoo) }); `%||%` <- function(x, y) if (is.null(x)) y else x
-for (f in c("R/utils_trading_records.R", "R/utils_trading_exports.R", "R/utils_trading_templates.R", "R/utils_trading_calendar.R", "R/utils_cc_catalog.R", "R/utils_cc_api.R", "R/utils_cc_patterns.R", "R/utils_cc_chart.R", "R/utils_cc_records.R", "R/utils_cc_sheet.R", "R/utils_cc_advice.R")) source(f)
+for (f in c("R/utils_trading_records.R", "R/utils_trading_exports.R", "R/utils_trading_templates.R", "R/utils_trading_calendar.R", "R/utils_cc_catalog.R", "R/utils_cc_api.R", "R/utils_cc_patterns.R", "R/utils_cc_chart.R", "R/utils_cc_records.R", "R/utils_cc_tradelog.R", "R/utils_cc_sheet.R", "R/utils_cc_advice.R", "R/utils_cc_plan.R")) source(f)
 pass <- 0L; fail <- 0L; ok <- function(c, w) { if (isTRUE(c)) { pass <<- pass + 1L; cat("  ok  ", w, "\n") } else { fail <<- fail + 1L; cat("  FAIL", w, "\n") } }
 tr <- cc_coerce("trades", data.frame(trade_id = "CC_1421", record_version = 3L, source = "APP", epic = "OIL_BRENT", market_name = "Brent Oil Spot", instrument_currency = "USD", account_currency = "GBP",
   direction = "BUY", size = 11, lot_size = 1, deal_id = "POS", status = "CLOSED", entry_level = 109.756, stop_initial = 108.703, stop_level = 108.703, target_level = 110.495,

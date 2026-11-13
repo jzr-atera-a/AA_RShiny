@@ -196,6 +196,9 @@ cc_res_minutes <- c(MINUTE = 1, MINUTE_5 = 5, MINUTE_15 = 15, MINUTE_30 = 30, HO
 # minute data, or a range with no trading in it). Each page that is refused is logged with its dates and skipped; if
 # every dated page is refused, the latest 1000 candles are fetched without dates (always accepted).
 cc_fetch_bars <- function(client, epic, resolution, from, to = Sys.time(), max_calls = 20, log = function(...) cat("[Capital.com]", ..., "\n")) {
+  if (identical(resolution, "MINUTE")) return(tryCatch(cc_fetch_bars(client, epic, "MINUTE_1X", from, to, max_calls, log), error = function(e) {   # ********
+    if (!grepl("not-found|not found", conditionMessage(e))) stop(e); log(sprintf("%s has no 1-minute candles on Capital.com: 5-minute used", epic)); cc_fetch_bars(client, epic, "MINUTE_5", from, to, max_calls, log) }))
+  if (identical(resolution, "MINUTE_1X")) resolution <- "MINUTE"
   # at most ~7 days per request (a 20-day span was refused for 30-minute candles) and never more than 990 candles
   mins <- cc_res_minutes[[resolution]]; step <- min(mins * 60 * 990, 7 * 86400)
   out <- list(); t0 <- as.POSIXct(from); k <- 0; refused <- character(0)

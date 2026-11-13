@@ -105,6 +105,7 @@ source("R/utils_cc_catalog.R")     # the 141 patterns of the matrix with their c
 source("R/utils_cc_patterns.R")    # rule-based pattern engine on Capital.com prices
 source("R/utils_cc_chart.R")      # chart: patterns drawn on the price + indicator panel; saved scans
 source("R/utils_cc_records.R")     # cc_ BigQuery tables, currency, budget, scenarios, sync
+source("R/utils_cc_tradelog.R")    # ******** Trade Log: every deal and order in the tracking-sheet layout, overnight ranges (cc_ranges)
 source("R/utils_cc_sheet.R")       # closed trade: full summary, static charts, LAT Individual Trade Sheet
 source("R/utils_cc_advice.R"); source("R/utils_synthetic.R"); source("R/utils_pm.R")      # prices rounded, order checks, measured chance, Morning Sheet text, Claude suggestions
 source("R/utils_cc_plan.R"); source("R/utils_cc_course_full.R"); source("R/utils_cc_course_checks.R")      # course study plan: plan rules on the ticket, backtest and blotter, higher time-frame trend, news window

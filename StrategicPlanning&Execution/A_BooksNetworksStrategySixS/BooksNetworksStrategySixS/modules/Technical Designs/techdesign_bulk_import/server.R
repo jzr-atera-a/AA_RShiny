@@ -8,7 +8,7 @@ techdesign_bulk_import_server <- function(id, api_manager) {
     observeEvent(api_manager$pending_bulk_text_techdesign(), {
       t <- api_manager$pending_bulk_text_techdesign()
       if (nchar(t) > 0) updateTextAreaInput(session, "text", value = t)
-    }, ignoreInit = TRUE)
+    }, ignoreInit = FALSE)   # FALSE: a tab built lazily (after the hand-off) still picks the text up
 
     observeEvent(input$clear, { updateTextAreaInput(session, "text", value = ""); parsed(NULL) })
 
@@ -93,7 +93,7 @@ techdesign_bulk_import_server <- function(id, api_manager) {
         showNotification(sprintf("Uploaded %d design(s).", length(rows)), type = "message")
         parsed(NULL)
       }, error = function(e) {
-        output$status <- renderUI(tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Upload failed: ", e$message))
+        output$status <- renderUI(tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Upload failed: ", app_err_text(e)))
       })
     })
 
