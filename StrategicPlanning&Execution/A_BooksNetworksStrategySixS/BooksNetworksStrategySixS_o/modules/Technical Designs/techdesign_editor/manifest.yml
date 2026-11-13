@@ -1,0 +1,35 @@
+module:
+  id: "techdesign_editor"
+  name: "Design Editor"
+  description: "Edit a design in tables with live redraw, ask the Editing Tool to modify it, save as new version or copy"
+  version: "1.0.0"
+  author: "Technical Designs Suite"
+
+  enabled: true
+
+  menu:
+    label: "Design Editor"
+    icon: "edit"
+    tabname: "techdesign_editor"
+    group: "Technical Designs"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinyjs
+      - jsonlite
+      - DT
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: ["claude", "bigquery"]
+
+  data:
+    required: []
+    optional: []

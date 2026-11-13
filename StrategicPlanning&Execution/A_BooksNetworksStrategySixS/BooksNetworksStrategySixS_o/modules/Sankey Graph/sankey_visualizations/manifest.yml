@@ -1,0 +1,32 @@
+module:
+  id: "sankey_visualizations"
+  name: "Sankey Visualizations"
+  description: "Render a selected Sankey graph with D3's d3-sankey (explicit column alignment, skip-ahead links supported)"
+  version: "1.0.0"
+  author: "Sankey Graph Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Visualizations"
+    icon: "water"
+    tabname: "sankey_visualizations"
+    group: "Sankey Graph"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: ["bigquery"]
+
+  data:
+    required: []
+    optional: []

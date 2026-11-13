@@ -1,0 +1,35 @@
+module:
+  id: "techdesign_ml"
+  name: "ML / GenAI Architectures"
+  description: "Machine Learning and GenAI architecture diagrams (RAG, agents, real-time and batch ML pipelines)"
+  version: "1.0.0"
+  author: "Technical Designs Suite"
+
+  enabled: true
+
+  menu:
+    label: "ML / GenAI Architectures"
+    icon: "brain"
+    tabname: "techdesign_ml"
+    group: "Technical Designs"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinyjs
+      - jsonlite
+      - DT
+
+    package_versions: {}
+
+  api:
+    required: ["claude"]
+    optional: ["bigquery"]
+
+  data:
+    required: []
+    optional: []

@@ -10,7 +10,7 @@ sankey_bulk_import_server <- function(id, api_manager) {
       if (nchar(incoming_text) > 0) {
         updateTextAreaInput(session, "sankey_text", value = incoming_text)
       }
-    }, ignoreInit = TRUE)
+    }, ignoreInit = FALSE)   # FALSE: a tab built lazily (after the hand-off) still picks the text up
 
     observeEvent(input$parse, {
       if (trimws(input$sankey_text %||% "") == "") {
@@ -56,11 +56,11 @@ sankey_bulk_import_server <- function(id, api_manager) {
       }, error = function(e) {
         parsed_data(NULL)
         output$parse_info <- renderUI({
-          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Parse issue: ", e$message)
+          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Parse issue: ", app_err_text(e))
         })
         output$preview_table <- DT::renderDataTable({})
         output$status <- renderUI({
-          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", e$message)
+          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", app_err_text(e))
         })
       })
     })
@@ -83,9 +83,9 @@ sankey_bulk_import_server <- function(id, api_manager) {
         showNotification(sprintf("✓ Uploaded %d row(s)!", rows_uploaded), type = "message")
       }, error = function(e) {
         output$status <- renderUI({
-          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", e$message)
+          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", app_err_text(e))
         })
-        showNotification(paste("Error:", e$message), type = "error")
+        showNotification(paste("Error:", app_err_text(e)), type = "error")
       })
     })
 

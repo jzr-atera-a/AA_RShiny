@@ -68,8 +68,8 @@ generate_summary_server <- function(id, api_manager) {
                         error = function(e) {
                           shinyjs::hide("loading_spinner")
                           output$status <- renderUI(tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"),
-                                                             " Index files problem: ", e$message))
-                          showNotification(paste("Index files:", e$message), type = "error", duration = 12)
+                                                             " Index files problem: ", app_err_text(e)))
+                          showNotification(paste("Index files:", app_err_text(e)), type = "error", duration = 12)
                           NULL })
         if (is.null(att)) return()
         for (nt in att$notes) showNotification(nt, type = "message", duration = 6)
@@ -88,14 +88,14 @@ generate_summary_server <- function(id, api_manager) {
           n_index_files = if (is.null(att)) 0 else att$n
         )
       }, error = function(e) {
-        cat("❌ [generate_summary] generate_summary_prompt() failed:", e$message, "\n")
+        cat("❌ [generate_summary] generate_summary_prompt() failed:", app_err_text(e), "\n")
         shinyjs::hide("loading_spinner")
         output$status <- renderUI({
           tags$div(class = "status-error",
                    tags$i(class = "fa fa-times-circle"),
-                   " Failed to build prompt: ", e$message)
+                   " Failed to build prompt: ", app_err_text(e))
         })
-        showNotification(paste("Error building prompt:", e$message), type = "error", duration = 10)
+        showNotification(paste("Error building prompt:", app_err_text(e)), type = "error", duration = 10)
         NULL
       })
       
@@ -181,10 +181,10 @@ generate_summary_server <- function(id, api_manager) {
         }
         
       }, error = function(e) {
-        cat("❌ [generate_summary] call_claude() FAILED:", e$message, "\n")
+        cat("❌ [generate_summary] call_claude() FAILED:", app_err_text(e), "\n")
         shinyjs::hide("loading_spinner")
         
-        error_message <- e$message
+        error_message <- app_err_text(e)
         
         # Provide helpful suggestions based on error type
         suggestion <- ""
@@ -270,9 +270,9 @@ generate_summary_server <- function(id, api_manager) {
         output$status <- renderUI({
           tags$div(class = "status-error",
                    tags$i(class = "fa fa-times-circle"),
-                   " Error: ", e$message)
+                   " Error: ", app_err_text(e))
         })
-        showNotification(paste("Error:", e$message), type = "error")
+        showNotification(paste("Error:", app_err_text(e)), type = "error")
       })
     })
     

@@ -1,0 +1,292 @@
+design_id: seed_cdc_event_driven
+design_group: data_processing
+design_type: cdc_event_driven
+title: CDC and Event-Driven Integration
+variant: Log-based change data capture to many consumers
+summary: Change data capture reads a database transaction log and publishes every insert, update and delete as an event. Downstream services, search indexes, caches and the warehouse subscribe to these events, staying in sync without polling or dual writes.
+when_to_use: Many systems need near real-time copies of operational data, and you want to avoid dual writes or heavy batch extracts.
+when_not_to_use: There is a single consumer with relaxed freshness, or the source database cannot expose its log.
+complexity: Medium
+tags: cdc, debezium, event driven, outbox, kafka
+
+@component
+id: C1
+label: Application Service
+lane: Source
+kind: service
+description: Writes business data and, with the outbox pattern, domain events in the same transaction.
+technologies: Spring, Node, Django
+attributes: N/A
+methods: N/A
+
+@component
+id: C2
+label: Source Database
+lane: Source
+kind: store
+description: Operational database whose transaction log is the source of changes.
+technologies: Postgres, MySQL
+attributes: N/A
+methods: N/A
+
+@component
+id: C3
+label: Transaction Log
+lane: Source
+kind: queue
+description: Write-ahead log that records every committed change in order.
+technologies: WAL, binlog
+attributes: N/A
+methods: N/A
+
+@component
+id: C4
+label: CDC Connector
+lane: Capture
+kind: process
+description: Reads the log, tracks its offset and converts rows into change events.
+technologies: Debezium, Kafka Connect
+attributes: N/A
+methods: N/A
+
+@component
+id: C5
+label: Event Broker
+lane: Transport
+kind: queue
+description: Durable topics per table or aggregate with ordered partitions.
+technologies: Kafka, Pulsar
+attributes: N/A
+methods: N/A
+
+@component
+id: C6
+label: Schema Registry
+lane: Transport
+kind: service
+description: Manages event schema versions and compatibility.
+technologies: Avro, Protobuf registry
+attributes: N/A
+methods: N/A
+
+@component
+id: C7
+label: Stream Transformer
+lane: Processing
+kind: process
+description: Filters, enriches and reshapes change events.
+technologies: Flink, ksqlDB
+attributes: N/A
+methods: N/A
+
+@component
+id: C8
+label: Warehouse Sink
+lane: Consumers
+kind: store
+description: Applies changes to analytical tables.
+technologies: BigQuery, Snowflake
+attributes: N/A
+methods: N/A
+
+@component
+id: C9
+label: Search Index Sink
+lane: Consumers
+kind: store
+description: Keeps a search index in sync.
+technologies: Elasticsearch, OpenSearch
+attributes: N/A
+methods: N/A
+
+@component
+id: C10
+label: Cache Invalidator
+lane: Consumers
+kind: cache
+description: Evicts or refreshes cache entries on change.
+technologies: Redis
+attributes: N/A
+methods: N/A
+
+@component
+id: C11
+label: Downstream Microservice
+lane: Consumers
+kind: service
+description: Reacts to domain events from other services.
+technologies: Any service
+attributes: N/A
+methods: N/A
+
+@component
+id: C12
+label: Dead Letter Queue
+lane: Operations
+kind: queue
+description: Holds events that could not be processed for inspection and replay.
+technologies: Kafka topic
+attributes: N/A
+methods: N/A
+
+@component
+id: C13
+label: Lag and Health Monitor
+lane: Operations
+kind: monitor
+description: Tracks connector lag, replication slots and throughput.
+technologies: Prometheus, Grafana
+attributes: N/A
+methods: N/A
+
+@connection
+from: C1
+to: C2
+label: transactional writes
+type: data
+
+@connection
+from: C2
+to: C3
+label: commit
+type: data
+
+@connection
+from: C3
+to: C4
+label: read changes
+type: data
+
+@connection
+from: C4
+to: C5
+label: change events
+type: event
+
+@connection
+from: C6
+to: C5
+label: validate schema
+type: control
+
+@connection
+from: C5
+to: C7
+label: events
+type: event
+
+@connection
+from: C7
+to: C8
+label: curated changes
+type: event
+
+@connection
+from: C7
+to: C9
+label: curated changes
+type: event
+
+@connection
+from: C5
+to: C10
+label: events
+type: event
+
+@connection
+from: C5
+to: C11
+label: events
+type: event
+
+@connection
+from: C8
+to: C12
+label: failed events
+type: event
+
+@connection
+from: C4
+to: C13
+label: offsets and lag
+type: event
+
+@connection
+from: C12
+to: C5
+label: replay
+type: feedback
+
+@step
+order: 1
+text: The application commits data, and optionally an outbox event, in one transaction.
+components: C1,C2
+
+@step
+order: 2
+text: The database records the change in its transaction log.
+components: C3
+
+@step
+order: 3
+text: The CDC connector reads the log and publishes change events to the broker.
+components: C4,C5
+
+@step
+order: 4
+text: Stream transformers filter and enrich events.
+components: C7
+
+@step
+order: 5
+text: Sinks update the warehouse, search index and cache; services react to events.
+components: C8,C9,C10,C11
+
+@step
+order: 6
+text: Failed events go to the dead letter queue and monitoring watches lag.
+components: C12,C13
+
+@tradeoff
+kind: pro
+text: Near real-time sync without polling or touching application code paths.
+
+@tradeoff
+kind: pro
+text: Decouples producers from many consumers.
+
+@tradeoff
+kind: con
+text: Consumers see database-shaped events unless an outbox or transformation is added.
+
+@tradeoff
+kind: con
+text: Needs careful handling of ordering, duplicates and schema changes.
+
+@tradeoff
+kind: risk
+text: A stalled connector can make the source database retain log files and fill its disk.
+
+@tradeoff
+kind: cost
+text: Broker and connector infrastructure to run.
+
+@tradeoff
+kind: scaling
+text: Partition topics by key to preserve per-entity order and scale consumers in groups.
+
+@reference
+title: Designing Data-Intensive Applications
+author: Martin Kleppmann
+url: N/A
+
+@reference
+title: Debezium Documentation
+author: Debezium project
+url: https://debezium.io/documentation/
+
+@reference
+title: Pattern: Transactional Outbox
+author: Chris Richardson
+url: https://microservices.io/patterns/data/transactional-outbox
+

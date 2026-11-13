@@ -344,7 +344,7 @@ APIManager <- R6::R6Class(
       }, error = function(e) {
         self$claude_authenticated <- FALSE
         self$claude_tested <- FALSE
-        stop(paste("Connection failed:", e$message))
+        stop(paste("Connection failed:", app_err_text(e)))
       })
     },
 
@@ -369,7 +369,7 @@ APIManager <- R6::R6Class(
         list(ok = TRUE, status = httr::status_code(r), elapsed = elapsed)
       }, error = function(e) {
         elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
-        list(ok = FALSE, error = e$message, elapsed = elapsed)
+        list(ok = FALSE, error = app_err_text(e), elapsed = elapsed)
       })
 
       if (reach$ok) {
@@ -548,7 +548,7 @@ APIManager <- R6::R6Class(
 
       }, error = function(e) {
         elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
-        error_msg <- e$message
+        error_msg <- app_err_text(e)
 
         self$log_debug(sprintf("[%s] FAILED after %.2fs", call_id, elapsed), tag = "call_claude ERROR")
         self$log_debug(sprintf("[%s] Condition class: %s", call_id, paste(class(e), collapse = ", ")), tag = "call_claude ERROR")
@@ -678,7 +678,7 @@ APIManager <- R6::R6Class(
 
       }, error = function(e) {
         self$bq_authenticated <- FALSE; self$bq_connected <- FALSE
-        stop(paste("BigQuery authentication failed:", e$message))
+        stop(paste("BigQuery authentication failed:", app_err_text(e)))
       })
     },
 
@@ -782,7 +782,9 @@ APIManager <- R6::R6Class(
             value_numeric FLOAT64, value_axis STRING, series_name STRING, unit_label STRING,
             axis_type STRING, axis_min FLOAT64, axis_max FLOAT64, metric_name STRING,
             color_hint STRING, icon_name STRING,
-            created_by STRING
+            created_by STRING,
+            node_id STRING, parent_id STRING, branch_label STRING,
+            probability FLOAT64, cash_flow FLOAT64, expected_value FLOAT64
           )", self$bq_full_table_diagram)
 
         # Schema evolution safety net: if strategy_diagrams already existed
@@ -910,32 +912,65 @@ APIManager <- R6::R6Class(
     },
 
     # Makes sure one suite's table exists with every column the app expects; runs CREATE / ALTER only when something is missing.
-    bq_ensure_schema = function(group) {
+    bq_ensure_schema = function(group, retries = 1) {
       if (group %in% self$bq_schema_done) return(invisible(TRUE))
       if (!(isTRUE(self$bq_connected) || isTRUE(self$bq_authenticated))) stop("Not authenticated to BigQuery")
       ddl <- self$bq_ddl()[[group]]; tbl <- self$bq_group_table(group)
-      run <- function(q) tryCatch({ bq_project_query(self$bq_project_id, q); TRUE }, error = function(e) { cat("[BigQuery] setup statement failed:", conditionMessage(e), "\n"); FALSE })
+      # BigQuery allows only ~5 changes to one table per 10 seconds: retry with a pause when it says "rate limit"
+      run <- function(q) {
+        for (attempt in seq_len(retries + 1)) {
+          ok <- tryCatch({ bq_project_query(self$bq_project_id, q); TRUE }, error = function(e) {
+            msg <- app_err_text(e); cat("[BigQuery] setup statement failed (attempt", attempt, "):", msg, "\n")
+            if (grepl("rate ?limit|rateLimitExceeded|too many table update", msg, ignore.case = TRUE)) "retry" else FALSE })
+          if (isTRUE(ok)) return(TRUE)
+          if (!identical(ok, "retry") || attempt > retries) return(FALSE)
+          Sys.sleep(11)   # the limit is per 10-second window
+        }
+        FALSE
+      }
+      expected_cols <- function() {
+        body <- sub("\\)\\s*$", "", sub("(?s)^.*?IF NOT EXISTS `[^`]+`\\s*\\(", "", ddl$create, perl = TRUE))
+        cols <- trimws(strsplit(body, ",", fixed = TRUE)[[1]]); cols <- cols[nzchar(cols)]
+        list(nm = sub("\\s.*$", "", cols), ty = vapply(strsplit(cols, "\\s+"), function(z) if (length(z) >= 2) z[2] else "STRING", ""))
+      }
       info <- self$bq_schema_info(group)
+      all_ok <- TRUE
       if (is.null(info)) {
-        for (q in c(ddl$create, ddl$alter)) run(q)
+        for (q in c(ddl$create, ddl$alter)) all_ok <- run(q) && all_ok
       } else {
         have <- info$column_name[info$table_name == tbl]
         if (length(have) == 0) {
-          cat("[BigQuery] table", tbl, "not found - creating it\n"); run(ddl$create)
+          cat("[BigQuery] table", tbl, "not found - creating it\n"); all_ok <- run(ddl$create)
           self$bq_schema_cache[[tbl]] <- NULL
         } else {
-          body <- sub("\\)\\s*$", "", sub("(?s)^.*?IF NOT EXISTS `[^`]+`\\s*\\(", "", ddl$create, perl = TRUE))
-          cols <- trimws(strsplit(body, ",", fixed = TRUE)[[1]]); cols <- cols[nzchar(cols)]
-          nm <- sub("\\s.*$", "", cols); ty <- vapply(strsplit(cols, "\\s+"), function(z) if (length(z) >= 2) z[2] else "STRING", "")
-          for (i in which(!nm %in% have)) {
-            cat("[BigQuery] adding column", nm[i], "to", tbl, "\n")
-            run(sprintf("ALTER TABLE `%s.%s.%s` ADD COLUMN IF NOT EXISTS %s %s", self$bq_project_id, self$bq_dataset_id, tbl, nm[i], ty[i]))
+          ec <- expected_cols(); miss <- which(!ec$nm %in% have)
+          if (length(miss)) {
+            # one ALTER statement for all missing columns = one table update (no rate limit)
+            cat("[BigQuery] adding column(s)", paste(ec$nm[miss], collapse = ", "), "to", tbl, "\n")
+            all_ok <- run(sprintf("ALTER TABLE `%s.%s.%s` %s", self$bq_project_id, self$bq_dataset_id, tbl,
+                                  paste(sprintf("ADD COLUMN IF NOT EXISTS %s %s", ec$nm[miss], ec$ty[miss]), collapse = ", ")))
             self$bq_schema_cache[[tbl]] <- NULL
+            if (all_ok) {
+              now <- self$bq_schema_info(group, refresh = TRUE)
+              still <- setdiff(ec$nm[miss], now$column_name[now$table_name == tbl])
+              if (length(still)) { all_ok <- FALSE; cat("[BigQuery] still missing after ALTER:", paste(still, collapse = ", "), "\n") }
+              else cat("[BigQuery]", tbl, "is up to date\n")
+            }
           }
         }
       }
-      self$bq_schema_done <- unique(c(self$bq_schema_done, group))
-      invisible(TRUE)
+      # only remember success - a failed step is tried again next time (e.g. before the next save)
+      if (all_ok) self$bq_schema_done <- unique(c(self$bq_schema_done, group))
+      invisible(all_ok)
+    },
+
+    # Columns of a table as BigQuery has them now (NULL if unknown) - used to keep uploads matching the table.
+    bq_table_columns = function(group) {
+      info <- tryCatch(self$bq_schema_info(group, refresh = TRUE), error = function(e) NULL)
+      if (is.null(info)) return(NULL)
+      tbl <- self$bq_group_table(group)
+      cols <- info$column_name[info$table_name == tbl]
+      if (length(cols)) cols else NULL
     },
 
     # Opens one suite: schema check, then fires its trigger (its modules refresh) and primes its list cache.
@@ -973,7 +1008,7 @@ APIManager <- R6::R6Class(
         bq_table_download(job)
       }, error = function(e) {
         elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
-        self$log_debug(sprintf("FAILED after %.2fs | %s | error: %s", elapsed, query_preview, e$message),
+        self$log_debug(sprintf("FAILED after %.2fs | %s | error: %s", elapsed, query_preview, app_err_text(e)),
                        tag = "bq_query")
         stop(e)
       })
@@ -996,7 +1031,7 @@ APIManager <- R6::R6Class(
         self$bq_full_table_books
       )
       result <- tryCatch(self$bq_query(query), error = function(e) {
-        cat("⚠️  [bq_get_books_taxonomy] Query failed:", e$message, "\n")
+        cat("⚠️  [bq_get_books_taxonomy] Query failed:", app_err_text(e), "\n")
         self$empty_books_taxonomy()
       })
       self$books_taxonomy_cache <- result
@@ -1041,7 +1076,7 @@ APIManager <- R6::R6Class(
          FROM `%s` ORDER BY category, topic", self$bq_full_table_flex
       )
       result <- tryCatch(self$bq_query(query), error = function(e) {
-        cat("⚠️  [bq_get_flex_taxonomy] Query failed:", e$message, "\n")
+        cat("⚠️  [bq_get_flex_taxonomy] Query failed:", app_err_text(e), "\n")
         self$empty_flex_taxonomy()
       })
       self$flex_taxonomy_cache <- result
@@ -1085,7 +1120,7 @@ APIManager <- R6::R6Class(
          FROM `%s` ORDER BY category, domain, topic, map_id", self$bq_full_table_mindmap
       )
       result <- tryCatch(self$bq_query(query), error = function(e) {
-        cat("⚠️  [bq_get_mindmap_taxonomy] Query failed:", e$message, "\n")
+        cat("⚠️  [bq_get_mindmap_taxonomy] Query failed:", app_err_text(e), "\n")
         self$empty_mindmap_taxonomy()
       })
       self$mindmap_taxonomy_cache <- result
@@ -1121,7 +1156,7 @@ APIManager <- R6::R6Class(
         self$bq_full_table_mindmap, safe_category, safe_domain, safe_topic
       )
       result <- tryCatch(self$bq_query(query), error = function(e) {
-        cat("⚠️  [bq_get_map_ids_for_topic] Query failed:", e$message, "\n")
+        cat("⚠️  [bq_get_map_ids_for_topic] Query failed:", app_err_text(e), "\n")
         data.frame(map_id = character(), last_touched = character(), map_title = character())
       })
 
@@ -1190,7 +1225,7 @@ APIManager <- R6::R6Class(
          FROM `%s` ORDER BY category, domain, topic, graph_id", self$bq_full_table_kg
       )
       result <- tryCatch(self$bq_query(query), error = function(e) {
-        cat("⚠️  [bq_get_kg_taxonomy] Query failed:", e$message, "\n")
+        cat("⚠️  [bq_get_kg_taxonomy] Query failed:", app_err_text(e), "\n")
         self$empty_kg_taxonomy()
       })
       self$kg_taxonomy_cache <- result
@@ -1213,7 +1248,7 @@ APIManager <- R6::R6Class(
         self$bq_full_table_kg, safe_category, safe_domain, safe_topic
       )
       result <- tryCatch(self$bq_query(query), error = function(e) {
-        cat("⚠️  [bq_get_graph_ids_for_topic] Query failed:", e$message, "\n")
+        cat("⚠️  [bq_get_graph_ids_for_topic] Query failed:", app_err_text(e), "\n")
         data.frame(graph_id = character(), last_touched = character(), graph_title = character())
       })
 
@@ -1318,7 +1353,7 @@ APIManager <- R6::R6Class(
           ORDER BY topic, diagram_name, created_at DESC
         ", self$bq_full_table_diagram))
       }, error = function(e) {
-        cat("⚠️  [bq_get_diagram_taxonomy] Query failed:", e$message, "\n")
+        cat("⚠️  [bq_get_diagram_taxonomy] Query failed:", app_err_text(e), "\n")
         self$empty_diagram_taxonomy()
       })
 
@@ -1340,7 +1375,7 @@ APIManager <- R6::R6Class(
           ORDER BY grid_row, grid_col, sequence_order, z_index
         ", self$bq_full_table_diagram, safe_sql_escape(diagram_id)))
       }, error = function(e) {
-        cat("⚠️  [bq_get_diagram_components] Query failed:", e$message, "\n")
+        cat("⚠️  [bq_get_diagram_components] Query failed:", app_err_text(e), "\n")
         data.frame()
       })
 
@@ -1366,7 +1401,9 @@ APIManager <- R6::R6Class(
                         "label_text", "sub_text", "items_packed",
                         "value_numeric", "value_axis", "series_name", "unit_label",
                         "axis_type", "axis_min", "axis_max", "metric_name",
-                        "color_hint", "icon_name", "created_by")
+                        "color_hint", "icon_name", "created_by",
+                        # decision trees (R/utils_decision_tree.R); NULL for every other framework
+                        "node_id", "parent_id", "branch_label", "probability", "cash_flow", "expected_value")
 
       max_id_query <- sprintf("SELECT COALESCE(MAX(id), 0) as max_id FROM `%s`", self$bq_full_table_diagram)
       start_id <- tryCatch({
@@ -1378,6 +1415,9 @@ APIManager <- R6::R6Class(
       data_frame$created_at <- Sys.time()
       for (col in required_cols) if (!col %in% names(data_frame)) data_frame[[col]] <- NA
       data_frame <- data_frame[, required_cols]
+      # typed NULLs, so an all-empty column is uploaded as the column's real type (not BOOLEAN)
+      for (col in c("node_id", "parent_id", "branch_label")) data_frame[[col]] <- as.character(data_frame[[col]])
+      for (col in c("probability", "cash_flow", "expected_value")) data_frame[[col]] <- suppressWarnings(as.numeric(data_frame[[col]]))
 
       # ---- DEBUG: full detail on exactly what is about to be written,
       #     printed to the console every time a new diagram is persisted ---
@@ -1393,8 +1433,21 @@ APIManager <- R6::R6Class(
       cat(sprintf("    id range        : %d - %d\n", min(data_frame$id), max(data_frame$id)))
       cat("========================================================\n")
 
+      # the upload must not name a column the table lacks (BigQuery then fails the whole job): repair, else leave it out
+      have <- self$bq_table_columns("diagram")
+      if (!is.null(have) && length(setdiff(required_cols, have))) {
+        self$bq_schema_done <- setdiff(self$bq_schema_done, "diagram")
+        self$bq_ensure_schema("diagram", retries = 0)
+        have <- self$bq_table_columns("diagram") %||% have
+        drop <- setdiff(required_cols, have)
+        if (length(drop)) {
+          cat("[BigQuery] column(s) not in strategy_diagrams yet, saved without them:", paste(drop, collapse = ", "), "\n")
+          data_frame <- data_frame[, setdiff(names(data_frame), drop), drop = FALSE]
+        }
+      }
       table_ref <- bq_table(self$bq_project_id, self$bq_dataset_id, self$bq_table_diagram)
-      bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
+      tryCatch(bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND"),
+               error = function(e) stop(paste("BigQuery could not save the diagram:", app_err_text(e)), call. = FALSE))
 
       cat("✅ [BigQuery] Inserted", nrow(data_frame), "row(s) ->", self$bq_full_table_diagram, "\n")
       self$trigger_state_update_diagram()
@@ -1420,7 +1473,7 @@ APIManager <- R6::R6Class(
           ORDER BY topic, diagram_name, created_at DESC
         ", self$bq_full_table_sixsigma))
       }, error = function(e) {
-        cat("⚠️  [bq_get_sixsigma_taxonomy] Query failed:", e$message, "\n")
+        cat("⚠️  [bq_get_sixsigma_taxonomy] Query failed:", app_err_text(e), "\n")
         self$empty_sixsigma_taxonomy()
       })
 
@@ -1442,7 +1495,7 @@ APIManager <- R6::R6Class(
           ORDER BY grid_row, grid_col, sequence_order, z_index
         ", self$bq_full_table_sixsigma, safe_sql_escape(diagram_id)))
       }, error = function(e) {
-        cat("⚠️  [bq_get_sixsigma_components] Query failed:", e$message, "\n")
+        cat("⚠️  [bq_get_sixsigma_components] Query failed:", app_err_text(e), "\n")
         data.frame()
       })
 
@@ -1528,7 +1581,7 @@ APIManager <- R6::R6Class(
             ORDER BY created_at DESC
           ", self$bq_full_table_techdesign))
         }, error = function(e) {
-          cat("⚠️  [bq_get_techdesign_list] Query failed:", e$message, "\n")
+          cat("⚠️  [bq_get_techdesign_list] Query failed:", app_err_text(e), "\n")
           NULL
         })
         if (is.null(all)) return(data.frame())
@@ -1544,7 +1597,7 @@ APIManager <- R6::R6Class(
         self$bq_query(sprintf("SELECT * FROM `%s` WHERE design_id = '%s' ORDER BY id DESC LIMIT 1",
                               self$bq_full_table_techdesign, safe_sql_escape(design_id)))
       }, error = function(e) {
-        cat("⚠️  [bq_get_techdesign] Query failed:", e$message, "\n")
+        cat("⚠️  [bq_get_techdesign] Query failed:", app_err_text(e), "\n")
         data.frame()
       })
     },
@@ -1556,7 +1609,7 @@ APIManager <- R6::R6Class(
         self$bq_query(sprintf("SELECT * FROM `%s` WHERE design_id = '%s' ORDER BY id DESC",
                               self$bq_full_table_techdesign, safe_sql_escape(design_id)))
       }, error = function(e) {
-        cat("⚠️  [bq_get_techdesign_versions] Query failed:", e$message, "\n")
+        cat("⚠️  [bq_get_techdesign_versions] Query failed:", app_err_text(e), "\n")
         data.frame()
       })
     },
@@ -1568,7 +1621,7 @@ APIManager <- R6::R6Class(
         self$bq_query(sprintf("SELECT * FROM `%s` WHERE id = %d LIMIT 1",
                               self$bq_full_table_techdesign, as.integer(row_id)))
       }, error = function(e) {
-        cat("⚠️  [bq_get_techdesign_row] Query failed:", e$message, "\n")
+        cat("⚠️  [bq_get_techdesign_row] Query failed:", app_err_text(e), "\n")
         data.frame()
       })
     },
@@ -1616,7 +1669,7 @@ APIManager <- R6::R6Class(
           ORDER BY topic, title, created_at DESC
         ", self$bq_full_table_sankey))
       }, error = function(e) {
-        cat("⚠️  [bq_get_sankey_taxonomy] Query failed:", e$message, "\n")
+        cat("⚠️  [bq_get_sankey_taxonomy] Query failed:", app_err_text(e), "\n")
         self$empty_sankey_taxonomy()
       })
 
@@ -1638,7 +1691,7 @@ APIManager <- R6::R6Class(
           ORDER BY row_kind DESC, column_index, sequence_order
         ", self$bq_full_table_sankey, safe_sql_escape(sankey_id)))
       }, error = function(e) {
-        cat("⚠️  [bq_get_sankey_components] Query failed:", e$message, "\n")
+        cat("⚠️  [bq_get_sankey_components] Query failed:", app_err_text(e), "\n")
         data.frame()
       })
 
@@ -1716,3 +1769,15 @@ APIManager <- R6::R6Class(
 )
 
 `%||%` <- function(x, y) if (is.null(x)) y else x
+
+# Full text of an error. bigrquery/rlang errors keep the reason (e.g. "Exceeded rate limits",
+# "No such field: expected_value") in the body, which app_err_text(e) leaves out - so always show this instead.
+app_err_text <- function(e) {
+  msg <- tryCatch(if (inherits(e, "condition")) conditionMessage(e) else if (is.list(e) && !is.null(e$message)) e$message else as.character(e),
+                  error = function(x) tryCatch(as.character(e$message), error = function(y) "unknown error"))
+  msg <- paste(msg, collapse = " ")
+  msg <- gsub("\033\\[[0-9;]*m", "", msg)                       # colour codes
+  msg <- gsub("\\s*\n\\s*[\u2716\u2139\u2022\u2715!x*i]?\\s*", " | ", msg)  # rlang bullet lines -> one line
+  msg <- gsub("(\\s*\\|\\s*)+$", "", gsub("(\\s*\\|\\s*){2,}", " | ", msg))
+  trimws(msg)
+}

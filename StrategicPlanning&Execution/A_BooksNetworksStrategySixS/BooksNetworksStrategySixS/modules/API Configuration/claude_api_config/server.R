@@ -54,9 +54,9 @@ claude_api_config_server <- function(id, api_manager) {
                    tags$i(class = "fa fa-times-circle"),
                    " Connection Failed: ",
                    tags$br(),
-                   tags$small(e$message))
+                   tags$small(app_err_text(e)))
         })
-        showNotification(paste("Error:", e$message), type = "error", duration = 10)
+        showNotification(paste("Error:", app_err_text(e)), type = "error", duration = 10)
       })
     })
 
@@ -95,7 +95,7 @@ claude_api_config_server <- function(id, api_manager) {
       lines <- tryCatch({
         api_manager$diagnose_network()
       }, error = function(e) {
-        c(paste("Diagnostics failed to run:", e$message))
+        c(paste("Diagnostics failed to run:", app_err_text(e)))
       })
 
       output$diagnostics_output <- renderUI({

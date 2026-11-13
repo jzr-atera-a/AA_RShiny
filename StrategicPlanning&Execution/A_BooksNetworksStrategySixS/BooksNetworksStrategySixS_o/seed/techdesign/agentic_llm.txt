@@ -1,0 +1,442 @@
+design_id: seed_agentic_llm
+design_group: ml_genai
+design_type: agentic_llm
+title: Agentic LLM System
+variant: Plan, act, observe loop with guardrails
+summary: An agentic system lets an LLM pursue a goal over several steps. A planner decomposes the goal, an executor calls tools and observes the results, and a critic reflects and revises the plan. Memory keeps context across steps while guardrails and human approval limit what the agent may do.
+when_to_use: Tasks need multiple steps, tool use or decisions that depend on intermediate results, such as research, data analysis, coding or workflow automation.
+when_not_to_use: A single prompt or a fixed workflow solves the task; agents add latency, cost and unpredictability.
+complexity: High
+tags: agents, tool use, react, planning, memory, guardrails
+
+@component
+id: C1
+label: User
+lane: Interface
+kind: actor
+description: Gives the goal and reviews the final result.
+technologies: Chat UI, API client
+attributes: N/A
+methods: N/A
+
+@component
+id: C2
+label: Agent API
+lane: Interface
+kind: gateway
+description: Accepts tasks, streams progress and returns the final answer.
+technologies: FastAPI, WebSocket
+attributes: N/A
+methods: N/A
+
+@component
+id: C3
+label: Planner
+lane: Orchestration
+kind: process
+description: Breaks the goal into steps and revises the plan as results arrive.
+technologies: LLM prompt, LangGraph
+attributes: N/A
+methods: N/A
+
+@component
+id: C4
+label: Agent Loop Executor
+lane: Orchestration
+kind: process
+description: Runs the loop: choose a tool, call it, read the observation, decide the next step.
+technologies: LangGraph, custom loop
+attributes: N/A
+methods: N/A
+
+@component
+id: C5
+label: Reflection Critic
+lane: Orchestration
+kind: process
+description: Checks whether a step succeeded and whether the plan still serves the goal.
+technologies: LLM judge
+attributes: N/A
+methods: N/A
+
+@component
+id: C6
+label: LLM
+lane: Reasoning
+kind: model
+description: Reasons about the next action and produces structured tool calls.
+technologies: Claude, GPT-4
+attributes: N/A
+methods: N/A
+
+@component
+id: C7
+label: System Prompt and Policy
+lane: Reasoning
+kind: store
+description: Role, rules, tool descriptions and safety policy given to the model.
+technologies: Prompt registry
+attributes: N/A
+methods: N/A
+
+@component
+id: C8
+label: Tool Registry
+lane: Tools and Actions
+kind: service
+description: Catalogue of tools with schemas and permissions; validates every call.
+technologies: MCP, function calling
+attributes: N/A
+methods: N/A
+
+@component
+id: C9
+label: Search and RAG Tool
+lane: Tools and Actions
+kind: service
+description: Retrieves facts from the web or private knowledge bases.
+technologies: Search API, vector DB
+attributes: N/A
+methods: N/A
+
+@component
+id: C10
+label: Code Sandbox
+lane: Tools and Actions
+kind: service
+description: Runs generated code in an isolated environment.
+technologies: Docker, Firecracker
+attributes: N/A
+methods: N/A
+
+@component
+id: C11
+label: External APIs
+lane: Tools and Actions
+kind: external
+description: Business systems the agent can act on, such as email, tickets or CRM.
+technologies: REST, GraphQL
+attributes: N/A
+methods: N/A
+
+@component
+id: C12
+label: Specialist Sub-agents
+lane: Tools and Actions
+kind: service
+description: Focused agents the executor can delegate subtasks to.
+technologies: Multi-agent framework
+attributes: N/A
+methods: N/A
+
+@component
+id: C13
+label: Short-term Context
+lane: Memory and State
+kind: cache
+description: The running conversation and recent observations inside the context window.
+technologies: Context window
+attributes: N/A
+methods: N/A
+
+@component
+id: C14
+label: Long-term Memory
+lane: Memory and State
+kind: store
+description: Facts and past experiences retrieved by similarity when relevant.
+technologies: Vector DB
+attributes: N/A
+methods: N/A
+
+@component
+id: C15
+label: Task State Store
+lane: Memory and State
+kind: store
+description: Checkpoints of plan and progress so runs can resume after failure.
+technologies: Postgres, Redis
+attributes: N/A
+methods: N/A
+
+@component
+id: C16
+label: Guardrails
+lane: Safety and Observability
+kind: process
+description: Validates proposed actions against policy, budgets and permissions.
+technologies: Policy engine, NeMo Guardrails
+attributes: N/A
+methods: N/A
+
+@component
+id: C17
+label: Human Approval
+lane: Safety and Observability
+kind: actor
+description: Approves or rejects high-risk actions such as payments or deletions.
+technologies: Approval UI
+attributes: N/A
+methods: N/A
+
+@component
+id: C18
+label: Tracing and Evaluation
+lane: Safety and Observability
+kind: monitor
+description: Records every step for debugging, cost control and evaluation.
+technologies: LangSmith, OpenTelemetry
+attributes: N/A
+methods: N/A
+
+@connection
+from: C1
+to: C2
+label: goal
+type: data
+
+@connection
+from: C2
+to: C3
+label: task
+type: data
+
+@connection
+from: C7
+to: C6
+label: instructions
+type: control
+
+@connection
+from: C3
+to: C6
+label: planning prompt
+type: data
+
+@connection
+from: C6
+to: C3
+label: draft plan
+type: data
+
+@connection
+from: C3
+to: C4
+label: plan steps
+type: control
+
+@connection
+from: C13
+to: C6
+label: context
+type: data
+
+@connection
+from: C4
+to: C8
+label: select tool
+type: control
+
+@connection
+from: C4
+to: C16
+label: proposed action
+type: control
+
+@connection
+from: C16
+to: C17
+label: escalate risky action
+type: control
+
+@connection
+from: C17
+to: C4
+label: approve or reject
+type: control
+
+@connection
+from: C8
+to: C9
+label: invoke
+type: control
+
+@connection
+from: C8
+to: C10
+label: invoke
+type: control
+
+@connection
+from: C8
+to: C11
+label: invoke
+type: control
+
+@connection
+from: C8
+to: C12
+label: delegate
+type: control
+
+@connection
+from: C9
+to: C4
+label: observation
+type: data
+
+@connection
+from: C10
+to: C4
+label: observation
+type: data
+
+@connection
+from: C11
+to: C4
+label: observation
+type: data
+
+@connection
+from: C12
+to: C4
+label: sub-result
+type: data
+
+@connection
+from: C4
+to: C13
+label: append step
+type: data
+
+@connection
+from: C4
+to: C5
+label: step result
+type: data
+
+@connection
+from: C5
+to: C3
+label: revise plan
+type: feedback
+
+@connection
+from: C14
+to: C3
+label: recall experience
+type: data
+
+@connection
+from: C4
+to: C14
+label: store learnings
+type: data
+
+@connection
+from: C4
+to: C15
+label: checkpoint
+type: data
+
+@connection
+from: C4
+to: C18
+label: trace events
+type: event
+
+@connection
+from: C4
+to: C2
+label: final answer
+type: data
+
+@connection
+from: C2
+to: C1
+label: answer
+type: data
+
+@step
+order: 1
+text: The user submits a goal through the Agent API.
+components: C1,C2
+
+@step
+order: 2
+text: The planner asks the LLM for a plan, using system policy and recalled long-term memory.
+components: C3,C6,C7,C14
+
+@step
+order: 3
+text: The executor picks the next step and selects a tool from the registry.
+components: C4,C8
+
+@step
+order: 4
+text: Guardrails check the proposed action; risky actions wait for human approval.
+components: C16,C17
+
+@step
+order: 5
+text: The tool runs and returns an observation to the executor.
+components: C8,C9,C10,C11,C12
+
+@step
+order: 6
+text: The observation is appended to context and checkpointed.
+components: C4,C13,C15
+
+@step
+order: 7
+text: The critic reviews progress and the planner revises the plan; the loop repeats until done.
+components: C5,C3
+
+@step
+order: 8
+text: The final answer is returned and the whole trace is stored for evaluation.
+components: C4,C2,C1,C18
+
+@tradeoff
+kind: pro
+text: Handles open-ended, multi-step tasks that fixed workflows cannot.
+
+@tradeoff
+kind: pro
+text: Tools and sub-agents extend capability without retraining the model.
+
+@tradeoff
+kind: con
+text: Latency and token cost grow with every loop iteration.
+
+@tradeoff
+kind: con
+text: Behaviour is non-deterministic and harder to test than a fixed pipeline.
+
+@tradeoff
+kind: risk
+text: Prompt injection or a wrong tool call can trigger real side effects; limit permissions and require approval for risky actions.
+
+@tradeoff
+kind: risk
+text: Loops can run away or stall, so set step, time and cost budgets.
+
+@tradeoff
+kind: scaling
+text: Run steps asynchronously with checkpoints so long tasks survive failures.
+
+@reference
+title: ReAct: Synergizing Reasoning and Acting in Language Models
+author: Yao et al.
+url: https://arxiv.org/abs/2210.03629
+
+@reference
+title: Reflexion: Language Agents with Verbal Reinforcement Learning
+author: Shinn et al.
+url: https://arxiv.org/abs/2303.11366
+
+@reference
+title: Building Effective Agents
+author: Anthropic
+url: N/A
+

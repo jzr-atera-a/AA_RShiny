@@ -214,6 +214,19 @@ diagram_tool_guide_ui <- function(id) {
         "https://www.mindtools.com/aksic2i/decision-matrix-analysis/",
         "MindTools' guide to Decision Matrix Analysis (a form of Multi-Criteria Decision Analysis)."
       ),
+      .strategy_tool_card(
+        "Decision Tree (expected value)",
+        paste("you face a choice whose results depend on uncertain events - an investment, a launch, a bid, a staged project - and",
+              "you can put rough probabilities and money values on the outcomes. In Generate Diagram you can add optional settings and then edit every node and see expected values, risk and critical probabilities."),
+        paste("left to right: squares for decisions, circles for chance events, triangles for end payoffs, probabilities and costs on the",
+              "branches. The app calculates the expected value at every node, highlights the recommended plan, and shows the risk of",
+              "each option and the probability at which the best option would change."),
+        "\"Should we expand the business unit (40% chance of 2.5m profit, else an 800k loss), launch a shower gel line, or do nothing?\"",
+        "https://www.mindtools.com/dectree.html",
+        "MindTools' step-by-step guide to drawing and evaluating decision trees."
+      )
+    ),
+    fluidRow(
       box(title = "Moving to Organizational Alignment", status = "info", solidHeader = TRUE, width = 6,
           p("Once a decision is made, the Organizational frameworks below help align the people and structure ",
             "needed to execute it.")

@@ -1,0 +1,171 @@
+design_id: seed_observer_pattern
+design_group: software_patterns
+design_type: observer_pattern
+title: Observer Pattern
+variant: Push model with subject and observers
+summary: Observer defines a one-to-many dependency so that when one object changes state, all its dependents are notified and updated automatically. The subject knows only the observer interface, so subjects and observers stay loosely coupled.
+when_to_use: A change in one object must update an open-ended set of others, as in event systems, UI bindings and notifications.
+when_not_to_use: There are few fixed dependents or updates must happen in a strict transactional order.
+complexity: Low
+tags: behavioral, gof, observer, events, pub-sub
+
+@component
+id: C1
+label: Subject
+lane: Abstractions
+kind: interface
+description: Manages the list of observers and notifies them.
+technologies: N/A
+attributes: N/A
+methods: + attach(o: Observer): void; + detach(o: Observer): void; + notify(): void
+
+@component
+id: C2
+label: Observer
+lane: Abstractions
+kind: interface
+description: Receives updates from the subject.
+technologies: N/A
+attributes: N/A
+methods: + update(state: State): void
+
+@component
+id: C3
+label: ConcreteSubject
+lane: Concrete Classes
+kind: class
+description: Holds the state and notifies observers when it changes.
+technologies: N/A
+attributes: - observers: List; - state: State
+methods: + getState(): State; + setState(s: State): void
+
+@component
+id: C4
+label: ConcreteObserverA
+lane: Concrete Classes
+kind: class
+description: Reacts to updates, for example by refreshing a cache.
+technologies: N/A
+attributes: - cache: State
+methods: + update(state: State): void
+
+@component
+id: C5
+label: ConcreteObserverB
+lane: Concrete Classes
+kind: class
+description: Reacts differently, for example by redrawing a view.
+technologies: N/A
+attributes: - view: Widget
+methods: + update(state: State): void
+
+@component
+id: C6
+label: Client
+lane: Client
+kind: class
+description: Wires subjects and observers together.
+technologies: N/A
+attributes: N/A
+methods: + main(): void
+
+@connection
+from: C3
+to: C1
+label: implements
+type: implements
+
+@connection
+from: C4
+to: C2
+label: implements
+type: implements
+
+@connection
+from: C5
+to: C2
+label: implements
+type: implements
+
+@connection
+from: C1
+to: C2
+label: holds 0..*
+type: aggregation
+
+@connection
+from: C3
+to: C4
+label: notifies
+type: notifies
+
+@connection
+from: C3
+to: C5
+label: notifies
+type: notifies
+
+@connection
+from: C6
+to: C1
+label: uses
+type: uses
+
+@step
+order: 1
+text: The client attaches observers to the subject.
+components: C6,C1,C2
+
+@step
+order: 2
+text: The subject state changes.
+components: C3
+
+@step
+order: 3
+text: The subject calls notify, which loops over its observers.
+components: C3,C1
+
+@step
+order: 4
+text: Each observer receives update and refreshes itself.
+components: C4,C5
+
+@tradeoff
+kind: pro
+text: Loose coupling between subject and observers.
+
+@tradeoff
+kind: pro
+text: Observers can be added or removed at runtime.
+
+@tradeoff
+kind: con
+text: Notification order is not guaranteed.
+
+@tradeoff
+kind: con
+text: Observers that are never detached leak memory.
+
+@tradeoff
+kind: risk
+text: Cascading updates can cause loops or performance problems.
+
+@tradeoff
+kind: cost
+text: Notification overhead grows with the number of observers.
+
+@tradeoff
+kind: scaling
+text: Use asynchronous queues or an event bus when observers are many or remote.
+
+@reference
+title: Design Patterns: Elements of Reusable Object-Oriented Software
+author: Gamma, Helm, Johnson, Vlissides
+url: N/A
+
+@reference
+title: Refactoring Guru: Observer
+author: Refactoring Guru
+url: https://refactoring.guru/design-patterns/observer
+

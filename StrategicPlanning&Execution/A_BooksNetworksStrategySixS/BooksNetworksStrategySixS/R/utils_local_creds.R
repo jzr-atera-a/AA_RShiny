@@ -127,7 +127,7 @@ app_cred_banner <- function(which, trigger = NULL) {
 # sidebar box
 app_api_status_css <- function() tags$style(HTML("@keyframes tblpulse { 0%,100% { opacity:1; transform:scale(1);} 50% { opacity:.35; transform:scale(.7);} } .pulse-dot { animation: tblpulse 0.9s ease-in-out infinite; } #api_status:empty::before { content: 'BigQuery: connecting...   Claude: connecting...'; color:#fbbf24; font-size:11.5px; }"))
 app_api_status_ui <- function() tagList(app_api_status_css(),
-  tags$div(style = "padding:10px; background-color:#2c3e50; margin-top:6px;",
+  tags$div(style = "padding:10px 12px; background-color:rgba(0,44,60,.55); margin:6px 8px 0; border-radius:10px;",
     tags$div(style = "color:#b2e0db; font-size:11px; font-weight:700; margin-bottom:4px;", "API CONNECTIONS"), uiOutput("api_status")))
 app_api_status_render <- function(api_manager, booting = NULL, checks = NULL) {
   invalidateLater(3000)

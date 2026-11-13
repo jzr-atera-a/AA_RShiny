@@ -52,7 +52,7 @@ app_bq_group_label_map <- function(module_loader) {
 }
 
 # Sidebar section under the API status box: which suites are being checked / are ready.
-app_bq_checks_ui <- function() tags$div(style = "padding:10px; background-color:#2c3e50; margin-top:6px; border-top:1px solid #34495e;",
+app_bq_checks_ui <- function() tags$div(style = "padding:10px 12px; background-color:rgba(0,44,60,.55); margin:6px 8px 8px; border-radius:10px;",
   tags$div(style = "color:#b2e0db; font-size:11px; font-weight:700; margin-bottom:4px;", "TABLE CHECKS (ON DEMAND)"), uiOutput("bq_checks"))
 
 app_bq_checks_render <- function(checks, api_manager) {

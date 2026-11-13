@@ -207,10 +207,10 @@ diagram_visualizations_server <- function(id, api_manager) {
         })
 
       }, error = function(e) {
-        cat(sprintf("❌ [Strategic Analysis][DEBUG] Visualization failed: %s\n", e$message))
+        cat(sprintf("❌ [Strategic Analysis][DEBUG] Visualization failed: %s\n", app_err_text(e)))
         cat("========================================================\n")
         output$status <- renderUI({
-          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", e$message)
+          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", app_err_text(e))
         })
         output$diagram_output <- renderUI({ tags$div() })
       })

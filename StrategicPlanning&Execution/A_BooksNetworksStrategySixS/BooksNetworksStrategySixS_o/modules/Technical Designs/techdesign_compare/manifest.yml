@@ -1,0 +1,35 @@
+module:
+  id: "techdesign_compare"
+  name: "Compare Designs"
+  description: "Two designs side by side with a computed and the Editing Tool-written comparison"
+  version: "1.0.0"
+  author: "Technical Designs Suite"
+
+  enabled: true
+
+  menu:
+    label: "Compare Designs"
+    icon: "columns"
+    tabname: "techdesign_compare"
+    group: "Technical Designs"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinyjs
+      - jsonlite
+      - DT
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: ["claude", "bigquery"]
+
+  data:
+    required: []
+    optional: []

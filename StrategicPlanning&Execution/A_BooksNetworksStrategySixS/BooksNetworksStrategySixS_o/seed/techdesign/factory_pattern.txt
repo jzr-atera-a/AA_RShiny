@@ -1,0 +1,192 @@
+design_id: seed_factory_pattern
+design_group: software_patterns
+design_type: factory_pattern
+title: Factory Method Pattern
+variant: Creator with product hierarchy
+summary: Factory Method defines an interface for creating an object but lets subclasses decide which concrete class to instantiate. The client works only with the abstract creator and product types, so new product types can be added without changing client code.
+when_to_use: The exact class of objects is only known at runtime or varies by configuration, and you want to keep creation logic out of client code.
+when_not_to_use: There is only one product type that will never change; a plain constructor is simpler.
+complexity: Low
+tags: creational, gof, factory, polymorphism
+
+@component
+id: C1
+label: Creator
+lane: Abstractions
+kind: abstract
+description: Declares the factory method and uses the product it returns.
+technologies: N/A
+attributes: N/A
+methods: + createProduct(): Product; + operation(): void
+
+@component
+id: C2
+label: Product
+lane: Abstractions
+kind: interface
+description: Common interface of all objects the factory creates.
+technologies: N/A
+attributes: N/A
+methods: + execute(): void
+
+@component
+id: C3
+label: ConcreteCreatorA
+lane: Concrete Classes
+kind: class
+description: Overrides the factory method to return product A.
+technologies: N/A
+attributes: N/A
+methods: + createProduct(): Product
+
+@component
+id: C4
+label: ConcreteCreatorB
+lane: Concrete Classes
+kind: class
+description: Overrides the factory method to return product B.
+technologies: N/A
+attributes: N/A
+methods: + createProduct(): Product
+
+@component
+id: C5
+label: ConcreteProductA
+lane: Concrete Classes
+kind: class
+description: One implementation of the product.
+technologies: N/A
+attributes: - config: Config
+methods: + execute(): void
+
+@component
+id: C6
+label: ConcreteProductB
+lane: Concrete Classes
+kind: class
+description: Another implementation of the product.
+technologies: N/A
+attributes: - config: Config
+methods: + execute(): void
+
+@component
+id: C7
+label: Client
+lane: Client
+kind: class
+description: Chooses a creator and works with products through the interface.
+technologies: N/A
+attributes: N/A
+methods: + main(): void
+
+@connection
+from: C3
+to: C1
+label: extends
+type: inherit
+
+@connection
+from: C4
+to: C1
+label: extends
+type: inherit
+
+@connection
+from: C5
+to: C2
+label: implements
+type: implements
+
+@connection
+from: C6
+to: C2
+label: implements
+type: implements
+
+@connection
+from: C1
+to: C2
+label: uses product
+type: uses
+
+@connection
+from: C3
+to: C5
+label: creates
+type: creates
+
+@connection
+from: C4
+to: C6
+label: creates
+type: creates
+
+@connection
+from: C7
+to: C1
+label: uses
+type: uses
+
+@step
+order: 1
+text: The client picks a concrete creator, for example from configuration.
+components: C7,C3
+
+@step
+order: 2
+text: It calls the operation on the abstract creator.
+components: C7,C1
+
+@step
+order: 3
+text: The creator calls its factory method, which the subclass implements.
+components: C1,C3
+
+@step
+order: 4
+text: The subclass instantiates the concrete product.
+components: C3,C5
+
+@step
+order: 5
+text: The creator uses the product only through the Product interface.
+components: C1,C2
+
+@tradeoff
+kind: pro
+text: Client code depends on abstractions, not concrete classes.
+
+@tradeoff
+kind: pro
+text: New products are added without changing existing code (open/closed).
+
+@tradeoff
+kind: con
+text: Adds a parallel hierarchy of creator classes.
+
+@tradeoff
+kind: con
+text: Can be overkill when there are few product types.
+
+@tradeoff
+kind: risk
+text: Overuse hides simple object creation behind needless indirection.
+
+@tradeoff
+kind: cost
+text: More classes to write and maintain.
+
+@tradeoff
+kind: scaling
+text: Combine with a registry or dependency injection when the number of products grows.
+
+@reference
+title: Design Patterns: Elements of Reusable Object-Oriented Software
+author: Gamma, Helm, Johnson, Vlissides
+url: N/A
+
+@reference
+title: Refactoring Guru: Factory Method
+author: Refactoring Guru
+url: https://refactoring.guru/design-patterns/factory-method
+

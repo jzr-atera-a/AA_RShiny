@@ -1,0 +1,33 @@
+module:
+  id: "diagram_bulk_import"
+  name: "Diagram Bulk Import"
+  description: "Paste or receive-from-Generate diagram component text, parse, preview, upload"
+  version: "1.0.0"
+  author: "Strategic Analysis Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Bulk Import"
+    icon: "file-import"
+    tabname: "diagram_bulk_import"
+    group: "Strategic Analysis"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - DT
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: ["bigquery"]
+
+  data:
+    required: []
+    optional: []

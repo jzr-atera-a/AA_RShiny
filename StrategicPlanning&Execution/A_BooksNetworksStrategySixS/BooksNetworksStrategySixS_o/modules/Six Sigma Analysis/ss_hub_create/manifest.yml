@@ -1,0 +1,33 @@
+module:
+  id: "ss_hub_create"
+  name: "Create and Add"
+  description: "Hub: Create and Add"
+  version: "1.0.0"
+  author: "Six Sigma Analysis Suite"
+
+  enabled: true
+
+  menu:
+    label: "Create and Add"
+    icon: "magic"
+    tabname: "ss_hub_create"
+    group: "Six Sigma Analysis"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinyjs
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: ["claude", "bigquery"]
+
+  data:
+    required: []
+    optional: []

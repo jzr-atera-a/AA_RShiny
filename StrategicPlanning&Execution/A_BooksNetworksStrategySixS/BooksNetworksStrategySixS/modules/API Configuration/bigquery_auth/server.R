@@ -89,9 +89,9 @@ bigquery_auth_server <- function(id, api_manager) {
       }, error = function(e) {
         output$auth_status <- renderUI({
           tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"),
-                   " Authentication failed: ", tags$br(), tags$small(e$message))
+                   " Authentication failed: ", tags$br(), tags$small(app_err_text(e)))
         })
-        showNotification(paste("Error:", e$message), type = "error")
+        showNotification(paste("Error:", app_err_text(e)), type = "error")
       })
 
       authenticating(FALSE)
@@ -150,9 +150,9 @@ bigquery_auth_server <- function(id, api_manager) {
       }, error = function(e) {
         output$test_status <- renderUI({
           tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"),
-                   " Test query failed: ", tags$br(), tags$small(e$message))
+                   " Test query failed: ", tags$br(), tags$small(app_err_text(e)))
         })
-        showNotification(paste("Error:", e$message), type = "error")
+        showNotification(paste("Error:", app_err_text(e)), type = "error")
       })
     })
 

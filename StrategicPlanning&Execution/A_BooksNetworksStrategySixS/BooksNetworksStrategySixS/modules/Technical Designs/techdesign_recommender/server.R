@@ -19,7 +19,7 @@ techdesign_recommender_server <- function(id, api_manager) {
           output$status <- renderUI(tags$div(class = "status-success", tags$i(class = "fa fa-check-circle"), sprintf(" %d recommendation(s).", length(r))))
         }
       }, error = function(e) {
-        output$status <- renderUI(tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Failed: ", e$message))
+        output$status <- renderUI(tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Failed: ", app_err_text(e)))
       })
     })
 

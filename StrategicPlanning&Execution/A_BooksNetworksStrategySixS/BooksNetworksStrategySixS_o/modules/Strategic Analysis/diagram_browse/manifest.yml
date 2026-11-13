@@ -1,0 +1,33 @@
+module:
+  id: "diagram_browse"
+  name: "Browse Diagrams"
+  description: "Browse saved diagrams and download the raw component rows"
+  version: "1.0.0"
+  author: "Strategic Analysis Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Browse Diagrams"
+    icon: "table"
+    tabname: "diagram_browse"
+    group: "Strategic Analysis"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - DT
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: ["bigquery"]
+
+  data:
+    required: []
+    optional: []

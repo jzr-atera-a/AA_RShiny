@@ -1,0 +1,267 @@
+design_id: seed_kappa_architecture
+design_group: data_processing
+design_type: kappa_architecture
+title: Kappa Architecture
+variant: Single streaming path with replayable log
+summary: Kappa architecture removes the batch layer. All data flows through one replayable log and one stream processing codebase. To fix logic or rebuild a view, the job is redeployed and replays the log from the beginning into a new output table, which then replaces the old one.
+when_to_use: Most workloads are event based, the log can retain history and one streaming engine can handle both live and reprocessed data.
+when_not_to_use: Computations need huge historical scans that are not practical to replay, or ad hoc analytics over data not held in the log.
+complexity: Medium
+tags: kappa, streaming, event log, replay, kafka
+
+@component
+id: C1
+label: Event Producers
+lane: Sources
+kind: external
+description: Applications and databases that emit events.
+technologies: Apps, IoT, CDC
+attributes: N/A
+methods: N/A
+
+@component
+id: C2
+label: Immutable Event Log
+lane: Log
+kind: queue
+description: Retains all events for long periods so any consumer can replay from any offset.
+technologies: Kafka, Pulsar, Redpanda
+attributes: N/A
+methods: N/A
+
+@component
+id: C3
+label: Schema Registry
+lane: Log
+kind: service
+description: Enforces compatible event schemas for producers and consumers.
+technologies: Confluent Schema Registry
+attributes: N/A
+methods: N/A
+
+@component
+id: C4
+label: Stream Processing Job v1
+lane: Processing
+kind: process
+description: Current job that transforms, aggregates and joins events.
+technologies: Flink, Kafka Streams
+attributes: N/A
+methods: N/A
+
+@component
+id: C5
+label: Stream Processing Job v2
+lane: Processing
+kind: process
+description: New version started in parallel and replaying the log from the start.
+technologies: Flink, Kafka Streams
+attributes: N/A
+methods: N/A
+
+@component
+id: C6
+label: State Store
+lane: Processing
+kind: store
+description: Local, checkpointed state used for windows and joins.
+technologies: RocksDB
+attributes: N/A
+methods: N/A
+
+@component
+id: C7
+label: Output Table v1
+lane: Serving
+kind: store
+description: Materialised view produced by the current job.
+technologies: Cassandra, Elasticsearch, ClickHouse
+attributes: N/A
+methods: N/A
+
+@component
+id: C8
+label: Output Table v2
+lane: Serving
+kind: store
+description: Rebuilt view; swapped in once it has caught up.
+technologies: Cassandra, Elasticsearch, ClickHouse
+attributes: N/A
+methods: N/A
+
+@component
+id: C9
+label: Query Service
+lane: Consumers
+kind: service
+description: Reads the active output table and serves applications.
+technologies: REST, GraphQL
+attributes: N/A
+methods: N/A
+
+@component
+id: C10
+label: Applications and Dashboards
+lane: Consumers
+kind: actor
+description: Users and systems that consume the results.
+technologies: BI tools, apps
+attributes: N/A
+methods: N/A
+
+@component
+id: C11
+label: Lag and Quality Monitor
+lane: Operations
+kind: monitor
+description: Watches consumer lag, checkpoints and data quality.
+technologies: Prometheus, Grafana
+attributes: N/A
+methods: N/A
+
+@connection
+from: C1
+to: C2
+label: events
+type: event
+
+@connection
+from: C3
+to: C2
+label: validate schema
+type: control
+
+@connection
+from: C2
+to: C4
+label: live stream
+type: event
+
+@connection
+from: C2
+to: C5
+label: replay from start
+type: event
+
+@connection
+from: C4
+to: C6
+label: state
+type: data
+
+@connection
+from: C4
+to: C7
+label: results
+type: data
+
+@connection
+from: C5
+to: C8
+label: rebuilt results
+type: data
+
+@connection
+from: C7
+to: C9
+label: active view
+type: data
+
+@connection
+from: C8
+to: C9
+label: swap when caught up
+type: control
+
+@connection
+from: C9
+to: C10
+label: answers
+type: data
+
+@connection
+from: C4
+to: C11
+label: metrics
+type: event
+
+@connection
+from: C5
+to: C11
+label: catch-up progress
+type: event
+
+@connection
+from: C11
+to: C5
+label: promote when lag is zero
+type: feedback
+
+@step
+order: 1
+text: Producers write events to the immutable log, validated by the schema registry.
+components: C1,C3,C2
+
+@step
+order: 2
+text: Job v1 processes the live stream and maintains the output table.
+components: C4,C6,C7
+
+@step
+order: 3
+text: To change logic, job v2 is deployed and replays the log into a new table.
+components: C5,C8
+
+@step
+order: 4
+text: The monitor tracks catch-up progress until lag reaches zero.
+components: C11
+
+@step
+order: 5
+text: The query service switches to the new table and v1 is retired.
+components: C9,C8,C7
+
+@step
+order: 6
+text: Applications read fresh results.
+components: C9,C10
+
+@tradeoff
+kind: pro
+text: One codebase and one pipeline to build, test and operate.
+
+@tradeoff
+kind: pro
+text: Reprocessing is just a replay, which makes fixes and new views simple.
+
+@tradeoff
+kind: con
+text: Long retention of the log can be expensive.
+
+@tradeoff
+kind: con
+text: Replaying large histories takes time and capacity.
+
+@tradeoff
+kind: risk
+text: Exactly-once semantics and schema changes need careful design.
+
+@tradeoff
+kind: cost
+text: High log retention and parallel jobs during reprocessing.
+
+@tradeoff
+kind: scaling
+text: Scale by partitioning the log and parallelising the job per partition.
+
+@reference
+title: Questioning the Lambda Architecture
+author: Jay Kreps
+url: https://www.oreilly.com/ideas/questioning-the-lambda-architecture
+
+@reference
+title: Designing Data-Intensive Applications
+author: Martin Kleppmann
+url: N/A
+

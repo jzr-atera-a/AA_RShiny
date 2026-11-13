@@ -1,0 +1,32 @@
+module:
+  id: "sankey_about"
+  name: "About Sankey Graph"
+  description: "Schema documentation for sankey_graphs and the delimiter convention"
+  version: "1.0.0"
+  author: "Sankey Graph Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "About"
+    icon: "info-circle"
+    tabname: "sankey_about"
+    group: "Sankey Graph"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+
+    package_versions: {}
+
+  api:
+    required: []
+    optional: []
+
+  data:
+    required: []
+    optional: []

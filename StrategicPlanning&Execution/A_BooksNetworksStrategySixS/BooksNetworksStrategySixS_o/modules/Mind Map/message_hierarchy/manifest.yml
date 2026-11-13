@@ -1,0 +1,34 @@
+module:
+  id: "message_hierarchy"
+  name: "Message Hierarchy"
+  description: "Build a pyramid-principle message structure for talks and presentations (core message on top, supporting points and evidence below). Stored in the Mind Map table under the reserved category MessageHierarchy."
+  version: "1.0.0"
+  author: "Mind Map Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Message Hierarchy"
+    icon: "sitemap"
+    tabname: "message_hierarchy"
+    group: "Mind Map"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinyjs
+      - jsonlite
+
+    package_versions: {}
+
+  api:
+    required: ["claude"]
+    optional: ["bigquery"]
+
+  data:
+    required: []
+    optional: []

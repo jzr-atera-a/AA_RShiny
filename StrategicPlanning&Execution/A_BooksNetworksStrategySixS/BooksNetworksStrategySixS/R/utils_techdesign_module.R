@@ -59,7 +59,7 @@ td_actions_server <- function(input, session, api_manager, get_design) {
       api_manager$trigger_state_update_mindmap()
       showNotification(sprintf("Mind map created (%d nodes) under category '%s'. Open it in the Mind Map group.", n, TD_MINDMAP_CATEGORY),
                        type = "message", duration = 10)
-    }, error = function(e) showNotification(paste("Mind map failed:", e$message), type = "error", duration = 12))
+    }, error = function(e) showNotification(paste("Mind map failed:", app_err_text(e)), type = "error", duration = 12))
   })
   send_flex <- function(which) {
     d <- need(); if (is.null(d)) return()
@@ -67,7 +67,7 @@ td_actions_server <- function(input, session, api_manager, get_design) {
       api_manager$set_pending_bulk_text_flex(techdesign_to_flex_text(d, which))
       td_nav(session, "bulk_import")
       showNotification("Sent to Flex Table's Bulk Import tab.", type = "message")
-    }, error = function(e) showNotification(paste("Could not send:", e$message), type = "error"))
+    }, error = function(e) showNotification(paste("Could not send:", app_err_text(e)), type = "error"))
   }
   observeEvent(input$act_flex_components, send_flex("components"))
   observeEvent(input$act_flex_tradeoffs, send_flex("tradeoffs"))
@@ -271,8 +271,8 @@ techdesign_module_server <- function(id, api_manager, group) {
         }
       }, error = function(e) {
         shinyjs::hide("loading_spinner")
-        set_status("status-error", "fa fa-times-circle", paste("Failed:", e$message))
-        showNotification(paste("Error:", e$message), type = "error", duration = 12)
+        set_status("status-error", "fa fa-times-circle", paste("Failed:", app_err_text(e)))
+        showNotification(paste("Error:", app_err_text(e)), type = "error", duration = 12)
       })
     })
 
@@ -305,8 +305,8 @@ techdesign_module_server <- function(id, api_manager, group) {
                            td_design_name(group, d$meta$design_type, d$meta$title), nrow(d$components), nrow(d$connections)), warn_ui(d))
       }, error = function(e) {
         shinyjs::hide("loading_spinner")
-        set_status("status-error", "fa fa-times-circle", paste("Failed:", e$message))
-        showNotification(paste("Error:", e$message), type = "error", duration = 12)
+        set_status("status-error", "fa fa-times-circle", paste("Failed:", app_err_text(e)))
+        showNotification(paste("Error:", app_err_text(e)), type = "error", duration = 12)
       })
     })
 
@@ -341,7 +341,7 @@ techdesign_module_server <- function(id, api_manager, group) {
         draw(d)
         set_status("status-success", "fa fa-check-circle",
                    sprintf("Parsed %d components, %d connections, %d steps.", nrow(d$components), nrow(d$connections), nrow(d$steps)), warn_ui(d))
-      }, error = function(e) set_status("status-error", "fa fa-times-circle", paste("Parse problem:", e$message)))
+      }, error = function(e) set_status("status-error", "fa fa-times-circle", paste("Parse problem:", app_err_text(e))))
     })
 
     # ---------------- Save ----------------
@@ -364,8 +364,8 @@ techdesign_module_server <- function(id, api_manager, group) {
         showNotification("Design saved", type = "message")
         updateSelectInput(session, "saved_type", selected = "")
       }, error = function(e) {
-        set_status("status-error", "fa fa-times-circle", paste("Save failed:", e$message))
-        showNotification(paste("Error:", e$message), type = "error", duration = 12)
+        set_status("status-error", "fa fa-times-circle", paste("Save failed:", app_err_text(e)))
+        showNotification(paste("Error:", app_err_text(e)), type = "error", duration = 12)
       })
     })
 
@@ -450,7 +450,7 @@ techdesign_module_server <- function(id, api_manager, group) {
       tryCatch({
         api_manager$bq_insert_techdesign(row)
         showNotification("Design deleted.", type = "message")
-      }, error = function(e) showNotification(paste("Error:", e$message), type = "error"))
+      }, error = function(e) showNotification(paste("Error:", app_err_text(e)), type = "error"))
     })
 
     # ---------------- Browse ----------------
@@ -459,7 +459,7 @@ techdesign_module_server <- function(id, api_manager, group) {
       df <- tryCatch(api_manager$bq_query(sprintf(
         "SELECT id, created_at, design_id, design_type, title, variant, change_type, complexity_level, diagram_kind, schema_version, created_by
          FROM `%s` WHERE design_group = '%s' ORDER BY id DESC LIMIT 300", api_manager$bq_full_table_techdesign, group)),
-        error = function(e) { showNotification(paste("Error:", e$message), type = "error"); data.frame() })
+        error = function(e) { showNotification(paste("Error:", app_err_text(e)), type = "error"); data.frame() })
       output$browse_table <- DT::renderDataTable(DT::datatable(df, options = list(pageLength = 15, scrollX = TRUE), rownames = FALSE))
     })
 

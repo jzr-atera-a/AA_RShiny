@@ -2,7 +2,7 @@
 # Used by tests/browser_cc.js (Playwright). Run: Rscript -e 'shiny::runApp(source("tests/harness_cc_app.R")$value, port = 8790)' from the app folder.
 suppressMessages({ library(shiny); library(shinydashboard); library(TTR); library(zoo); library(DT); library(plotly) })
 `%||%` <- function(x, y) if (is.null(x)) y else x
-for (f in c("R/utils_cc_catalog.R", "R/utils_cc_api.R", "R/utils_cc_patterns.R", "R/utils_cc_chart.R", "R/utils_cc_records.R", "R/utils_cc_advice.R", "R/utils_cc_plan.R", "R/utils_unit3_rules.R", "R/utils_cc_course_full.R", "R/utils_cc_course_checks.R", "modules/cc_trading_records.R")) source(f)
+for (f in c("R/utils_cc_catalog.R", "R/utils_cc_api.R", "R/utils_cc_patterns.R", "R/utils_cc_chart.R", "R/utils_cc_records.R", "R/utils_cc_tradelog.R", "R/utils_cc_advice.R", "R/utils_cc_plan.R", "R/utils_unit3_rules.R", "R/utils_cc_course_full.R", "R/utils_cc_course_checks.R", "modules/cc_trading_records.R")) source(f)
 src <- readLines("tests/test_cc_api_records.R"); eval(parse(text = src[grep("^js <- ", src):(grep("^cat\\(\"Credentials file", src) - 1)]))
 cl <- cc_new_client(http_fn = fake$fn, sleep_fn = function(s) NULL)
 cl$set_credentials(list(api_key = "KEY-123456789", identifier = "me@example.com", api_password = "pw", environment = "demo")); cl$login()

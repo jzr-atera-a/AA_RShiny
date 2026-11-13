@@ -1,0 +1,384 @@
+design_id: seed_batch_ml_pipeline
+design_group: ml_genai
+design_type: batch_ml_pipeline
+title: Batch ML Pipeline
+variant: Scheduled training and bulk scoring (MLOps)
+summary: A scheduled pipeline ingests and validates data, builds features, trains and evaluates a model, registers it behind an approval gate and then scores whole datasets in bulk. Results land in a store that reports and applications read, while a monitor watches data and model drift to trigger retraining.
+when_to_use: Predictions are needed daily or weekly for many records at once, such as churn scores, demand forecasts or lead scoring.
+when_not_to_use: Decisions must be made per request in real time.
+complexity: Medium
+tags: batch, mlops, training, scoring, orchestration, drift
+
+@component
+id: C1
+label: Operational Databases
+lane: Sources
+kind: store
+description: Business systems that produce the raw data.
+technologies: Postgres, MySQL
+attributes: N/A
+methods: N/A
+
+@component
+id: C2
+label: Files and Logs
+lane: Sources
+kind: store
+description: Exports, clickstream and application logs.
+technologies: S3, GCS
+attributes: N/A
+methods: N/A
+
+@component
+id: C3
+label: Third-party Data
+lane: Sources
+kind: external
+description: Purchased or partner data that enriches features.
+technologies: Vendor APIs
+attributes: N/A
+methods: N/A
+
+@component
+id: C4
+label: Ingestion Job
+lane: Data Preparation
+kind: process
+description: Extracts and loads data into the lake or warehouse on a schedule.
+technologies: Airflow, Fivetran
+attributes: N/A
+methods: N/A
+
+@component
+id: C5
+label: Data Validation
+lane: Data Preparation
+kind: process
+description: Checks schema, ranges and freshness and stops bad data early.
+technologies: Great Expectations, Deequ
+attributes: N/A
+methods: N/A
+
+@component
+id: C6
+label: Transformation and Features
+lane: Data Preparation
+kind: process
+description: Cleans data and builds the feature tables.
+technologies: Spark, dbt
+attributes: N/A
+methods: N/A
+
+@component
+id: C7
+label: Training Job
+lane: Training
+kind: process
+description: Trains the model on the latest feature snapshot.
+technologies: XGBoost, scikit-learn, SageMaker
+attributes: N/A
+methods: N/A
+
+@component
+id: C8
+label: Hyperparameter Tuning
+lane: Training
+kind: process
+description: Searches parameters to improve validation metrics.
+technologies: Optuna, Vertex Vizier
+attributes: N/A
+methods: N/A
+
+@component
+id: C9
+label: Evaluation and Validation
+lane: Training
+kind: process
+description: Compares the candidate with the current model on holdout and fairness checks.
+technologies: MLflow, custom metrics
+attributes: N/A
+methods: N/A
+
+@component
+id: C10
+label: Model Registry
+lane: Registry and Governance
+kind: store
+description: Versioned models with metrics, lineage and status.
+technologies: MLflow Registry
+attributes: N/A
+methods: N/A
+
+@component
+id: C11
+label: Approval Gate
+lane: Registry and Governance
+kind: actor
+description: Automated or human sign-off before a model goes live.
+technologies: CI/CD approval
+attributes: N/A
+methods: N/A
+
+@component
+id: C12
+label: Orchestrator
+lane: Batch Scoring
+kind: service
+description: Schedules and sequences every job and handles retries.
+technologies: Airflow, Dagster
+attributes: N/A
+methods: N/A
+
+@component
+id: C13
+label: Batch Inference Job
+lane: Batch Scoring
+kind: model
+description: Loads the approved model and scores the full dataset.
+technologies: Spark, Beam
+attributes: N/A
+methods: N/A
+
+@component
+id: C14
+label: Predictions Store
+lane: Batch Scoring
+kind: store
+description: Table of scores with model version and timestamp.
+technologies: BigQuery, Snowflake
+attributes: N/A
+methods: N/A
+
+@component
+id: C15
+label: BI and Reports
+lane: Consumers and Monitoring
+kind: external
+description: Dashboards and analyses that use the scores.
+technologies: Looker, Power BI
+attributes: N/A
+methods: N/A
+
+@component
+id: C16
+label: Downstream Applications
+lane: Consumers and Monitoring
+kind: external
+description: CRM, marketing and operations systems that act on scores.
+technologies: Reverse ETL
+attributes: N/A
+methods: N/A
+
+@component
+id: C17
+label: Drift and Quality Monitor
+lane: Consumers and Monitoring
+kind: monitor
+description: Tracks input drift and score quality against actual outcomes.
+technologies: Evidently, WhyLabs
+attributes: N/A
+methods: N/A
+
+@connection
+from: C1
+to: C4
+label: tables
+type: data
+
+@connection
+from: C2
+to: C4
+label: files
+type: data
+
+@connection
+from: C3
+to: C4
+label: enrichment
+type: data
+
+@connection
+from: C4
+to: C5
+label: raw data
+type: data
+
+@connection
+from: C5
+to: C6
+label: validated data
+type: data
+
+@connection
+from: C6
+to: C7
+label: feature snapshot
+type: data
+
+@connection
+from: C7
+to: C8
+label: trials
+type: data
+
+@connection
+from: C8
+to: C9
+label: best candidate
+type: data
+
+@connection
+from: C9
+to: C10
+label: registered model
+type: data
+
+@connection
+from: C10
+to: C11
+label: request approval
+type: control
+
+@connection
+from: C11
+to: C13
+label: approved model
+type: control
+
+@connection
+from: C12
+to: C4
+label: schedule
+type: control
+
+@connection
+from: C12
+to: C7
+label: trigger training
+type: control
+
+@connection
+from: C12
+to: C13
+label: trigger scoring
+type: control
+
+@connection
+from: C6
+to: C13
+label: features to score
+type: data
+
+@connection
+from: C13
+to: C14
+label: scores
+type: data
+
+@connection
+from: C14
+to: C15
+label: scores
+type: data
+
+@connection
+from: C14
+to: C16
+label: scores
+type: data
+
+@connection
+from: C14
+to: C17
+label: scores and outcomes
+type: data
+
+@connection
+from: C17
+to: C12
+label: retrain on drift
+type: feedback
+
+@step
+order: 1
+text: The orchestrator starts the scheduled run and ingestion loads fresh data.
+components: C12,C4,C1,C2,C3
+
+@step
+order: 2
+text: Data validation blocks bad data, then transformations build the feature tables.
+components: C5,C6
+
+@step
+order: 3
+text: The training job and tuning produce the best candidate model.
+components: C7,C8
+
+@step
+order: 4
+text: Evaluation compares the candidate with the current model and registers it.
+components: C9,C10
+
+@step
+order: 5
+text: The approval gate promotes the model.
+components: C10,C11
+
+@step
+order: 6
+text: The batch inference job scores the whole dataset and writes predictions.
+components: C13,C14
+
+@step
+order: 7
+text: Reports and downstream applications read the predictions.
+components: C14,C15,C16
+
+@step
+order: 8
+text: The monitor watches drift and asks the orchestrator to retrain when needed.
+components: C17,C12
+
+@tradeoff
+kind: pro
+text: Simple, cheap and easy to debug compared with real-time serving.
+
+@tradeoff
+kind: pro
+text: Heavy features and large models are fine because latency is not critical.
+
+@tradeoff
+kind: con
+text: Predictions are only as fresh as the last run.
+
+@tradeoff
+kind: con
+text: Not suitable for decisions that depend on events within the last minutes.
+
+@tradeoff
+kind: risk
+text: A silent upstream schema change can corrupt a whole batch; validation gates are essential.
+
+@tradeoff
+kind: cost
+text: Pay only while jobs run, but backfills can be expensive.
+
+@tradeoff
+kind: scaling
+text: Partition data and scale the scoring job out; keep runs idempotent so they can be retried.
+
+@reference
+title: Designing Machine Learning Systems
+author: Chip Huyen
+url: N/A
+
+@reference
+title: Machine Learning Engineering
+author: Andriy Burkov
+url: N/A
+
+@reference
+title: Hidden Technical Debt in Machine Learning Systems
+author: Sculley et al.
+url: N/A
+

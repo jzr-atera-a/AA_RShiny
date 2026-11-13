@@ -12,7 +12,7 @@ bulk_import_server <- function(id, api_manager) {
       if (nchar(incoming_text) > 0) {
         updateTextAreaInput(session, "summary_upload_text", value = incoming_text)
       }
-    }, ignoreInit = TRUE)
+    }, ignoreInit = FALSE)   # FALSE: a tab built lazily (after the hand-off) still picks the text up
 
     observeEvent(input$parse, {
 
@@ -59,9 +59,9 @@ bulk_import_server <- function(id, api_manager) {
         output$status <- renderUI({
           tags$div(class = "status-error",
                    tags$i(class = "fa fa-times-circle"),
-                   " Error: ", e$message)
+                   " Error: ", app_err_text(e))
         })
-        showNotification(paste("Error:", e$message), type = "error")
+        showNotification(paste("Error:", app_err_text(e)), type = "error")
       })
     })
 
@@ -100,9 +100,9 @@ bulk_import_server <- function(id, api_manager) {
         output$status <- renderUI({
           tags$div(class = "status-error",
                    tags$i(class = "fa fa-times-circle"),
-                   " Error: ", e$message)
+                   " Error: ", app_err_text(e))
         })
-        showNotification(paste("Error:", e$message), type = "error")
+        showNotification(paste("Error:", app_err_text(e)), type = "error")
       })
     })
 

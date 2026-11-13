@@ -126,12 +126,13 @@ cc_scenario_lines <- function(sr, d = 4) {
   s <- sr$scenario; if (is.null(s)) return(character(0)); d <- if (is.finite(suppressWarnings(as.numeric(sr$d)))) as.numeric(sr$d) else d
   px <- function(k) { v <- suppressWarnings(as.numeric(cc_scen_val(s, k))); if (is.finite(v)) formatC(v, format = "f", digits = d) else "-" }
   nm <- function(k) suppressWarnings(as.numeric(cc_scen_val(s, k)))
-  src <- cc_scen_val(s, "source"); who <- if (identical(src, "Claude")) "the platform's chart analysis (Capital.com data)" else if (identical(src, "Rules")) "the app's rules" else "-"
+  src <- cc_scen_val(s, "source"); who <- if (identical(src, "Claude")) "the platform's chart analysis (Capital.com data)" else if (identical(src, "Rules")) "the app's rules" else if (grepl("^Course", src %||% "")) "the app's course strategies" else "the app"
   c(sprintf("Scenario chosen: %s, suggested by %s: %s %s.", cc_no_ai_name(cc_scen_val(s, "id")), who, cc_scen_val(s, "side") %||% "", tolower(cc_scen_val(s, "type") %||% "")),
     sprintf("Entry %s, stop %s, target %s%s; R:R %s.", px("entry"), px("stop"), px("target"), if (is.finite(nm("now_px"))) sprintf(" (price when worked out %s)", px("now_px")) else "",
             if (is.finite(nm("rrr"))) formatC(nm("rrr"), format = "f", digits = 2) else "-"),
-    sprintf("Chance of success (target before stop), measured: %s. Platform estimate: %s.",
+    sprintf("Baseline for these distances from any moment in this market (not a forecast of this trade): %s. Break-even for this R:R: %s. Platform estimate: %s.",
             if (is.finite(nm("meas_p"))) sprintf("%.0f%% (n=%d; %.0f%% reached neither within %s h)", nm("meas_p"), as.integer(nm("meas_n")), nm("meas_und"), format(round(as.numeric(sr$hold_h), 1))) else "not measured",
+            if (is.finite(nm("rrr")) && nm("rrr") > 0) sprintf("%.0f%%", 100 / (1 + nm("rrr"))) else "-",
             if (is.finite(nm("claude_p"))) sprintf("%.0f%% (estimate, not measured)", nm("claude_p")) else "-"),
     if (!is.na(cc_scen_val(s, "note")) && nzchar(cc_scen_val(s, "note"))) paste("How / why:", cc_no_ai_name(cc_scen_val(s, "note"))) else NULL,
     if (!is.na(cc_scen_val(s, "basis")) && nzchar(cc_scen_val(s, "basis"))) paste("Patterns / reasons:", cc_no_ai_name(cc_scen_val(s, "basis"))) else NULL)

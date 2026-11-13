@@ -29,7 +29,10 @@ diagram_about_ui <- function(id) {
               tags$tr(tags$td("label_text / sub_text"), tags$td("Primary and secondary text content")),
               tags$tr(tags$td("items_packed"), tags$td("Multiple bullets/items in ONE row, joined by the delimiter below")),
               tags$tr(tags$td("value_numeric / value_axis / series_name / unit_label"), tags$td("Chart-family fields (line/bar/funnel/dual-axis)")),
-              tags$tr(tags$td("color_hint / icon_name"), tags$td("Semantic style hints, not literal hex/pixel values"))
+              tags$tr(tags$td("color_hint / icon_name"), tags$td("Semantic style hints, not literal hex/pixel values")),
+              tags$tr(tags$td("node_id / parent_id / branch_label"), tags$td("Decision trees only: the tree structure - each node names its parent and the label of the branch leading into it")),
+              tags$tr(tags$td("probability / cash_flow"), tags$td("Decision trees only: the chance of a branch after a chance node, and the money paid (-) or received (+) when a branch is taken; end-node payoffs use value_numeric")),
+              tags$tr(tags$td("expected_value"), tags$td("Decision trees only: the expected value at each node when saved (a snapshot - the app always recalculates on load); color_hint = 'best' marks the recommended plan"))
             )
           ),
 

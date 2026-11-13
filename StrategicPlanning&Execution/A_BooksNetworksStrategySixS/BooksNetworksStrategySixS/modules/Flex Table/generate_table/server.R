@@ -92,7 +92,7 @@ generate_table_server <- function(id, api_manager) {
         output$status <- renderUI({
           tags$div(class = "status-error",
                    tags$i(class = "fa fa-times-circle"),
-                   " Failed to build prompt: ", e$message)
+                   " Failed to build prompt: ", app_err_text(e))
         })
         NULL
       })
@@ -135,7 +135,7 @@ generate_table_server <- function(id, api_manager) {
       }, error = function(e) {
         shinyjs::hide("loading_spinner")
 
-        error_message <- e$message
+        error_message <- app_err_text(e)
         suggestion <- ""
         if (grepl("timeout", error_message, ignore.case = TRUE)) {
           suggestion <- "💡 Try: Increase timeout in Editing Tool API Config (recommended: 300-600 seconds)"
@@ -210,9 +210,9 @@ generate_table_server <- function(id, api_manager) {
         output$status <- renderUI({
           tags$div(class = "status-error",
                    tags$i(class = "fa fa-times-circle"),
-                   " Error: ", e$message)
+                   " Error: ", app_err_text(e))
         })
-        showNotification(paste("Error:", e$message), type = "error")
+        showNotification(paste("Error:", app_err_text(e)), type = "error")
       })
     })
 

@@ -37,7 +37,7 @@ techdesign_matrix_server <- function(id, api_manager) {
     observeEvent(input$load_seed, {
       sd <- input$seed %||% ""
       if (!nzchar(sd) || !file.exists(sd)) { showNotification("No example selected.", type = "warning"); return() }
-      tryCatch(load_seed(sd), error = function(e) showNotification(paste("Could not load the example:", e$message), type = "error"))
+      tryCatch(load_seed(sd), error = function(e) showNotification(paste("Could not load the example:", app_err_text(e)), type = "error"))
     })
 
     # ---- Generate (plan -> research per column -> verify -> hierarchies -> names)
@@ -62,8 +62,8 @@ techdesign_matrix_server <- function(id, api_manager) {
         set_status(if (length(d$warnings) > 0) "status-warning" else "status-success", "fa fa-check-circle",
                    paste(summary_msg(d), "Review it, then 'Save to BigQuery'."), warn_ui(d))
       }, error = function(e) {
-        set_status("status-error", "fa fa-times-circle", paste("Failed:", e$message))
-        showNotification(paste("Error:", e$message), type = "error", duration = 12)
+        set_status("status-error", "fa fa-times-circle", paste("Failed:", app_err_text(e)))
+        showNotification(paste("Error:", app_err_text(e)), type = "error", duration = 12)
       })
     })
 
@@ -72,7 +72,7 @@ techdesign_matrix_server <- function(id, api_manager) {
       tryCatch({
         d <- parse_matrix_text(input$gen_text); draw(d)
         set_status("status-success", "fa fa-check-circle", summary_msg(d), warn_ui(d))
-      }, error = function(e) set_status("status-error", "fa fa-times-circle", paste("Parse problem:", e$message)))
+      }, error = function(e) set_status("status-error", "fa fa-times-circle", paste("Parse problem:", app_err_text(e))))
     })
 
     observeEvent(input$rename, {
@@ -83,7 +83,7 @@ techdesign_matrix_server <- function(id, api_manager) {
         d <- withProgress(message = "Naming branches", value = 0.3, tdm_rename_branches(api_manager, d))
         show_text(d); draw(d)
         set_status("status-success", "fa fa-check-circle", "Branches renamed.")
-      }, error = function(e) set_status("status-error", "fa fa-times-circle", paste("Could not name the branches:", e$message)))
+      }, error = function(e) set_status("status-error", "fa fa-times-circle", paste("Could not name the branches:", app_err_text(e))))
     })
 
     # ---- Save
@@ -99,8 +99,8 @@ techdesign_matrix_server <- function(id, api_manager) {
         set_status("status-success", "fa fa-check-circle", sprintf("Saved '%s' (design_id: %s).", d$meta$title, did), warn_ui(d))
         showNotification("Matrix saved", type = "message")
       }, error = function(e) {
-        set_status("status-error", "fa fa-times-circle", paste("Save failed:", e$message))
-        showNotification(paste("Error:", e$message), type = "error", duration = 12)
+        set_status("status-error", "fa fa-times-circle", paste("Save failed:", app_err_text(e)))
+        showNotification(paste("Error:", app_err_text(e)), type = "error", duration = 12)
       })
     })
 
@@ -115,7 +115,7 @@ techdesign_matrix_server <- function(id, api_manager) {
         api_manager$set_pending_bulk_text_flex(tdm_to_flex_text(d))
         td_nav(session, "bulk_import")
         showNotification("Sent to Flex Table's Bulk Import tab.", type = "message")
-      }, error = function(e) showNotification(paste("Could not send:", e$message), type = "error"))
+      }, error = function(e) showNotification(paste("Could not send:", app_err_text(e)), type = "error"))
     })
 
     # ---- Saved matrices
@@ -159,7 +159,7 @@ techdesign_matrix_server <- function(id, api_manager) {
       if (nrow(row) == 0) return()
       row$change_type <- "delete"; row$id <- NULL; row$created_at <- NULL
       tryCatch({ api_manager$bq_insert_techdesign(row); showNotification("Matrix deleted.", type = "message") },
-               error = function(e) showNotification(paste("Error:", e$message), type = "error"))
+               error = function(e) showNotification(paste("Error:", app_err_text(e)), type = "error"))
     })
 
     output$status <- renderUI(tags$div())

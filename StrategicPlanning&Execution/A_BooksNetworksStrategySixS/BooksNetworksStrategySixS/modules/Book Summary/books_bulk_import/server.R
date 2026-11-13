@@ -13,7 +13,7 @@ books_bulk_import_server <- function(id, api_manager) {
         cat("📥 [bulk_import] Received text from generate_summary (", nchar(incoming_text), "chars )\n")
         updateTextAreaInput(session, "summary_text", value = incoming_text)
       }
-    }, ignoreInit = TRUE)
+    }, ignoreInit = FALSE)   # FALSE: a tab built lazily (after the hand-off) still picks the text up
     
     # Parse summary
     observeEvent(input$parse, {
@@ -60,9 +60,9 @@ books_bulk_import_server <- function(id, api_manager) {
         output$status <- renderUI({
           tags$div(class = "status-error",
                    tags$i(class = "fa fa-times-circle"),
-                   " Error: ", e$message)
+                   " Error: ", app_err_text(e))
         })
-        showNotification(paste("Error:", e$message), type = "error")
+        showNotification(paste("Error:", app_err_text(e)), type = "error")
       })
     })
     
@@ -103,9 +103,9 @@ books_bulk_import_server <- function(id, api_manager) {
         output$status <- renderUI({
           tags$div(class = "status-error",
                    tags$i(class = "fa fa-times-circle"),
-                   " Error: ", e$message)
+                   " Error: ", app_err_text(e))
         })
-        showNotification(paste("Error:", e$message), type = "error")
+        showNotification(paste("Error:", app_err_text(e)), type = "error")
       })
     })
     

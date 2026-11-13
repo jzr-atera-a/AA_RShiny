@@ -357,7 +357,7 @@ ApiManager <- R6::R6Class(
     # Vision call (non-streaming): one or more images + an instruction -> text reply.
     # Used by the Order Evidence tab to transcribe platform screenshots. No web search, temperature 0.
     # images: list of list(media_type = "image/png", data = <base64 string>) as built by tr_read_image().
-    call_claude_vision = function(images, prompt, system = NULL, max_tokens = 4000, model = NULL) {
+    call_claude_vision = function(images, prompt, system = NULL, max_tokens = 8000, model = NULL) {
       cat("\n=== [Claude] call_claude_vision() START ===\n")
       if (!self$claude_authenticated || is.null(self$claude_api_key) || nchar(self$claude_api_key) == 0) {
         cat("[Claude] ERROR: not authenticated / empty key\n")

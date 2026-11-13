@@ -1,0 +1,180 @@
+design_id: seed_adapter_facade_pattern
+design_group: software_patterns
+design_type: adapter_facade_pattern
+title: Adapter and Facade Patterns
+variant: Wrapping a legacy API and simplifying a subsystem
+summary: Adapter converts the interface of an existing class into the one clients expect, letting incompatible classes work together. Facade provides one simple entry point to a complex subsystem. Both wrap existing code, but Adapter changes an interface while Facade simplifies it.
+when_to_use: You must integrate a legacy or third-party class with a different interface, or hide a complex subsystem behind a simple API.
+when_not_to_use: You control all the code and can change the interfaces directly.
+complexity: Low
+tags: structural, gof, adapter, facade, integration
+
+@component
+id: C1
+label: Client
+lane: Client
+kind: class
+description: Calls the target interface and the facade.
+technologies: N/A
+attributes: N/A
+methods: + run(): void
+
+@component
+id: C2
+label: Target
+lane: Abstractions
+kind: interface
+description: The interface the client expects.
+technologies: N/A
+attributes: N/A
+methods: + request(data: Data): Result
+
+@component
+id: C3
+label: Adapter
+lane: Concrete Classes
+kind: class
+description: Implements Target and translates calls to the adaptee.
+technologies: N/A
+attributes: - adaptee: Adaptee
+methods: + request(data: Data): Result
+
+@component
+id: C4
+label: Adaptee
+lane: Concrete Classes
+kind: class
+description: Existing class with an incompatible interface.
+technologies: N/A
+attributes: N/A
+methods: + specificRequest(raw: Raw): Raw
+
+@component
+id: C5
+label: Facade
+lane: Concrete Classes
+kind: class
+description: Simple entry point that coordinates subsystem classes.
+technologies: N/A
+attributes: - a: SubsystemA; - b: SubsystemB
+methods: + process(input: Input): Output
+
+@component
+id: C6
+label: SubsystemA
+lane: Concrete Classes
+kind: class
+description: Part of a complex subsystem.
+technologies: N/A
+attributes: N/A
+methods: + stepOne(): void
+
+@component
+id: C7
+label: SubsystemB
+lane: Concrete Classes
+kind: class
+description: Another part of the subsystem.
+technologies: N/A
+attributes: N/A
+methods: + stepTwo(): void
+
+@connection
+from: C3
+to: C2
+label: implements
+type: implements
+
+@connection
+from: C3
+to: C4
+label: wraps
+type: composition
+
+@connection
+from: C1
+to: C2
+label: uses
+type: uses
+
+@connection
+from: C1
+to: C5
+label: uses
+type: uses
+
+@connection
+from: C5
+to: C6
+label: delegates
+type: uses
+
+@connection
+from: C5
+to: C7
+label: delegates
+type: uses
+
+@step
+order: 1
+text: The client calls the Target interface.
+components: C1,C2
+
+@step
+order: 2
+text: The adapter translates the request and calls the adaptee.
+components: C3,C4
+
+@step
+order: 3
+text: For complex workflows the client calls the facade.
+components: C1,C5
+
+@step
+order: 4
+text: The facade coordinates the subsystem classes.
+components: C5,C6,C7
+
+@tradeoff
+kind: pro
+text: Reuses existing code without changing it.
+
+@tradeoff
+kind: pro
+text: Hides complexity and reduces coupling to subsystems.
+
+@tradeoff
+kind: con
+text: Adds an extra layer of indirection.
+
+@tradeoff
+kind: con
+text: A facade can grow into a god object.
+
+@tradeoff
+kind: risk
+text: Adapters hide mismatches in behaviour such as error handling or units.
+
+@tradeoff
+kind: cost
+text: Small wrapper classes to write and test.
+
+@tradeoff
+kind: scaling
+text: Keep facades focused; use one facade per use case.
+
+@reference
+title: Design Patterns: Elements of Reusable Object-Oriented Software
+author: Gamma, Helm, Johnson, Vlissides
+url: N/A
+
+@reference
+title: Refactoring Guru: Adapter
+author: Refactoring Guru
+url: https://refactoring.guru/design-patterns/adapter
+
+@reference
+title: Refactoring Guru: Facade
+author: Refactoring Guru
+url: https://refactoring.guru/design-patterns/facade
+

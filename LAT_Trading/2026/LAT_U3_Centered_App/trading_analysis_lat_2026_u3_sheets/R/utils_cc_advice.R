@@ -131,6 +131,9 @@ cc_suggest_prompt <- function(scan, f, scen, plan, morning = NULL, now = Sys.tim
     "stop and target as absolute prices with ", d, " decimals; the stop beyond a real level and at least about 1 ATR from the entry; ",
     "probability_pct = your estimate (0-100) that the target is reached before the stop; horizon_hours; why (max 2 short sentences, facts only); main_risk (1 short sentence, e.g. a release in the window). ",
     "Every trade must respect the plan rules above (direction with the major trend of the Rule of Five when it has one, the higher R:R when against the daily / 4-hour trend, the allowed set-ups). If a rule that applies to every trade fails now (session, news window, regime, losses in a row), return an empty list and put the reason in stand_aside_reason. ",
+    "EVIDENCE RULE: the 'baseline' figure of a scenario is how often ANY trade with those distances reached its target first in this market, whatever the set-up; it is not a forecast. ",
+    "A trade only pays if its chance is above break-even = 100 / (1 + R:R) percent (40% at 1.5, 33% at 2.0). Suggest a trade only when you can name the specific evidence that lifts it above break-even; ",
+    "state in 'why' the break-even percent and why your probability_pct is above it. A pattern record with fewer than 30 cases is weak evidence: say so. If nothing clears break-even, or today's Morning Sheet marks this market UNCLEAR / no trade, return an empty list: standing aside is a correct answer. ",
     "Also give probability_pct for each of the app's scenarios. If no trade makes sense, return an empty list and say why in summary. ",
     "Reply with ONE JSON object only: {\"summary\":\"1-2 sentences\",\"morning_sheet_used\":true|false,\"stand_aside_reason\":\"\",",
     "\"suggestions\":[{\"side\":\"SELL\",\"type\":\"MARKET\",\"entry\":0,\"stop\":0,\"target\":0,\"probability_pct\":0,\"horizon_hours\":0,\"why\":\"\",\"main_risk\":\"\"}],",
@@ -204,3 +207,25 @@ cc_recent_trades_text <- function(t, atr = NA_real_) {
   paste0(sprintf("Totals: %d trade(s), %d closed, %d won, %d lost; total %.2f R; stops hit %d times.", nrow(t), sum(cl), w, sum(r[cl] <= 0), sum(r[cl]), sum(g("exit_code") %in% c("S1", "S2+"), na.rm = TRUE)),
          "\n", paste(lines, collapse = "\n"))
 }
+
+# ---- ********** evidence, not "chance of success" ---------------------------------------------------------------
+# The baseline (cc_touch_prob) is measured from EVERY candle, whatever the set-up: it is what any trade with these
+# distances does in this market, not a forecast. The set-up's own record is the evidence; with few cases it proves
+# nothing, so its likely range (Wilson, 95%) is shown and compared with the break-even rate 1 / (1 + R:R).
+cc_wilson <- function(p_pct, n, z = 1.96) { p <- p_pct / 100; ok <- is.finite(p) & is.finite(n) & n > 0; n <- ifelse(ok, n, 1); p <- ifelse(ok, p, 0)
+  den <- 1 + z^2 / n; mid <- (p + z^2 / (2 * n)) / den; hw <- z * sqrt(p * (1 - p) / n + z^2 / (4 * n^2)) / den
+  list(lo = ifelse(ok, 100 * pmax(0, mid - hw), NA_real_), hi = ifelse(ok, 100 * pmin(1, mid + hw), NA_real_)) }
+cc_breakeven <- function(rrr) ifelse(is.finite(rrr) & rrr > 0, 100 / (1 + rrr), NA_real_)
+cc_evidence <- function(rrr, setup_p, setup_n, min_n = 30L) {
+  be <- cc_breakeven(rrr); w <- cc_wilson(setup_p, setup_n); has <- is.finite(setup_p) & is.finite(setup_n) & setup_n > 0
+  verdict <- ifelse(!has, "NO RECORD for this set-up (baseline only)", ifelse(w$lo > be, "PROVEN: record above break-even",
+             ifelse(w$hi < be, "AGAINST: record below break-even", ifelse(setup_n < min_n, "NOT PROVEN: too few cases", "NOT PROVEN: record near break-even"))))
+  list(be = be, lo = w$lo, hi = w$hi, verdict = verdict, proven = has & w$lo > be, against = has & w$hi < be,
+       exp_r = ifelse(has, setup_p / 100 * rrr - (1 - setup_p / 100), NA_real_),
+       record = ifelse(has, sprintf("%.0f%% of %d cases (likely %.0f-%.0f%%)", setup_p, as.integer(setup_n), w$lo, w$hi), "none"))
+}
+# regime label written for a market in today's Morning Sheet text ("- Brent Crude: ..., UNCLEAR_NO_TRADE"); "" when not found
+cc_ms_regime <- function(ms_text, market_name) { if (is.null(ms_text) || !nzchar(ms_text %||% "") || !nzchar(market_name %||% "")) return("")
+  w <- strsplit(tolower(market_name), "[^a-z]+")[[1]]; w <- w[nchar(w) >= 4 & !w %in% c("spot", "crude", "cash", "index")]; if (!length(w)) return("")
+  ln <- grep("^- ", strsplit(ms_text, "\n")[[1]], value = TRUE); ln <- ln[grepl(w[1], tolower(ln), fixed = TRUE)]; if (!length(ln)) return("")
+  m <- regmatches(ln[1], regexpr("UNCLEAR_NO_TRADE|TREND|RANGE", ln[1])); if (length(m)) m else "" }

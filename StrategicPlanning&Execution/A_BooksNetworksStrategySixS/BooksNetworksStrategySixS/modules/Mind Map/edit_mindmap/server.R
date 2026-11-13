@@ -121,9 +121,9 @@ edit_mindmap_server <- function(id, api_manager) {
 
       }, error = function(e) {
         output$load_status <- renderUI({
-          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", e$message)
+          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", app_err_text(e))
         })
-        showNotification(paste("Error:", e$message), type = "error")
+        showNotification(paste("Error:", app_err_text(e)), type = "error")
       })
     })
 
@@ -244,9 +244,9 @@ edit_mindmap_server <- function(id, api_manager) {
       }, error = function(e) {
         shinyjs::hide("loading_spinner")
         output$edit_status <- renderUI({
-          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", e$message)
+          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", app_err_text(e))
         })
-        showNotification(paste("Error:", e$message), type = "error", duration = 15)
+        showNotification(paste("Error:", app_err_text(e)), type = "error", duration = 15)
       })
     })
 
@@ -323,9 +323,9 @@ edit_mindmap_server <- function(id, api_manager) {
 
       }, error = function(e) {
         output$apply_status <- renderUI({
-          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", e$message)
+          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", app_err_text(e))
         })
-        showNotification(paste("Error:", e$message), type = "error")
+        showNotification(paste("Error:", app_err_text(e)), type = "error")
       })
     })
 

@@ -1,0 +1,34 @@
+module:
+  id: "business_consulting"
+  name: "Business Consulting"
+  description: "Build a Flex-Table-formatted business consulting case from an existing Strategic Analysis diagram and/or Six Sigma tool, plus user context, via the Editing Tool"
+  version: "1.0.0"
+  author: "Strategic Analysis Suite Team"
+
+  enabled: true
+
+  menu:
+    label: "Business Consulting"
+    icon: "briefcase"
+    tabname: "business_consulting"
+    group: "Strategic Analysis"
+    badge:
+      label: null
+      color: null
+
+  dependencies:
+    packages:
+      - shiny
+      - shinydashboard
+      - shinyjs
+      - DT
+
+    package_versions: {}
+
+  api:
+    required: ["claude"]
+    optional: ["bigquery"]
+
+  data:
+    required: []
+    optional: []

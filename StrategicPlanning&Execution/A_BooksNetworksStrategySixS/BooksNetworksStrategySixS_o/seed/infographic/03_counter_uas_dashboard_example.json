@@ -1,0 +1,433 @@
+{
+ "meta": {
+  "title": "AeraGuard EO counter-UAS (layout example)",
+  "subtitle": "Example of a two-slide dashboard deck built only from facts the applicant supplied. TRLs are self-assessed; field tests and SAPIENT validation are [INSERT] placeholders.",
+  "kicker": "Dashboard example",
+  "theme": "custom",
+  "facts": "CCAV CAM Pathfinder: YOLO model mAP 0.87 and precision 0.91 on road imagery; risk scoring; telemetry latency under 200 ms. Robot tracking prototype proved Kalman tracking on Jetson edge hardware. Isaac Sim digital twin supplies synthetic training data. Drone field tests: not done. SAPIENT validation: not done. Build February 2027, independent trials March 2027. Sensing is passive, no RF emissions. Links wired or private.",
+  "layout": "dashboard",
+  "format": "16x9",
+  "slides": 2,
+  "panels": 4,
+  "cover": "no",
+  "palette": {
+   "navy": "#0B2A4A",
+   "teal": "#0E9AA7",
+   "magenta": "#C2185B",
+   "ochre": "#D99A1F"
+  },
+  "slide_titles": [
+   {
+    "title": "Passive vision that sees what RF detectors miss",
+    "kicker": "Concept and fit",
+    "subtitle": "AeraGuard EO at a prison perimeter"
+   },
+   {
+    "title": "Honest readiness and a path to independent trials",
+    "kicker": "Readiness and evidence",
+    "subtitle": "Targets and placeholders are labelled"
+   }
+  ],
+  "requirements": "Detect and track two or more drones at once\nPassive sensing, no RF emissions\nSAPIENT (BSI Flex 335) output\nTRL 6 required\nHonest comparison with RF detection and radar",
+  "research": "knowledge",
+  "topic": "Counter-UAS node for prison perimeters (example)"
+ },
+ "sections": [
+  {
+   "id": "a",
+   "type": "flow",
+   "heading": "Camera to alert",
+   "intro": "Five steps from photons to a staff alert.",
+   "items": [
+    {
+     "icon": "camera",
+     "label": "Sense",
+     "text": "Daylight and thermal cameras in an IP66 housing",
+     "tag": ""
+    },
+    {
+     "icon": "chip",
+     "label": "Detect",
+     "text": "YOLO detector on a Jetson module",
+     "tag": ""
+    },
+    {
+     "icon": "route",
+     "label": "Track",
+     "text": "Kalman tracker follows two or more drones",
+     "tag": ""
+    },
+    {
+     "icon": "brain",
+     "label": "Classify",
+     "text": "Drone or bird",
+     "tag": "target"
+    },
+    {
+     "icon": "bell",
+     "label": "Alert",
+     "text": "SAPIENT message, staff alert and local log",
+     "tag": "insert"
+    }
+   ],
+   "slide": 1
+  },
+  {
+   "id": "c",
+   "type": "radial_zones",
+   "heading": "Perimeter coverage",
+   "intro": "Layered detection around the estate.",
+   "center": "Prison estate",
+   "center_icon": "wall",
+   "zones": [
+    {
+     "label": "Detect",
+     "text": "First sighting of a drone",
+     "tag": "target"
+    },
+    {
+     "label": "Track",
+     "text": "Hold a track on 2+ drones"
+    },
+    {
+     "label": "Alert",
+     "text": "Staff alerted with location",
+     "tag": "target"
+    }
+   ],
+   "nodes": [
+    {
+     "label": "Node N",
+     "angle": 0,
+     "zone": 2,
+     "icon": "camera"
+    },
+    {
+     "label": "Node E",
+     "angle": 90,
+     "zone": 2
+    },
+    {
+     "label": "Node S",
+     "angle": 180,
+     "zone": 2
+    },
+    {
+     "label": "Node W",
+     "angle": 270,
+     "zone": 2
+    }
+   ],
+   "threats": [
+    {
+     "label": "Drone 1",
+     "angle": 50,
+     "zone": 1
+    },
+    {
+     "label": "Drone 2",
+     "angle": 215,
+     "zone": 1
+    }
+   ],
+   "slide": 1
+  },
+  {
+   "id": "d",
+   "type": "requirements",
+   "heading": "Meets the brief",
+   "intro": "",
+   "items": [
+    {
+     "label": "Detect and track 2+ drones",
+     "text": "Kalman tracker on edge hardware",
+     "status": "met"
+    },
+    {
+     "label": "Passive sensing",
+     "text": "No RF emissions, so fibre-optic and GPS-free drones are visible",
+     "status": "met"
+    },
+    {
+     "label": "SAPIENT output",
+     "text": "Message format designed; validation not done yet",
+     "status": "planned",
+     "tag": "insert"
+    },
+    {
+     "label": "Field-proven on drones",
+     "text": "Road imagery only so far",
+     "status": "partial"
+    },
+    {
+     "label": "Works in rain and fog",
+     "text": "Not yet characterised",
+     "status": "gap"
+    }
+   ],
+   "slide": 1
+  },
+  {
+   "id": "g",
+   "type": "gauge_row",
+   "heading": "Evidence so far",
+   "intro": "",
+   "items": [
+    {
+     "label": "mAP (road imagery)",
+     "value": 0.87,
+     "max": 1,
+     "display": "0.87",
+     "note": "CCAV CAM Pathfinder",
+     "confidence": "applicant"
+    },
+    {
+     "label": "Precision",
+     "value": 0.91,
+     "max": 1,
+     "display": "0.91",
+     "target": 0.95,
+     "confidence": "applicant"
+    },
+    {
+     "label": "Telemetry latency",
+     "value": 200,
+     "max": 400,
+     "display": "<200 ms",
+     "note": "Pathfinder project",
+     "confidence": "applicant"
+    },
+    {
+     "label": "Drone mAP",
+     "max": 1,
+     "tag": "insert",
+     "note": "Field tests not done"
+    }
+   ],
+   "slide": 1
+  },
+  {
+   "id": "f",
+   "type": "readiness",
+   "heading": "Readiness",
+   "intro": "",
+   "unit": "TRL",
+   "scale_max": 9,
+   "threshold": 6,
+   "threshold_label": "TRL 6 required",
+   "items": [
+    {
+     "label": "Detector",
+     "value": 5,
+     "text": "Road imagery results",
+     "tag": "estimate"
+    },
+    {
+     "label": "Tracker",
+     "value": 5,
+     "text": "Robot prototype",
+     "tag": "estimate"
+    },
+    {
+     "label": "SAPIENT interface",
+     "text": "validation not done",
+     "tag": "insert"
+    },
+    {
+     "label": "Housing",
+     "value": 7,
+     "text": "IP66 housing",
+     "tag": "estimate"
+    }
+   ],
+   "slide": 2
+  },
+  {
+   "id": "e",
+   "type": "compare_matrix",
+   "heading": "How it compares",
+   "intro": "",
+   "columns": [
+    {
+     "label": "AeraGuard EO",
+     "icon": "eye",
+     "ours": true
+    },
+    {
+     "label": "RF detection",
+     "icon": "antenna"
+    },
+    {
+     "label": "Radar",
+     "icon": "radar"
+    }
+   ],
+   "items": [
+    {
+     "label": "Catches fibre-optic drones",
+     "cells": [
+      {
+       "score": 4,
+       "text": "passive vision"
+      },
+      {
+       "score": 0,
+       "text": "no RF link"
+      },
+      {
+       "score": 3
+      }
+     ],
+     "confidence": "judgment"
+    },
+    {
+     "label": "Range",
+     "cells": [
+      {
+       "score": 2,
+       "text": "line of sight"
+      },
+      {
+       "score": 4
+      },
+      {
+       "score": 4
+      }
+     ],
+     "confidence": "judgment"
+    },
+    {
+     "label": "Works at night",
+     "cells": [
+      {
+       "score": 3,
+       "text": "thermal"
+      },
+      {
+       "score": 4
+      },
+      {
+       "score": 4
+      }
+     ]
+    },
+    {
+     "label": "Bird false alarms",
+     "cells": [
+      {
+       "score": 2
+      },
+      {
+       "score": 4
+      },
+      {
+       "score": 1
+      }
+     ]
+    },
+    {
+     "label": "Emits no RF",
+     "cells": [
+      {
+       "score": 4
+      },
+      {
+       "score": 4
+      },
+      {
+       "score": 0,
+       "text": "active"
+      }
+     ]
+    }
+   ],
+   "slide": 2
+  },
+  {
+   "id": "h",
+   "type": "timeline",
+   "heading": "Path to trials",
+   "intro": "",
+   "items": [
+    {
+     "date": "Now",
+     "label": "Digital twin",
+     "text": "Isaac Sim synthetic data",
+     "state": "done"
+    },
+    {
+     "date": "Feb 2027",
+     "label": "Build",
+     "text": "Node build complete",
+     "state": "next"
+    },
+    {
+     "date": "Mar 2027",
+     "label": "Independent trials",
+     "text": "Prison environment trials",
+     "state": "planned"
+    },
+    {
+     "date": "[INSERT]",
+     "label": "Field tests",
+     "text": "Drone tests",
+     "state": "planned",
+     "tag": "insert"
+    }
+   ],
+   "slide": 2
+  },
+  {
+   "id": "b",
+   "type": "layers",
+   "heading": "Node architecture",
+   "intro": "",
+   "items": [
+    {
+     "icon": "camera",
+     "label": "Sensing",
+     "text": "Passive, no RF emissions",
+     "chips": [
+      "Daylight camera",
+      "Thermal camera",
+      "IP66 housing"
+     ],
+     "tag": ""
+    },
+    {
+     "icon": "chip",
+     "label": "Edge compute",
+     "text": "",
+     "chips": [
+      "NVIDIA Jetson",
+      "YOLO detector",
+      "Kalman tracker",
+      "Bird classifier"
+     ],
+     "tag": ""
+    },
+    {
+     "icon": "network",
+     "label": "Comms",
+     "text": "Wired or private only",
+     "chips": [
+      "SAPIENT (BSI Flex 335)",
+      "Private link"
+     ],
+     "tag": "estimate"
+    },
+    {
+     "icon": "bell",
+     "label": "Staff interface",
+     "text": "",
+     "chips": [
+      "Alerts",
+      "Timestamped log with images"
+     ],
+     "tag": ""
+    }
+   ],
+   "slide": 2
+  }
+ ]
+}
