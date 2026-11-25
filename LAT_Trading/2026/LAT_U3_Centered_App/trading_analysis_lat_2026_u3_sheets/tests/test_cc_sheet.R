@@ -1,6 +1,6 @@
 # tests/test_cc_sheet.R - the Individual Trade Sheet for a closed Capital.com trade (your trade of 2 Nov 2026)
 suppressMessages({ library(TTR); library(zoo) }); `%||%` <- function(x, y) if (is.null(x)) y else x
-for (f in c("R/utils_trading_records.R", "R/utils_trading_exports.R", "R/utils_trading_templates.R", "R/utils_trading_calendar.R", "R/utils_cc_catalog.R", "R/utils_cc_api.R", "R/utils_cc_patterns.R", "R/utils_cc_chart.R", "R/utils_cc_records.R", "R/utils_cc_tradelog.R", "R/utils_cc_sheet.R", "R/utils_cc_advice.R", "R/utils_cc_plan.R")) source(f)
+for (f in c("R/utils_trading_records.R", "R/utils_trading_exports.R", "R/utils_trading_templates.R", "R/utils_trading_calendar.R", "R/utils_cc_catalog.R", "R/utils_cc_api.R", "R/utils_cc_patterns.R", "R/utils_cc_chart.R", "R/utils_cc_records.R", "R/utils_cc_sheet.R", "R/utils_cc_markets.R", "R/utils_cc_advice.R", "R/utils_ml.R", "R/utils_cc_plan.R")) source(f)
 pass <- 0L; fail <- 0L; ok <- function(c, w) { if (isTRUE(c)) { pass <<- pass + 1L; cat("  ok  ", w, "\n") } else { fail <<- fail + 1L; cat("  FAIL", w, "\n") } }
 tr <- cc_coerce("trades", data.frame(trade_id = "CC_1421", record_version = 3L, source = "APP", epic = "OIL_BRENT", market_name = "Brent Oil Spot", instrument_currency = "USD", account_currency = "GBP",
   direction = "BUY", size = 11, lot_size = 1, deal_id = "POS", status = "CLOSED", entry_level = 109.756, stop_initial = 108.703, stop_level = 108.703, target_level = 110.495,
@@ -103,7 +103,9 @@ ok(k5$status == "CLOSED" && k5$entry_level == 93.598 && k5$exit_code == "T" && k
 b5 <- local({ tt <- seq(as.POSIXct("2026-11-05 02:00", tz = "UTC"), by = 300, length.out = 160); pp <- seq(93.2, 95.2, length.out = 160); data.frame(time = tt, open = pp, high = pp + 0.05, low = pp - 0.05, close = pp, volume = 0) })
 testServer(cc_trading_records_server, args = list(client = cc_new_client(http_fn = function(...) list(status = 500, headers = list(), body = "{}"), sleep_fn = function(s) NULL), store = st5,
     fetch_bars = function(...) b5, morning_fn = function(day) list(ok = TRUE, text = paste("MORNING SHEET", format(day, "%d/%m/%Y"), "bias: Brent bearish; BoE 12:00"), saved_at = as.POSIXct("2026-11-05 06:40", tz = "UTC")),
-    vision_fn = function(p) { c_prompt5 <<- p; list(text = paste(if (grepl("MORNING SHEET 05/11/2026", p)) "[with the Morning Sheet]" else "[no sheet]","C: the BUY STOP recommendation (31% measured, 34% estimated, R:R 2.0) worked: the stop order filled at 93.598 and the target 94.987 was hit.",
+    vision_fn = function(p) { if (grepl("six reason boxes", p)) { f_prompt5 <<- p; fl <- function(w) list(suggestion = paste("I", w, "SUGGESTED-WORDING; Claude said so."), context = paste("Context for", w), check = paste("Did you", w, "?"))
+        return(list(text = paste0("Here: ", jsonlite::toJSON(list(fields = list(setup_fund = fl("fund"), setup_tech = fl("tech"), trigger_text = fl("trigger"), execution_text = fl("exec"), stop_reason = fl("stop"), target_reason = fl("target"))), auto_unbox = TRUE)))) }
+      c_prompt5 <<- p; list(text = paste(if (grepl("MORNING SHEET 05/11/2026", p)) "[with the Morning Sheet]" else "[no sheet]","C: the BUY STOP recommendation (31% measured, 34% estimated, R:R 2.0) worked: the stop order filled at 93.598 and the target 94.987 was hit.",
                                                                             if (grepl("BUY STOP", p) && grepl("94.987", p)) "[prompt had the scenario and the exit]" else "[prompt incomplete]")) }), {
   session$setInputs(j_trade = "CC_83be"); session$flushReact()
   session$setInputs(j_chart = "15 Min", j_stopwhy = "", j_tgtwhy = "", j_why = "Target reached.", j_purpose = "PRACTICE", j_followed = "Y", j_devtype = "", j_devnote = "", j_mood = 3, j_fund = "", j_tech = "",
@@ -117,7 +119,49 @@ testServer(cc_trading_records_server, args = list(client = cc_new_client(http_fn
   f5 <- output$j_dl_docx; ok(file.exists(f5) && identical(readBin(f5, "raw", 2), charToRaw("PK")), "Download Word gives the sheet for the repaired trade")
   dx <- tempfile(); xx <- utils::unzip(f5, "word/document.xml", exdir = dx); tt <- paste(readLines(xx, warn = FALSE), collapse = "")
   ok(grepl("93.598", tt) && grepl("94.987", tt), "the sheet has the real entry 93.598 and exit 94.987")
+  # ****************** every cell of the summary box and of the reasons box is filled
+  cells <- function(xml, k) { tb <- regmatches(xml, gregexpr("<w:tbl>.*?</w:tbl>", xml, perl = TRUE))[[1]]; rows <- regmatches(tb[k], gregexpr("<w:tr[ >].*?</w:tr>", tb[k], perl = TRUE))[[1]]
+    vapply(rows, function(r) { cs <- regmatches(r, gregexpr("<w:tc>.*?</w:tc>", r, perl = TRUE))[[1]]; paste(regmatches(cs[length(cs)], gregexpr("(?<=<w:t>|<w:t xml:space=\"preserve\">)[^<]*", cs[length(cs)], perl = TRUE))[[1]], collapse = "") }, "", USE.NAMES = FALSE) }
+  c2 <- cells(tt, 2); c4 <- cells(tt, 4); c6 <- cells(tt, 6)
+  ok(length(c2) == 5 && all(nzchar(trimws(c2))) && grepl("Hr|Mins", c2[2]) && grepl("pips \\(", c2[3]) && grepl("pips \\(", c2[4]), sprintf("summary box: all 5 filled (%s)", paste(c2, collapse = " | ")))
+  ok(length(c4) == 6 && all(nchar(trimws(c4)) > 20), sprintf("reasons box: all 6 filled from the saved facts (%s)", paste(substr(c4, 1, 30), collapse = " | ")))
+  ok(grepl("buy stop order for 3 at 93.593 on Capital.com; it filled at 93.598", c4[4]) && grepl("Slippage 0.005 points against me", c4[4]) && grepl("Stop at 92.895", c4[5]) && grepl("Target at 94.987", c4[6]) && grepl("break-even win rate", c4[6]) && grepl("MORNING SHEET|Morning Sheet", c4[1]) && !any(grepl("Claude", c(c4, c6))), "the reasons name the real fill, stop, target and the Morning Sheet; no AI name")
+  ok(nzchar(c6[1]) && grepl("target 94.987 reached", c6[1]), "Reason for Exit filled")
+  # ******************* suggestions for the six boxes
+  session$setInputs(j_sug_go = 1); session$flushReact(); so <- paste(as.character(output$j_sug_out), collapse = "")
+  ok(all(vapply(cc_field_names, function(l) grepl(l, so, fixed = TRUE), TRUE)) && lengths(regmatches(so, gregexpr("Copy into my box", so))) == 6 && grepl("Context for stop", so) && grepl("Did you trigger", so), "suggestions: six cards, each with wording, context, a check and a copy button")
+  ok(!grepl("Claude said", so) && grepl("the platform said", so), "the suggested wording never names the AI")
+  ok(grepl("FILLED AT 93.598|filled at 93.598", f_prompt5, ignore.case = TRUE) && grepl("MORNING SHEET 05/11/2026", f_prompt5) && grepl("BUY STOP", f_prompt5) && grepl("Bought|buy stop order", f_prompt5) && grepl("never invent", f_prompt5), "the prompt carries the fill, the scenario, the Morning Sheet and what the app would write; it forbids invented facts")
+  ev5 <- st5$current("events"); ok(any(ev5$event_type == "FIELD_SUGGESTIONS" & ev5$trade_id == "CC_83be"), "suggestions saved to BigQuery as an event of the trade")
+  fs <- output$j_dl_docx; xs <- utils::unzip(fs, "word/document.xml", exdir = tempfile()); ts <- paste(readLines(xs, warn = FALSE), collapse = ""); ok(!grepl("SUGGESTED-WORDING", ts), "suggestions are not printed on the sheet unless copied into a box")
+  session$setInputs(j_sug_use_stop_reason = 1); session$flushReact(); ok(TRUE, "copy button runs")
+  # ********************* end-of-week review inside the module
+  wd <- as.Date(format(as.POSIXct(st5$current("trades")$entry_ts[1], tz = "UTC"), "%Y-%m-%d")); mon <- wd - ((as.integer(format(wd, "%u")) - 1) %% 7)
+  session$setInputs(wr_from = mon, wr_claude = FALSE, wr_go = 1); session$flushReact(); wo <- paste(as.character(output$wr_out), collapse = "")
+  ok(grepl("1 trade\\(s\\), 1 closed", wo) && any(st5$current("events")$event_type == "WEEK_REVIEW"), "end-of-week review built from the records and saved to BigQuery")
+  pcu <- paste(as.character(output$plan_checkup), collapse = ""); ok(grepl("plan items are complete", pcu) && grepl("Rule of Five", pcu), "trade plan check-up shown")
+  session$setInputs(j_tech = "My own technical words.", j_stopwhy = "Below the overnight low."); f6 <- output$j_dl_docx; xx6 <- utils::unzip(f6, "word/document.xml", exdir = tempfile()); t6 <- paste(readLines(xx6, warn = FALSE), collapse = "")
+  c46 <- cells(t6, 4); ok(c46[2] == "My own technical words." && c46[5] == "Below the overnight low." && grepl("buy stop order", c46[4]), "your own words always win; the empty boxes are still filled")
   ok(grepl("BUY STOP", tt) && grepl("31%", tt) && grepl("34%", tt) && grepl("Analysis", tt) && !grepl("Claude", tt) && grepl("prompt had the scenario and the exit", tt), "the context: the recommended trade, both chances, and the C analysis (written from the scenario and the real exit)")
   if (!is.na(tr_find_soffice())) { fp <- output$j_dl_pdf; ok(identical(readBin(fp, "raw", 4), charToRaw("%PDF")), "Download PDF gives the PDF") ; file.copy(fp, "/tmp/sheet_5nov.pdf", overwrite = TRUE) }
 })
+# ****************** a market deal from a scenario, with the chart scan and a full Morning Sheet
+trm <- data.frame(trade_id = "CC_M", direction = "SELL", size = 2, epic = "OIL_BRENT", market_name = "Brent Oil Spot", order_type = "MARKET", entry_level = 89.871, stop_initial = 90.54, target_level = 88.435,
+  entry_ts = as.POSIXct("2026-11-10 09:01", tz = "UTC"), status = "CLOSED", exit_code = "SL", exit_level = 90.55, exit_ts = as.POSIXct("2026-11-10 11:40", tz = "UTC"), risk_account = 1.02, reward_account = 2.19,
+  account_currency = "GBP", strategy = "Holy Grail", stringsAsFactors = FALSE)
+srm <- list(scenario = list(id = "SELL MARKET", source = "Claude", side = "SELL", type = "MARKET", entry = 89.85, stop = 90.52, target = 88.41, now_px = 89.85, rrr = 2.15,
+  note = "Deal at the bid now; stop just beyond the level that cancels Moving averages stacked bearish; target at the pattern's measured target; break filter **: close 0.10 ATR beyond the level for 1 candle(s)",
+  basis = "Moving averages stacked bearish (measured 62% target-first, n=13); Downtrend (Dow Theory) (measured 44% target-first, n=59)"), d = 3, hold_h = 8)
+pm <- data.frame(Pattern = c("Bullish hammer", "Moving averages stacked bearish"), Bias = c("Bullish", "Bearish"), `Measured record` = c("40% target first, n=20", "62% target first, n=13"), check.names = FALSE, stringsAsFactors = FALSE)
+scm <- data.frame(resolution = "MINUTE_15", regime = "TREND", adx = 31.4, stringsAsFactors = FALSE)
+msm <- list(news = "OPEC+ kept output unchanged; US inventories rose.", window = "15:30 EIA crude inventories (high)", stand = "", regime = "Brent trending down on the 4-hour chart")
+am <- cc_auto_reasons(trm, srm, pm, scm, msm)
+ok(all(vapply(am, function(x) nchar(x) > 20, TRUE)), "every reason is written, exit included")
+ok(grepl("OPEC", am$setup_fund) && grepl("15:30 EIA", am$setup_fund) && grepl("Holy Grail", am$setup_tech) && grepl("TREND \\(ADX 31.4 on the 15 Min chart\\)", am$setup_tech) && grepl("^.*Moving averages stacked bearish \\(bearish", am$setup_tech) && !any(grepl("Claude", unlist(am))),
+   "fundamental from the Morning Sheet; technical: set-up, regime, the patterns agreeing with the side first, the scenario; no AI name")
+ok(grepl("Moving averages stacked bearish on the 15 Min chart", am$trigger_text) && grepl("close 0.10 ATR beyond the level", am$trigger_text), "trigger: the signal and its confirmation")
+ok(grepl("Sold 2 at the market", am$execution_text) && grepl("sold 0.021 better", am$execution_text), "execution: deal at the market and the price against the scenario")
+ok(grepl("Stop just beyond the level that cancels", am$stop_reason) && grepl("0.669 points above the entry \\(GBP 1.02\\)", am$stop_reason) && grepl("Target at the pattern's measured target", am$target_reason) && grepl("reward to risk of 2.15", am$target_reason), "stop and target: why, distance, money and R:R")
+ok(grepl("The stop at 90.540 was hit at 11:40 UK \\(closed at 90.550\\)", am$exit_reason), "exit from the close")
+ab <- cc_auto_reasons(trm[, c("trade_id", "direction", "size", "epic", "entry_level", "stop_initial", "target_level", "status")]); ok(all(vapply(ab[1:6], function(x) nchar(x) > 20, TRUE)) && grepl("No Morning Sheet", ab$setup_fund) && grepl("no scenario or chart scan", ab$setup_tech), "a deal with nothing saved still gets every box filled, saying what is missing")
 cat(sprintf("\n%d passed, %d failed\n", pass, fail)); if (fail) quit(status = 1)

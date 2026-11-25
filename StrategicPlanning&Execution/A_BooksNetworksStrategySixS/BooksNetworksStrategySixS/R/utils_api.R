@@ -1,30 +1,17 @@
 # R/utils_api.R
-# APIManager R6 Class - UNIFIED across Book Summary, Flex Table, Mind
-# Map, and Knowledge Graph suites.
+# APIManager R6 class: the one shared Claude API connection and the one shared BigQuery connection of the app.
 # =================================================================
-# One shared Claude API connection and one shared BigQuery
-# authentication (same project/dataset), but each sub-app has its OWN
-# table and its OWN schema - so every BigQuery-specific method below
-# is named per sub-app (bq_insert_books / bq_insert_flex /
-# bq_insert_mindmap / bq_insert_kg, etc) rather than sharing a single
-# generic name, since the four original apps' methods of the same name
-# (bq_insert, bq_get_taxonomy, empty_taxonomy) had DIFFERENT required
-# columns and DIFFERENT target tables - merging them under one name
-# would only be able to support one sub-app correctly. Same for
-# pending_bulk_text (Generate -> Bulk Import handoff): Book Summary and
-# Flex Table BOTH have their own independent Generate->Bulk Import
-# flow, so this is also scoped per-suite (pending_bulk_text_books /
-# pending_bulk_text_flex) to avoid one suite's generated content
-# leaking into the other's Bulk Import box.
-#
-# Everything Claude-API-related (call_claude, streaming, diagnostics,
-# logging) was byte-for-byte identical across all four source apps
-# and is kept exactly once here.
+# Every suite has its OWN table and schema in the same project / dataset, so the BigQuery methods are named per suite
+# (bq_insert_books, bq_get_flex_taxonomy, ...). What they have in common lives once, in the private helpers at the bottom:
+# numbering new rows, filling missing columns, uploading, caching a suite's list and firing its refresh trigger.
+# The Generate -> Bulk Import hand-offs (pending_bulk_text_*) are also per suite, so one suite's text never lands in another's box.
 
-library(R6)
-library(httr)
-library(jsonlite)
-library(bigrquery)
+# The Claude Messages endpoint. CLAUDE_API_URL can point the app at a gateway or a test double; unset, it is Anthropic's API.
+CLAUDE_API_URL <- Sys.getenv("CLAUDE_API_URL", "https://api.anthropic.com/v1/messages")
+
+# suite key -> name shown in log lines
+APP_SUITE_LABELS <- c(books = "Book Summary", flex = "Flex Table", mindmap = "Mind Map", kg = "Knowledge Graph", sankey = "Sankey Graph",
+                      diagram = "Strategic Analysis", sixsigma = "Six Sigma Analysis", techdesign = "Technical Designs")
 
 APIManager <- R6::R6Class(
   "APIManager",
@@ -59,12 +46,14 @@ APIManager <- R6::R6Class(
     bq_full_table_techdesign = NULL,
     bq_authenticated = FALSE,     # TRUE once at least one suite has been opened (its table checked and its lists loaded)
     bq_connected = FALSE,         # signed in to BigQuery; suites load lazily when their tab is opened
-    bq_groups_loaded = character(0),
+    bq_groups_loaded = character(0),    # suites whose table was checked and whose list was loaded in this session
+    bq_groups_checked = character(0),   # suites whose table check has started: before that their lists are empty (no query is sent)
     bq_schema_done = character(0),
     bq_schema_cache = NULL,
     bq_conn_tick = NULL,
     techdesign_list_cache = NULL,
     bq_temp_file = NULL,
+    bq_key_path = NULL,           # path of the service-account key BigQuery signed in with (Google Drive can reuse it)
 
     # ⭐ Reactive triggers for cross-module updates - deliberately SCOPED
     # PER SUB-APP (not one shared trigger), so an upload/edit in one
@@ -145,105 +134,35 @@ APIManager <- R6::R6Class(
 
     initialize = function() {
       self$bq_conn_tick <- shiny::reactiveVal(0)
-      self$state_trigger_books <- shiny::reactiveVal(0)
-      self$state_trigger_flex <- shiny::reactiveVal(0)
-      self$state_trigger_mindmap <- shiny::reactiveVal(0)
-      self$state_trigger_kg <- shiny::reactiveVal(0)
-      self$state_trigger_sankey <- shiny::reactiveVal(0)
-      self$state_trigger_diagram <- shiny::reactiveVal(0)
-      self$state_trigger_sixsigma <- shiny::reactiveVal(0)
-      self$state_trigger_techdesign <- shiny::reactiveVal(0)
-      self$pending_bulk_text_books <- shiny::reactiveVal("")
-      self$pending_bulk_text_flex <- shiny::reactiveVal("")
-      self$pending_bulk_text_sankey <- shiny::reactiveVal("")
-      self$pending_bulk_text_diagram <- shiny::reactiveVal("")
-      self$pending_bulk_text_sixsigma <- shiny::reactiveVal("")
-      self$pending_diagram_selection <- shiny::reactiveVal(NULL)
-      self$pending_sixsigma_selection <- shiny::reactiveVal(NULL)
-      self$pending_techdesign_selection <- shiny::reactiveVal(NULL)
-      self$pending_bulk_text_techdesign <- shiny::reactiveVal("")
-      self$pending_techdesign_load <- shiny::reactiveVal(NULL)
+      for (g in self$bq_group_names()) self[[paste0("state_trigger_", g)]] <- shiny::reactiveVal(0)
+      for (g in c("books", "flex", "sankey", "diagram", "sixsigma", "techdesign")) self[[paste0("pending_bulk_text_", g)]] <- shiny::reactiveVal("")
+      for (f in c("pending_diagram_selection", "pending_sixsigma_selection", "pending_techdesign_selection", "pending_techdesign_load")) self[[f]] <- shiny::reactiveVal(NULL)
       private$recompute_full_table_ids()
-      cat("🔌 API Manager initialized (Book Summary + Flex Table + Mind Map + Knowledge Graph + Sankey Graph + Strategic Analysis + Six Sigma Analysis)\n")
+      cat("🔌 API Manager initialized (", paste(APP_SUITE_LABELS, collapse = " + "), ")\n")
     },
 
-    trigger_state_update_books = function() {
-      current <- self$state_trigger_books()
-      self$state_trigger_books(current + 1)
-      self$books_taxonomy_cache <- NULL
-      cat("🔔 [Book Summary] State trigger fired:", current + 1, "\n")
-    },
-    trigger_state_update_flex = function() {
-      current <- self$state_trigger_flex()
-      self$state_trigger_flex(current + 1)
-      self$flex_taxonomy_cache <- NULL
-      cat("🔔 [Flex Table] State trigger fired:", current + 1, "\n")
-    },
-    trigger_state_update_mindmap = function() {
-      current <- self$state_trigger_mindmap()
-      self$state_trigger_mindmap(current + 1)
-      self$mindmap_taxonomy_cache <- NULL
-      self$mindmap_ids_for_topic_cache <- NULL
-      cat("🔔 [Mind Map] State trigger fired:", current + 1, "\n")
-    },
-    trigger_state_update_kg = function() {
-      current <- self$state_trigger_kg()
-      self$state_trigger_kg(current + 1)
-      self$kg_taxonomy_cache <- NULL
-      self$kg_ids_for_topic_cache <- NULL
-      cat("🔔 [Knowledge Graph] State trigger fired:", current + 1, "\n")
-    },
-    trigger_state_update_sankey = function() {
-      current <- self$state_trigger_sankey()
-      self$state_trigger_sankey(current + 1)
-      self$sankey_taxonomy_cache <- NULL
-      cat("🔔 [Sankey Graph] State trigger fired:", current + 1, "\n")
-    },
-    trigger_state_update_diagram = function() {
-      current <- self$state_trigger_diagram()
-      self$state_trigger_diagram(current + 1)
-      self$diagram_taxonomy_cache <- NULL
-      cat("🔔 [Strategic Analysis] State trigger fired:", current + 1, "\n")
-    },
-    trigger_state_update_sixsigma = function() {
-      current <- self$state_trigger_sixsigma()
-      self$state_trigger_sixsigma(current + 1)
-      self$sixsigma_taxonomy_cache <- NULL
-      cat("🔔 [Six Sigma Analysis] State trigger fired:", current + 1, "\n")
-    },
+    # "This suite's data changed": its modules re-read their lists (the cached copy is dropped first). One trigger per suite,
+    # so a save in one suite never makes another suite query BigQuery again.
+    trigger_state_update_books = function() private$fire_trigger("books"),
+    trigger_state_update_flex = function() private$fire_trigger("flex"),
+    trigger_state_update_mindmap = function() private$fire_trigger("mindmap"),
+    trigger_state_update_kg = function() private$fire_trigger("kg"),
+    trigger_state_update_sankey = function() private$fire_trigger("sankey"),
+    trigger_state_update_diagram = function() private$fire_trigger("diagram"),
+    trigger_state_update_sixsigma = function() private$fire_trigger("sixsigma"),
+    trigger_state_update_techdesign = function() private$fire_trigger("techdesign"),
 
-    trigger_state_update_techdesign = function() {
-      current <- self$state_trigger_techdesign()
-      self$state_trigger_techdesign(current + 1)
-      self$techdesign_list_cache <- NULL
-      cat("🔔 [Technical Designs] State trigger fired:", current + 1, "\n")
-    },
-
-    set_pending_techdesign_selection = function(sel) { self$pending_techdesign_selection(sel) },
-    set_pending_bulk_text_techdesign = function(text) { self$pending_bulk_text_techdesign(text) },
-    set_pending_techdesign_load = function(x) { self$pending_techdesign_load(x) },
-
-    set_pending_bulk_text_books = function(text) {
-      self$pending_bulk_text_books(text)
-    },
-    set_pending_bulk_text_flex = function(text) {
-      self$pending_bulk_text_flex(text)
-    },
-    set_pending_bulk_text_sankey = function(text) {
-      self$pending_bulk_text_sankey(text)
-    },
-    set_pending_bulk_text_diagram = function(text) {
-      self$pending_bulk_text_diagram(text)
-    },
-    set_pending_bulk_text_sixsigma = function(text) {
-      self$pending_bulk_text_sixsigma(text)
-    },
-    set_pending_diagram_selection = function(diagram_type) {
-      self$pending_diagram_selection(diagram_type)
-    },
-    set_pending_sixsigma_selection = function(diagram_type) {
-      self$pending_sixsigma_selection(diagram_type)
-    },
+    # hand-offs between tabs: the sending tab stores a value, the receiving tab watches it
+    set_pending_bulk_text_books = function(text) self$pending_bulk_text_books(text),
+    set_pending_bulk_text_flex = function(text) self$pending_bulk_text_flex(text),
+    set_pending_bulk_text_sankey = function(text) self$pending_bulk_text_sankey(text),
+    set_pending_bulk_text_diagram = function(text) self$pending_bulk_text_diagram(text),
+    set_pending_bulk_text_sixsigma = function(text) self$pending_bulk_text_sixsigma(text),
+    set_pending_bulk_text_techdesign = function(text) self$pending_bulk_text_techdesign(text),
+    set_pending_diagram_selection = function(diagram_type) self$pending_diagram_selection(diagram_type),
+    set_pending_sixsigma_selection = function(diagram_type) self$pending_sixsigma_selection(diagram_type),
+    set_pending_techdesign_selection = function(sel) self$pending_techdesign_selection(sel),
+    set_pending_techdesign_load = function(x) self$pending_techdesign_load(x),
 
     log_debug = function(msg, tag = "APIManager") {
       cat(sprintf("[%s] [%s] %s\n", format(Sys.time(), "%H:%M:%OS3"), tag, msg))
@@ -278,12 +197,7 @@ APIManager <- R6::R6Class(
                  category = character(), domain = character(), topic = character(), title = character(),
                  is_template = logical(), created_at = character(), stringsAsFactors = FALSE)
     },
-    empty_sixsigma_taxonomy = function() {
-      data.frame(diagram_id = character(), diagram_name = character(), diagram_type = character(),
-                 diagram_group = character(),
-                 category = character(), domain = character(), topic = character(), title = character(),
-                 is_template = logical(), created_at = character(), stringsAsFactors = FALSE)
-    },
+    empty_sixsigma_taxonomy = function() self$empty_diagram_taxonomy(),
 
     # ============================================================
     # CLAUDE API METHODS (identical across all three source apps)
@@ -302,7 +216,7 @@ APIManager <- R6::R6Class(
 
       tryCatch({
         response <- POST(
-          url = "https://api.anthropic.com/v1/messages",
+          url = CLAUDE_API_URL,
           add_headers(
             "x-api-key" = self$claude_api_key,
             "anthropic-version" = "2023-06-01",
@@ -364,7 +278,7 @@ APIManager <- R6::R6Class(
 
       start_time <- Sys.time()
       reach <- tryCatch({
-        r <- httr::GET("https://api.anthropic.com", httr::timeout(15))
+        r <- httr::GET(sub("^(https?://[^/]+).*$", "\\1", CLAUDE_API_URL), httr::timeout(15))
         elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
         list(ok = TRUE, status = httr::status_code(r), elapsed = elapsed)
       }, error = function(e) {
@@ -493,7 +407,7 @@ APIManager <- R6::R6Class(
       }
 
       tryCatch({
-        curl::curl_fetch_stream(url = "https://api.anthropic.com/v1/messages", fun = process_chunk, handle = h)
+        curl::curl_fetch_stream(url = CLAUDE_API_URL, fun = process_chunk, handle = h)
 
         elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
         if (nchar(trimws(sse_buffer)) > 0) parse_sse_event(sse_buffer)
@@ -626,28 +540,26 @@ APIManager <- R6::R6Class(
         Sys.unsetenv("GOOGLE_APPLICATION_CREDENTIALS")
         Sys.unsetenv("GCE_METADATA_HOST")
 
+        check_key <- function(json) {
+          missing <- setdiff(c("type", "project_id", "private_key", "client_email"), names(fromJSON(json)))
+          if (length(missing) > 0) stop("Missing JSON fields: ", paste(missing, collapse = ", "))
+        }
         if (!is.null(json_path)) {
-          json_content <- fromJSON(json_path)
-          required_fields <- c("type", "project_id", "private_key", "client_email")
-          missing <- setdiff(required_fields, names(json_content))
-          if (length(missing) > 0) stop("Missing JSON fields: ", paste(missing, collapse = ", "))
+          check_key(json_path)
           bq_auth(path = json_path, cache = FALSE)
-
+          self$bq_key_path <- json_path
         } else if (!is.null(json_text)) {
-          json_content <- fromJSON(json_text)
-          required_fields <- c("type", "project_id", "private_key", "client_email")
-          missing <- setdiff(required_fields, names(json_content))
-          if (length(missing) > 0) stop("Missing JSON fields: ", paste(missing, collapse = ", "))
+          check_key(json_text)
           temp_file <- tempfile(fileext = ".json")
           writeLines(json_text, temp_file)
           self$bq_temp_file <- temp_file
           bq_auth(path = temp_file, cache = FALSE)
-
+          self$bq_key_path <- temp_file
         } else {
           stop("Provide JSON file path or text")
         }
 
-        datasets <- bq_project_datasets(self$bq_project_id)
+        bq_project_datasets(self$bq_project_id)   # one cheap call: fails here if the key cannot reach the project
 
         # ---- Tables: the statements are built in bq_ddl(). ----
         if (isTRUE(lazy)) {
@@ -663,17 +575,9 @@ APIManager <- R6::R6Class(
           tryCatch({ bq_project_query(self$bq_project_id, q) }, error = function(e) {})
         }
         self$bq_connected <- TRUE
-        self$bq_groups_loaded <- names(self$bq_ddl()); self$bq_schema_done <- names(self$bq_ddl())
-
+        self$bq_groups_loaded <- self$bq_schema_done <- self$bq_groups_checked <- names(self$bq_ddl())
         self$bq_authenticated <- TRUE
-        self$trigger_state_update_books()
-        self$trigger_state_update_flex()
-        self$trigger_state_update_mindmap()
-        self$trigger_state_update_kg()
-        self$trigger_state_update_sankey()
-        self$trigger_state_update_diagram()
-        self$trigger_state_update_sixsigma()
-        self$trigger_state_update_techdesign()
+        for (g in self$bq_group_names()) private$fire_trigger(g)
         return(TRUE)
 
       }, error = function(e) {
@@ -888,16 +792,13 @@ APIManager <- R6::R6Class(
 
     # new browser session: connection kept, but nothing is considered loaded until a tab is opened again
     bq_reset_lazy_state = function() {
-      self$bq_groups_loaded <- character(0); self$bq_schema_done <- character(0); self$bq_schema_cache <- NULL
+      self$bq_groups_loaded <- character(0); self$bq_groups_checked <- character(0); self$bq_schema_done <- character(0); self$bq_schema_cache <- NULL
       self$bq_authenticated <- FALSE
-      self$books_taxonomy_cache <- NULL; self$flex_taxonomy_cache <- NULL; self$mindmap_taxonomy_cache <- NULL; self$kg_taxonomy_cache <- NULL
-      self$mindmap_ids_for_topic_cache <- NULL; self$kg_ids_for_topic_cache <- NULL
-      self$sankey_taxonomy_cache <- NULL; self$diagram_taxonomy_cache <- NULL; self$sixsigma_taxonomy_cache <- NULL; self$techdesign_list_cache <- NULL
+      for (f in c(private$cache_fields, "mindmap_ids_for_topic_cache", "kg_ids_for_topic_cache")) self[[f]] <- NULL
       invisible(TRUE)
     },
     bq_session_reset = function() { if (isTRUE(self$bq_connected)) self$bq_reset_lazy_state(); invisible(TRUE) },
 
-    # ONE query lists every table and column of the dataset (cached for the session)
     # Column list of ONE suite's table (a small, targeted query; cached per table)
     bq_schema_info = function(group, refresh = FALSE) {
       tbl <- self$bq_group_table(group)
@@ -965,11 +866,10 @@ APIManager <- R6::R6Class(
     },
 
     # Columns of a table as BigQuery has them now (NULL if unknown) - used to keep uploads matching the table.
-    bq_table_columns = function(group) {
-      info <- tryCatch(self$bq_schema_info(group, refresh = TRUE), error = function(e) NULL)
+    bq_table_columns = function(group, refresh = TRUE) {
+      info <- tryCatch(self$bq_schema_info(group, refresh = refresh), error = function(e) NULL)
       if (is.null(info)) return(NULL)
-      tbl <- self$bq_group_table(group)
-      cols <- info$column_name[info$table_name == tbl]
+      cols <- info$column_name[info$table_name == self$bq_group_table(group)]
       if (length(cols)) cols else NULL
     },
 
@@ -979,16 +879,12 @@ APIManager <- R6::R6Class(
       if (!isTRUE(self$bq_connected) && !isTRUE(self$bq_authenticated)) stop("Not connected to BigQuery")
       if (group %in% self$bq_groups_loaded) return(list(group = group, rows = NA_integer_, seconds = 0, first = FALSE))
       t0 <- Sys.time()
+      self$bq_groups_checked <- union(self$bq_groups_checked, group)
       self$bq_ensure_schema(group)
       self$bq_authenticated <- TRUE
-      trig <- switch(group, books = self$trigger_state_update_books, flex = self$trigger_state_update_flex, mindmap = self$trigger_state_update_mindmap,
-                     kg = self$trigger_state_update_kg, sankey = self$trigger_state_update_sankey, diagram = self$trigger_state_update_diagram,
-                     sixsigma = self$trigger_state_update_sixsigma, techdesign = self$trigger_state_update_techdesign)
-      trig()
-      d <- tryCatch(switch(group, books = self$bq_get_books_taxonomy(), flex = self$bq_get_flex_taxonomy(), mindmap = self$bq_get_mindmap_taxonomy(),
-                           kg = self$bq_get_kg_taxonomy(), sankey = self$bq_get_sankey_taxonomy(), diagram = self$bq_get_diagram_taxonomy(),
-                           sixsigma = self$bq_get_sixsigma_taxonomy(), techdesign = self$bq_get_techdesign_list()), error = function(e) NULL)
-      self$bq_groups_loaded <- unique(c(self$bq_groups_loaded, group))
+      private$fire_trigger(group)
+      d <- tryCatch(self[[private$list_methods[[group]]]](), error = function(e) NULL)
+      self$bq_groups_loaded <- union(self$bq_groups_loaded, group)
       list(group = group, rows = if (is.data.frame(d)) nrow(d) else NA_integer_, seconds = as.numeric(difftime(Sys.time(), t0, units = "secs")), first = TRUE)
     },
 
@@ -1022,110 +918,40 @@ APIManager <- R6::R6Class(
     # ============================================================
     # BOOK SUMMARY - BigQuery methods
     # ============================================================
-    bq_get_books_taxonomy = function() {
-      if (!self$bq_authenticated) return(self$empty_books_taxonomy())
-      if (!is.null(self$books_taxonomy_cache)) return(self$books_taxonomy_cache)
-
-      query <- sprintf(
-        "SELECT DISTINCT genre, topic, book_name, author FROM `%s` ORDER BY genre, topic, book_name",
-        self$bq_full_table_books
-      )
-      result <- tryCatch(self$bq_query(query), error = function(e) {
-        cat("⚠️  [bq_get_books_taxonomy] Query failed:", app_err_text(e), "\n")
-        self$empty_books_taxonomy()
-      })
-      self$books_taxonomy_cache <- result
-      result
-    },
+    bq_get_books_taxonomy = function() private$cached_list("books", "books_taxonomy_cache", self$empty_books_taxonomy, function() self$bq_query(sprintf(
+      "SELECT DISTINCT genre, topic, book_name, author FROM `%s` ORDER BY genre, topic, book_name", self$bq_full_table_books))),
 
     bq_insert_books = function(data_frame, table_name = NULL) {
-      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
-      self$bq_ensure_schema("books")   # creates the table first if it does not exist yet
-
-      max_id_query <- sprintf("SELECT COALESCE(MAX(id), 0) as max_id FROM `%s`", self$bq_full_table_books)
-      start_id <- tryCatch({
-        result <- bq_project_query(self$bq_project_id, max_id_query)
-        as.integer(bq_table_download(result)$max_id) + 1
-      }, error = function(e) { 1 })
-
-      data_frame$id <- seq(start_id, start_id + nrow(data_frame) - 1)
-      data_frame$created_at <- Sys.time()
-
       required_cols <- c("id", "created_at", "book_name", "author", "genre", "topic",
                          "chapter", "section", "main_details",
                          "formula", "formula_explanation",
                          "reference_url", "reference_description",
                          "numeric_data", "numeric_data_description")
-      for (col in required_cols) if (!col %in% names(data_frame)) data_frame[[col]] <- ""
-      data_frame <- data_frame[, required_cols]
-
-      table_ref <- bq_table(self$bq_project_id, self$bq_dataset_id, table_name %||% self$bq_table_books)
-      bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
-      return(nrow(data_frame))
+      data_frame <- private$prepare_rows("books", data_frame, required_cols, fill = "")
+      private$upload_rows("books", data_frame, table_name)
     },
 
     # ============================================================
     # FLEX TABLE - BigQuery methods
     # ============================================================
-    bq_get_flex_taxonomy = function() {
-      if (!self$bq_authenticated) return(self$empty_flex_taxonomy())
-      if (!is.null(self$flex_taxonomy_cache)) return(self$flex_taxonomy_cache)
-
-      query <- sprintf(
-        "SELECT DISTINCT category, topic, table_title, row_dimension_label, column_dimension_label
-         FROM `%s` ORDER BY category, topic", self$bq_full_table_flex
-      )
-      result <- tryCatch(self$bq_query(query), error = function(e) {
-        cat("⚠️  [bq_get_flex_taxonomy] Query failed:", app_err_text(e), "\n")
-        self$empty_flex_taxonomy()
-      })
-      self$flex_taxonomy_cache <- result
-      result
-    },
+    bq_get_flex_taxonomy = function() private$cached_list("flex", "flex_taxonomy_cache", self$empty_flex_taxonomy, function() self$bq_query(sprintf(
+      "SELECT DISTINCT category, topic, table_title, row_dimension_label, column_dimension_label
+         FROM `%s` ORDER BY category, topic", self$bq_full_table_flex))),
 
     bq_insert_flex = function(data_frame, table_name = NULL, source = "claude") {
-      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
-      self$bq_ensure_schema("flex")   # creates the table first if it does not exist yet
-
-      max_id_query <- sprintf("SELECT COALESCE(MAX(id), 0) as max_id FROM `%s`", self$bq_full_table_flex)
-      start_id <- tryCatch({
-        result <- bq_project_query(self$bq_project_id, max_id_query)
-        as.integer(bq_table_download(result)$max_id) + 1
-      }, error = function(e) { 1 })
-
-      data_frame$id <- seq(start_id, start_id + nrow(data_frame) - 1)
-      data_frame$created_at <- Sys.time()
-      if (!"source" %in% names(data_frame)) data_frame$source <- source
-
       required_cols <- c("id", "created_at", "source", "category", "topic", "table_title",
                          "row_dimension_label", "column_dimension_label",
                          "row_index", "columns_data", "notes")
-      for (col in required_cols) if (!col %in% names(data_frame)) data_frame[[col]] <- ""
-      data_frame <- data_frame[, required_cols]
-
-      table_ref <- bq_table(self$bq_project_id, self$bq_dataset_id, table_name %||% self$bq_table_flex)
-      bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
-      return(nrow(data_frame))
+      data_frame <- private$prepare_rows("flex", data_frame, required_cols, fill = "", defaults = list(source = source))
+      private$upload_rows("flex", data_frame, table_name)
     },
 
     # ============================================================
     # MIND MAP - BigQuery methods
     # ============================================================
-    bq_get_mindmap_taxonomy = function() {
-      if (!self$bq_authenticated) return(self$empty_mindmap_taxonomy())
-      if (!is.null(self$mindmap_taxonomy_cache)) return(self$mindmap_taxonomy_cache)
-
-      query <- sprintf(
-        "SELECT DISTINCT category, domain, topic, map_id, map_title
-         FROM `%s` ORDER BY category, domain, topic, map_id", self$bq_full_table_mindmap
-      )
-      result <- tryCatch(self$bq_query(query), error = function(e) {
-        cat("⚠️  [bq_get_mindmap_taxonomy] Query failed:", app_err_text(e), "\n")
-        self$empty_mindmap_taxonomy()
-      })
-      self$mindmap_taxonomy_cache <- result
-      result
-    },
+    bq_get_mindmap_taxonomy = function() private$cached_list("mindmap", "mindmap_taxonomy_cache", self$empty_mindmap_taxonomy, function() self$bq_query(sprintf(
+      "SELECT DISTINCT category, domain, topic, map_id, map_title
+         FROM `%s` ORDER BY category, domain, topic, map_id", self$bq_full_table_mindmap))),
 
     # Scoped views of the SAME mind map table: the regular Mind Map
     # tabs never show the reserved "MessageHierarchy" category, and the
@@ -1148,7 +974,7 @@ APIManager <- R6::R6Class(
         return(self$mindmap_ids_for_topic_cache[[cache_key]])
       }
 
-      safe_category <- gsub("'", "''", category); safe_domain <- gsub("'", "''", domain); safe_topic <- gsub("'", "''", topic)
+      safe_category <- safe_sql_escape(category); safe_domain <- safe_sql_escape(domain); safe_topic <- safe_sql_escape(topic)
       query <- sprintf(
         "SELECT map_id, MAX(created_at) as last_touched, ANY_VALUE(map_title) as map_title
          FROM `%s` WHERE category = '%s' AND domain = '%s' AND topic = '%s'
@@ -1167,7 +993,7 @@ APIManager <- R6::R6Class(
 
     get_current_tree_state = function(map_id) {
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
-      safe_map_id <- gsub("'", "''", map_id)
+      safe_map_id <- safe_sql_escape(map_id)
       query <- sprintf("SELECT * FROM `%s` WHERE map_id = '%s' ORDER BY id", self$bq_full_table_mindmap, safe_map_id)
       all_versions <- self$bq_query(query)
 
@@ -1189,48 +1015,19 @@ APIManager <- R6::R6Class(
     },
 
     bq_insert_mindmap = function(data_frame, source = "claude") {
-      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
-      self$bq_ensure_schema("mindmap")   # creates the table first if it does not exist yet
-
-      max_id_query <- sprintf("SELECT COALESCE(MAX(id), 0) as max_id FROM `%s`", self$bq_full_table_mindmap)
-      start_id <- tryCatch({
-        result <- bq_project_query(self$bq_project_id, max_id_query)
-        as.integer(bq_table_download(result)$max_id) + 1
-      }, error = function(e) { 1 })
-
-      data_frame$id <- seq(start_id, start_id + nrow(data_frame) - 1)
-      data_frame$created_at <- Sys.time()
-      if (!"source" %in% names(data_frame)) data_frame$source <- source
-
       required_cols <- c("id", "created_at", "source", "change_type", "category", "domain",
                          "topic", "map_id", "map_title", "node_id", "node_label",
                          "node_content", "parent_node_id", "cross_links", "sort_order")
-      for (col in required_cols) if (!col %in% names(data_frame)) data_frame[[col]] <- if (col == "sort_order") 0L else ""
-      data_frame <- data_frame[, required_cols]
-
-      table_ref <- bq_table(self$bq_project_id, self$bq_dataset_id, self$bq_table_mindmap)
-      bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
-      return(nrow(data_frame))
+      data_frame <- private$prepare_rows("mindmap", data_frame, required_cols, fill = "", defaults = list(source = source, sort_order = 0L))
+      private$upload_rows("mindmap", data_frame)
     },
 
     # ============================================================
     # KNOWLEDGE GRAPH - BigQuery methods
     # ============================================================
-    bq_get_kg_taxonomy = function() {
-      if (!self$bq_authenticated) return(self$empty_kg_taxonomy())
-      if (!is.null(self$kg_taxonomy_cache)) return(self$kg_taxonomy_cache)
-
-      query <- sprintf(
-        "SELECT DISTINCT category, domain, topic, graph_id, graph_title
-         FROM `%s` ORDER BY category, domain, topic, graph_id", self$bq_full_table_kg
-      )
-      result <- tryCatch(self$bq_query(query), error = function(e) {
-        cat("⚠️  [bq_get_kg_taxonomy] Query failed:", app_err_text(e), "\n")
-        self$empty_kg_taxonomy()
-      })
-      self$kg_taxonomy_cache <- result
-      result
-    },
+    bq_get_kg_taxonomy = function() private$cached_list("kg", "kg_taxonomy_cache", self$empty_kg_taxonomy, function() self$bq_query(sprintf(
+      "SELECT DISTINCT category, domain, topic, graph_id, graph_title
+         FROM `%s` ORDER BY category, domain, topic, graph_id", self$bq_full_table_kg))),
 
     bq_get_graph_ids_for_topic = function(category, domain, topic) {
       if (!self$bq_authenticated) return(character(0))
@@ -1240,7 +1037,7 @@ APIManager <- R6::R6Class(
         return(self$kg_ids_for_topic_cache[[cache_key]])
       }
 
-      safe_category <- gsub("'", "''", category); safe_domain <- gsub("'", "''", domain); safe_topic <- gsub("'", "''", topic)
+      safe_category <- safe_sql_escape(category); safe_domain <- safe_sql_escape(domain); safe_topic <- safe_sql_escape(topic)
       query <- sprintf(
         "SELECT graph_id, MAX(created_at) as last_touched, ANY_VALUE(graph_title) as graph_title
          FROM `%s` WHERE category = '%s' AND domain = '%s' AND topic = '%s'
@@ -1259,7 +1056,7 @@ APIManager <- R6::R6Class(
 
     get_current_graph_state = function(graph_id) {
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
-      safe_graph_id <- gsub("'", "''", graph_id)
+      safe_graph_id <- safe_sql_escape(graph_id)
       query <- sprintf("SELECT * FROM `%s` WHERE graph_id = '%s' ORDER BY id", self$bq_full_table_kg, safe_graph_id)
       all_versions <- self$bq_query(query)
 
@@ -1308,58 +1105,28 @@ APIManager <- R6::R6Class(
     },
 
     bq_insert_kg = function(data_frame, source = "claude") {
-      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
-      self$bq_ensure_schema("kg")   # creates the table first if it does not exist yet
-
-      max_id_query <- sprintf("SELECT COALESCE(MAX(id), 0) as max_id FROM `%s`", self$bq_full_table_kg)
-      start_id <- tryCatch({
-        result <- bq_project_query(self$bq_project_id, max_id_query)
-        as.integer(bq_table_download(result)$max_id) + 1
-      }, error = function(e) { 1 })
-
-      data_frame$id <- seq(start_id, start_id + nrow(data_frame) - 1)
-      data_frame$created_at <- Sys.time()
-      if (!"source" %in% names(data_frame)) data_frame$source <- source
-
       required_cols <- c("id", "created_at", "source", "change_type", "row_kind",
                          "category", "domain", "topic", "graph_id", "graph_title",
                          "entity_id", "entity_label", "entity_type", "entity_description",
                          "relationship_id", "source_entity_id", "predicate", "target_entity_id",
                          "relationship_description", "sort_order")
-      for (col in required_cols) if (!col %in% names(data_frame)) data_frame[[col]] <- if (col == "sort_order") 0L else ""
-      data_frame <- data_frame[, required_cols]
-
-      table_ref <- bq_table(self$bq_project_id, self$bq_dataset_id, self$bq_table_kg)
-      bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
-      return(nrow(data_frame))
+      data_frame <- private$prepare_rows("kg", data_frame, required_cols, fill = "", defaults = list(source = source, sort_order = 0L))
+      private$upload_rows("kg", data_frame)
     },
 
     # ============================================================
     # STRATEGIC ANALYSIS (AI-generated strategy diagrams)
     # ============================================================
-    bq_get_diagram_taxonomy = function() {
-      if (!is.null(self$diagram_taxonomy_cache)) return(self$diagram_taxonomy_cache)
-      if (!self$bq_authenticated) return(self$empty_diagram_taxonomy())
-
-      result <- tryCatch({
-        self$bq_query(sprintf("
+    bq_get_diagram_taxonomy = function() private$cached_list("diagram", "diagram_taxonomy_cache", self$empty_diagram_taxonomy, function() self$bq_query(sprintf("
           SELECT diagram_id, ANY_VALUE(diagram_name) AS diagram_name,
                  ANY_VALUE(diagram_type) AS diagram_type, ANY_VALUE(diagram_group) AS diagram_group,
-                 ANY_VALUE(category) AS category,
-                 ANY_VALUE(domain) AS domain, ANY_VALUE(topic) AS topic, ANY_VALUE(title) AS title,
+                 ANY_VALUE(category) AS category, ANY_VALUE(domain) AS domain,
+                 ANY_VALUE(topic) AS topic, ANY_VALUE(title) AS title,
                  ANY_VALUE(is_template) AS is_template, MIN(created_at) AS created_at
           FROM `%s`
           GROUP BY diagram_id
           ORDER BY topic, diagram_name, created_at DESC
-        ", self$bq_full_table_diagram))
-      }, error = function(e) {
-        cat("⚠️  [bq_get_diagram_taxonomy] Query failed:", app_err_text(e), "\n")
-        self$empty_diagram_taxonomy()
-      })
-
-      self$diagram_taxonomy_cache <- result
-      result
-    },
+        ", self$bq_full_table_diagram))),
 
     # Every component row for one diagram_id, in render order - the single
     # query the Visualizations tab needs to draw a diagram.
@@ -1390,31 +1157,18 @@ APIManager <- R6::R6Class(
     },
 
     bq_insert_diagram = function(data_frame) {
-      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
-      self$bq_ensure_schema("diagram")   # creates the table first if it does not exist yet
-
       required_cols <- c("id", "created_at", "diagram_id", "diagram_name", "diagram_type", "diagram_group",
-                        "category", "domain", "topic", "title", "is_template", "source_diagram_id",
-                        "component_type", "layout_role",
-                        "grid_row", "grid_col", "quadrant_position", "sequence_order", "z_index",
-                        "pos_x", "pos_y", "width", "height",
-                        "label_text", "sub_text", "items_packed",
-                        "value_numeric", "value_axis", "series_name", "unit_label",
-                        "axis_type", "axis_min", "axis_max", "metric_name",
-                        "color_hint", "icon_name", "created_by",
-                        # decision trees (R/utils_decision_tree.R); NULL for every other framework
-                        "node_id", "parent_id", "branch_label", "probability", "cash_flow", "expected_value")
-
-      max_id_query <- sprintf("SELECT COALESCE(MAX(id), 0) as max_id FROM `%s`", self$bq_full_table_diagram)
-      start_id <- tryCatch({
-        result <- bq_project_query(self$bq_project_id, max_id_query)
-        as.integer(bq_table_download(result)$max_id) + 1
-      }, error = function(e) 1L)
-
-      data_frame$id <- seq(start_id, start_id + nrow(data_frame) - 1L)
-      data_frame$created_at <- Sys.time()
-      for (col in required_cols) if (!col %in% names(data_frame)) data_frame[[col]] <- NA
-      data_frame <- data_frame[, required_cols]
+                         "category", "domain", "topic", "title", "is_template", "source_diagram_id",
+                         "component_type", "layout_role",
+                         "grid_row", "grid_col", "quadrant_position", "sequence_order", "z_index",
+                         "pos_x", "pos_y", "width", "height",
+                         "label_text", "sub_text", "items_packed",
+                         "value_numeric", "value_axis", "series_name", "unit_label",
+                         "axis_type", "axis_min", "axis_max", "metric_name",
+                         "color_hint", "icon_name", "created_by",
+                         # decision trees (R/utils_decision_tree.R); NULL for every other framework
+                         "node_id", "parent_id", "branch_label", "probability", "cash_flow", "expected_value")
+      data_frame <- private$prepare_rows("diagram", data_frame, required_cols)
       # typed NULLs, so an all-empty column is uploaded as the column's real type (not BOOLEAN)
       for (col in c("node_id", "parent_id", "branch_label")) data_frame[[col]] <- as.character(data_frame[[col]])
       for (col in c("probability", "cash_flow", "expected_value")) data_frame[[col]] <- suppressWarnings(as.numeric(data_frame[[col]]))
@@ -1433,36 +1187,16 @@ APIManager <- R6::R6Class(
       cat(sprintf("    id range        : %d - %d\n", min(data_frame$id), max(data_frame$id)))
       cat("========================================================\n")
 
-      # the upload must not name a column the table lacks (BigQuery then fails the whole job): repair, else leave it out
-      have <- self$bq_table_columns("diagram")
-      if (!is.null(have) && length(setdiff(required_cols, have))) {
-        self$bq_schema_done <- setdiff(self$bq_schema_done, "diagram")
-        self$bq_ensure_schema("diagram", retries = 0)
-        have <- self$bq_table_columns("diagram") %||% have
-        drop <- setdiff(required_cols, have)
-        if (length(drop)) {
-          cat("[BigQuery] column(s) not in strategy_diagrams yet, saved without them:", paste(drop, collapse = ", "), "\n")
-          data_frame <- data_frame[, setdiff(names(data_frame), drop), drop = FALSE]
-        }
-      }
-      table_ref <- bq_table(self$bq_project_id, self$bq_dataset_id, self$bq_table_diagram)
-      tryCatch(bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND"),
-               error = function(e) stop(paste("BigQuery could not save the diagram:", app_err_text(e)), call. = FALSE))
-
-      cat("✅ [BigQuery] Inserted", nrow(data_frame), "row(s) ->", self$bq_full_table_diagram, "\n")
+      n <- private$upload_rows("diagram", data_frame, what = "the diagram")
+      cat("✅ [BigQuery] Inserted", n, "row(s) ->", self$bq_full_table_diagram, "\n")
       self$trigger_state_update_diagram()
-      return(nrow(data_frame))
+      n
     },
 
     # ============================================================
     # SIX SIGMA ANALYSIS (AI-generated Six Sigma diagrams)
     # ============================================================
-    bq_get_sixsigma_taxonomy = function() {
-      if (!is.null(self$sixsigma_taxonomy_cache)) return(self$sixsigma_taxonomy_cache)
-      if (!self$bq_authenticated) return(self$empty_sixsigma_taxonomy())
-
-      result <- tryCatch({
-        self$bq_query(sprintf("
+    bq_get_sixsigma_taxonomy = function() private$cached_list("sixsigma", "sixsigma_taxonomy_cache", self$empty_sixsigma_taxonomy, function() self$bq_query(sprintf("
           SELECT diagram_id, ANY_VALUE(diagram_name) AS diagram_name,
                  ANY_VALUE(diagram_type) AS diagram_type, ANY_VALUE(diagram_group) AS diagram_group,
                  ANY_VALUE(category) AS category, ANY_VALUE(domain) AS domain,
@@ -1471,15 +1205,7 @@ APIManager <- R6::R6Class(
           FROM `%s`
           GROUP BY diagram_id
           ORDER BY topic, diagram_name, created_at DESC
-        ", self$bq_full_table_sixsigma))
-      }, error = function(e) {
-        cat("⚠️  [bq_get_sixsigma_taxonomy] Query failed:", app_err_text(e), "\n")
-        self$empty_sixsigma_taxonomy()
-      })
-
-      self$sixsigma_taxonomy_cache <- result
-      result
-    },
+        ", self$bq_full_table_sixsigma))),
 
     # Every component row for one diagram_id, in render order - the single
     # query the Visualizations tab needs to draw a Six Sigma diagram.
@@ -1510,31 +1236,18 @@ APIManager <- R6::R6Class(
     },
 
     bq_insert_sixsigma = function(data_frame) {
-      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
-      self$bq_ensure_schema("sixsigma")   # creates the table first if it does not exist yet
-
       required_cols <- c("id", "created_at", "diagram_id", "diagram_name", "diagram_type", "diagram_group",
-                        "category", "domain", "topic", "title", "is_template", "source_diagram_id",
-                        "component_type", "layout_role",
-                        "grid_row", "grid_col", "quadrant_position", "sequence_order", "z_index",
-                        "pos_x", "pos_y", "width", "height",
-                        "label_text", "sub_text", "items_packed",
-                        "value_numeric", "value_axis", "series_name", "unit_label",
-                        "axis_type", "axis_min", "axis_max", "metric_name",
-                        "severity", "occurrence", "detection",
-                        "component_ref", "parent_ref",
-                        "color_hint", "icon_name", "created_by")
-
-      max_id_query <- sprintf("SELECT COALESCE(MAX(id), 0) as max_id FROM `%s`", self$bq_full_table_sixsigma)
-      start_id <- tryCatch({
-        result <- bq_project_query(self$bq_project_id, max_id_query)
-        as.integer(bq_table_download(result)$max_id) + 1
-      }, error = function(e) 1L)
-
-      data_frame$id <- seq(start_id, start_id + nrow(data_frame) - 1L)
-      data_frame$created_at <- Sys.time()
-      for (col in required_cols) if (!col %in% names(data_frame)) data_frame[[col]] <- NA
-      data_frame <- data_frame[, required_cols]
+                         "category", "domain", "topic", "title", "is_template", "source_diagram_id",
+                         "component_type", "layout_role",
+                         "grid_row", "grid_col", "quadrant_position", "sequence_order", "z_index",
+                         "pos_x", "pos_y", "width", "height",
+                         "label_text", "sub_text", "items_packed",
+                         "value_numeric", "value_axis", "series_name", "unit_label",
+                         "axis_type", "axis_min", "axis_max", "metric_name",
+                         "severity", "occurrence", "detection",
+                         "component_ref", "parent_ref",
+                         "color_hint", "icon_name", "created_by")
+      data_frame <- private$prepare_rows("sixsigma", data_frame, required_cols)
 
       # ---- DEBUG: full detail on exactly what is about to be written,
       #     printed to the console every time a new diagram is persisted ---
@@ -1553,12 +1266,10 @@ APIManager <- R6::R6Class(
       cat(sprintf("    id range        : %d - %d\n", min(data_frame$id), max(data_frame$id)))
       cat("========================================================\n")
 
-      table_ref <- bq_table(self$bq_project_id, self$bq_dataset_id, self$bq_table_sixsigma)
-      bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
-
-      cat("✅ [BigQuery] Inserted", nrow(data_frame), "row(s) ->", self$bq_full_table_sixsigma, "\n")
+      n <- private$upload_rows("sixsigma", data_frame, what = "the diagram")
+      cat("✅ [BigQuery] Inserted", n, "row(s) ->", self$bq_full_table_sixsigma, "\n")
       self$trigger_state_update_sixsigma()
-      return(nrow(data_frame))
+      n
     },
 
     # ============================================================
@@ -1566,12 +1277,8 @@ APIManager <- R6::R6Class(
     # ============================================================
     # Latest, non-deleted version of every design in one group (or all groups).
     bq_get_techdesign_list = function(group = NULL) {
-      if (!self$bq_authenticated) return(data.frame())
       # ONE query for every group (cached until the next save); each tab then filters its own group in R
-      all <- self$techdesign_list_cache
-      if (is.null(all)) {
-        all <- tryCatch({
-          self$bq_query(sprintf("
+      all <- private$cached_list("techdesign", "techdesign_list_cache", function() data.frame(), cache_failures = FALSE, function() self$bq_query(sprintf("
             SELECT * FROM (
               SELECT design_id, design_group, design_type, name, variant, title, summary,
                      complexity_level, tags, diagram_kind, change_type, created_at, id
@@ -1579,14 +1286,8 @@ APIManager <- R6::R6Class(
               QUALIFY ROW_NUMBER() OVER (PARTITION BY design_id ORDER BY id DESC) = 1
             ) WHERE change_type != 'delete'
             ORDER BY created_at DESC
-          ", self$bq_full_table_techdesign))
-        }, error = function(e) {
-          cat("⚠️  [bq_get_techdesign_list] Query failed:", app_err_text(e), "\n")
-          NULL
-        })
-        if (is.null(all)) return(data.frame())
-        self$techdesign_list_cache <- all
-      }
+          ", self$bq_full_table_techdesign)))
+      if (!nrow(all) || !"design_group" %in% names(all)) return(data.frame())
       if (!is.null(group) && nzchar(group)) all[all$design_group %in% group, , drop = FALSE]
       else all[!all$design_group %in% c("market_matrix", "infographic"), , drop = FALSE]
     },
@@ -1627,39 +1328,23 @@ APIManager <- R6::R6Class(
     },
 
     bq_insert_techdesign = function(data_frame) {
-      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
-      self$bq_ensure_schema("techdesign")   # creates the table first if it does not exist yet
       required_cols <- c("id", "created_at", "design_id", "design_group", "design_type", "name", "variant", "title",
                          "summary", "when_to_use", "when_not_to_use", "complexity_level", "tags", "diagram_kind",
                          "components_json", "connections_json", "flow_steps_json", "tradeoffs_json",
                          "references_json", "extras_json", "schema_version", "change_type", "created_by")
-      max_id_query <- sprintf("SELECT COALESCE(MAX(id), 0) as max_id FROM `%s`", self$bq_full_table_techdesign)
-      start_id <- tryCatch({
-        result <- bq_project_query(self$bq_project_id, max_id_query)
-        as.integer(bq_table_download(result)$max_id) + 1
-      }, error = function(e) 1L)
-      data_frame$id <- seq(start_id, start_id + nrow(data_frame) - 1L)
-      data_frame$created_at <- Sys.time()
-      for (col in required_cols) if (!col %in% names(data_frame)) data_frame[[col]] <- NA
-      data_frame <- data_frame[, required_cols]
+      data_frame <- private$prepare_rows("techdesign", data_frame, required_cols)
       cat(sprintf("🧩 [Technical Designs][DEBUG] Inserting design %s (%s/%s, %s) -> %s\n",
                   data_frame$design_id[1], data_frame$design_group[1], data_frame$design_type[1],
                   data_frame$change_type[1], self$bq_full_table_techdesign))
-      table_ref <- bq_table(self$bq_project_id, self$bq_dataset_id, self$bq_table_techdesign)
-      bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
+      n <- private$upload_rows("techdesign", data_frame, what = "the design")
       self$trigger_state_update_techdesign()
-      return(nrow(data_frame))
+      n
     },
 
     # ============================================================
     # SANKEY GRAPH (AI-generated Sankey flow diagrams)
     # ============================================================
-    bq_get_sankey_taxonomy = function() {
-      if (!is.null(self$sankey_taxonomy_cache)) return(self$sankey_taxonomy_cache)
-      if (!self$bq_authenticated) return(self$empty_sankey_taxonomy())
-
-      result <- tryCatch({
-        self$bq_query(sprintf("
+    bq_get_sankey_taxonomy = function() private$cached_list("sankey", "sankey_taxonomy_cache", self$empty_sankey_taxonomy, function() self$bq_query(sprintf("
           SELECT sankey_id, ANY_VALUE(title) AS title,
                  ANY_VALUE(category) AS category, ANY_VALUE(domain) AS domain, ANY_VALUE(topic) AS topic,
                  ANY_VALUE(num_columns) AS num_columns, ANY_VALUE(num_initial_rows) AS num_initial_rows,
@@ -1667,15 +1352,7 @@ APIManager <- R6::R6Class(
           FROM `%s`
           GROUP BY sankey_id
           ORDER BY topic, title, created_at DESC
-        ", self$bq_full_table_sankey))
-      }, error = function(e) {
-        cat("⚠️  [bq_get_sankey_taxonomy] Query failed:", app_err_text(e), "\n")
-        self$empty_sankey_taxonomy()
-      })
-
-      self$sankey_taxonomy_cache <- result
-      result
-    },
+        ", self$bq_full_table_sankey))),
 
     # Every node/link row for one sankey_id, in a sensible render order -
     # the single query the Visualizations tab needs to draw a Sankey.
@@ -1706,26 +1383,13 @@ APIManager <- R6::R6Class(
     },
 
     bq_insert_sankey = function(data_frame) {
-      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
-      self$bq_ensure_schema("sankey")   # creates the table first if it does not exist yet
-
       required_cols <- c("id", "created_at", "sankey_id", "title", "category", "domain", "topic",
-                        "is_template", "source_sankey_id", "num_columns", "num_initial_rows",
-                        "row_kind", "component_ref", "column_index", "sequence_order",
-                        "label_text", "sub_text", "items_packed",
-                        "source_ref", "target_ref", "value_numeric", "unit_label",
-                        "color_hint", "created_by")
-
-      max_id_query <- sprintf("SELECT COALESCE(MAX(id), 0) as max_id FROM `%s`", self$bq_full_table_sankey)
-      start_id <- tryCatch({
-        result <- bq_project_query(self$bq_project_id, max_id_query)
-        as.integer(bq_table_download(result)$max_id) + 1
-      }, error = function(e) 1L)
-
-      data_frame$id <- seq(start_id, start_id + nrow(data_frame) - 1L)
-      data_frame$created_at <- Sys.time()
-      for (col in required_cols) if (!col %in% names(data_frame)) data_frame[[col]] <- NA
-      data_frame <- data_frame[, required_cols]
+                         "is_template", "source_sankey_id", "num_columns", "num_initial_rows",
+                         "row_kind", "component_ref", "column_index", "sequence_order",
+                         "label_text", "sub_text", "items_packed",
+                         "source_ref", "target_ref", "value_numeric", "unit_label",
+                         "color_hint", "created_by")
+      data_frame <- private$prepare_rows("sankey", data_frame, required_cols)
 
       # ---- DEBUG: full detail on exactly what is about to be written ----
       node_rows <- sum(data_frame$row_kind == "node")
@@ -1745,30 +1409,99 @@ APIManager <- R6::R6Class(
       cat(sprintf("    id range        : %d - %d\n", min(data_frame$id), max(data_frame$id)))
       cat("========================================================\n")
 
-      table_ref <- bq_table(self$bq_project_id, self$bq_dataset_id, self$bq_table_sankey)
-      bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
-
-      cat("✅ [BigQuery] Inserted", nrow(data_frame), "row(s) ->", self$bq_full_table_sankey, "\n")
+      n <- private$upload_rows("sankey", data_frame, what = "the Sankey graph")
+      cat("✅ [BigQuery] Inserted", n, "row(s) ->", self$bq_full_table_sankey, "\n")
       self$trigger_state_update_sankey()
-      return(nrow(data_frame))
+      n
     }
   ),
 
   private = list(
+    cache_fields = c(books = "books_taxonomy_cache", flex = "flex_taxonomy_cache", mindmap = "mindmap_taxonomy_cache", kg = "kg_taxonomy_cache",
+                     sankey = "sankey_taxonomy_cache", diagram = "diagram_taxonomy_cache", sixsigma = "sixsigma_taxonomy_cache", techdesign = "techdesign_list_cache"),
+    list_methods = c(books = "bq_get_books_taxonomy", flex = "bq_get_flex_taxonomy", mindmap = "bq_get_mindmap_taxonomy", kg = "bq_get_kg_taxonomy",
+                     sankey = "bq_get_sankey_taxonomy", diagram = "bq_get_diagram_taxonomy", sixsigma = "bq_get_sixsigma_taxonomy", techdesign = "bq_get_techdesign_list"),
+
     recompute_full_table_ids = function() {
-      self$bq_full_table_books <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_books)
-      self$bq_full_table_flex <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_flex)
-      self$bq_full_table_mindmap <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_mindmap)
-      self$bq_full_table_kg <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_kg)
-      self$bq_full_table_sankey <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_sankey)
-      self$bq_full_table_diagram <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_diagram)
-      self$bq_full_table_sixsigma <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_sixsigma)
-      self$bq_full_table_techdesign <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_techdesign)
+      for (g in self$bq_group_names())
+        self[[paste0("bq_full_table_", g)]] <- paste(self$bq_project_id, self$bq_dataset_id, self$bq_group_table(g), sep = ".")
+    },
+
+    # A suite's data changed: drop its cached list(s) and bump its trigger so its modules re-read.
+    fire_trigger = function(group) {
+      trig <- self[[paste0("state_trigger_", group)]]
+      n <- shiny::isolate(trig()) + 1
+      self[[private$cache_fields[[group]]]] <- NULL
+      if (group %in% c("mindmap", "kg")) self[[paste0(group, "_ids_for_topic_cache")]] <- NULL
+      trig(n)
+      cat(sprintf("🔔 [%s] State trigger fired: %s \n", APP_SUITE_LABELS[[group]], n))
+      invisible(n)
+    },
+
+    # The list of one suite (its taxonomy), fetched once and then served from memory until the suite's trigger fires.
+    # Before the suite's table check has started nothing is sent to BigQuery: the list is simply empty for now, and the
+    # trigger fired by bq_open_group() makes every module read it again. A failed query is logged and gives the empty shape.
+    cached_list = function(group, field, empty, fetch, cache_failures = TRUE) {
+      if (!is.null(self[[field]])) return(self[[field]])
+      if (!isTRUE(self$bq_authenticated) || !(group %in% self$bq_groups_checked)) return(empty())
+      failed <- FALSE
+      result <- tryCatch(fetch(), error = function(e) {
+        cat(sprintf("⚠️  [%s] Query failed: %s\n", private$list_methods[[group]], app_err_text(e)))
+        failed <<- TRUE
+        empty()
+      })
+      if (!failed || cache_failures) self[[field]] <- result
+      result
+    },
+
+    # id for the next row of a table. The table exists by now (bq_ensure_schema ran), so a failure here is a real problem:
+    # the save stops instead of numbering from 1 again, which would duplicate ids and confuse "latest version" look-ups.
+    next_id = function(full_table) {
+      n <- tryCatch({
+        job <- bq_project_query(self$bq_project_id, sprintf("SELECT COALESCE(MAX(id), 0) as max_id FROM `%s`", full_table))
+        as.integer(bq_table_download(job)$max_id) + 1L
+      }, error = function(e) {
+        msg <- app_err_text(e)
+        if (grepl("not found|no such table|does not exist", msg, ignore.case = TRUE)) return(1L)
+        stop("Could not read the last row id of ", full_table, ", so nothing was saved (", msg, "). Please try again.", call. = FALSE)
+      })
+      if (length(n) != 1 || is.na(n)) 1L else n
+    },
+
+    # Rows ready for upload: table checked, ids and created_at set, missing columns added (defaults first, else `fill`),
+    # columns in table order.
+    prepare_rows = function(group, data_frame, required_cols, fill = NA, defaults = list()) {
+      if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
+      self$bq_ensure_schema(group)   # creates the table first if it does not exist yet
+      start_id <- private$next_id(self[[paste0("bq_full_table_", group)]])
+      data_frame$id <- seq(start_id, length.out = nrow(data_frame))
+      data_frame$created_at <- Sys.time()
+      for (col in setdiff(required_cols, names(data_frame))) data_frame[[col]] <- if (!is.null(defaults[[col]])) defaults[[col]] else fill
+      data_frame[, required_cols, drop = FALSE]
+    },
+
+    # Appends the rows to the suite's table (or to `table_name`). An upload that names a column the table lacks fails as a
+    # whole in BigQuery, so when the known columns say one is missing the table is repaired first, else that column is left out.
+    upload_rows = function(group, data_frame, table_name = NULL, what = "the rows") {
+      own_table <- is.null(table_name) || identical(table_name, self$bq_group_table(group))
+      have <- if (own_table) self$bq_table_columns(group, refresh = FALSE) else NULL
+      if (!is.null(have) && length(setdiff(names(data_frame), have))) {
+        self$bq_schema_done <- setdiff(self$bq_schema_done, group)
+        self$bq_ensure_schema(group, retries = 0)
+        have <- self$bq_table_columns(group, refresh = TRUE) %||% have
+        drop <- setdiff(names(data_frame), have)
+        if (length(drop)) {
+          cat("[BigQuery] column(s) not in", self$bq_group_table(group), "yet, saved without them:", paste(drop, collapse = ", "), "\n")
+          data_frame <- data_frame[, setdiff(names(data_frame), drop), drop = FALSE]
+        }
+      }
+      table_ref <- bq_table(self$bq_project_id, self$bq_dataset_id, table_name %||% self$bq_group_table(group))
+      tryCatch(bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND"),
+               error = function(e) stop(paste0("BigQuery could not save ", what, ": ", app_err_text(e)), call. = FALSE))
+      nrow(data_frame)
     }
   )
 )
-
-`%||%` <- function(x, y) if (is.null(x)) y else x
 
 # Full text of an error. bigrquery/rlang errors keep the reason (e.g. "Exceeded rate limits",
 # "No such field: expected_value") in the body, which app_err_text(e) leaves out - so always show this instead.

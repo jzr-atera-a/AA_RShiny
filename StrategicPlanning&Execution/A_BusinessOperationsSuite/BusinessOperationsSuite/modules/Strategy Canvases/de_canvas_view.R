@@ -49,8 +49,10 @@ de_canvas_view_ui <- function(id) {
     ),
     fluidRow(
       column(12,
+             tags$div(id = ns("canvas_area"),
              h2("The Disciplined Entrepreneurship Canvas", style = "text-align: center; color: white; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);"),
-             div(class = "de-canvas-grid", lapply(DE_BOX_META, box_div)))
+             div(class = "de-canvas-grid", lapply(DE_BOX_META, box_div))),
+             diagram_save_ui(ns("save_canvas"), formats = c("html", DIAGRAM_IMAGE_FORMATS, "csv")))
     )
   )
 }
@@ -67,6 +69,14 @@ de_canvas_view_server <- function(id, api_manager) {
       }
     }
     render_defaults()
+    loaded <- reactiveVal(NULL)
+    canvas_sel <- function() paste(c(input$business_area, input$project, input$business_focus), collapse = " / ")
+    diagram_save_server("save_canvas", "de_canvas_view", session$ns("canvas_area"), "html", function() {
+      r <- loaded(); t <- if (is.null(r)) "" else attr(r, "sel")
+      list(title = if (is.null(r)) "DE Canvas (template)" else paste("DE Canvas", t), subtitle = t, bg = "#006b66",
+           data = data.frame(no = vapply(DE_BOX_META, `[[`, 0, "num"), box = vapply(DE_BOX_META, `[[`, "", "title"), question = vapply(DE_BOX_META, `[[`, "", "subtitle"),
+                             content = vapply(DE_BOX_META, function(m) diagram_plain(if (is.null(r)) m$default else as.character(r[[m$field]][1])), ""), stringsAsFactors = FALSE))
+    })
 
     setup_canvas_selection_cascade(input, output, session, api_manager)
 
@@ -87,6 +97,7 @@ de_canvas_view_server <- function(id, api_manager) {
               output[[paste0("box", m$num, "_content")]] <- renderUI(de_box_html_field(result[[m$field]][1]))
             })
           }
+          r <- result[1, , drop = FALSE]; attr(r, "sel") <- canvas_sel(); loaded(r)
           showNotification("✓ DE Canvas loaded successfully!", type = "message")
         } else {
           showNotification("No DE Canvas found for this selection.", type = "warning")

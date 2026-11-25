@@ -240,6 +240,13 @@ cc_losses_in_row <- function(trades, now = Sys.time()) { d0 <- format(now, "%Y-%
 cc_corr <- function(a, b) { if (is.null(a) || is.null(b) || nrow(a) < 20 || nrow(b) < 20) return(NA_real_)
   m <- merge(data.frame(time = a$time, x = a$close), data.frame(time = b$time, y = b$close), by = "time"); if (nrow(m) < 20) return(NA_real_)
   m <- utils::tail(m[order(m$time), ], 101); stats::cor(diff(log(m$x)), diff(log(m$y)), use = "complete.obs") }
+# ********************* the course's four theoretical set-ups (Week 6 Thursday recap) for each scenario: from its first pattern, else from its set-up
+cc_scen_setup4 <- function(sc) { if (is.null(sc) || !NROW(sc)) return(character(0)); k <- if (is.null(sc$keys)) rep("", NROW(sc)) else ifelse(is.na(sc$keys), "", sub(",.*$", "", sc$keys))
+  st <- cc_scen_setup(sc); by_key <- ifelse(nzchar(k), cc_setup4(k), NA_character_)
+  t <- tolower(paste(if (is.null(sc$id)) "" else sc$id, if (is.null(sc$basis)) "" else sc$basis))
+  from_words <- ifelse(grepl("profile|poc|value area|initial balance|volume node|single print|ledge", t), "Profiles", ifelse(grepl("range|bounce|pivot|band", t), "Sideways",
+                ifelse(grepl("reversal|divergence|double|head|star|hammer|engulf|failed", t), "Reversal", "Trend")))
+  ifelse(!is.na(by_key), by_key, ifelse(st == "PIVOT_BOUNCE", "Sideways", ifelse(st %in% c("HOLY_GRAIL", "STRADDLE", "ORB"), "Trend", from_words))) }
 cc_setup_choices <- c("Pattern from the matrix" = "PATTERN", "Pivot Point Bounce" = "PIVOT_BOUNCE", "Holy Grail" = "HOLY_GRAIL", "Straddle" = "STRADDLE", "Opening-range breakout" = "ORB", "Other" = "OTHER")
 
 # ******** the set-up of a scenario, from its pattern keys, name and reasons (rule, course and Claude scenarios alike)
@@ -248,3 +255,290 @@ cc_scen_setup <- function(sc) { if (is.null(sc) || !NROW(sc)) return(character(0
   ifelse(g("source") %in% "Claude", "OTHER", ifelse(grepl("pivot", t), "PIVOT_BOUNCE", ifelse(grepl("holy.?grail", t), "HOLY_GRAIL", ifelse(grepl("straddle", t), "STRADDLE",
     ifelse(grepl("(^|[^a-z])orb([^a-z_]|_up|_down|$)|opening.range", t), "ORB", "PATTERN"))))) }
 cc_chart_label <- function(res) { x <- c(MINUTE = "1 Min", MINUTE_5 = "5 Min", MINUTE_15 = "15 Min", MINUTE_30 = "30 Min", HOUR = "1 Hour", HOUR_4 = "4 Hour", DAY = "Daily")[res]; if (is.na(x)) as.character(res) else unname(x) }
+
+# ====================================================================================================
+# (was R/utils_cc_course_full.R)
+# **** Full course coverage: the remaining LAT topics as pure functions (no Shiny).
+#  Rule of Five time-frames (Week 7), support / resistance, pivots and Fibonacci (Weeks 1-2, Week 6), candlesticks / trend lines /
+#  chart patterns grouped by course topic (Weeks 1-2), stochastics and RSI divergence (Week 3), types of investment risk and
+#  relative value (Week 2), trading biases (Week 4 psychology; Unit 2), attitude survey (Introduction), course coverage map.
+
+# ---- Rule of Five: base = the loaded candle; minor and major = the nearest Capital.com candles to the course table ----
+cc_r5_map <- data.frame(stringsAsFactors = FALSE,
+  base  = c("MINUTE_5", "MINUTE_15", "MINUTE_30", "HOUR", "HOUR_4"),
+  minor = c("MINUTE", "MINUTE", "MINUTE_5", "MINUTE_15", "HOUR"),
+  major = c("MINUTE_30", "HOUR", "HOUR_4", "HOUR_4", "DAY"),
+  course = c("5 minutes: minor 1 minute, major 30 minutes", "between 5 and 30 minutes: minor 1 minute, major about 1 hour",
+             "30 minutes: minor 5 minutes, major 2-3 hours", "about 2 hours: minor 30 minutes, major 12 hours", "between 2 hours and 1 day: minor about 1 hour, major 1 day"))
+cc_r5_frames <- function(base) { i <- match(base, cc_r5_map$base); if (is.na(i)) NULL else as.list(cc_r5_map[i, ]) }
+cc_r5_days <- c(MINUTE = 1, MINUTE_5 = 3, MINUTE_15 = 6, MINUTE_30 = 10, HOUR = 20, HOUR_4 = 45, DAY = 200)
+# trends: named character c(minor=, base=, major=) with "UP"/"DOWN"/"RANGE"/"unknown"; dir +1 buy / -1 sell / NA
+cc_r5_verdict <- function(trends, dir = NA) {
+  up <- function(x) grepl("UP", toupper(x)); dn <- function(x) grepl("DOWN", toupper(x)); t <- trends
+  agree <- (all(up(t)) || all(dn(t))); maj <- if (up(t[["major"]])) 1 else if (dn(t[["major"]])) -1 else 0
+  txt <- sprintf("minor %s, base %s, major %s", t[["minor"]], t[["base"]], t[["major"]])
+  ok <- if (is.na(dir) || maj == 0) NA else dir == maj
+  list(text = paste0(txt, if (agree) " - all three agree: trade only with them" else if (maj == 0) " - major has no clear trend" else sprintf(" - position with the major trend (%s)", if (maj > 0) "up" else "down")),
+       agree = agree, major = maj, ok = ok) }
+
+# ---- Support / resistance on higher frames, pivots (7 levels) and Fibonacci --------------------------------------------
+cc_sr_levels <- function(bd, price = NA) { if (is.null(bd) || nrow(bd) < 6) return(NULL)
+  bd <- bd[order(bd$time), , drop = FALSE]; n <- nrow(bd); y <- bd[n - 1, ]; w <- bd[max(1, n - 5):(n - 1), , drop = FALSE]
+  m <- bd[max(1, n - 22):(n - 1), , drop = FALSE]
+  pv <- if (exists("u3r_pivots")) u3r_pivots(y$high, y$low, y$close) else { pp <- (y$high + y$low + y$close) / 3; c(R1 = 2 * pp - y$low, PP = pp, S1 = 2 * pp - y$high) }
+  lv <- c(`Previous day high` = y$high, `Previous day low` = y$low, `Last 5 days high` = max(w$high), `Last 5 days low` = min(w$low),
+          `Last month high` = max(m$high), `Last month low` = min(m$low), setNames(pv, paste("Pivot", names(pv))))
+  d <- data.frame(level = names(lv), price = as.numeric(lv), stringsAsFactors = FALSE)
+  if (is.finite(price)) { d$side <- ifelse(d$price > price, "resistance (above)", "support (below)"); d$dist <- d$price - price; d <- d[order(-d$price), , drop = FALSE] }
+  d }
+cc_sr_near <- function(d, price) { if (is.null(d) || !is.finite(price)) return("")
+  a <- d[d$price > price, , drop = FALSE]; b <- d[d$price <= price, , drop = FALSE]
+  sprintf("nearest resistance %s at %s; nearest support %s at %s",
+          if (nrow(a)) a$level[which.min(a$price)] else "-", if (nrow(a)) format(round(min(a$price), 4)) else "-",
+          if (nrow(b)) b$level[which.max(b$price)] else "-", if (nrow(b)) format(round(max(b$price), 4)) else "-") }
+cc_fib_levels <- function(ctx, look = 100) { n <- ctx$n; i <- max(1, n - look + 1):n; hi <- which.max(ctx$h[i]) + i[1] - 1; lo <- which.min(ctx$l[i]) + i[1] - 1
+  H <- ctx$h[hi]; L <- ctx$l[lo]; if (!is.finite(H - L) || H <= L) return(NULL); up <- lo < hi   # the last swing went up when the low came first
+  r <- c(0.236, 0.382, 0.5, 0.618, 0.786); lv <- if (up) H - r * (H - L) else L + r * (H - L)
+  list(swing = if (up) "up" else "down", high = H, low = L, levels = setNames(lv, paste0(100 * r, "%"))) }
+cc_fib_text <- function(f, price) { if (is.null(f)) return("no clear swing")
+  k <- names(f$levels)[which.min(abs(f$levels - price))]
+  sprintf("last swing %s from %s to %s; retracements %s; price nearest the %s level", f$swing, format(round(f$low, 4)), format(round(f$high, 4)),
+          paste(sprintf("%s %s", names(f$levels), format(round(f$levels, 4))), collapse = ", "), k) }
+
+# ---- patterns alive grouped by course topic -------------------------------------------------------------------------------
+cc_topic_of_family <- function(f) {
+  t <- c(candle_rev = "Japanese candlesticks (Week 1)", candle_run = "Japanese candlesticks (Week 1)", candle_cont = "Japanese candlesticks (Week 1)",
+         trend_dow = "Trend lines, support and resistance (Week 1)", level_bounce = "Trend lines, support and resistance (Week 1)", role_reversal = "Trend lines, support and resistance (Week 1)",
+         trendline = "Trend lines, support and resistance (Week 1)", trendline_break = "Trend lines, support and resistance (Week 1)", channel = "Trend lines, support and resistance (Week 1)",
+         fib = "Fibonacci (Week 2)", harmonic = "Fibonacci (Week 2)", elliott = "Fibonacci (Week 2)")
+  ifelse(f %in% names(t), t[f], ifelse(f %in% c("ma_cross_long", "ma_pullback", "ma_stack", "macd_cross", "divergence", "rsi_extreme", "rsi_swing", "rsi_mid", "stoch", "bb_break", "bb_walk", "bb_snap", "squeeze", "atr_trend"),
+         "Indicator signals (Week 3)", ifelse(f %in% c("adx", "di_cross", "holy_grail", "pivot", "straddle", "orb"), "ADX / DMI and course strategies (Week 6)", "Chart patterns (Week 2)"))) }
+cc_pattern_topics <- function(cur) { if (is.null(cur) || !nrow(cur)) return("no pattern alive at the last candle")
+  fam <- cc_catalog$family[match(cur$key, cc_catalog$key)]; tp <- cc_topic_of_family(fam)
+  sp <- split(cur$label, tp); paste(sprintf("%s: %s", names(sp), vapply(sp, function(x) paste(unique(x), collapse = ", "), "")), collapse = "; ") }
+
+# ---- Week 3: stochastics and RSI divergence ------------------------------------------------------------------------------
+cc_divergence <- function(ctx, look = 30) { d <- ctx$ind; n <- ctx$n; if (n < look + 5 || is.null(d$rsi)) return("not enough candles")
+  a <- (n - look + 1):(n - look %/% 2); b <- (n - look %/% 2 + 1):n
+  hh <- max(ctx$h[b]) > max(ctx$h[a]); ll <- min(ctx$l[b]) < min(ctx$l[a])
+  rh <- max(d$rsi[b], na.rm = TRUE) < max(d$rsi[a], na.rm = TRUE); rl <- min(d$rsi[b], na.rm = TRUE) > min(d$rsi[a], na.rm = TRUE)
+  if (hh && rh) "bearish RSI divergence (higher price high, lower RSI high)" else if (ll && rl) "bullish RSI divergence (lower price low, higher RSI low)" else "no RSI divergence in the last 30 candles" }
+cc_stoch_text <- function(ctx) { d <- ctx$ind; n <- ctx$n; k <- d$stoch_k[n]; dd <- d$stoch_d[n]; if (!is.finite(k)) return("stochastics: NA")
+  sprintf("slow stochastics %%K %.0f, %%D %.0f (%s%s)", k, dd, if (k > 80) "overbought" else if (k < 20) "oversold" else "middle", if (is.finite(dd)) if (k > dd) ", %K above %D" else ", %K below %D" else "") }
+
+# ---- Week 2: types of investment risk for one deal -------------------------------------------------------------------------
+# t: list(dir, entry, stop, size_exposure (instrument ccy ~ account), risk_amt, spread, atr, hold_h, balance, news_hits, corr_note, now)
+cc_risk_types <- function(t) { g <- function(x, d = NA) if (is.null(x) || !length(x) || !is.finite(x[1])) d else x[1]
+  now <- t$now %||% Sys.time(); hold <- g(t$hold_h, 4); end <- now + hold * 3600
+  lt <- function(x) as.POSIXlt(x, tz = "Europe/London"); ln <- lt(now); le <- lt(end)
+  over22 <- as.Date(le) > as.Date(ln) || (le$hour >= 22 && ln$hour < 22)
+  wkend <- ln$wday == 5 && (le$wday != 5 || le$hour >= 22) || ln$wday == 6 || (as.numeric(difftime(end, now, units = "days")) >= (6 - ln$wday))
+  sp <- g(t$spread); at <- g(t$atr); stp <- abs(g(t$entry) - g(t$stop)); lev <- g(t$exposure) / g(t$balance)
+  row <- function(r, lvl, d) data.frame(risk = r, level = lvl, detail = d, stringsAsFactors = FALSE)
+  rbind(
+    row("Market (price) risk", if (!is.finite(stp) || !is.finite(at)) "-" else if (stp < 0.5 * at) "high" else "normal",
+        if (is.finite(stp) && is.finite(at)) sprintf("stop %.4g away = %.1f ATR; risk %s", stp, stp / at, if (is.finite(g(t$risk_amt))) sprintf("%.2f", t$risk_amt) else "-") else "set the stop"),
+    row("Liquidity (spread) risk", if (!is.finite(sp) || !is.finite(at)) "-" else if (sp > 0.2 * at) "high" else "low",
+        if (is.finite(sp) && is.finite(at)) sprintf("spread %.4g = %.0f%% of one ATR", sp, 100 * sp / at) else "spread not known"),
+    row("Gap / weekend risk", if (isTRUE(wkend)) "high" else "low", if (isTRUE(wkend)) "the holding time reaches the weekend close: the price can gap past the stop" else "closed before the weekend"),
+    row("Overnight (financing) risk", if (isTRUE(over22)) "cost" else "none", if (isTRUE(over22)) "held past 22:00 UK: overnight funding is charged on CFDs" else "closed the same day"),
+    row("Leverage (margin) risk", if (!is.finite(lev)) "-" else if (lev > 5) "high" else if (lev > 2) "medium" else "low", if (is.finite(lev)) sprintf("exposure %.1f x the balance", lev) else "exposure not known"),
+    row("Event (news) risk", if (nzchar(t$news_hits %||% "") && !(t$news_hits %in% c("none", "Morning Sheet not loaded"))) "high" else "low", t$news_hits %||% "-"),
+    row("Correlation risk", if (nzchar(t$corr_note %||% "")) "high" else "low", if (nzchar(t$corr_note %||% "")) paste("same risk already open:", t$corr_note) else "no correlated open position")) }
+cc_risk_text <- function(r) if (is.null(r)) "" else paste(sprintf("%s %s (%s)", r$risk, r$level, r$detail), collapse = "; ")
+
+# ---- Week 2: relative value (spread between two related markets) ---------------------------------------------------------
+cc_spread_z <- function(a, b, n = 100) { if (is.null(a) || is.null(b)) return(NULL)
+  m <- merge(data.frame(time = a$time, x = a$close), data.frame(time = b$time, y = b$close), by = "time"); m <- utils::tail(m, n)
+  if (nrow(m) < 20 || any(m$x <= 0 | m$y <= 0)) return(NULL); s <- log(m$x / m$y); if (!is.finite(stats::sd(s)) || stats::sd(s) < 1e-12) return(NULL); z <- (utils::tail(s, 1) - mean(s)) / stats::sd(s)
+  list(z = z, ratio = utils::tail(m$x / m$y, 1), mean_ratio = exp(mean(s)), n = nrow(m),
+       text = sprintf("ratio %.4f vs its %d-candle mean %.4f, z = %+.2f (%s)", utils::tail(m$x / m$y, 1), nrow(m), exp(mean(s)), z,
+                      if (z > 2) "this market rich vs the other: relative-value sell" else if (z < -2) "this market cheap vs the other: relative-value buy" else "inside its normal range")) }
+
+# ---- Week 4 psychology / Unit 2 biases from your own trades ---------------------------------------------------------------
+cc_bias_checks <- function(tr, events = NULL) { t <- tr[tr$status %in% "CLOSED" & !is.na(tr$exit_ts) & !is.na(tr$entry_ts), , drop = FALSE]
+  if (nrow(t) < 2) return(NULL); t <- t[order(t$exit_ts), , drop = FALSE]
+  pl <- ifelse(is.finite(t$pnl_account_booked), t$pnl_account_booked, t$pnl_account_est); w <- pl > 0; hold <- as.numeric(difftime(t$exit_ts, t$entry_ts, units = "hours"))
+  row <- function(b, flag, d) data.frame(bias = b, flag = flag, detail = d, stringsAsFactors = FALSE)
+  disp <- if (any(w) && any(!w)) mean(hold[!w]) > 1.5 * mean(hold[w]) else NA
+  sz <- t$size; aw <- sz[-1][utils::head(w, -1)]; al <- sz[-1][!utils::head(w, -1)]
+  over <- if (length(aw) && length(al)) mean(aw) > 1.3 * mean(al) else NA
+  gap <- as.numeric(difftime(t$entry_ts[-1], t$exit_ts[-nrow(t)], units = "mins")); rev <- sum(gap < 30 & !utils::head(w, -1), na.rm = TRUE)
+  widened <- sum(is.finite(t$stop_initial) & is.finite(t$stop_level) & ifelse(t$direction == "BUY", t$stop_level < t$stop_initial, t$stop_level > t$stop_initial))
+  rbind(
+    row("Disposition effect (cut winners, run losers)", if (is.na(disp)) "-" else if (disp) "yes" else "no",
+        if (any(w) && any(!w)) sprintf("losers held %.1f h on average, winners %.1f h", mean(hold[!w]), mean(hold[w])) else "needs both wins and losses"),
+    row("Overconfidence (bigger size after a win)", if (is.na(over)) "-" else if (over) "yes" else "no",
+        if (length(aw) && length(al)) sprintf("average size after a win %.2f, after a loss %.2f", mean(aw), mean(al)) else "needs trades after both"),
+    row("Revenge trading (new deal < 30 min after a loss)", if (rev > 0) "yes" else "no", sprintf("%d time(s)", rev)),
+    row("Loss aversion (stop moved further away)", if (widened > 0) "yes" else "no", sprintf("%d trade(s) with the stop widened", widened))) }
+
+# ---- Attitude survey (Introduction): self-assessment on the course's themes. Statements written by the app, not the LAT form. ----
+cc_attitude_items <- c(
+  "I follow my trading plan even after a loss", "I accept a small loss quickly when the stop is hit", "I do not move my stop further away to avoid a loss",
+  "I size every trade from the plan, not from how sure I feel", "I can sit out when there is no set-up", "I do not trade to win back a loss",
+  "I take profits at my target instead of closing early from fear", "I review each trade honestly, wins and losses", "I stay calm when a trade goes against me",
+  "I trade the higher time-frame trend, not my opinion")
+cc_attitude_score <- function(x) { x <- as.numeric(x); if (!length(x) || all(is.na(x))) return(NULL); s <- sum(x, na.rm = TRUE); mx <- 5 * sum(!is.na(x))
+  list(score = s, max = mx, pct = round(100 * s / mx), band = if (s / mx >= 0.8) "disciplined" else if (s / mx >= 0.6) "developing" else "at risk: review the psychology lecture",
+       weakest = cc_attitude_items[which(x == min(x, na.rm = TRUE))]) }
+
+# ---- the full course coverage map: every topic, where it is in the app ------------------------------------------------------------
+cc_course_coverage <- data.frame(stringsAsFactors = FALSE, check.names = FALSE, matrix(ncol = 4, byrow = TRUE, c(
+  "Introduction", "Economic Calendar walkthrough", "Plan & Order box 3 (releases, news window); plan check; Claude check 'News'", "full",
+  "Introduction", "US Macro Crib Sheet", "Meaning next to each release and scenario; Claude check 'News' (meanings written by the app, not the LAT sheet text)", "partial: course text not in the app",
+  "Introduction", "Attitude Survey", "Statistics: Attitude survey **** (self-assessment on the course themes, history kept); Claude check 'Trader state'", "full (app statements)",
+  "Introduction; Weeks 9-12", "Backtesting workbook", "12. Backtest & Blotter: by strategy and by pattern; Claude check 'Measured record'", "full",
+  "Introduction; Weeks 9-12", "Trade Blotter", "12. Backtest & Blotter: LAT layout Excel export", "full",
+  "Week 1 (Step 1)", "Support and resistance (daily / weekly / monthly)", "Market & Patterns: Support, resistance, pivots, Fibonacci ****; Claude check 'Support / resistance'", "full",
+  "Week 1 (Step 1)", "Trend lines, channels, countertrend lines", "Pattern matrix (trend lines, channels, breaks); Claude check 'Patterns by course topic'", "full",
+  "Week 1 (Step 1)", "Japanese candlesticks", "Pattern matrix candle patterns; Step 1 examples; Claude check 'Patterns by course topic'", "full",
+  "Week 2 (Step 2)", "Fibonacci retracements", "Fibonacci levels of the last swing ****; fib patterns; Claude check 'Support / resistance'", "full",
+  "Week 2 (Step 2)", "Chart (price) patterns", "Pattern matrix (141 patterns); Step 2-3 examples", "full",
+  "Week 2", "Time-frame analysis", "Daily / 4-hour trend on every scenario; Rule of Five ****; Claude check 'Higher time-frame'", "full",
+  "Week 2", "Price / time filters", "Setup break filter; applied to scenarios; Claude check 'Breakout filter'", "full",
+  "Week 2", "Types of investment risk", "Plan & Order: Investment risks of this deal ****; Claude check 'Investment risks'", "full",
+  "Week 2", "Relative value trading", "Related markets: ratio z-score ****; Claude check 'Related markets'", "full",
+  "Week 3 (Step 3)", "Moving averages, MACD", "Indicators on the chart; confluence score; Claude check 'Indicators'", "full",
+  "Week 3 (Step 3)", "Oscillators: RSI, stochastics, divergence", "Indicator panel; stochastics and RSI divergence ****; Claude check 'Indicators'", "full",
+  "Week 3 (Step 3)", "Bollinger bands, OBV", "Indicators; confluence (volatility, volume); Claude check 'Indicators'", "full",
+  "Week 4 (Step 4)", "Bull / bear market cycle, Dow Theory", "Dow phase on every scenario; Claude check 'Higher time-frame'", "full",
+  "Week 4 (Step 4)", "Options trading and payouts", "Step 4 practice tab (payoff diagrams); not used on Capital.com CFD deals", "reference only: not a CFD chart topic",
+  "Week 4", "Trading psychology", "Mood / confidence on the ticket; results by mood; biases ****; reflection ****; losses-in-a-row block", "full",
+  "Week 4", "Structured trading plan", "Setup plan rules; plan check on the ticket; Word export", "full",
+  "Week 5 (Step 5)", "Volume profile, POC, value area", "Market & Patterns box 3; chart lines; Claude check 'Profile levels'", "full",
+  "Week 5 (Step 5)", "Market profile, initial balance", "Market & Patterns box 3 (TPO when no volume; IB from the opening range)", "full",
+  "Week 6 (Step 6)", "ADX and DMI", "Indicators; Holy Grail; confluence; Claude check 'ADX / SAR'", "full",
+  "Week 6 (Step 6)", "Parabolic SAR", "Positions: SAR trailing stop; Claude check 'ADX / SAR'", "full",
+  "Week 6; Weeks 7-8", "Short-term traders' pivot point system", "Course scanner rows; 7 pivot levels ****; Claude check 'Course strategies'", "full",
+  "Week 6; Weeks 7-8", "The Holy Grail trade", "Course scanner rows; Claude check 'Course strategies'", "full",
+  "Week 6; Weeks 7-8", "Straddle trade (and Morning Straddle)", "Course scanner rows; Step 6 examples; Claude check 'Course strategies'", "full",
+  "Weeks 7-8", "Trade Plan Template", "Setup plan rules; Word export 'My Trading Plan'", "full",
+  "Week 7", "The Rule of Five (time-frames)", "Market & Patterns: Rule of Five ****; plan check; Claude check 'Rule of Five'", "full",
+  "Weeks 7-8", "LAT position sizing", "Ticket size from risk % and stop; plan check", "full",
+  "Weeks 9-12", "Assessment trading (Morning Sheet, Trade Sheet)", "Journal & Trade Sheet tab; Morning Sheet in BigQuery", "full",
+  "Week 1 (activity sheet)", "Single candles: hammer at support, inverted hammer, shooting star, hanging man, dragonfly and long-legged doji, marubozu breakouts of levels and trend lines", "Live chart: group 'Single candles' *********************; measured records; Claude reading", "full",
+  "Week 2 (activity sheet)", "Fibonacci 50 / 61.8% pullback with the trend (with trend-line confluence) and the 100% expansion target", "Live chart: group 'Fibonacci' *********************", "full",
+  "Week 2 (activity sheet)", "Price patterns: one hit its measured (MPO) target, one failed", "Measured record of every pattern (target first, stop first, time-out); practice examples with hit / miss tails", "full",
+  "Week 3 (activity sheet)", "Bollinger range trading and inside / outside signals; RSI and stochastic signals at the range edges; MACD at a primary level with reversal; two moving average system", "Live chart: groups 'Bollinger strategies', 'RSI', 'Stochastic', 'MACD', 'Moving averages' *********************", "full",
+  "Week 3 (activity sheet)", "On-Balance Volume (OBV)", "Needs traded volume, which Capital.com CFD prices do not have", "not applicable on Capital.com",
+  "Week 4 (activity sheet)", "Options premiums, strikes, payouts; straddle with options", "Step 4 practice tab (payoff diagrams)", "reference only",
+  "Week 5 (activity sheet)", "P / b-shaped days, inside and thin days, double distribution, low / high volume node bounces, POC / VAH / VAL respected, single prints, ledges, IB breaks and retests, 3+ level confluence", "Live chart: groups 'Volume profile', 'Market profile', 'Initial balance' on time-at-price profiles of each UK day *********************", "full (time-at-price, no traded volume)",
+  "Week 6 (activity sheet)", "ADX above 30 / below 25, ADX falling in a pullback, DMI signals with ADX confirming", "Live chart: group 'ADX / DMI' *********************; plan thresholds in Setup", "full",
+  "Week 6 Thursday (schedule)", "The four theoretical set-ups: Profiles, Trend, Reversal, Sideways", "Column 'Course set-up (Week 6)' on every scenario; Claude prompt; Trade Sheet technical box *********************", "full",
+  "Weeks 7-8 (schedule)", "Trade plan development and check-up", "Setup: Trade plan check-up (17 items against the Trade Plan Template, Rule of Five and your written plan) *********************", "full",
+  "Weeks 9-12 (schedule)", "End of week assessed trading review (Fridays)", "E: End-of-week review, saved to BigQuery and Dropbox 'Weekly Reviews' *********************", "full",
+  "Other course units", "Bond markets, yield curves, futures, broker set-up, career module", "Not part of chart analysis on Capital.com; not built", "not applicable")))
+names(cc_course_coverage) <- c("Week", "Topic", "Where in the app", "Status")
+
+# ====================================================================================================
+# (was R/utils_cc_course_checks.R)
+# *** Course checks Claude adds to its chart reading (beside the pattern identification). Each names its LAT week and topic.
+cc_course_checks <- data.frame(stringsAsFactors = FALSE, matrix(ncol = 5, byrow = TRUE, c(
+  "htf",    "Higher time-frame trend, Dow phase and bull / bear cycle", "Week 2, Week 4", "Time-frame Analysis, Dow Theory, market cycle", "Daily and 4-hour trend, phase, with or against",
+  "r5",     "Rule of Five time-frames ****", "Week 7", "The Rule of Five", "Minor, base and major trend agree or not",
+  "sr",     "Support / resistance, pivots and Fibonacci ****", "Week 1, Week 2, Week 6", "Support and Resistance, Fibonacci, Pivot Points", "Nearest levels above and below the price",
+  "cand",   "Patterns by course topic: candlesticks, trend lines, chart patterns ****", "Week 1, Week 2", "Japanese Candlesticks, Trend Lines, Price Patterns", "What each pattern alive means, by topic",
+  "ind",    "Indicators: MAs, MACD, RSI, stochastics, divergence, Bollinger, OBV", "Week 3", "Technical indicators and oscillators", "Momentum, volatility and volume read",
+  "adx",    "ADX/DMI trend strength and Parabolic SAR stop", "Week 6", "ADX and DMI, Parabolic SAR", "Is the trend strong; where to trail",
+  "prof",   "POC, value area and initial balance", "Week 5", "Volume Profile, Market Profile", "Levels as stop and target anchors",
+  "filt",   "Price/time breakout filter", "Week 2", "Price/Time Filters", "Is the break real or a false break",
+  "strat",  "Course strategies: Pivot, Holy Grail, Straddle", "Week 6, Weeks 7-8", "Course strategies", "Does any course set-up fire now",
+  "news",   "News in the holding time", "Introduction", "Economic Calendar, US Macro Crib Sheet", "Releases and what they mean for this market",
+  "rel",    "Related markets, correlation and relative value", "Week 2", "Relative Value Trading", "Brent vs WTI, dollar index, ratio z-score",
+  "risk",   "Types of investment risk for this deal ****", "Week 2", "Types of Investment Risk", "Market, liquidity, gap, overnight, leverage, event, correlation",
+  "plan",   "Fit with my trading plan", "Week 4, Weeks 7-8", "Structured Trading Plan, Trade Plan Template", "Set-up allowed, minimum R:R, session, plan points",
+  "record", "Measured record of this set-up", "Weeks 9-12", "Backtesting workbook", "Win % and expectancy from the backtest",
+  "trader", "Trader state: psychology, biases, attitude survey ****", "Week 4, Introduction", "Trading Psychology, Attitude Survey", "Mood, losses in a row, biases, survey score")))
+names(cc_course_checks) <- c("id", "label", "week", "topic", "desc")
+cc_course_checks$default <- cc_course_checks$id %in% c("htf", "r5", "sr", "ind", "prof", "news", "risk")
+
+cc_course_check_ui <- function(id_checkbox, selected = cc_course_checks$id[cc_course_checks$default]) {
+  lab <- lapply(seq_len(nrow(cc_course_checks)), function(i) { r <- cc_course_checks[i, ]
+    htmltools::tags$span(htmltools::tags$b(r$label), htmltools::tags$br(),
+      htmltools::tags$span(style = "display:inline-block; font-size:11px; background:#dbeafe; color:#1e3a8a; padding:1px 7px; border-radius:6px; margin:2px 0;", paste(r$week, "·", r$topic)),
+      htmltools::tags$br(), htmltools::tags$span(style = "font-size:12px; color:#555;", r$desc)) })
+  shiny::checkboxGroupInput(id_checkbox, NULL, choiceNames = lab, choiceValues = cc_course_checks$id, selected = selected, width = "100%") }
+
+# facts: named list id -> text computed in R. Builds the prompt part Claude must answer in "course".
+cc_course_prompt <- function(facts) { facts <- facts[nzchar(unlist(facts))]; if (!length(facts)) return("")
+  r <- cc_course_checks[match(names(facts), cc_course_checks$id), ]
+  paste0("\n\nCOURSE CHECKS (LAT course; values computed in R, use them, do not invent numbers):\n",
+         paste(sprintf("- [%s] %s (%s, %s): %s", r$id, r$label, r$week, r$topic, unlist(facts)), collapse = "\n"),
+         "\nFor EACH course check above, add to your JSON a \"course\" array item {\"id\":\"...\",\"verdict\":\"supports|against|neutral\",\"note\":\"one or two plain sentences on what it means for the patterns found\"}.") }
+
+cc_course_parse <- function(txt) { j <- tryCatch({ s <- sub("^[^{]*", "", txt); s <- sub("[^}]*$", "", s); jsonlite::fromJSON(s, simplifyVector = FALSE) }, error = function(e) NULL)
+  if (is.null(j) || !length(j$course)) return(data.frame(id = character(), verdict = character(), note = character()))
+  x <- do.call(rbind, lapply(j$course, function(z) data.frame(id = as.character(z$id %||% ""), verdict = as.character(z$verdict %||% ""), note = as.character(z$note %||% ""), stringsAsFactors = FALSE)))
+  x[x$id %in% cc_course_checks$id, , drop = FALSE] }
+
+# ********************* Weeks 7-8: trade plan check-up against the course's Trade Plan Template and Rule of Five ---------------
+# x = named list of the Setup values (input ids without the "s_" prefix). Status: OK / CHECK (set, but outside what the course or
+# your written plan says) / MISSING (not set).
+cc_plan_checkup <- function(x) {
+  v <- function(k) { y <- x[[k]]; if (is.null(y) || !length(y) || all(is.na(y)) || (is.character(y) && !any(nzchar(y)))) NULL else y }
+  num <- function(k) { y <- suppressWarnings(as.numeric(v(k))); if (length(y) && is.finite(y[1])) y[1] else NA_real_ }
+  row <- function(sec, item, val, status, why) data.frame(Section = sec, Item = item, Setting = val, Status = status, Why = why, stringsAsFactors = FALSE)
+  st <- function(ok, set = TRUE) if (!set) "MISSING" else if (isTRUE(ok)) "OK" else "CHECK"
+  rules <- vapply(1:5, function(i) { y <- v(paste0("pl_r", i)); if (is.null(y)) "" else as.character(y[1]) }, ""); nr <- sum(nzchar(trimws(rules)))
+  setups <- v("pl_setups"); risk <- num("risk"); rr <- num("minrrr"); at <- num("adx_t"); ar <- num("adx_r"); sa <- num("pl_stopatr"); smx <- num("pl_stopatr_max")
+  rbind(
+    row("1. Markets", "Markets you trade", paste(v("pl_markets") %||% "-", collapse = ", "), st(TRUE, !is.null(v("pl_markets"))), "The template asks which markets and why; your plan names WTI, natural gas and EUR/USD."),
+    row("2. Time-frames (Rule of Five)", "Chart period and the higher time-frames", "15-minute chart checked against 1-hour, 4-hour and daily (Rule of Five box)", "OK", "Week 7: trade the base time-frame in the direction of the major one."),
+    row("3. Regime", "ADX trend / range thresholds", sprintf("trend %s, range %s", at %||% "-", ar %||% "-"), st(is.finite(at) && is.finite(ar) && at > ar && at >= 25 && ar <= 25, is.finite(at) && is.finite(ar)), "Week 6: ADX above 30 trending, below 25 sideways; your plan uses 30 / 20."),
+    row("4. Set-ups", "Set-ups allowed", if (is.null(setups)) "any" else paste(names(cc_setup_choices)[match(setups, cc_setup_choices)], collapse = ", "),
+        if (is.null(setups)) "MISSING" else if ("STRADDLE" %in% setups) "CHECK" else "OK", if ("STRADDLE" %in% setups) "The straddle needs resting orders either side; this app sends deals at the market only, so place straddles yourself or remove them from the plan." else "Name the set-ups you trade (Holy Grail, Pivot Point Bounce...)."),
+    row("5. Entry triggers", "Plan points 1-5 (your exact triggers)", sprintf("%d of 5 written", nr), st(nr >= 3, nr > 0), "Each set-up needs a precise trigger you check against price before entering."),
+    row("6. Stop", "Minimum and maximum stop in ATR", sprintf("min %s, max %s ATR", sa %||% "-", smx %||% "-"), st(is.finite(sa) && sa >= 1, is.finite(sa)), "Your plan: a stop of at least 1 ATR, beyond the level that cancels the set-up."),
+    row("7. Target", "Minimum Reward:Risk", if (is.finite(rr)) format(rr) else "-", st(is.finite(rr) && rr >= 1.5, is.finite(rr)), "Your plan: at least 1.5; Week 6 straddles: morning 1:1, news 2:1."),
+    row("8. Size", "Risk per trade (% of equity)", if (is.finite(risk)) paste0(risk, "%") else "-", st(is.finite(risk) && risk >= 1 && risk <= 2, is.finite(risk)), "Your plan: 1 to 2% fixed in advance."),
+    row("8. Size", "Total open risk cap (%)", paste0(num("cap") %||% "-", "%"), st(TRUE, is.finite(num("cap"))), "Correlated markets (Brent, WTI, gas) count together."),
+    row("9. Money rules", "Daily loss limit", paste0(num("pl_maxloss") %||% "-"), st(TRUE, is.finite(num("pl_maxloss"))), "Stops trading for the day after this loss."),
+    row("9. Money rules", "Deals per day", paste0(num("pl_maxday") %||% "-"), st(TRUE, is.finite(num("pl_maxday"))), "Avoids over-trading."),
+    row("9. Money rules", "Losses in a row before stopping", paste0(num("pl_lossrow") %||% "-"), st(TRUE, is.finite(num("pl_lossrow"))), "Week 4 psychology: stop after a run of losses."),
+    row("10. News", "No entry this many minutes around high-impact releases", paste0(num("pl_news") %||% "-"), st(TRUE, is.finite(num("pl_news"))), "EIA reports and central-bank speakers move oil and FX sharply."),
+    row("11. Counter-trend", "Extra R:R (or half size) against the higher time-frame", paste0(num("pl_ctr") %||% "-"), st(TRUE, is.finite(num("pl_ctr"))), "Week 2 time-frame analysis and Week 4 Dow Theory."),
+    row("12. Trading hours", "Hours you trade", if (isTRUE(as.logical(v("pl_anyhours")))) "any hour" else paste(v("pl_from") %||% "-", "to", v("pl_to") %||% "-"), st(TRUE, isTRUE(as.logical(v("pl_anyhours"))) || !is.null(v("pl_from"))), "Matches the trading window of your Morning Sheet."),
+    row("13. Holding time", "Expected holding time (hours)", paste0(num("hold") %||% "-"), st(TRUE, is.finite(num("hold"))), "Needed for the Trade Sheet and the measured records."),
+    row("14. Review", "Morning Sheet daily, Trade Sheet per trade, end-of-week review on Fridays", "the app's one-click Morning Sheet, Review screen and E. end-of-week review", "OK", "Weeks 9-12: assessed trading reviewed every Friday.")) }
+
+# ********************* Weeks 9-12: end-of-week assessed trading review -------------------------------------------------------------
+cc_week_review <- function(trades, from, to, ms_days = character(0), sheet_ids = character(0)) {
+  t <- trades; if (is.null(t) || !nrow(t)) t <- data.frame(); tz <- "Europe/London"
+  if (nrow(t)) { when <- as.POSIXct(t$entry_ts %||% t$placed_ts, tz = "UTC"); d <- as.Date(format(when, "%Y-%m-%d", tz = tz)); t <- t[!is.na(d) & d >= from & d <= to & !(t$status %in% c("DUPLICATE", "CANCELLED", "REJECTED")), , drop = FALSE] }
+  cl <- if (nrow(t)) t[t$status %in% "CLOSED", , drop = FALSE] else t
+  num <- function(d, k) if (k %in% names(d)) suppressWarnings(as.numeric(d[[k]])) else rep(NA_real_, nrow(d))
+  sg <- if (nrow(cl)) ifelse(toupper(cl$direction) %in% "BUY", 1, -1) else numeric(0); stp <- num(cl, "stop_initial"); risk <- abs(num(cl, "entry_level") - stp)
+  r <- sg * (num(cl, "exit_level") - num(cl, "entry_level")) / risk; prr <- abs(num(cl, "target_level") - num(cl, "entry_level")) / risk
+  ok <- is.finite(r); k <- if (any(ok)) ml_risk_stats(r[ok]) else NULL
+  pf <- if (nrow(t) && "plan_followed" %in% names(t)) toupper(substr(t$plan_followed, 1, 1)) else character(0); pf <- pf[pf %in% c("Y", "N")]
+  pl <- num(cl, "pl_account"); if (!any(is.finite(pl))) pl <- num(cl, "profit_loss")
+  stats <- list(trades = nrow(t), closed = nrow(cl), open = sum(t$status %in% "OPEN"), win_pct = k$win_pct %||% NA_real_, avg_rr_planned = if (any(is.finite(prr))) mean(prr[is.finite(prr)]) else NA_real_,
+    break_even = if (any(is.finite(prr))) 100 / (1 + mean(prr[is.finite(prr)])) else NA_real_, total_r = k$total %||% NA_real_, r_per_trade = k$expectancy %||% NA_real_, sharpe = k$sharpe %||% NA_real_, sortino = k$sortino %||% NA_real_,
+    max_dd = k$max_dd %||% NA_real_, money = if (any(is.finite(pl))) sum(pl, na.rm = TRUE) else NA_real_, followed_pct = if (length(pf)) 100 * mean(pf == "Y") else NA_real_, followed_n = length(pf),
+    morning_sheets = length(unique(ms_days)), trade_sheets = length(unique(sheet_ids)), trading_days = length(unique(format(as.POSIXct(t$entry_ts %||% t$placed_ts, tz = "UTC"), "%Y-%m-%d", tz = tz))))
+  g <- function(k) if (k %in% names(cl)) as.character(cl[[k]]) else rep("", nrow(cl))
+  tab <- if (nrow(cl)) data.frame(Date = format(as.POSIXct(cl$entry_ts, tz = "UTC"), "%a %d/%m %H:%M", tz = tz), Market = g("market_name"), Side = g("direction"), Strategy = g("strategy"), `Planned R:R` = round(prr, 2), `Result (R)` = round(r, 2),
+                                    `Plan followed` = g("plan_followed"), Deviation = trimws(paste(g("deviation_type"), g("deviation_note"))), Lesson = g("lessons"), check.names = FALSE, stringsAsFactors = FALSE) else NULL
+  by_strat <- if (nrow(cl) && any(ok)) do.call(rbind, lapply(split(which(ok), g("strategy")[ok]), function(i) data.frame(Strategy = g("strategy")[i[1]], Trades = length(i), `Win %` = round(100 * mean(r[i] > 0)), `Total R` = round(sum(r[i]), 2), check.names = FALSE))) else NULL
+  cls <- if (nrow(cl) && exists("cc_class_of", mode = "function")) vapply(seq_len(nrow(cl)), function(i) cc_class_labels[[cc_class_of(if (exists("cc_watch_info", mode = "function")) cc_watch_info(g("epic")[i])$type %||% NA else NA, g("epic")[i], g("market_name")[i])]], "") else character(0)
+  by_class <- if (nrow(cl) && any(ok) && length(cls)) do.call(rbind, lapply(split(which(ok), cls[ok]), function(i) data.frame(`Asset class` = cls[i[1]], Markets = paste(unique(g("market_name")[i]), collapse = ", "), Trades = length(i),
+    `Win %` = round(100 * mean(r[i] > 0)), `Total R` = round(sum(r[i]), 2), check.names = FALSE))) else NULL
+  list(from = from, to = to, stats = stats, trades = tab, by_strategy = by_strat, by_class = by_class) }
+cc_week_review_lines <- function(w) { s <- w$stats; f <- function(v, d = 2) if (is.null(v) || !is.finite(v)) "-" else formatC(v, format = "f", digits = d)
+  c(sprintf("Week %s to %s: %d trade(s), %d closed, %d still open, on %d trading day(s).", format(w$from, "%d/%m/%Y"), format(w$to, "%d/%m/%Y"), s$trades, s$closed, s$open, s$trading_days),
+    sprintf("Win rate %s%% against a break-even of %s%% at the average planned Reward:Risk of %s.", f(s$win_pct, 0), f(s$break_even, 0), f(s$avg_rr_planned)),
+    sprintf("Result %s R in total (%s R per trade); money %s.", f(s$total_r), f(s$r_per_trade), f(s$money)),
+    sprintf("Sharpe %s and Sortino %s per trade; maximum drawdown %s R.", f(s$sharpe), f(s$sortino), f(s$max_dd)),
+    sprintf("Plan followed in %s%% of the %d trade(s) with an answer.", f(s$followed_pct, 0), s$followed_n),
+    sprintf("Evidence: %d Morning Sheet(s) and %d Individual Trade Sheet(s) saved this week.", s$morning_sheets, s$trade_sheets),
+    if (s$closed < 30) "With fewer than 30 closed trades these figures describe the week; they are not yet evidence of skill." else NULL) }
+cc_week_review_docx <- function(w, name, file, summary = NULL) {
+  doc <- officer::read_docx(); doc <- officer::body_add_par(doc, "End of Week Assessed Trading Review", style = "heading 1")
+  doc <- officer::body_add_par(doc, sprintf("%s - %s to %s", name %||% "", format(w$from, "%d/%m/%Y"), format(w$to, "%d/%m/%Y")))
+  for (l in cc_week_review_lines(w)) doc <- officer::body_add_par(doc, l, style = "Normal")
+  if (!is.null(w$by_strategy)) { doc <- officer::body_add_par(doc, "By strategy", style = "heading 2"); doc <- officer::body_add_table(doc, w$by_strategy, style = "table_template") }
+  if (!is.null(w$by_class)) { doc <- officer::body_add_par(doc, "By asset class", style = "heading 2"); doc <- officer::body_add_table(doc, w$by_class, style = "table_template") }
+  if (!is.null(w$trades)) { doc <- officer::body_add_par(doc, "Trades", style = "heading 2"); doc <- officer::body_add_table(doc, w$trades, style = "table_template") }
+  if (length(summary) && any(nzchar(summary))) { doc <- officer::body_add_par(doc, "What worked, what did not, next week", style = "heading 2"); for (l in summary) doc <- officer::body_add_par(doc, l, style = "Normal") }
+  print(doc, target = file); file }

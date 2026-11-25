@@ -1,0 +1,142 @@
+# modules/_module_registry.yml
+# Single source of truth for the sidebar.
+#   groups:   one sidebar entry per group, in this order. Its `modules` appear as horizontal sub-tabs.
+#             `planned` lists the sub-tabs later phases will add (shown as "Coming next" on the page).
+#             `admin: true` = only admins see it, and it needs the admin code (except on Windows).
+#   modules:  each id is backed by modules/<Group folder>/<id>.R defining <id>_ui(id) and <id>_server(id, ctx).
+#             Set enabled: false to hide a sub-tab without deleting it.
+#             Set partner: false to hide a sub-tab from people with the partner role (outside collaborators).
+#             Set owner: true for a sub-tab only the owner (ADMIN_EMAILS) sees. The Admin group is owner only.
+#             The owner can also hide, rename and restrict tabs in Admin > Tabs and groups (no file changes needed).
+#             Partners also only ever see data for bids where they are in the consortium.
+
+app:
+  name: "Collaboration Planning"
+  version: "0.8.0"
+
+groups:
+  - id: home
+    label: "Home"
+    icon: "house"
+    blurb: "Every programme on one board, by stage."
+    modules: [home_board]
+
+  - id: discover
+    label: "1 Discover"
+    icon: "magnifying-glass-dollar"
+    blurb: "Find funding programmes and commercial ideas, and keep their details checked. Start with How to use this app."
+    modules: [discover_intro, programmes_browse, collab_ideas, programme_search, programme_bulk_import, programme_add, programme_charts]
+    from: "Funding Programmes"
+
+  - id: qualify
+    label: "2 Qualify"
+    icon: "bullseye"
+    blurb: "Check eligibility and score how well each programme fits us."
+    modules: [eligibility_check, team_scoring, team_ranking, go_no_go]
+    from: "Grant Compass, BooksNetworks"
+
+  - id: teamup
+    label: "3 Team up"
+    icon: "people-group"
+    blurb: "Find partners, reach out, process their replies, and track who is in each bid."
+    modules: [collaborators, partner_match, outreach, inbox, consortium]
+    from: "Business Operations Suite, DaysPlanning Contact Manager"
+
+  - id: decide
+    label: "4 Decide"
+    icon: "scale-balanced"
+    blurb: "Decide in writing and in your own time."
+    modules: [decisions, decision_log, ideas, meet_by_exception]
+    from: "Grant Compass"
+
+  - id: plan
+    label: "5 Plan"
+    icon: "diagram-project"
+    blurb: "Turn a go decision into work packages, owners, risks and budget."
+    modules: [work_packages, raci, risk_register, budget]
+    from: "Business Operations Suite, BooksNetworks"
+
+  - id: write
+    label: "6 Write"
+    icon: "pen-to-square"
+    blurb: "Answer each programme's questions within their word limits."
+    modules: [section_drafts, question_sets, canvases_diagrams, submit_checklist]
+    from: "Business Operations Suite"
+
+  - id: deliver
+    label: "7 Deliver"
+    icon: "list-check"
+    blurb: "Run the work week by week on Trello."
+    modules: [trello_board, weekly_updates, milestones, reminders]
+    from: "Business Operations Suite, Grant Compass"
+
+  - id: learn
+    label: "8 Learn"
+    icon: "graduation-cap"
+    blurb: "Record each result and what to do better next time."
+    modules: [outcomes, win_rate]
+
+  - id: suggest
+    label: "Suggestions"
+    icon: "lightbulb"
+    blurb: "Suggest programmes and ideas to work on together; Claude analyses them into tables."
+    modules: [my_suggestions, analysis_workbench, analysis_library]
+
+  - id: admin
+    label: "Admin"
+    icon: "sliders"
+    blurb: "Settings, users, storage and connections. Admins only."
+    admin: true
+    modules: [admin_tabs, admin_analytics, admin_access, admin_storage, admin_claude, admin_trello, admin_email, admin_drive, admin_general, admin_data, admin_previous_apps, admin_activity]
+
+modules:
+  home_board:            { enabled: true }
+  discover_intro:        { enabled: true }
+  programmes_browse:     { enabled: true }
+  collab_ideas:          { enabled: true, partner: false }
+  programme_search:      { enabled: true, partner: false }
+  programme_bulk_import: { enabled: true, partner: false }
+  programme_add:         { enabled: true, partner: false }
+  programme_charts:      { enabled: true }
+  eligibility_check:     { enabled: true, partner: false }
+  team_scoring:          { enabled: true, partner: false }
+  team_ranking:          { enabled: true, partner: false }
+  go_no_go:              { enabled: true, partner: false }
+  collaborators:         { enabled: true, partner: false }
+  partner_match:         { enabled: true, partner: false }
+  outreach:              { enabled: true, partner: false }
+  inbox:                 { enabled: true, partner: false }
+  consortium:            { enabled: true }
+  decisions:             { enabled: true }
+  decision_log:          { enabled: true }
+  ideas:                 { enabled: true }
+  meet_by_exception:     { enabled: true }
+  work_packages:         { enabled: true }
+  raci:                  { enabled: true }
+  risk_register:         { enabled: true }
+  budget:                { enabled: true }
+  section_drafts:        { enabled: true }
+  question_sets:         { enabled: true }
+  canvases_diagrams:     { enabled: true }
+  submit_checklist:      { enabled: true }
+  trello_board:          { enabled: true, partner: false }
+  weekly_updates:        { enabled: true }
+  milestones:            { enabled: true }
+  reminders:             { enabled: true, partner: false }
+  outcomes:              { enabled: true }
+  win_rate:              { enabled: true, partner: false }
+  my_suggestions:        { enabled: true }
+  analysis_workbench:    { enabled: true, owner: true }
+  analysis_library:      { enabled: true }
+  admin_tabs:            { enabled: true }
+  admin_analytics:       { enabled: true }
+  admin_drive:           { enabled: true }
+  admin_access:          { enabled: true }
+  admin_storage:         { enabled: true }
+  admin_claude:          { enabled: true }
+  admin_trello:          { enabled: true }
+  admin_email:           { enabled: true }
+  admin_general:         { enabled: true }
+  admin_data:            { enabled: true }
+  admin_previous_apps:   { enabled: true }
+  admin_activity:        { enabled: true }

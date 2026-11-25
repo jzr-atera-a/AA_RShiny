@@ -76,8 +76,8 @@ receipt_categorize_server <- function(id, api_manager) {
     output$category_totals_ui <- renderUI({
       req(rv$category_totals)
       tags$div(class = "category-totals",
-               tags$h4("Category Totals", style = "color: #7ec8e3; margin-bottom: 15px; font-weight: bold;"),
-               tags$p("Sum of amounts for each category (only receipts with category = 1):", style = "color: #c7d2fe; margin-bottom: 15px;"),
+               tags$h4("Category Totals", style = "color: #008A82; margin-bottom: 15px; font-weight: bold;"),
+               tags$p("Sum of amounts for each category (only receipts with category = 1):", style = "color: #546e7a; margin-bottom: 15px;"),
                lapply(names(rv$category_totals), function(cat) {
                  tags$div(class = "category-total-item",
                           tags$div(class = "category-total-label", gsub("_", " ", cat)),

@@ -9,3 +9,9 @@ DROPBOX_REFRESH_TOKEN=
 # or a short-lived token instead of the three above
 # DROPBOX_ACCESS_TOKEN=
 # TRADING_RUNTIME=server
+
+# Google Drive (API Configuration > Google Drive): charts, diagrams and tables saved for other apps (all optional)
+# GDRIVE_KEY_FILE=/path/to/service-account.json     # a key with the Google Drive API turned on in its project
+# GDRIVE_FOLDER_ID=<folder id or link in a Shared Drive, shared with the key's email as Content manager>
+# GDRIVE_ROOT_NAME=LAT U3 Trading Desk
+# GDRIVE_LOCAL_DIR=G:/My Drive                       # instead: write into a Google Drive for desktop folder

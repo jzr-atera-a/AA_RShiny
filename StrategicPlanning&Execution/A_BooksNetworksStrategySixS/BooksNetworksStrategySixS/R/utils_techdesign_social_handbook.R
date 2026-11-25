@@ -258,6 +258,5 @@ social_handbook_server <- function(id, api_manager) {
       td_nav(session, tab)
       updateSelectInput(session$rootScope(), paste0(tab, "-algo"), selected = o$id)
     })
-    session$onSessionEnded(function() {})
   })
 }

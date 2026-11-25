@@ -210,7 +210,7 @@ techdesign_module_server <- function(id, api_manager, group) {
 
     draw <- function(d) {
       current_design(d)
-      output$diagram <- renderUI({ export_capture_wrapper(session$ns, render_techdesign(d), d$meta$title %||% "technical_design") })
+      output$diagram <- renderUI({ export_capture_wrapper(session$ns, render_techdesign(d), d$meta$title %||% "technical_design", meta = d) })
     }
 
     warn_ui <- function(d) {
@@ -458,13 +458,12 @@ techdesign_module_server <- function(id, api_manager, group) {
       if (!api_manager$bq_authenticated) { showNotification("Please authenticate with BigQuery first!", type = "error"); return() }
       df <- tryCatch(api_manager$bq_query(sprintf(
         "SELECT id, created_at, design_id, design_type, title, variant, change_type, complexity_level, diagram_kind, schema_version, created_by
-         FROM `%s` WHERE design_group = '%s' ORDER BY id DESC LIMIT 300", api_manager$bq_full_table_techdesign, group)),
+         FROM `%s` WHERE design_group = '%s' ORDER BY id DESC LIMIT 300", api_manager$bq_full_table_techdesign, safe_sql_escape(group))),
         error = function(e) { showNotification(paste("Error:", app_err_text(e)), type = "error"); data.frame() })
       output$browse_table <- DT::renderDataTable(DT::datatable(df, options = list(pageLength = 15, scrollX = TRUE), rownames = FALSE))
     })
 
     output$status <- renderUI({ tags$div() })
     output$diagram <- renderUI({ tags$div(class = "status-info", "Generate or load a design to see its diagram here.") })
-    session$onSessionEnded(function() {})
   })
 }

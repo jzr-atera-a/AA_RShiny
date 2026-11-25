@@ -1,0 +1,44 @@
+# Copy to .Renviron (never commit it). On shinyapps.io set these in the app's Settings > Variables.
+
+# Google Sheet with the approved users and team tables (the id is in the Sheet's URL)
+GOOGLE_SHEETS_ID=
+
+# BigQuery project and dataset; tables are created with the cp_ prefix
+CP_BQ_PROJECT=atera-2
+CP_BQ_DATASET=business_strategy
+CP_BQ_PREFIX=cp_
+
+# Service account key (Sheets + BigQuery). Default path shown.
+GOOGLE_SA_KEY_PATH=auth/google_service_account.json
+
+# Always-admin emails, comma-separated
+ADMIN_EMAILS=joseph.zr@atera-analytics.co.uk
+
+# Code that unlocks Admin when the app is NOT running on Windows
+CP_ADMIN_CODE=7818
+
+# Claude and Trello
+ANTHROPIC_API_KEY=
+CP_CLAUDE_MODEL=claude-sonnet-5-5
+TRELLO_KEY=
+TRELLO_TOKEN=
+TRELLO_BOARD_ID=
+
+# Email for outreach and reminders (also editable in Admin > Email, except the password)
+SMTP_HOST=smtp.titan.email
+SMTP_PORT=465
+SMTP_USER=
+SMTP_PASSWORD=
+SMTP_ALWAYS_CC=
+
+# Claude web search tool version (checked against docs.claude.com, Nov 2026). web_search_20260318 also works.
+CP_WEB_SEARCH_TOOL=web_search_20250305
+
+# Google Drive copies of the analysis tables (also set in Admin > Google Drive)
+# api: a folder in a Shared Drive shared with the service account; folder: a synced folder on this computer
+CP_DRIVE_MODE=off
+CP_DRIVE_FOLDER_ID=
+CP_DRIVE_LOCAL_PATH=
+
+# People registered as members (not admins) on first start; added once if missing, never re-added after removal
+CP_SEED_MEMBERS=ali.jboloori@gmail.com

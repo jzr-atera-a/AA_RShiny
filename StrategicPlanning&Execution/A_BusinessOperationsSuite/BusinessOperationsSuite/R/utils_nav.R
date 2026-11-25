@@ -31,7 +31,7 @@ nav_layout <- function(registry, enabled_ids) {
     for (s in g$sections) {
       mods <- intersect(unlist(s$modules), gm); if (!length(mods)) next
       secs[[length(secs) + 1]] <- list(id = s$id, label = s$label, icon = s$icon %||% g$icon, modules = mods,
-                                       tab_labels = s$tab_labels %||% list())
+                                       tab_labels = s$tab_labels %||% list(), tone = s$tone)
       placed <- c(placed, mods)
     }
     for (mid in setdiff(gm, placed))        # modules no section lists (or a group with no sections): own sidebar item
@@ -55,7 +55,12 @@ nav_sidebar_items <- function(layout) {
       s <- g$sections[[1]]
       return(shinydashboard::menuItem(g$label, tabName = s$id, icon = shiny::icon(g$icon)))
     }
-    subs <- lapply(g$sections, function(s) shinydashboard::menuSubItem(s$label, tabName = s$id, icon = shiny::icon(s$icon)))
+    subs <- lapply(g$sections, function(s) {
+      it <- shinydashboard::menuSubItem(s$label, tabName = s$id, icon = shiny::icon(s$icon))
+      # tone: green shade per former group (Health Tracker, Media Processing) - see .bos-tone-* in www/css/global.css
+      if (!is.null(s$tone)) it <- htmltools::tagAppendAttributes(it, class = paste0("bos-tone bos-tone-", s$tone))
+      it
+    })
     do.call(shinydashboard::menuItem, c(list(text = g$label, icon = shiny::icon(g$icon),
                                              startExpanded = g$expanded, expandedName = g$id), subs))
   })

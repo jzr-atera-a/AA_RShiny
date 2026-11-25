@@ -23,6 +23,14 @@ fake <- local({ calls <- list(); expire_next <- FALSE; positions <- list(); orde
       dealingRules = list(minDealSize = list(unit = "POINTS", value = 1), minStopOrProfitDistance = list(unit = "POINTS", value = 0.05)), snapshot = list(bid = 65.00, offer = 65.04, marketStatus = "TRADEABLE")))))
     if (path == "/markets/GBPUSD") return(list(status = 200, headers = list(), body = js(list(instrument = list(epic = "GBPUSD", currency = "USD"), snapshot = list(bid = 1.2499, offer = 1.2501)))))
     if (path == "/markets") return(list(status = 200, headers = list(), body = js(list(markets = list(list(epic = "OIL_BRENT", instrumentName = "Brent Crude Oil", instrumentType = "COMMODITIES"))))))
+    if (path == "/marketnavigation") return(list(status = 200, headers = list(), body = js(list(nodes = list(list(id = "hierarchy_v1.commodities", name = "Commodities"), list(id = "hierarchy_v1.shares", name = "Shares"), list(id = "hierarchy_v1.crypto", name = "Cryptocurrencies"))))))
+    if (path == "/marketnavigation/hierarchy_v1.shares") return(list(status = 200, headers = list(), body = js(list(nodes = list(list(id = "hierarchy_v1.shares.us", name = "US shares"))))))
+    if (path == "/marketnavigation/hierarchy_v1.shares.us") return(list(status = 200, headers = list(), body = js(list(markets = list(list(epic = "AAPL", instrumentName = "Apple Inc", instrumentType = "SHARES", bid = 190.1, offer = 190.3, marketStatus = "TRADEABLE"),
+      list(epic = "TSLA", instrumentName = "Tesla Inc", instrumentType = "SHARES", bid = 250, offer = 250.4, marketStatus = "CLOSED"))))))
+    if (grepl("^/marketnavigation/", path)) return(list(status = 200, headers = list(), body = js(list(markets = list(list(epic = "OIL_BRENT", instrumentName = "Brent Crude Oil", instrumentType = "COMMODITIES", marketStatus = "TRADEABLE"))))))
+    if (path == "/markets/AAPL") return(list(status = 200, headers = list(), body = js(list(instrument = list(epic = "AAPL", name = "Apple Inc", type = "SHARES", currency = "USD", lotSize = 1, marginFactor = 20, marginFactorUnit = "PERCENTAGE",
+        openingHours = list(mon = list("14:30 - 21:00"), tue = list("14:30 - 21:00"), wed = list("14:30 - 21:00"), thu = list("14:30 - 21:00"), fri = list("14:30 - 21:00"), sat = list(), sun = list(), zone = "UTC")),
+      dealingRules = list(minDealSize = list(value = 1), maxDealSize = list(value = 5000), minSizeIncrement = list(value = 1), minStopOrProfitDistance = list(value = 0.1)), snapshot = list(bid = 190.1, offer = 190.3, marketStatus = "TRADEABLE", decimalPlacesFactor = 2)))))
     if (grepl("^/markets/", path)) return(list(status = 404, headers = list(), body = js(list(errorCode = "error.not-found.epic"))))
     if (path == "/prices/OIL_BRENT") { q <- sub("^[^?]*\\?", "", url); n <- 30
       t <- as.POSIXct("2026-10-20 08:00", tz = "UTC") + (0:(n - 1)) * 900; p <- 65 + cumsum(rep(c(0.02, -0.01), length.out = n))
@@ -224,6 +232,15 @@ ok(all(grepl("^cc_", vapply(cc_tables, `[[`, "", "table"))), "every table is pre
 off <- cc_make_store(list(connected = function() FALSE, ensure = function() NULL, write = function(...) stop("x"), read = function(...) stop("x")))
 off$write("events", data.frame(event_id = "E1", event_type = "X")); ok(off$pending_count() == 1 && nrow(off$read("events")) == 1, "without BigQuery a record is kept in the session and queued")
 
+cat("BigQuery: light reads ***********\n")
+ok(cc_select_light("trades") == "*" && cc_select_light("scans") == "* EXCEPT(bars_json), CAST(NULL AS STRING) AS bars_json", "the scans list is read without the candles JSON")
+calls <- 0L; fb <- list(connected = function() TRUE, ensure = function() TRUE, write = function(name, df) invisible(1),
+  read = function(name) if (name == "scans") data.frame(scan_id = c("S1", "S2"), saved_at = Sys.time(), epic = "X", bars_json = NA_character_, stringsAsFactors = FALSE) else NULL,
+  read_one = function(name, id) { calls <<- calls + 1L; data.frame(scan_id = id, saved_at = Sys.time(), epic = "X", bars_json = "{\"a\":1}", stringsAsFactors = FALSE) })
+st2 <- cc_make_store(fb); r <- st2$full_row("scans", "S2"); ok(nrow(r) == 1 && r$bars_json == "{\"a\":1}" && calls == 1L && all(is.na(st2$current("scans")$bars_json)), "opening one scan fetches only that row")
+st2$write("scans", data.frame(scan_id = "S3", epic = "X", bars_json = "{\"b\":2}", stringsAsFactors = FALSE)); r3 <- st2$full_row("scans", "S3"); ok(r3$bars_json == "{\"b\":2}" && calls == 1L, "a scan saved in this session needs no query")
+ok(nrow(cc_make_store(cc_mem_backend())$full_row("scans", "nope")) == 0, "an unknown scan gives no row (no crash)")
+ok(all(c("be_pct", "setup_p", "setup_n", "evidence") %in% names(cc_tables$scenarios$cols)) && any(grepl("ADD COLUMN IF NOT EXISTS evidence", cc_ddl("p", "d"))), "the evidence of each scenario is saved (columns added to cc_scenarios)")
 cat(sprintf("\n%d passed, %d failed\n", pass, fail)); if (fail) quit(status = 1)
 
 # ---- 2 Nov round 4: closes by hand (actions in details), saved history, exit repair, state line ----

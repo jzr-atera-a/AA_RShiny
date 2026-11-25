@@ -27,7 +27,10 @@
     return safe.substring(0, 80);
   }
 
+  // finished files go to window.__exportDeliver (www/js/gdrive_export.js): a download, or Google Drive
+  var CTX = null;
   function downloadBlob(blob, filename) {
+    if (window.__exportDeliver) { window.__exportDeliver(CTX, blob, filename); return; }
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
     a.href = url;
@@ -89,6 +92,17 @@
     }, "image/jpeg", 0.92);
   }
 
+  function exportAsPNG(canvas, safeTitle) {
+    canvas.toBlob(function (blob) { downloadBlob(blob, safeTitle + ".png"); }, "image/png");
+  }
+
+  // GIF: the built-in encoder from infographic_export.js (median-cut palette + LZW); captured at scale 1 to keep it small
+  function exportAsGIF(canvas, safeTitle) {
+    if (!window.__igEncodeGIF) { alert("The GIF encoder failed to load - please refresh and try again."); return; }
+    var ctx = canvas.getContext("2d");
+    downloadBlob(window.__igEncodeGIF(canvas.width, canvas.height, ctx.getImageData(0, 0, canvas.width, canvas.height).data), safeTitle + ".gif");
+  }
+
   // Fits a canvas of arbitrary pixel dimensions into a bounding box
   // (in whatever unit the box is expressed in - points for jsPDF, inches
   // for pptxgenjs) while preserving its aspect ratio. A single scale
@@ -115,7 +129,7 @@
 
     var imgData = canvas.toDataURL("image/jpeg", 0.95);
     pdf.addImage(imgData, "JPEG", x, y, fitted.w, fitted.h);
-    pdf.save(safeTitle + ".pdf");
+    downloadBlob(pdf.output("blob"), safeTitle + ".pdf");
   }
 
   function exportAsPPTX(canvas, safeTitle) {
@@ -133,7 +147,9 @@
 
     var imgData = canvas.toDataURL("image/png");
     slide.addImage({ data: imgData, x: x, y: y, w: fitted.w, h: fitted.h });
-    pptx.writeFile({ fileName: safeTitle + ".pptx" });
+    return pptx.write({ outputType: "blob" }).then(function (b) {
+      downloadBlob(b instanceof Blob ? b : new Blob([b], { type: "application/vnd.openxmlformats-officedocument.presentationml.presentation" }), safeTitle + ".pptx");
+    });
   }
 
   // Main entry point, called directly from each Visualizations tab's
@@ -147,6 +163,7 @@
   //   fallbackName - used as the filename if the target has no
   //                 data-export-title attribute set.
   window.exportVisualization = function (targetId, formatSelectId, fallbackName) {
+    CTX = window.__exportTakeCtx ? window.__exportTakeCtx() : null;
     var el = document.getElementById(targetId);
     if (!el || el.children.length === 0) {
       alert("Nothing to export yet - render a diagram first.");
@@ -168,13 +185,15 @@
     // html2canvas's own (synchronous, potentially slow) capture work
     // blocks the main thread.
     setTimeout(function () {
-      html2canvas(el, { scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false })
+      html2canvas(el, { scale: format === "gif" ? 1 : 2, backgroundColor: "#ffffff", useCORS: true, logging: false })
         .then(function (canvas) {
           if (format === "jpeg") exportAsJPEG(canvas, safeTitle);
+          else if (format === "png") exportAsPNG(canvas, safeTitle);
+          else if (format === "gif") exportAsGIF(canvas, safeTitle);
           else if (format === "pdf") exportAsPDF(canvas, safeTitle);
-          else if (format === "pptx") exportAsPPTX(canvas, safeTitle);
-          hidePreparingIndicator(indicator);
+          else if (format === "pptx") return exportAsPPTX(canvas, safeTitle);
         })
+        .then(function () { hidePreparingIndicator(indicator); })
         .catch(function (err) {
           hidePreparingIndicator(indicator);
           alert("Export failed: " + err.message);

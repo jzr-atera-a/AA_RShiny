@@ -373,3 +373,14 @@
 .econ-grid-table tbody tr:nth-child(odd)  td, .econ-grid-table tbody tr:nth-child(odd)  th.econ-grid-sticky-col { background: #ffffff; }
 .econ-grid-table tbody tr:nth-child(even) td, .econ-grid-table tbody tr:nth-child(even) th.econ-grid-sticky-col { background: #f6f8fb; }
 
+
+/* Google Drive save buttons (www/js/gdrive_export.js) */
+.gdx-btn { display:none; position:absolute; z-index:1002; width:26px; height:26px; padding:0; border:1px solid #99d5cf; border-radius:13px; background:#ffffffe6; color:#008A82;
+  cursor:pointer; align-items:center; justify-content:center; opacity:.65; box-shadow:0 1px 3px rgba(0,0,0,.12); }
+body.gdx-on .gdx-btn { display:flex; }
+.gdx-btn:hover { opacity:1; background:#008A82; color:#fff; }
+.gdx-btn.gdx-plotly, .gdx-btn.gdx-svg, .gdx-btn.gdx-img { top:4px; left:4px; }
+.gdx-btn.gdx-table { bottom:2px; right:2px; }
+.gdx-btn.gdx-busy { opacity:1; animation:gdxspin 1s linear infinite; }
+@keyframes gdxspin { to { transform:rotate(360deg); } }
+.gdx-path { font-family:Consolas,monospace; font-size:12px; background:#f1f5f9; border-radius:6px; padding:6px 8px; word-break:break-all; }

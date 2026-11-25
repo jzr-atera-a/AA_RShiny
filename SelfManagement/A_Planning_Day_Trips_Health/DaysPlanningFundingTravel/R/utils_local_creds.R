@@ -110,6 +110,8 @@ cred_startup <- function(api) {
     api$claude_authenticated <- TRUE; api$claude_tested <- NA
     st <- cred_test_claude(api, st, "ANTHROPIC_API_KEY", cred_mask(k))
   }
+  # Google Drive: reconnect to the saved root folder (no secrets are stored, see R/utils_gdrive.R)
+  tryCatch(gdrive_restore(api), error = function(e) cat("[Drive] start-up check failed:", conditionMessage(e), "\n"))
   assign(".cred_status", st, envir = .GlobalEnv)
   st
 }

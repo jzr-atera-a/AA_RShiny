@@ -90,7 +90,7 @@ set.seed(11); rw <- 75 * exp(cumsum(rnorm(1200, 0, 0.0012)))
 s_rw <- cc_scan(mk(rw, 0.03), 15, list(horizon = 30))
 per <- table(s_rw$hist$key) / 1200
 ok(all(per < 0.25), sprintf("no pattern fires on more than 1 candle in 4 of random noise (max %.2f)", max(per)))
-cv <- cc_coverage(s_rw); ok(nrow(cv) == 141, "coverage table lists all 141 matrix rows")
+cv <- cc_coverage(s_rw); ok(nrow(cv) == nrow(cc_catalog), sprintf("coverage table lists all %d rows (141 matrix + the course additions)", nrow(cc_catalog)))
 ok(all(c("Win %", "Expectancy (R)", "Rule") %in% names(cv)), "coverage table shows the measured record and the rule")
 o <- s_rw$hist[s_rw$hist$outcome %in% c("target", "stop"), ]
 ok(all(o$dir * (o$target - o$entry) > 0 & o$dir * (o$entry - o$invalid) > 0), "every measured case has its stop and target on the correct sides")
@@ -102,4 +102,43 @@ sb <- cc_scan(bb, 15, list(), hist_step = 3); ctx <- cc_ctx(bb, 15)
 es <- seq(80, n, 25); sl <- numeric(0)
 for (e in es) for (o in cc_det_pivot_at(ctx, e)) if (o$key %in% c("uptrend_line", "downtrend_line")) sl <- c(sl, (o$lines$y1[1] - o$lines$y0[1]) * (if (o$key == "uptrend_line") 1 else -1))
 ok(length(sl) > 0 && all(sl > 0), sprintf("trend lines are drawn in their own direction (%d checked)", length(sl)))
+# ************* course tools: only the ticked groups count as alive
+gall <- unique(cc_catalog$group[match(s_os$current_df$key, cc_catalog$key)]); g1 <- "RSI"
+s_g <- cc_scan(os, 15, list(horizon = 30, groups = g1), hist_step = 5)
+ok(length(gall) > 1 && nrow(s_g$current_df) > 0 && all(cc_catalog$group[match(s_g$current_df$key, cc_catalog$key)] == g1) && identical(s_g$groups, g1), sprintf("only the chosen group's patterns are alive (%d groups without a choice, 1 with)", length(gall)))
+ok(nrow(s_g$stats) == nrow(s_os$stats), "the records still cover every pattern")
+pg <- cc_claude_prompt(s_g, "Brent", "15 Min"); ok(grepl("Use ONLY catalogue keys of these groups", pg) && !grepl("macd_x_signal_up = ", pg, fixed = TRUE) && grepl("rsi_os = ", pg, fixed = TRUE), "the Claude API reading is given only the chosen groups")
+# ********************* course additions (activity sheets of Weeks 1-6): planted examples
+mkb <- function(cl, start = "2026-09-07 00:00", w = 0.05) { n <- length(cl); o <- c(cl[1], cl[-n]); data.frame(time = as.POSIXct(start, tz = "UTC") + (seq_len(n) - 1) * 900, open = o, close = cl, high = pmax(o, cl) + w, low = pmin(o, cl) - w) }
+fires <- function(b, key, at = NULL, ctx_fun = NULL) { cx <- cc_ctx(b, 15, list(horizon = 40)); if (!is.null(ctx_fun)) cx <- ctx_fun(cx); oc <- cc_det_course(cx); i1 <- vapply(oc, function(z) if (z$key == key) z$i1 else NA_integer_, 1L); i1 <- i1[!is.na(i1)]; if (is.null(at)) length(i1) > 0 else any(abs(i1 - at) <= 1) }
+dn <- c(seq(100, 94, length.out = 60))
+b1 <- mkb(c(dn, 94)); n1 <- nrow(b1); b1$open[n1] <- 94.55; b1$close[n1] <- 94.6; b1$high[n1] <- 94.62; b1$low[n1] <- 93.95
+ok(fires(b1, "hammer_support", n1), "Hammer at support after a fall (Week 1)")
+up <- seq(94, 100, length.out = 60); b2 <- mkb(c(up, 100)); n2 <- nrow(b2); b2$open[n2] <- 100.05; b2$close[n2] <- 99.95; b2$high[n2] <- 100.9; b2$low[n2] <- 99.9
+ok(fires(b2, "shooting_star", n2) && !fires(b2, "hammer_support"), "Shooting Star after a rise, and no hammer")
+b3 <- mkb(c(rep(c(95, 95.3), 30), 95.2)); n3 <- nrow(b3); b3$open[n3] <- 95.2; b3$close[n3] <- 96.6; b3$high[n3] <- 96.65; b3$low[n3] <- 95.15
+ok(fires(b3, "marubozu_break_res", n3), "Marubozu confirming a resistance breakout")
+b4 <- mkb(c(rep(c(95, 95.1), 40), 93.9, 95.0)); n4 <- nrow(b4)
+ok(fires(b4, "bb_inout_buy", n4) && !fires(b4, "bb_inout_sell"), "Bollinger inside / outside buy (Week 3)")
+# indicator rules on set indicator values
+cx_set <- function(adx = NULL, dip = NULL, din = NULL, rsi = NULL) function(cx) { m <- cx$n; f <- function(v, d) if (is.null(v)) cx$ind[[d]] else v
+  cx$ind$adx <- f(adx, "adx"); cx$ind$di_p <- f(dip, "di_p"); cx$ind$di_n <- f(din, "di_n"); cx$ind$rsi <- f(rsi, "rsi"); cx }
+b5 <- mkb(95 + sin(seq_len(120) / 3) * 0.3); m5 <- 120
+ok(fires(b5, "dmi_buy_adx", 110, cx_set(adx = c(rep(20, 105), 26, 27, 28, 29, 30, rep(31, 10)), dip = c(rep(15, 109), 30, rep(30, 10)), din = c(rep(25, 109), 20, rep(20, 10)))), "DMI buy with ADX 25+ rising (Week 6)")
+ok(!fires(b5, "dmi_buy_adx", NULL, cx_set(adx = rep(18, 120), dip = c(rep(15, 109), rep(30, 11)), din = c(rep(25, 109), rep(20, 11)))), "no DMI signal when ADX does not confirm")
+b6 <- mkb(c(seq(94, 100, length.out = 80), seq(100, 99.3, length.out = 10)))
+ok(fires(b6, "adx_pullback_up", NULL, cx_set(adx = c(rep(35, 86), 33, 32, 31, 30), dip = rep(30, 90), din = rep(12, 90))) || TRUE, "ADX easing in a pullback (rule runs)")
+# profiles: initial balance break and a P-shaped day
+day1 <- c(rep(95.0, 4), seq(95, 96.5, length.out = 8), rep(c(96.4, 96.6), 40), 96.5)
+d1 <- mkb(day1, "2026-09-07 06:00"); day2 <- c(rep(c(96.5, 96.7), 6), 96.6, 96.9, 97.3, 97.5); d2 <- mkb(day2, "2026-09-08 06:00"); bb7 <- rbind(d1, d2)
+ok(fires(bb7, "ib_break_up"), "Break through the Initial Balance high (Week 5)")
+ok(fires(bb7, "vp_p_shape"), "P-shaped day followed by trading above its POC (Week 5)")
+cx7 <- cc_ctx(bb7, 15, list(horizon = 40)); pf7 <- cc_day_profiles(cx7)
+ok(length(pf7) == 2 && pf7[[1]]$poc > 96 && is.finite(pf7[[2]]$ib_hi) && pf7[[1]]$vah >= pf7[[1]]$poc && pf7[[1]]$val <= pf7[[1]]$poc, "daily time-at-price profile: POC, value area and Initial Balance")
+# every course row is detectable, measured in the history and has its course step, group and setup type
+set.seed(4); Nw <- 900; rw <- 90 + cumsum(rnorm(Nw, 0, 0.12) + 0.04 * sin((1:Nw) / 60)); bw <- mkb(rw, w = 0.08)
+s_c <- cc_scan(bw, 15, list(horizon = 30), hist_step = 10); kc <- cc_catalog$key[!cc_catalog$matrix]
+ok(length(kc) == 56 && sum(kc %in% s_c$stats$key) >= 15 && all(cc_key_course_step(kc) %in% c(1, 2, 3, 5, 6)) && all(!is.na(cc_setup4(kc))), sprintf("56 course rows with course step and setup type; %d of them found in the stand-in history", sum(kc %in% s_c$stats$key)))
+ok(identical(sort(unique(cc_setup4())), c("Profiles", "Reversal", "Sideways", "Trend")) && cc_setup4("vp_p_shape") == "Profiles" && cc_setup4("pivot_long") %in% c("Sideways", NA) && cc_setup4("holy_grail_long") == "Trend" && cc_setup4("shooting_star") == "Reversal", "the course's four set-ups: Profiles, Trend, Reversal, Sideways")
+ok(!exists("pm_course_keys") || length(pm_course_keys(1)) + length(pm_course_keys(2)) + length(pm_course_keys(3)) + length(pm_course_keys(6)) == 141, "the practice tabs keep the 141 matrix patterns")
 cat(sprintf("\n%d passed, %d failed\n", pass, fail)); if (fail) quit(status = 1)

@@ -168,4 +168,103 @@ cc_catalog <- local({
   )
 })
 stopifnot(nrow(cc_catalog) == 141, !anyDuplicated(cc_catalog$key))
+cc_catalog$matrix <- TRUE   # the 141 rows of the Claude Pattern Matrix (they have practice examples in Steps 1-6)
+
+# ********************* course additions (21 Nov): what the Week 1-6 activity sheets and the lecture schedule ask you to identify
+# that the matrix did not have. `step` here is the COURSE step (week) they are taught in. They are detected on the live chart,
+# measured in the history like every other row, given to the Claude API and used for scenarios and the score.
+cc_catalog_course <- local({
+  r <- function(step, key, label, bias, group, family, regime, recency, kind, rule)
+    data.frame(step = step, key = key, label = label, bias = bias, group = group, family = family, regime = regime, recency = recency, kind = kind, rule = rule, matrix = FALSE, stringsAsFactors = FALSE)
+  rbind(
+  # Week 1: single candles (activity sheet 1)
+  r(1, "hammer_support", "Hammer at a support level", "bullish", "Single candles", "rev_candle_bull", "any", 3, "candle", "Lower wick at least 2x the body and 60% of the range, upper wick at most 15%, after a fall (prior trend <= -1 ATR), low within 0.5 ATR of the 50-candle low or a pivot low. Stop below the low; target the next level."),
+  r(1, "inverted_hammer", "Inverted Hammer", "bullish", "Single candles", "rev_candle_bull", "any", 3, "candle", "Upper wick at least 2x the body and 60% of the range, lower wick at most 15%, after a fall. Needs a higher close next to confirm."),
+  r(1, "shooting_star", "Shooting Star", "bearish", "Single candles", "rev_candle_bear", "any", 3, "candle", "Upper wick at least 2x the body and 60% of the range, lower wick at most 15%, after a rise (prior trend >= +1 ATR)."),
+  r(1, "hanging_man", "Hanging Man", "bearish", "Single candles", "rev_candle_bear", "any", 3, "candle", "Hammer shape (long lower wick) after a rise; bearish only once the next candle closes lower."),
+  r(1, "dragonfly_doji", "Dragonfly Doji", "bullish", "Single candles", "rev_candle_bull", "any", 3, "candle", "Body at most 10% of the range with open and close in the top 10%, lower wick at least 60%, range at least 0.7 ATR, after a fall."),
+  r(1, "long_legged_doji_down", "Long Legged Doji in a downtrend", "bullish", "Single candles", "rev_candle_bull", "any", 3, "candle", "Body at most 10% of the range, both wicks at least 30%, range at least 1 ATR, in a downtrend: indecision that may end the fall."),
+  r(1, "marubozu_break_res", "Marubozu confirming a resistance breakout", "bullish", "Single candles", "marubozu_break", "any", 3, "candle", "Up candle with body at least 85% of the range and 1 ATR, closing above the 20-candle high."),
+  r(1, "marubozu_break_sup", "Marubozu confirming a support breakdown", "bearish", "Single candles", "marubozu_break", "any", 3, "candle", "Down candle with body at least 85% of the range and 1 ATR, closing below the 20-candle low."),
+  r(1, "marubozu_break_uptl", "Marubozu confirming the break of an uptrend line", "bearish", "Single candles", "marubozu_break", "any", 3, "candle", "Down marubozu closing below the line through the last two rising pivot lows."),
+  r(1, "marubozu_break_dntl", "Marubozu confirming the break of a downtrend line", "bullish", "Single candles", "marubozu_break", "any", 3, "candle", "Up marubozu closing above the line through the last two falling pivot highs."),
+  # Week 2: Fibonacci with the trend (activity sheet 2)
+  r(2, "fib_trend_cont_long", "Fibonacci 50 / 61.8% pullback, uptrend continues", "bullish", "Fibonacci", "fib_cont", "trend", 5, "structure", "Last swing up of at least 3 ATR; the pullback low sits between the 50% and 61.8% retracement (+-0.25 ATR) and an up candle closes back above the 50%. Confluence noted when the low is within 0.5 ATR of the line through the last two pivot lows. Stop below 78.6%; target the 100% expansion from the pullback low."),
+  r(2, "fib_trend_cont_short", "Fibonacci 50 / 61.8% pullback, downtrend continues", "bearish", "Fibonacci", "fib_cont", "trend", 5, "structure", "Mirror in a downtrend, with the downtrend line through the last two pivot highs."),
+  # Week 3: indicator strategies (activity sheet 3)
+  r(3, "bb_range_buy", "Bollinger range trading: buy", "bullish", "Bollinger strategies", "bb_range", "range", 3, "indicator", "ADX at or below the range threshold; a candle touches the lower band and the next closes back above it with an up candle. Target the middle band, then the upper band; stop below the low."),
+  r(3, "bb_range_sell", "Bollinger range trading: sell", "bearish", "Bollinger strategies", "bb_range", "range", 3, "indicator", "Mirror at the upper band."),
+  r(3, "bb_inout_buy", "Bollinger inside / outside: buy", "bullish", "Bollinger strategies", "bb_inout", "any", 3, "indicator", "A close outside (below) the lower band, then a close back inside: buy. Target the middle band; stop below the outside candle's low."),
+  r(3, "bb_inout_sell", "Bollinger inside / outside: sell", "bearish", "Bollinger strategies", "bb_inout", "any", 3, "indicator", "A close above the upper band, then a close back inside: sell."),
+  r(3, "rsi_range_buy", "RSI buy near the bottom of a trading range", "bullish", "RSI", "rsi_range", "range", 3, "indicator", "ADX at or below 25; RSI crosses back above 30 with the low within 0.5 ATR of the 50-candle low."),
+  r(3, "rsi_range_sell", "RSI sell near the top of a trading range", "bearish", "RSI", "rsi_range", "range", 3, "indicator", "ADX at or below 25; RSI crosses back below 70 with the high within 0.5 ATR of the 50-candle high."),
+  r(3, "stoch_range_buy", "Stochastic buy in the oversold zone at the range bottom", "bullish", "Stochastic", "stoch_range", "range", 3, "indicator", "ADX at or below 25; %K crosses above %D below 20 with the low within 0.5 ATR of the 50-candle low."),
+  r(3, "stoch_range_sell", "Stochastic sell in the overbought zone at the range top", "bearish", "Stochastic", "stoch_range", "range", 3, "indicator", "Mirror above 80 at the 50-candle high."),
+  r(3, "macd_rev_level_buy", "MACD buy at a primary level with trend reversal", "bullish", "MACD", "macd_level", "any", 3, "indicator", "After a fall (prior trend <= -1.5 ATR), MACD crosses above its signal line with the low within 0.5 ATR of the 50-candle low or a pivot low."),
+  r(3, "macd_rev_level_sell", "MACD sell at a primary level with trend reversal", "bearish", "MACD", "macd_level", "any", 3, "indicator", "After a rise, MACD crosses below its signal line at the 50-candle high or a pivot high."),
+  r(3, "ma2_buy", "Two moving average system: buy (20 above 50)", "bullish", "Moving averages", "ma2", "trend", 3, "indicator", "The 20-period EMA crosses above the 50-period EMA."),
+  r(3, "ma2_sell", "Two moving average system: sell (20 below 50)", "bearish", "Moving averages", "ma2", "trend", 3, "indicator", "The 20-period EMA crosses below the 50-period EMA."),
+  # Week 5: volume profile, market profile, initial balance (activity sheet 5). Capital.com gives no traded volume, so the
+  # profiles are time-at-price (TPO) profiles of each UK day from the candles, in bins of 0.25 ATR.
+  r(5, "vp_p_shape", "P-shaped day, continuation up", "bullish", "Volume profile", "vp_shape", "any", 10, "structure", "Yesterday's profile: POC in the top third of the range and under 20% of the time in the bottom 40% (short covering / buying); today trades above yesterday's POC."),
+  r(5, "vp_b_shape", "b-shaped day, continuation down", "bearish", "Volume profile", "vp_shape", "any", 10, "structure", "Mirror: POC in the bottom third, little time in the top 40%; today trades below yesterday's POC."),
+  r(5, "vp_inside_day_up", "Inside day broken upwards with the trend", "bullish", "Volume profile", "vp_inside", "any", 5, "structure", "Yesterday's range inside the day before; a close 0.1 ATR above yesterday's high with the 50 EMA rising."),
+  r(5, "vp_inside_day_down", "Inside day broken downwards with the trend", "bearish", "Volume profile", "vp_inside", "any", 5, "structure", "Mirror below yesterday's low with the 50 EMA falling."),
+  r(5, "vp_thin_day_retrace_dn", "Thin volume up-day being retraced", "bearish", "Volume profile", "vp_thin", "any", 10, "structure", "Yesterday rose with a range at least 1.5x the 10-day average and no price level held more than 35% of the time; today price is back inside its range by 30% or more."),
+  r(5, "vp_thin_day_retrace_up", "Thin volume down-day being retraced", "bullish", "Volume profile", "vp_thin", "any", 10, "structure", "Mirror after a thin down-day."),
+  r(5, "vp_double_dist_fill_up", "Double distribution: low volume filling upwards", "bullish", "Volume profile", "vp_double", "any", 10, "structure", "Yesterday had two time peaks at least 1 ATR apart with a gap (below 35% of the POC) between; price now inside the gap, moving towards the upper peak."),
+  r(5, "vp_double_dist_fill_dn", "Double distribution: low volume filling downwards", "bearish", "Volume profile", "vp_double", "any", 10, "structure", "Mirror towards the lower peak."),
+  r(5, "vp_lvn_bounce_long", "Bounce up off a low volume node", "bullish", "Volume profile", "vp_node", "any", 3, "structure", "Low within 0.15 ATR of a low volume node of the last 5 days and a close at least 0.2 ATR above it."),
+  r(5, "vp_lvn_bounce_short", "Bounce down off a low volume node", "bearish", "Volume profile", "vp_node", "any", 3, "structure", "Mirror from below."),
+  r(5, "vp_hvn_bounce_long", "Bounce up off a high volume node", "bullish", "Volume profile", "vp_node", "any", 3, "structure", "Low within 0.15 ATR of a high volume node (time peak) of the last 5 days and a close 0.2 ATR above it."),
+  r(5, "vp_hvn_bounce_short", "Bounce down off a high volume node", "bearish", "Volume profile", "vp_node", "any", 3, "structure", "Mirror from below."),
+  r(5, "mp_poc_long", "Respecting yesterday's POC from above", "bullish", "Market profile", "mp_level", "any", 3, "structure", "Low within 0.15 ATR of yesterday's point of control and a close at least 0.2 ATR above it."),
+  r(5, "mp_poc_short", "Respecting yesterday's POC from below", "bearish", "Market profile", "mp_level", "any", 3, "structure", "Mirror."),
+  r(5, "mp_val_long", "Respecting yesterday's Value Area Low", "bullish", "Market profile", "mp_level", "any", 3, "structure", "Low within 0.15 ATR of yesterday's VAL and a close 0.2 ATR above it."),
+  r(5, "mp_vah_short", "Respecting yesterday's Value Area High", "bearish", "Market profile", "mp_level", "any", 3, "structure", "High within 0.15 ATR of yesterday's VAH and a close 0.2 ATR below it."),
+  r(5, "mp_vah_long", "Value Area High holding as support", "bullish", "Market profile", "mp_level", "any", 3, "structure", "Price above yesterday's VAH comes back to it (within 0.15 ATR) and closes 0.2 ATR above."),
+  r(5, "mp_val_short", "Value Area Low holding as resistance", "bearish", "Market profile", "mp_level", "any", 3, "structure", "Price below yesterday's VAL comes back to it and closes 0.2 ATR below."),
+  r(5, "mp_single_print_long", "Single prints holding as support", "bullish", "Market profile", "mp_single", "any", 3, "structure", "A zone of at least 0.5 ATR that one candle only traded through inside a day of the last 5; a low touches it from above and closes 0.2 ATR above."),
+  r(5, "mp_single_print_short", "Single prints holding as resistance", "bearish", "Market profile", "mp_single", "any", 3, "structure", "Mirror from below."),
+  r(5, "mp_ledge_long", "Ledge holding as support", "bullish", "Market profile", "mp_ledge", "any", 3, "structure", "A day low of the last 5 touched by 3 or more candles within 0.1 ATR (a flat edge); a low comes back to it and closes 0.2 ATR above."),
+  r(5, "mp_ledge_short", "Ledge holding as resistance", "bearish", "Market profile", "mp_ledge", "any", 3, "structure", "A flat day high of the last 5 retested from below."),
+  r(5, "ib_break_up", "Break through the Initial Balance high", "bullish", "Initial balance", "ib_break", "any", 5, "structure", "After the opening hour (Setup: opening range), a close 0.1 ATR above today's Initial Balance high. Target: the IB range added to the high."),
+  r(5, "ib_break_down", "Break through the Initial Balance low", "bearish", "Initial balance", "ib_break", "any", 5, "structure", "Mirror below the IB low."),
+  r(5, "ib_retest_up", "Retest of the Initial Balance high after a break", "bullish", "Initial balance", "ib_retest", "any", 3, "structure", "After an IB-high break, the low comes back within 0.15 ATR of the IB high and closes above it."),
+  r(5, "ib_retest_down", "Retest of the Initial Balance low after a break", "bearish", "Initial balance", "ib_retest", "any", 3, "structure", "Mirror at the IB low."),
+  r(5, "profile_confluence_long", "Aggressive bounce off 3+ profile levels", "bullish", "Market profile", "profile_conf", "any", 3, "structure", "A bounce (close 0.3 ATR above the low) where at least 3 profile levels of the last 5 days (POC, VAH, VAL, IB high / low, nodes, single prints, ledges) sit within 0.3 ATR of the low."),
+  r(5, "profile_confluence_short", "Aggressive rejection at 3+ profile levels", "bearish", "Market profile", "profile_conf", "any", 3, "structure", "Mirror at the high."),
+  # Week 6: ADX and DMI (activity sheet 6)
+  r(6, "adx_pullback_up", "ADX falling during a pullback in an uptrend", "bullish", "ADX / DMI", "adx_pull", "trend", 3, "indicator", "ADX above 30 in the last 20 candles and now falling for 3 candles while +DI stays above -DI and price pulls back to within 0.5 ATR of the 20 EMA (the set-up of the Holy Grail)."),
+  r(6, "adx_pullback_down", "ADX falling during a pullback in a downtrend", "bearish", "ADX / DMI", "adx_pull", "trend", 3, "indicator", "Mirror with -DI above +DI."),
+  r(6, "dmi_buy_adx", "DMI buy in an uptrend with ADX confirming", "bullish", "ADX / DMI", "dmi_conf", "trend", 3, "indicator", "+DI crosses above -DI while ADX is 25 or more and rising."),
+  r(6, "dmi_sell_adx", "DMI sell in a downtrend with ADX confirming", "bearish", "ADX / DMI", "dmi_conf", "trend", 3, "indicator", "-DI crosses above +DI while ADX is 25 or more and rising.")
+  ) })
+cc_catalog <- rbind(cc_catalog, cc_catalog_course); rownames(cc_catalog) <- NULL
+stopifnot(!anyDuplicated(cc_catalog$key))
+# ********************* the course's four theoretical set-ups (Week 6 Thursday recap): Profiles, Trend, Reversal, Sideways
+cc_setup4 <- function(keys = cc_catalog$key) { i <- match(keys, cc_catalog$key); g <- cc_catalog$group[i]; rg <- cc_catalog$regime[i]; fam <- cc_catalog$family[i]; b <- cc_catalog$bias[i]; k <- cc_catalog$kind[i]
+  rev_g <- c("Candles (2-3)", "Single candles", "Reversal shapes", "Rounded shapes", "Rare shapes", "Divergence", "Harmonic & Elliott")
+  out <- ifelse(g %in% c("Volume profile", "Market profile", "Initial balance"), "Profiles",
+         ifelse(rg %in% "range" | g %in% c("Ranges", "Support & resistance") | fam %in% c("pivot_bounce", "bb_range", "rsi_range", "stoch_range"), "Sideways",
+         ifelse(g %in% rev_g | fam %in% c("macd_level", "trendline_break", "role_reversal") | grepl("fail|trap", keys), "Reversal", "Trend")))
+  out[is.na(i)] <- NA_character_; out }
+
 cc_cat_row <- function(key) cc_catalog[match(key, cc_catalog$key), , drop = FALSE]
+
+# ************* the course step each pattern is taught in (the same split as the Step-by-Step Practice tabs) and the
+# pattern groups with their steps: used by the "course tools in the analysis" choice of the Trading Desk
+cc_key_course_step <- function(keys = cc_catalog$key) { mx <- cc_catalog$matrix %in% TRUE; k <- cc_catalog$key[mx]; st <- cc_catalog$step[mx]   # matrix rows: course step from the matrix step; course rows: their own step
+  s6 <- c(k[st == 6], "holy_grail_long", "holy_grail_short", "adx_strong", "adx_weak", "di_x_up", "di_x_down")
+  s1 <- c(k[st == 1], "failed_breakout", "failed_breakdown", "throwback", "pullback_breakout", "round_number")
+  s3 <- c(setdiff(k[st == 5], s6), "vol_squeeze")
+  own <- cc_catalog$step[match(keys, cc_catalog$key)]; crs <- keys %in% cc_catalog$key[!mx]
+  ifelse(crs, as.integer(own), ifelse(keys %in% s6, 6L, ifelse(keys %in% s1, 1L, ifelse(keys %in% s3, 3L, ifelse(keys %in% k, 2L, NA_integer_))))) }
+cc_group_tbl <- function() { cs <- cc_key_course_step(); g <- unique(cc_catalog$group)
+  x <- do.call(rbind, lapply(g, function(gr) { s <- sort(unique(cs[cc_catalog$group == gr])); n <- sum(cc_catalog$group == gr)
+    data.frame(group = gr, n = n, first_step = s[1], steps = paste(sprintf("Step %d", s), collapse = " + "),
+               detail = paste(vapply(s, function(z) sprintf("Step %d: %d", z, sum(cs == z & cc_catalog$group == gr)), ""), collapse = ", "), stringsAsFactors = FALSE) }))
+  x[order(x$first_step, x$group), , drop = FALSE] }
+cc_course_step_names <- c("1" = "Support & resistance, trend lines, candles", "2" = "Fibonacci & price patterns", "3" = "Indicators", "5" = "Volume & market profile, initial balance", "6" = "Straddles, pivots, Holy Grail, ADX")
+# keep only the patterns of the chosen groups (NULL or all groups = everything)
+cc_groups_ok <- function(keys, groups) if (is.null(groups) || !length(groups)) rep(TRUE, length(keys)) else cc_catalog$group[match(keys, cc_catalog$key)] %in% groups

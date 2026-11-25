@@ -1,5 +1,6 @@
 # modules/_module_registry.yml
 # Central Module Registry - Business Operations Suite
+# Each sub-tab is ONE file: modules/<Tab group>/<id>.R (header + <id>_ui + <id>_server). See STRUCTURE.md.
 # Change 'enabled: false' to disable any module. Priority controls ordering
 # WITHIN each sidebar group. Group membership/order/expanded state is
 # controlled by the top-level `groups:` list below.
@@ -13,13 +14,13 @@ groups:
     label: "API Configuration"
     icon: "key"
     expanded: true
-    modules: [bigquery_auth, claude_api_config, titan_auth, debug_console]
+    modules: [bigquery_auth, claude_api_config, gdrive_api_config, titan_auth, debug_console]
     sections:
       - id: sec_connections
         label: "API Configuration"
         icon: "key"
-        modules: [bigquery_auth, claude_api_config, titan_auth, debug_console]
-        tab_labels: {bigquery_auth: "BigQuery", claude_api_config: "Claude", titan_auth: "Titan Calendar", debug_console: "Debug Console"}
+        modules: [bigquery_auth, claude_api_config, gdrive_api_config, titan_auth, debug_console]
+        tab_labels: {bigquery_auth: "BigQuery", claude_api_config: "Claude", gdrive_api_config: "Google Drive", titan_auth: "Titan Calendar", debug_console: "Debug Console"}
 
   - id: day_planner
     label: "Day Planner"
@@ -194,6 +195,11 @@ modules:
     enabled: true
     priority: 2
     description: "Claude API credentials management, shared by all suites"
+
+  gdrive_api_config:
+    enabled: true
+    priority: 2.5
+    description: "Shared Google Drive folder where saved diagrams are kept for other R Shiny apps"
 
   debug_console:
     enabled: true

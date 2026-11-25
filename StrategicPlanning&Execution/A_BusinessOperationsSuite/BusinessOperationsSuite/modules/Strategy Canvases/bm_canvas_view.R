@@ -18,6 +18,7 @@ bm_canvas_view_ui <- function(id) {
     ),
     fluidRow(
       column(12,
+             tags$div(id = ns("canvas_area"),
              h2("Business Model Canvas", style = "text-align: center; color: white; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);"),
              div(class = "canvas-grid",
                  div(class = "canvas-section key-partners partners",
@@ -38,7 +39,8 @@ bm_canvas_view_ui <- function(id) {
                      div(class = "section-title", span(class = "section-icon", "💰"), "Cost Structure"), htmlOutput(ns("f_cost_structure"))),
                  div(class = "canvas-section revenue-streams revenue",
                      div(class = "section-title", span(class = "section-icon", "💵"), "Revenue Streams"), htmlOutput(ns("f_revenue_streams")))
-             ))
+             )),
+             diagram_save_ui(ns("save_canvas"), formats = c("html", DIAGRAM_IMAGE_FORMATS, "csv")))
     )
   )
 }
@@ -70,6 +72,14 @@ bm_canvas_view_server <- function(id, api_manager) {
       }
     }
     render_defaults()
+    loaded <- reactiveVal(NULL)   # the canvas row shown (NULL = the template)
+    canvas_sel <- function() paste(c(input$business_area, input$project, input$business_focus), collapse = " / ")
+    diagram_save_server("save_canvas", "bm_canvas_view", session$ns("canvas_area"), "html", function() {
+      r <- loaded(); t <- if (is.null(r)) "" else attr(r, "sel")
+      list(title = if (is.null(r)) "Business Model Canvas (template)" else paste("Business Model Canvas", t), subtitle = t, bg = "#006b66",
+           data = data.frame(box = BM_CANVAS_LABELS, content = vapply(BM_CANVAS_FIELDS, function(f) diagram_plain(if (is.null(r)) bm_canvas_default_html[[f]] else as.character(r[[f]][1])), ""),
+                             stringsAsFactors = FALSE))
+    })
 
     setup_canvas_selection_cascade(input, output, session, api_manager)
 
@@ -91,14 +101,15 @@ bm_canvas_view_server <- function(id, api_manager) {
               output[[paste0("f_", f)]] <- renderUI(canvas_html_field(result[[f]][1], extra))
             })
           }
+          r <- result[1, , drop = FALSE]; attr(r, "sel") <- canvas_sel(); loaded(r)
           showNotification("✓ Canvas loaded successfully!", type = "message")
         } else {
           showNotification("No canvas found for this selection. Showing default template.", type = "warning")
-          render_defaults()
+          render_defaults(); loaded(NULL)
         }
       }, error = function(e) {
         showNotification(paste("Error loading canvas:", e$message), type = "error")
-        render_defaults()
+        render_defaults(); loaded(NULL)
       })
     })
   })

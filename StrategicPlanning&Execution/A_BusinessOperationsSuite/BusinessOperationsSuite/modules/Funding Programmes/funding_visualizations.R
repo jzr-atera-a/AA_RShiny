@@ -50,18 +50,20 @@ funding_visualizations_ui <- function(id) {
 
     fluidRow(
       box(title = "Overview", status = "info", solidHeader = TRUE, width = 12, collapsible = TRUE,
-          fluidRow(
+          tags$div(id = ns("overview_area"), fluidRow(
             column(3, valueBoxOutput(ns("total_programmes"), width = 12)),
             column(3, valueBoxOutput(ns("total_categories"), width = 12)),
             column(3, valueBoxOutput(ns("total_countries"), width = 12)),
             column(3, valueBoxOutput(ns("upcoming_deadlines"), width = 12))
-          )
+          )),
+          diagram_save_ui(ns("save_overview"), formats = c("html", DIAGRAM_IMAGE_FORMATS, "csv"))
       )
     ),
 
     fluidRow(
       box(title = "Programmes by Category", status = "warning", solidHeader = TRUE, width = 12, collapsible = TRUE,
-          plotlyOutput(ns("category_chart"), height = "400px"))
+          plotlyOutput(ns("category_chart"), height = "400px"),
+          diagram_save_ui(ns("save_chart"), formats = c("html", DIAGRAM_IMAGE_FORMATS, "csv")))
     ),
 
     fluidRow(
@@ -69,14 +71,58 @@ funding_visualizations_ui <- function(id) {
           htmlOutput(ns("programme_cards")))
     ),
 
-    generic_export_box_ui(ns, title = "Save These Programmes")
+    generic_export_box_ui(ns, title = "Save These Programmes", ics = TRUE,
+                          ics_extra_ui = checkboxInput(ns("ics_include_opens"), "Also add application-open dates", value = TRUE)),
+    fluidRow(column(12, uiOutput(ns("titan_buttons"))))   # Titan calendar buttons (Events Scheduling > Events to Calendar)
   )
+}
+
+# bar chart of programmes per category (shown in the tab and saved by "Save diagram")
+funding_category_plot <- function(data) {
+  cat_counts <- as.data.frame(table(data$category), stringsAsFactors = FALSE)
+  names(cat_counts) <- c("category", "count")
+  plot_ly(cat_counts, x = ~category, y = ~count, type = "bar", marker = list(color = "#008A82")) %>%
+    layout(title = "Programme Count by Category", xaxis = list(title = ""), yaxis = list(title = "Count"))
 }
 
 funding_visualizations_server <- function(id, api_manager) {
   moduleServer(id, function(input, output, session) {
 
     viz_data <- reactiveVal(NULL)
+
+    # Add to Calendar (.ics): deadlines (+ application-open dates) in each programme's saved time zone - R/utils_ics.R
+    ics_result <- reactive({
+      ics_safe_build(ics_events_funding, viz_data(), include_opens = isTRUE(input$ics_include_opens), alarms = isTRUE(input$ics_alarms))
+    })
+    output$export_ics_status <- renderUI(ics_status_html(ics_result(), loaded = !is.null(viz_data())))
+    output$export_ics <- downloadHandler(
+      filename = function() ics_filename("funding_deadlines"),
+      content = function(file) ics_write_safe(function() ics_result()$events, "Funding Programmes", file),
+      contentType = "text/calendar")
+    # the same deadlines straight into the Titan calendar (DaysPlanningExerciseTravel engine, R/suite_dpet.R)
+    DPET_ENV$titan_viz_hook(input, output, session, dpet_manager(api_manager), ics_result, "Funding Programmes")
+
+    # Save diagram bars (Google Drive / zip)
+    viz_filters <- function() paste(c(
+      paste("Category:", if (is.null(input$viz_category) || input$viz_category == "all") "All" else input$viz_category),
+      paste("Country:", if (is.null(input$viz_country) || input$viz_country == "all") "All" else input$viz_country),
+      if (!is.null(input$viz_cityregion) && input$viz_cityregion != "all") paste("Region:", input$viz_cityregion)), collapse = " | ")
+    no_data <- list(ready = FALSE, why = "Load programmes first (Apply Filters) - nothing to save yet.")
+    # the same files also go to CollaborationPlanning's <Country>/<Category>/<Topic> folder (when that folder is set up)
+    to_collab <- function(base) function(files) {
+      lv <- collab_output_levels(isolate(input$viz_country), isolate(input$viz_category))
+      p <- collab_write_outputs(lv, base, files)
+      if (is.null(p)) NULL else sprintf("Also in CollaborationPlanning's folder: %s/ (%d file(s))", paste(lv, collapse = "/"), length(p))
+    }
+    diagram_save_server("save_chart", "funding_visualizations", session$ns("category_chart"), "plotly", function() {
+      d <- isolate(viz_data()); if (is.null(d) || !nrow(d)) return(no_data)
+      counts <- as.data.frame(table(category = d$category), stringsAsFactors = FALSE); names(counts) <- c("category", "programmes")
+      list(title = "Programmes by Category", subtitle = paste(isolate(viz_filters()), "|", nrow(d), "programme(s)"), plot = funding_category_plot(d), data = counts)
+    }, also = to_collab("funding_programmes_by_category"))
+    diagram_save_server("save_overview", "funding_visualizations", session$ns("overview_area"), "html", function() {
+      d <- isolate(viz_data()); if (is.null(d) || !nrow(d)) return(no_data)
+      list(title = "Funding Overview", subtitle = paste(isolate(viz_filters()), "|", nrow(d), "programme(s)"), data = as.data.frame(d), bg = "#ffffff")
+    }, also = to_collab("funding_overview"))
 
     viz_taxonomy <- reactive({
       api_manager$state_trigger_funding()
@@ -143,12 +189,7 @@ funding_visualizations_server <- function(id, api_manager) {
         upcoming <- sum(grepl("^\\d{4}-\\d{2}-\\d{2}$", data$deadline) & data$deadline >= today_str, na.rm = TRUE)
         output$upcoming_deadlines <- renderValueBox({ valueBox(upcoming, "Upcoming Deadlines", icon = icon("clock"), color = "yellow") })
 
-        output$category_chart <- renderPlotly({
-          cat_counts <- as.data.frame(table(data$category), stringsAsFactors = FALSE)
-          names(cat_counts) <- c("category", "count")
-          plot_ly(cat_counts, x = ~category, y = ~count, type = "bar", marker = list(color = "#008A82")) %>%
-            layout(title = "Programme Count by Category", xaxis = list(title = ""), yaxis = list(title = "Count"))
-        })
+        output$category_chart <- renderPlotly(funding_category_plot(data))
 
         output$programme_cards <- renderUI({
           html_parts <- c()

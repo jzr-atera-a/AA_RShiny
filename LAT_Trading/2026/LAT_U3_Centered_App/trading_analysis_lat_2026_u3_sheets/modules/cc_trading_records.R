@@ -58,7 +58,8 @@ cc_trading_records_ui <- function(id, parts = FALSE) {
           tags$h4(style = "margin:0 0 4px 0; color:#111827; font-weight:800;", "Trading plan rules, checked on every deal *"),
           cc_rec_note("From your structured trading plan (course Week 4 and Weeks 7-8). Each rule set here is checked on the deal ticket in B. Analyse & Place; empty = not checked. ",
                       "A deal that breaks a rule can only be sent with a written reason, which is saved with the trade."),
-          fluidRow(column(4, textInput(ns("s_pl_markets"), cc_rec_lab("Markets allowed (Capital.com epics, comma separated)"), "OIL_BRENT")),
+          fluidRow(column(4, textInput(ns("s_pl_markets"), cc_rec_lab("Markets allowed (Capital.com epics, comma separated)"), "OIL_BRENT"),
+                          actionButton(ns("s_pl_use_watch"), "Use my markets (B. Analyse & Place, box 1)", class = "btn-xs", icon = icon("list"))),
                    column(2, textInput(ns("s_pl_from"), cc_rec_lab("Session from (UK)"), "07:00")), column(2, textInput(ns("s_pl_to"), cc_rec_lab("Session to (UK)"), "20:00")), column(2, checkboxInput(ns("s_pl_anyhours"), "Allow deals outside these hours (any hour, e.g. Asia / US sessions) *****", TRUE)),
                    column(2, num("s_pl_maxday", "Maximum deals per day", 3, min = 1)), column(2, num("s_pl_maxloss", "Daily loss limit (% of balance)", 2, min = 0, step = 0.25))),
           fluidRow(column(3, num("s_pl_ctr", "Counter-trend: extra R:R needed (or half size)", 0.5, min = 0, step = 0.25)),
@@ -83,18 +84,49 @@ cc_trading_records_ui <- function(id, parts = FALSE) {
 
       # ------------------------------------------------------------------------------------------- 2 MARKET & PATTERNS
       tabPanel("2. Market & Patterns",
-        cc_rec_box(1, "Market",
-          fluidRow(column(4, textInput(ns("m_search"), cc_rec_lab("Search Capital.com markets"), "Brent")),
+        cc_rec_box(1, "Market: any Capital.com asset class (forex, commodities, indices, shares, crypto, ETFs)",
+          fluidRow(column(4, selectInput(ns("m_quick"), cc_rec_lab("My markets: choose one to analyse"), choices = c("(choose)" = "", cc_watch_default), width = "100%")),
+                   column(8, selectizeInput(ns("m_watch"), cc_rec_lab("My markets (watchlist): used by the Morning Sheet rows and news, the one-click trade, the related markets and ML"),
+                                            choices = cc_watch_default, selected = cc_watch_default, multiple = TRUE, width = "100%", options = list(create = TRUE, plugins = list("remove_button"), placeholder = "type an epic or add the market chosen below")))),
+          fluidRow(column(4, actionButton(ns("m_watch_add"), "Add the market below to my markets", icon = icon("plus"))),
+                   column(3, actionButton(ns("m_watch_save"), "Save my markets", icon = icon("floppy-disk"), class = "btn-success", style = "color:#fff;")),
+                   column(5, uiOutput(ns("m_watch_msg")))),
+          tags$details(style = "border:1px solid #bae6fd; background:#f0f9ff; border-radius:8px; padding:6px 10px; margin:8px 0;",
+            tags$summary(style = "cursor:pointer; font-weight:800; color:#075985;", icon("sitemap"), " Browse every Capital.com market by asset class"),
+            fluidRow(column(3, tags$div(style = "margin-top:25px;", actionButton(ns("m_nav_load"), "Load the asset classes", icon = icon("download")))),
+                     column(4, selectInput(ns("m_cls"), cc_rec_lab("Asset class"), c("(load first)" = ""), width = "100%")),
+                     column(5, selectInput(ns("m_node"), cc_rec_lab("Group"), c("(choose the asset class)" = ""), width = "100%"))),
+            uiOutput(ns("m_nav_note"))),
+          fluidRow(column(4, textInput(ns("m_search"), cc_rec_lab("Or search Capital.com markets (name or epic)"), "Brent")),
                    column(2, tags$div(style = "margin-top:25px;", actionButton(ns("m_find"), "Search", icon = icon("magnifying-glass")))),
-                   column(6, selectInput(ns("m_epic"), cc_rec_lab("Market (epic)"), choices = c("(search first)" = ""), width = "100%"))),
-          uiOutput(ns("m_facts"))),
+                   column(6, selectInput(ns("m_epic"), cc_rec_lab("Market (epic)"), choices = c("(search, browse or choose one of my markets)" = ""), width = "100%"))),
+          uiOutput(ns("m_facts")), uiOutput(ns("m_profile"))),
         cc_rec_box(2, "Chart & every pattern of the matrix", tint = "#f5f3ff",
           fluidRow(column(6, checkboxInput(ns("c_auto"), tags$b("One step ********: the load button also works out the scenarios and asks the Claude API for its analysis and trades (today's Morning Sheet included when there is one)"), TRUE)),
                    column(6, checkboxInput(ns("c_auto_read"), cc_rec_lab("Also the Claude API's chart reading (pattern by pattern, about 1 more minute)"), FALSE))),
+          tags$div(style = "background:#fff7ed; border:2px solid #ea580c; border-radius:10px; padding:10px 14px; margin:4px 0 10px;",   # ********************
+            tags$div(style = "font-weight:800; font-size:15px; color:#9a3412;", "One click: find the best trade ********************"),
+            tags$div(style = "font-size:12.5px; color:#334155; margin:2px 0 6px;", "For every market listed: reads Capital.com prices, loads the chart and its patterns, works out the scenarios, asks the Claude API for its trades with today's Morning Sheet, ",
+              "saves all of it to BigQuery, then picks the scenario with the highest score and fills the ticket. You read the 5 reasons, correct the size if you wish, and approve: nothing is sent before that."),
+            fluidRow(column(6, textInput(ns("one_epics"), cc_rec_lab("Markets (Capital.com epics)"), "OIL_BRENT, OIL_CRUDE, NATURALGAS, EURUSD")),
+                     column(2, numericInput(ns("one_size"), cc_rec_lab("Size (units)"), 2, min = 0)),
+                     column(4, tags$div(style = "margin-top:25px;", actionButton(ns("one_go"), "Find the best trade", icon = icon("bolt"), style = "background:#ea580c; color:#fff; font-weight:800; white-space:normal; width:100%;")))),
+            uiOutput(ns("one_out"))),
+          tags$details(style = "border:1px solid #c4b5fd; border-radius:8px; padding:6px 10px; margin:4px 0 8px; background:#fff;",
+            tags$summary(style = "cursor:pointer; font-weight:800; color:#4c1d95;", "Course tools in the analysis *************: choose the pattern groups (each shows its course step)"),
+            cc_rec_note("Tick the groups of course tools to use. Only their patterns are drawn, used for the scenarios and the score, and given to the Claude API. Each pattern's record still comes from the whole history. Press Analyse after changing the choice."),
+            tags$div(style = "margin:4px 0;", actionButton(ns("c_groups_all"), "All", class = "btn-xs"), actionButton(ns("c_groups_none"), "None", class = "btn-xs"),
+              lapply(c(1, 2, 3, 5, 6), function(st) actionButton(ns(paste0("c_groups_s", st)), sprintf("Step %d: %s", st, cc_course_step_names[[as.character(st)]]), class = "btn-xs", title = "Tick or untick every group of this step"))),
+            { t <- cc_group_tbl(); col <- c("1" = "#0369a1", "2" = "#7c3aed", "3" = "#b45309", "5" = "#0f766e", "6" = "#be123c")
+              tags$div(class = "cc-groups", checkboxGroupInput(ns("c_groups"), NULL, selected = t$group, inline = TRUE,
+                choiceValues = t$group, choiceNames = lapply(seq_len(nrow(t)), function(i) tags$span(tags$b(t$group[i]), sprintf(" (%d) ", t$n[i]),
+                  tags$span(style = sprintf("background:%s; color:#fff; border-radius:10px; padding:1px 8px; font-size:11px; font-weight:700;", col[[as.character(t$first_step[i])]]), if (grepl("\\+", t$steps[i])) t$detail[i] else t$steps[i]))))) },
+            cc_rec_note("Step 4 (options, market cycle) has no chart patterns: the Dow phase is always shown with the scenarios. Step 5 uses time-at-price profiles of each UK day, because Capital.com gives no traded volume. OBV (Week 3) needs traded volume, so it cannot be used on Capital.com prices."),
+            uiOutput(ns("c_groups_note"))),
           fluidRow(column(3, selectInput(ns("c_window"), cc_rec_lab("Chart window"), cc_windows, selected = 48)), column(3, selectInput(ns("c_res"), cc_rec_lab("Candle size"), cc_candles, selected = "MINUTE_15")),
                    column(3, radioButtons(ns("c_src"), cc_rec_lab("Candles from"), c("Capital.com" = "CC", "Yahoo" = "YAHOO"), selected = "CC", inline = TRUE),
                           conditionalPanel(sprintf("input['%s'] == 'YAHOO'", ns("c_src")), textInput(ns("c_ysym"), cc_rec_lab("Yahoo symbol (empty = matched to the market)"), "", placeholder = "e.g. BZ=F"))),
-                   column(3, tags$div(style = "margin-top:25px;", actionButton(ns("c_load"), "Analyse: chart, patterns, scenarios & Claude", icon = icon("chart-line"), class = "btn-primary", style = "color:#fff; font-weight:700;")))),
+                   column(3, tags$div(style = "margin-top:25px;", actionButton(ns("c_load"), "Analyse: chart, patterns, scenarios & Claude", icon = icon("chart-line"), class = "btn-primary", style = "color:#fff; font-weight:700; white-space:normal; width:100%;")))),
           cc_rec_note("Candles are Capital.com mid prices (between bid and offer). Indicators use the window plus 250 earlier candles, so EMA200 is real. Each pattern is also found throughout the history set in Setup, ",
                       "so its record shows how often price reached its target before its stop within your holding time on THIS market and candle size. Records with fewer than 8 cases are shown but not trusted."),
           uiOutput(ns("c_info")),
@@ -148,13 +180,21 @@ cc_trading_records_ui <- function(id, parts = FALSE) {
       tabPanel("3. Plan & Order",
         cc_rec_box(1, "Your money: account, currency and open risk", tint = "#ecfeff", uiOutput(ns("p_money"))),
         cc_rec_box(2, "Scenarios: BUY or SELL at the market (a deal, active at once)", tint = "#eef6f5",
-          fluidRow(column(3, num("p_size", "Size you want (Capital.com units)", NA, min = 0)),
+          fluidRow(column(3, num("p_size", "Size you want (Capital.com units)", 2, min = 0)),   # ******************** default 2
                    column(3, num("p_rrr", "Minimum Reward:Risk for these trades", 1.5, min = 0.5, step = 0.1)),
                    column(3, uiOutput(ns("p_size_help"))),
                    column(3, tags$div(style = "margin-top:25px;", actionButton(ns("p_build"), "Work out the scenarios", icon = icon("calculator"), class = "btn-primary", style = "color:#fff; font-weight:700;")))),
           checkboxInput(ns("p_size_plan"), cc_rec_lab("Only when 'Size you want' is EMPTY: use the size for my plan risk (Setup risk %). A size you type is never changed (only halved when against the trend) *********"), FALSE),
+          tags$div(style = "background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:6px 10px; margin:4px 0; font-size:12.5px;",
+            tags$b("How to read the first two columns *************. "),
+            tags$span(style = "background:#16a34a; color:#fff; border-radius:6px; padding:0 6px; font-weight:800;", "65-100 strong"), " ",
+            tags$span(style = "background:#d97706; color:#fff; border-radius:6px; padding:0 6px; font-weight:800;", "50-64 fair"), " ",
+            tags$span(style = "background:#dc2626; color:#fff; border-radius:6px; padding:0 6px; font-weight:800;", "0-49 weak"),
+            tags$b(" Score 0-100: "), "50 means break-even. It starts from the chance against the break-even of the R:R, then adds or takes points for the evidence, the daily / 4-hour trend, the ADX regime, high-impact news in the holding time, confluence, the stop width in ATR, the spread, the Morning Sheet and the other plan rules. A blocked scenario is capped at 25. 'Why this score' lists every point. ",
+            tags$b("Chance of target first: "), "measured, not a forecast: the set-up's own record on this market, pulled towards the market's baseline when it has few cases. A chance below 50% can still be a good trade when the R:R is high: compare it with 'Break-even needed'."),
+          tags$details(tags$summary(style = "cursor:pointer; color:#475569; font-size:12.5px;", "How the levels, the evidence and the baseline are worked out"),
           cc_rec_note("Levels come from the patterns alive now (stop beyond the level that cancels the strongest in-regime pattern on that side, target at its measured target), else from the ATR template, which is labelled. ",
-                      "Stop and target are shown as prices and as their distance from the price now. Evidence **********: each scenario's own set-up record (cases in this market's history, with its likely range) against the break-even rate for its R:R; PROVEN only when the whole range is above break-even. Baseline: how often, from ANY candle whatever the set-up, price moved the target distance before the stop distance within your holding time (n = cases). Money is in your account currency at today's Capital.com exchange rate."),
+                      "Stop and target are shown as prices and as their distance from the price now. Evidence **********: each scenario's own set-up record (cases in this market's history, with its likely range) against the break-even rate for its R:R; PROVEN only when the whole range is above break-even. Baseline: how often, from ANY candle whatever the set-up, price moved the target distance before the stop distance within your holding time (n = cases). Money is in your account currency at today's Capital.com exchange rate.")),
           uiOutput(ns("p_scen_msg")), checkboxInput(ns("p_show_bad"), "Also show the scenarios that break my plan (red, cannot be used) *****", FALSE), DT::DTOutput(ns("p_scen")),
           fluidRow(column(8, uiOutput(ns("p_pick_ui"))), column(4, tags$div(style = "margin-top:25px;", actionButton(ns("p_use"), "Copy these levels into the order ticket", icon = icon("arrow-down"), class = "btn-success", style = "color:#fff; font-weight:700;")))),
           tags$div(style = "margin-top:8px; background:#faf5ff; border:1px solid #e9d5ff; border-radius:8px; padding:8px 12px;",
@@ -183,7 +223,7 @@ cc_trading_records_ui <- function(id, parts = FALSE) {
                    column(3, sliderInput(ns("o_mood"), cc_rec_lab("Mood (1-5)"), 1, 5, 3, step = 1))),
           fluidRow(column(3, sliderInput(ns("o_conf"), cc_rec_lab("Confidence in this trade (1-5) **"), 1, 5, 3, step = 1))),
           tags$div(style = "background:#fff; border:1px dashed #f59e0b; border-radius:8px; padding:8px 12px; margin:6px 0;",
-            tags$div(style = "font-weight:800; color:#92400e; margin-bottom:4px;", "Your own words (the app never fills these)"),
+            tags$div(style = "font-weight:800; color:#92400e; margin-bottom:4px;", "Your own words: boxes you leave empty are filled from the trade's saved facts; edit them freely ******************"),
             ta("o_fund", "Set-up (fundamental)"), ta("o_tech", "Set-up (technical)", 3),
             fluidRow(column(6, ta("o_trigger", "Trigger")), column(6, ta("o_exec", "Execution"))),
             fluidRow(column(6, ta("o_stopwhy", "Reason for stop-loss placement")), column(6, ta("o_tgtwhy", "Reason for target placement")))),
@@ -237,6 +277,13 @@ cc_trading_records_ui <- function(id, parts = FALSE) {
         ta("j_fund", "Set-up (fundamental)"), ta("j_tech", "Set-up (technical)", 3),
         fluidRow(column(6, ta("j_trigger", "Trigger")), column(6, ta("j_exec", "Execution"))),
         fluidRow(column(6, ta("j_stopwhy", "Reason for stop-loss placement")), column(6, ta("j_tgtwhy", "Reason for target placement"))),
+        tags$div(style = "background:#f5f3ff; border:1px solid #c4b5fd; border-radius:8px; padding:8px 12px; margin:6px 0 10px;",   # *******************
+          tags$div(style = "font-weight:800; color:#4c1d95;", "Suggestions for the six boxes above (Claude API) *******************"),
+          cc_rec_note("For each box: a suggested wording, the context behind it and a question to check before you write. You decide what goes in your box: press 'Copy into my box' only for what you agree with, then edit it. ",
+                      "Suggestions are saved to BigQuery with the trade but are never printed on the sheet; only your boxes are."),
+          fluidRow(column(4, actionButton(ns("j_sug_go"), "Ask for suggestions for the six boxes", icon = icon("lightbulb"), style = "background:#7c3aed; color:#fff; font-weight:700; white-space:normal;")),
+                   column(8, uiOutput(ns("j_sug_msg")))),
+          uiOutput(ns("j_sug_out"))),
         fluidRow(column(6, ta("j_why", "Reason for exit (after the exit code)", 3)), column(6, ta("j_lessons", "Lessons learned", 3))),
         ta("j_analysis", "Overall analysis", 4),
         fluidRow(column(3, radioButtons(ns("j_followed"), cc_rec_lab("Did you follow your plan?"), c("Yes" = "Y", "No" = "N"), inline = TRUE)),
@@ -319,7 +366,7 @@ cc_trading_records_ui <- function(id, parts = FALSE) {
   )
 }
 
-cc_trading_records_server <- function(id, client, api_manager = NULL, store = NULL, vision_fn = NULL, fetch_bars = NULL, now_fn = Sys.time, morning_fn = NULL, yahoo_fn = NULL) {
+cc_trading_records_server <- function(id, client, api_manager = NULL, store = NULL, vision_fn = NULL, fetch_bars = NULL, now_fn = Sys.time, morning_fn = NULL, yahoo_fn = NULL, records_store = NULL) {
   moduleServer(id, function(input, output, session) {
     `%||%` <- function(x, y) if (is.null(x) || !length(x) || (length(x) == 1 && is.na(x))) y else x   # NA counts as missing here
     if (is.null(store)) store <- cc_make_store(cc_bq_backend(api_manager))
@@ -349,19 +396,33 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
       v <- sv("cc_default_search"); if (!is.na(v)) updateTextInput(session, "m_search", value = v)
       for (k in pm_ids) { v <- sv(paste0("rec_", k)); if (!is.na(v) && v %in% cc_plan_mode_choices) updateSelectInput(session, k, selected = v) }
       v <- sv("rec_s_pl_setups"); if (!is.na(v)) updateSelectizeInput(session, "s_pl_setups", selected = strsplit(v, ",", fixed = TRUE)[[1]])
+      v <- sv("rec_c_groups"); if (!is.na(v)) updateCheckboxGroupInput(session, "c_groups", selected = strsplit(v, "|", fixed = TRUE)[[1]])
       v <- sv("rec_c_course"); if (!is.na(v)) updateCheckboxGroupInput(session, "c_course", selected = strsplit(v, ",", fixed = TRUE)[[1]]); course_loaded(TRUE) })
     course_loaded <- reactiveVal(FALSE)
-    observeEvent(input$save_settings, {
+    # ************* course tools (pattern groups) used in the analysis: NULL = all of them
+    groups_all <- cc_group_tbl()$group
+    groups_sel <- function() { g <- intersect(input$c_groups %||% character(0), groups_all); if (!length(g) || length(g) == length(groups_all)) NULL else g }
+    observeEvent(input$c_groups_all, updateCheckboxGroupInput(session, "c_groups", selected = groups_all))
+    observeEvent(input$c_groups_none, updateCheckboxGroupInput(session, "c_groups", selected = character(0)))
+    lapply(c(1, 2, 3, 5, 6), function(st) observeEvent(input[[paste0("c_groups_s", st)]], { t <- cc_group_tbl(); g <- t$group[grepl(paste0("Step ", st), t$steps)]; cur <- input$c_groups %||% character(0)
+      updateCheckboxGroupInput(session, "c_groups", selected = if (all(g %in% cur)) setdiff(cur, g) else union(cur, g)) }))
+    observeEvent(input$c_groups, { if (!course_loaded()) return(); store$write("settings", data.frame(setting_key = "rec_c_groups", setting_value = paste(input$c_groups %||% character(0), collapse = "|"), stringsAsFactors = FALSE)) }, ignoreInit = TRUE, ignoreNULL = FALSE)
+    output$c_groups_note <- renderUI({ g <- input$c_groups %||% character(0); t <- cc_group_tbl(); s <- scan(); n <- sum(t$n[t$group %in% g])
+      used <- if (is.null(s)) NULL else if (is.null(s$groups)) groups_all else s$groups; stale <- !is.null(s) && !setequal(used, if (length(g)) g else groups_all)
+      tags$div(style = sprintf("font-weight:700; margin:4px 0; color:%s;", if (!length(g) || stale) "#b45309" else "#166534"),
+        if (!length(g)) "Nothing ticked: the analysis will use ALL course tools." else sprintf("%d of %d groups ticked (%d of %d patterns). The chart, the scenarios, the score and the Claude API use only these.", length(g), nrow(t), n, nrow(cc_catalog)),
+        if (stale) " The chart on screen was analysed with a different choice: press Analyse again." else "") })
+    observeEvent(input$save_settings, withProgress(message = "Saving your settings to BigQuery...", value = 0.3, {
       ks <- c("s_name", "s_id", "s_start", "s_end", "s_balance", "s_risk", "s_cap", "s_minrrr", "s_adx_t", "s_adx_r", "s_hold", "s_hist_days", "s_on_from", "s_on_to", "s_or_start", "s_or_min", pl_txt, pl_num, pm_ids)
       df <- data.frame(setting_key = paste0("rec_", ks), setting_value = vapply(ks, function(k) { v <- input[[k]]; if (is.null(v) || !length(v)) NA_character_ else as.character(v) }, ""), stringsAsFactors = FALSE)
       df <- rbind(df, data.frame(setting_key = "rec_s_pl_setups", setting_value = paste(input$s_pl_setups %||% character(0), collapse = ","), stringsAsFactors = FALSE))
       w <- store$write("settings", df); touch(); output$settings_msg <- renderUI(tags$div(style = "color:#16a34a; margin-top:6px;", icon("check"), " Settings saved (", w, ")."))
-    })
+    }))
     plan <- reactive(list(risk = input$s_risk, cap = input$s_cap, min_rrr = input$s_minrrr, adx_t = input$s_adx_t, adx_r = input$s_adx_r, hold = input$s_hold))
-    observeEvent(input$ensure, { r <- tryCatch({ store$ensure(); "The cc_ tables and their _current views are ready." }, error = function(e) paste("Failed:", conditionMessage(e)))
-      output$setup_msg <- renderUI(tags$div(style = "margin-top:6px;", r)) })
-    observeEvent(input$sync_pending, { r <- tryCatch(sprintf("%d row(s) written to BigQuery.", store$sync()), error = function(e) conditionMessage(e)); touch(); output$setup_msg <- renderUI(tags$div(style = "margin-top:6px;", r)) })
-    observeEvent(input$reload, { store$invalidate(); touch(); note("Reloaded from BigQuery.") })
+    observeEvent(input$ensure, withProgress(message = "Creating the BigQuery tables...", value = 0.3, { r <- tryCatch({ store$ensure(); "The cc_ tables and their _current views are ready." }, error = function(e) paste("Failed:", conditionMessage(e)))
+      output$setup_msg <- renderUI(tags$div(style = "margin-top:6px;", r)) }))
+    observeEvent(input$sync_pending, withProgress(message = "Writing the waiting rows to BigQuery...", value = 0.3, { r <- tryCatch(sprintf("%d row(s) written to BigQuery.", store$sync()), error = function(e) conditionMessage(e)); touch(); output$setup_msg <- renderUI(tags$div(style = "margin-top:6px;", r)) }))
+    observeEvent(input$reload, withProgress(message = "Reloading from BigQuery...", value = 0.3, { store$invalidate(); touch(); note("Reloaded from BigQuery.") }))
     output$status_bar <- renderUI({ invalidateLater(5000); bump(); s <- client$status()
       chip <- function(ok, txt) tags$span(style = sprintf("display:inline-block; padding:3px 10px; border-radius:999px; margin-right:6px; font-size:12px; font-weight:700; background:%s; color:%s;",
                                                            if (ok) "#dcfce7" else "#fee2e2", if (ok) "#166534" else "#991b1b"), txt)
@@ -384,13 +445,67 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
 
     # ---- market search & facts ---------------------------------------------------------------------------------
     mkt <- reactiveVal(NULL)
-    observeEvent(input$m_find, { if (!ready()) return()
+    observeEvent(input$m_find, withProgress(message = "Searching Capital.com markets...", value = 0.3, { if (!ready()) return()
       m <- tryCatch(client$search_markets(input$m_search), error = function(e) { note(conditionMessage(e), "error"); list() })
       if (!length(m)) { updateSelectInput(session, "m_epic", choices = c("(nothing found)" = "")); return() }
       ch <- setNames(vapply(m, function(z) cc_chr(z$epic), ""), vapply(m, function(z) sprintf("%s  [%s, %s]", cc_chr(z$instrumentName), cc_chr(z$epic), cc_chr(z$instrumentType)), ""))
-      pref <- sv("cc_default_epic"); updateSelectInput(session, "m_epic", choices = ch, selected = if (!is.na(pref) && pref %in% ch) pref else ch[1]) })
+      pref <- sv("cc_default_epic"); updateSelectInput(session, "m_epic", choices = ch, selected = if (!is.na(pref) && pref %in% ch) pref else ch[1]) }))
     observeEvent(input$m_epic, { ep <- input$m_epic; if (!nzchar(ep %||% "") || !client$connected()) return()
-      f <- tryCatch(cc_market_facts(client$market(ep)), error = function(e) { note(conditionMessage(e), "error"); NULL }); mkt(f); read_account() }, ignoreInit = TRUE)
+      f <- tryCatch(cc_market_facts(client$market(ep)), error = function(e) { note(conditionMessage(e), "error"); NULL }); mkt(f)
+      if (!is.null(f)) cc_watch$info[[toupper(f$epic)]] <- list(epic = f$epic, name = f$name, type = f$type, currency = f$currency)
+      read_account() }, ignoreInit = TRUE)
+    # ---- every asset class: Capital.com's market tree, the watchlist ("my markets") and the market's profile ------------
+    nav <- reactiveValues(top = NULL, path = character(0))
+    set_epics <- function(df, sel = NULL) { ch <- cc_market_choices(df); updateSelectInput(session, "m_epic", choices = ch, selected = sel %||% ch[1]) }
+    observeEvent(input$m_nav_load, withProgress(message = "Reading Capital.com's asset classes...", value = 0.4, { if (!ready()) return()
+      x <- tryCatch(client$navigation(), error = function(e) { note(conditionMessage(e), "error"); NULL }); if (is.null(x)) return()
+      d <- cc_nav_nodes(x); nav$top <- d; updateSelectInput(session, "m_cls", choices = c("(choose)" = "", setNames(d$id, d$name)))
+      output$m_nav_note <- renderUI(cc_rec_note(sprintf("%d asset classes on Capital.com: %s. Choose one, then a group; its markets fill the Market list.", nrow(d), paste(d$name, collapse = ", ")))) }))
+    nav_open <- function(id, into_group = TRUE) withProgress(message = "Reading the markets of this group from Capital.com...", value = 0.4, {
+      x <- tryCatch(client$navigation_node(id), error = function(e) { note(conditionMessage(e), "error"); NULL }); if (is.null(x)) return()
+      nd <- cc_nav_nodes(x); mk <- cc_nav_markets(x)
+      if (nrow(nd) && into_group) updateSelectInput(session, "m_node", choices = c("(choose a group)" = "", setNames(nd$id, nd$name)))
+      if (nrow(mk)) set_epics(mk)
+      output$m_nav_note <- renderUI(cc_rec_note(sprintf("%s%s", if (nrow(nd)) sprintf("%d groups. ", nrow(nd)) else "", if (nrow(mk)) sprintf("%d markets are in the Market list below (%d open now).", nrow(mk), sum(mk$status %in% "TRADEABLE")) else "Choose a group."))) })
+    observeEvent(input$m_cls, { id <- input$m_cls %||% ""; if (!nzchar(id) || !client$connected()) return(); nav_open(id) }, ignoreInit = TRUE)
+    observeEvent(input$m_node, { id <- input$m_node %||% ""; if (!nzchar(id) || !client$connected()) return(); nav_open(id, into_group = FALSE)
+      # a group of groups: show its sub-groups in the same list
+      x <- tryCatch(client$navigation_node(id), error = function(e) NULL); nd <- if (is.null(x)) NULL else cc_nav_nodes(x); mk <- if (is.null(x)) NULL else cc_nav_markets(x)
+      if (!is.null(nd) && nrow(nd) && (is.null(mk) || !nrow(mk))) updateSelectInput(session, "m_node", choices = c("(choose a group)" = "", setNames(nd$id, nd$name))) }, ignoreInit = TRUE)
+    watch_ui <- function(sel = cc_watch_get()) { ch <- setNames(sel, vapply(sel, function(e) { i <- cc_watch_info(e); if (!is.na(i$name %||% NA) && i$name != e) sprintf("%s (%s)", i$name, e) else e }, ""))
+      updateSelectizeInput(session, "m_watch", choices = ch, selected = sel); updateSelectInput(session, "m_quick", choices = c("(choose)" = "", ch))
+      updateTextInput(session, "one_epics", value = paste(sel, collapse = ", ")) }
+    watch_loaded <- reactiveVal(FALSE)
+    observe({ s <- settings_df(); if (isTRUE(isolate(watch_loaded()))) return(); v <- sv("cc_watchlist"); if (is.na(v) || !nzchar(v)) return()
+      inf <- tryCatch(jsonlite::fromJSON(sv("cc_watchlist_info", "{}"), simplifyVector = FALSE), error = function(e) list())
+      cc_watch_set(v, inf); cc_register_watch(); isolate(watch_ui()); watch_loaded(TRUE) })
+    observeEvent(input$s_pl_use_watch, { updateTextInput(session, "s_pl_markets", value = paste(cc_watch_get(), collapse = ", ")); note("Markets allowed = my markets. Press Save settings to keep it.", "message") })
+    observeEvent(input$m_quick, { ep <- input$m_quick %||% ""; if (!nzchar(ep)) return()
+      i <- cc_watch_info(ep); updateSelectInput(session, "m_epic", choices = setNames(ep, sprintf("%s  [%s]", i$name %||% ep, ep)), selected = ep) }, ignoreInit = TRUE)
+    observeEvent(input$m_watch_add, { ep <- input$m_epic %||% ""; if (!nzchar(ep)) return(note("Choose a market first (search, browse or my markets).", "warning"))
+      sel <- unique(c(input$m_watch %||% character(0), ep)); watch_ui(sel); output$m_watch_msg <- renderUI(cc_rec_note(sprintf("%s added: press Save my markets to keep it.", ep))) })
+    observeEvent(input$m_watch_save, withProgress(message = "Saving my markets to BigQuery (and reading their details from Capital.com)...", value = 0.3, {
+      sel <- cc_watch_parse(input$m_watch %||% character(0)); if (!length(sel)) return(note("Add at least one market.", "warning"))
+      if (client$connected()) for (e in sel) if (is.null(cc_watch$info[[e]]) || is.na(cc_watch$info[[e]]$type %||% NA)) {
+        f <- tryCatch(cc_market_facts(client$market(e)), error = function(err) NULL); if (!is.null(f)) cc_watch$info[[e]] <- list(epic = f$epic, name = f$name, type = f$type, currency = f$currency) }
+      cc_watch_set(sel); cc_register_watch()
+      inf <- cc_watch$info[intersect(names(cc_watch$info), sel)]
+      w <- tryCatch(store$write("settings", data.frame(setting_key = c("cc_watchlist", "cc_watchlist_info"), setting_value = c(paste(sel, collapse = ","), cc_json(inf)), stringsAsFactors = FALSE)), error = function(e) paste("not saved:", conditionMessage(e)))
+      watch_ui(sel); touch(); pr <- cc_watch_profiles(sel)
+      output$m_watch_msg <- renderUI(tags$div(style = "font-size:12px; color:#166534;", icon("check"), sprintf(" %d markets saved (%s): %s.", length(sel), w, paste(sprintf("%s = %s", sel, vapply(pr, `[[`, "", "class_label")), collapse = "; ")))) }))
+    output$m_profile <- renderUI({ f <- mkt(); if (is.null(f)) return(NULL)
+      p <- cc_market_profile(f$epic, f$name, f$type, f$currency); h <- cc_hours_text(f$hours, now_fn())
+      st <- if (isTRUE(h$open) || identical(f$status, "TRADEABLE")) "#166534" else "#b91c1c"
+      li <- function(x) tags$ul(style = "margin:2px 0 0 0; padding-left:16px;", lapply(x, tags$li))
+      tags$div(style = "display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;",
+        tags$div(style = "flex:1 1 220px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:6px 10px; font-size:12px;",
+          tags$b(p$class_label), ": ", p$sub, tags$br(), tags$span(style = sprintf("color:%s; font-weight:700;", st), if (identical(f$status, "TRADEABLE")) "Tradeable now (Capital.com)" else if (!is.na(f$status %||% NA)) paste("Not tradeable now: Capital.com status", f$status) else sub(";.*", "", h$text)),
+          tags$br(), "Capital.com hours: ", sub("^(OPEN|CLOSED) now; ", "", h$text), tags$br(), "Sessions (UK): ", p$hours),
+        tags$div(style = "flex:2 1 320px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:6px 10px; font-size:12px;", tags$b("What moves it"), li(p$drivers)),
+        tags$div(style = "flex:1 1 240px; background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:6px 10px; font-size:12px;",
+          tags$b("Releases that matter"), tags$div(gsub("\\|", ", ", p$reports %||% "-")), tags$b("Related markets"), tags$div(if (length(p$related)) paste(p$related, collapse = ", ") else "-"),
+          tags$b("Yahoo symbol"), tags$div(if (is.na(p$yahoo)) "none (Capital.com candles only)" else p$yahoo),
+          tags$b("Deal sizes"), tags$div(sprintf("min %s, step %s, max %s", cc_fmt(f$min_size, 2), cc_fmt(f$size_step %||% NA, 3), cc_fmt(f$max_size, 0))))) })
     output$m_facts <- renderUI({ f <- mkt(); if (is.null(f)) return(cc_rec_note("Search, then choose the market. Its contract details come from Capital.com."))
       a <- acct(); acc_ccy <- if (is.null(a)) NA else a$currency; fx <- fx_info(f$currency, acc_ccy)
       spr <- f$offer - f$bid
@@ -421,7 +536,7 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
         if (nrow(b) < 60) stop("Only ", nrow(b), " candles were read.")
         setProgress(0.3); sf <- max(1L, nrow(b) - as.integer(round(win_h * 60 / mins)) + 1L)
         sc <- cc_scan(b, mins, list(adx_trend = input$s_adx_t, adx_range = input$s_adx_r, horizon = max(4L, as.integer(round(tr_num0(input$s_hold, 10) * 60 / mins))),
-                                    on_from = input$s_on_from, on_to = input$s_on_to, or_start = input$s_or_start, or_minutes = tr_num0(input$s_or_min, 60)),
+                                    on_from = input$s_on_from, on_to = input$s_on_to, or_start = input$s_or_start, or_minutes = tr_num0(input$s_or_min, 60), groups = groups_sel()),
                       daily = dly, show_from = sf, progress = function(v) setProgress(0.3 + 0.6 * v))
         list(scan = sc, meta = list(epic = f$epic, name = f$name, res = res, mins = mins, window = win_h, bars = nrow(b), source = if (yahoo) sprintf("Yahoo %s (shifted %+.3f)", ysym, yshift) else "Capital.com", from = min(b$time), to = max(b$time), loaded_at = format(now_fn(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"))) },
         error = function(e) { note(conditionMessage(e), "error"); NULL }))
@@ -455,12 +570,15 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
       touch(); tl_msg(list(length(miss) == 0, sprintf("%d overnight range(s) saved to BigQuery (cc_ranges).%s", done, if (length(miss)) paste(" Not found on Capital.com:", paste(miss, collapse = ", ")) else ""))) })
 
     # ******** one step: chart & patterns -> scenarios (price now, your plan) -> the Claude API's analysis with today's Morning Sheet (and past trades if ticked)
-    analyse_all <- function() { s0 <- scan(); do_load(); s1 <- scan(); if (is.null(s1) || identical(s1, s0)) return()
+    step <- function(v, m) tryCatch(setProgress(v, message = m), error = function(e) NULL)
+    analyse_all <- function() { s0 <- scan(); step(0.1, "Step 1 of 4: reading Capital.com prices and finding patterns..."); do_load(); s1 <- scan(); if (is.null(s1) || identical(s1, s0)) return()
       if (!isTRUE(input$c_auto)) return()
-      do_build(); if (is.null(scen())) return()
-      do_suggest(); if (isTRUE(input$c_auto_read)) do_reading()
+      step(0.4, "Step 2 of 4: working out the scenarios (prices, records, evidence)..."); do_build(); if (is.null(scen())) return()
+      step(0.6, "Step 3 of 4: the Claude API is choosing the recommended trade..."); do_suggest()
+      if (isTRUE(input$c_auto_read)) { step(0.85, "Step 4 of 4: the Claude API is reading the chart..."); do_reading() }
+      step(1, "Analysis done.")
       note("Analysis done: chart, scenarios and the Claude API's recommendation (with today's Morning Sheet when there is one). Choose a scenario in B. Analyse & Place: the ticket fills itself.") }
-    observeEvent(input$c_load, analyse_all())
+    observeEvent(input$c_load, withProgress(message = "Analysing: chart, patterns, scenarios and the Claude API...", value = 0.2, analyse_all()))
     # one checkbox per pattern alive, numbered as on the chart, with its bias colour, status and record; all ticked on load
     chosen <- reactiveVal(character(0))
     refresh_pick <- function(sc, first = FALSE, all = TRUE) chosen(if (nrow(sc$current_df)) sc$current_df$key else character(0))
@@ -509,7 +627,7 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
     # ---- save / reopen / download the scan
     c_saved_msg <- reactiveVal(NULL); daily_last <- reactiveVal(NULL)
     scan_settings <- function() list(adx_trend = input$s_adx_t, adx_range = input$s_adx_r, horizon = max(4L, as.integer(round(tr_num0(input$s_hold, 10) * 60 / (scan_meta()$mins %||% 15)))),
-                                     on_from = input$s_on_from, on_to = input$s_on_to, or_start = input$s_or_start, or_minutes = tr_num0(input$s_or_min, 60))
+                                     on_from = input$s_on_from, on_to = input$s_on_to, or_start = input$s_or_start, or_minutes = tr_num0(input$s_or_min, 60), groups = groups_sel())
     payload <- function() { s <- scan(); m <- scan_meta(); cc_scan_payload(s, m[setdiff(names(m), "restored")], if (isTRUE(m$restored)) m$settings else scan_settings(), daily_last()) }
     save_scan <- function(trade_id = NA_character_, note = "") { s <- scan(); m <- scan_meta(); if (is.null(s)) return(NA_character_); id <- cc_id("SC"); pl <- payload(); pl$note <- note
       cr <- claude_read(); if (!is.null(cr) && identical(cr$epic %||% m$epic, m$epic) && !is.na(cr$saved$id %||% NA)) pl$reading_id <- cr$saved$id   # ******** the Claude reading of this chart travels with the scan
@@ -517,16 +635,17 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
       w <- store$write("scans", data.frame(scan_id = id, trade_id = trade_id, epic = m$epic, resolution = m$res, n_candles = s$n, last_candle_utc = max(s$ctx$b$time), regime = s$regime, adx = s$adx,
                                           current_json = cc_json(cur), bars_json = cc_json(pl)))
       cat(sprintf("[C.C] scan %s saved (%s): %d candles, %d patterns\n", id, w, s$n, nrow(s$current_df))); touch(); attr(id, "where") <- w; id }
-    observeEvent(input$c_save, { if (is.null(scan())) { note("Load a chart first.", "warning"); return() }
+    observeEvent(input$c_save, withProgress(message = "Saving the scan to BigQuery...", value = 0.3, { if (is.null(scan())) { note("Load a chart first.", "warning"); return() }
       id <- tryCatch(save_scan(note = input$c_save_note %||% ""), error = function(e) { c_saved_msg(list(FALSE, conditionMessage(e))); NULL })
-      if (!is.null(id)) c_saved_msg(list(TRUE, sprintf("Saved as %s (%s) at %s UK.", id, attr(id, "where"), format(now_fn(), "%H:%M:%S", tz = "Europe/London")))) })
+      if (!is.null(id)) c_saved_msg(list(TRUE, sprintf("Saved as %s (%s) at %s UK.", id, attr(id, "where"), format(now_fn(), "%H:%M:%S", tz = "Europe/London")))) }))
     output$c_save_out <- renderUI({ m <- c_saved_msg(); if (is.null(m)) return(NULL); tags$div(style = sprintf("font-weight:700; color:%s;", if (m[[1]]) "#166534" else "#b91c1c"), m[[2]]) })
     observe({ x <- tbl("scans"); if (!nrow(x)) { updateSelectInput(session, "c_saved", choices = c("(none yet)" = "")); return() }
       x <- x[order(x$saved_at, decreasing = TRUE), , drop = FALSE]
       updateSelectInput(session, "c_saved", choices = setNames(x$scan_id, sprintf("%s | %s %s | last candle %s UK | %s, %d patterns%s", format(x$saved_at, "%d/%m %H:%M", tz = "Europe/London"), x$epic, x$resolution,
         format(x$last_candle_utc, "%d/%m %H:%M", tz = "Europe/London"), x$regime, vapply(x$current_json, function(j) tryCatch(NROW(jsonlite::fromJSON(j)), error = function(e) 0L), 0L),
         ifelse(is.na(x$trade_id), "", paste(" | trade", x$trade_id))))) })
-    observeEvent(input$c_open, { x <- tbl("scans"); r <- x[x$scan_id == (input$c_saved %||% ""), , drop = FALSE]; if (!nrow(r)) return()
+    observeEvent(input$c_open, withProgress(message = "Reading the saved scan from BigQuery...", value = 0.3, { r <- store$full_row("scans", input$c_saved %||% ""); if (!nrow(r)) return()
+      if (is.na(r$bars_json[1]) || !nzchar(r$bars_json[1])) { note("The candles of this saved scan could not be read from BigQuery (see the log).", "error"); return() }
       out <- withProgress(message = "Redrawing the saved scan...", value = 0.5, tryCatch(cc_scan_restore(r$bars_json[1]), error = function(e) { note(conditionMessage(e), "error"); NULL }))
       if (is.null(out)) return(); m <- out$meta; m$restored <- TRUE; m$settings <- out$saved$settings; m$to <- max(out$scan$ctx$b$time)
       scan(out$scan); scan_meta(m); refresh_pick(out$scan, all = TRUE)
@@ -534,7 +653,7 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
       claude_read(if (length(rid) && !is.na(rid)) tryCatch({ cr <- tbl("claude_readings"); cr <- cr[cr$reading_id == rid, , drop = FALSE]
         if (!nrow(cr)) NULL else { o <- cc_claude_parse(cr$reply_text[1], out$scan); o$course <- cc_course_parse(cr$reply_text[1]); o$course_facts <- tryCatch(jsonlite::fromJSON(cr$facts_json[1], simplifyVector = FALSE), error = function(e) list())
           o$saved <- list(id = rid, where = "bigquery (reopened)"); o$epic <- m$epic; o } }, error = function(e) NULL) else NULL)
-      c_saved_msg(list(TRUE, sprintf("Showing saved scan %s exactly as saved%s (view only: 'Analyse' brings back live prices).", r$scan_id[1], if (!is.null(claude_read())) ", with its Claude reading" else ""))) })
+      c_saved_msg(list(TRUE, sprintf("Showing saved scan %s exactly as saved%s (view only: 'Analyse' brings back live prices).", r$scan_id[1], if (!is.null(claude_read())) ", with its Claude reading" else ""))) }))
     dl_name <- function(what, ext) { m <- scan_meta(); sprintf("cc_scan_%s_%s_%s_%s.%s", m$epic %||% "market", m$res %||% "", format(m$to %||% Sys.time(), "%Y%m%d_%H%M", tz = "Europe/London"), what, ext) }
     output$c_dl_pat <- downloadHandler(filename = function() dl_name("patterns", "csv"), content = function(f) { s <- scan(); req(s)
       d <- s$current_df; d$label <- d$label; utils::write.csv(d, f, row.names = FALSE) })
@@ -577,7 +696,7 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
       store$write("scenarios", data.frame(row_id = paste0(bid, "_", seq_len(nrow(sc))), build_id = bid, build_type = type, epic = f$epic %||% NA_character_, source = g("source"), scenario_id = g("id"),
         side = g("side"), entry = g("entry"), stop = g("stop"), target = g("target"), rrr = g("rrr"), size = tr_num0(input$p_size, NA), risk_account = g("risk_acc"), reward_account = g("reward_acc"),
         blocked = g("blocked"), plan = g("plan"), checks = g("checks"), trend = paste(g("htf_d"), g("htf_h4"), g("htf_phase"), sep = " / "), confluence = g("confl"), news = g("news"),
-        claude_p = g("claude_p"), meas_p = g("meas_p"), note = g("note"), stringsAsFactors = FALSE)) }, error = function(e) cat("[C.C] scenarios NOT saved:", conditionMessage(e), "\n"))
+        claude_p = g("claude_p"), meas_p = g("meas_p"), note = g("note"), be_pct = g("be_pct"), setup_p = g("setup_p"), setup_n = g("setup_n"), evidence = g("evidence"), score = g("score"), chance = g("chance"), score_why = g("score_why"), stringsAsFactors = FALSE)) }, error = function(e) cat("[C.C] scenarios NOT saved:", conditionMessage(e), "\n"))
     observeEvent(input$c_course_all, updateCheckboxGroupInput(session, "c_course", selected = cc_course_checks$id))
     observeEvent(input$c_course_none, updateCheckboxGroupInput(session, "c_course", selected = character()))
     observeEvent(input$c_course, { if (!course_loaded()) return(); store$write("settings", data.frame(setting_key = "rec_c_course", setting_value = paste(input$c_course %||% character(0), collapse = ","), stringsAsFactors = FALSE)) }, ignoreInit = TRUE, ignoreNULL = FALSE)
@@ -616,10 +735,10 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
     do_reading <- function() { s <- scan(); m <- scan_meta(); if (is.null(s)) { note("Load the chart first.", "warning"); return() }
       cat("[C.C] Claude second reading with", length(input$c_course), "course check(s)\n")
       r <- withProgress(message = "Claude is reading the same candles...", value = 0.5, tryCatch({
-        cf <- course_facts(s, m); res <- vision_fn(paste0(cc_claude_prompt(s, m$name %||% m$epic, names(cc_candles)[cc_candles == m$res]), cc_course_prompt(cf))); tx <- if (is.list(res)) res$text else res
+        cf <- course_facts(s, m); res <- vision_fn(paste0(cc_claude_prompt(s, m$name %||% m$epic, names(cc_candles)[cc_candles == m$res]), cc_course_prompt(cf), { f0 <- mkt() %||% list(); tryCatch(paste0("\n", cc_profile_prompt(cc_market_profile(m$epic, m$name, f0$type, f0$currency), cc_hours_text(f0$hours, now_fn()))), error = function(e) "") })); tx <- if (is.list(res)) res$text else res
         out <- cc_claude_parse(tx, s); out$course <- cc_course_parse(tx); out$course_facts <- cf; out$saved <- save_reading(out, s, m, tx); out$epic <- m$epic; out },
         error = function(e) { cat("[C.C] Claude reading failed:", conditionMessage(e), "\n"); note(conditionMessage(e), "error"); NULL })); claude_read(r) }
-    observeEvent(input$c_claude, do_reading())
+    observeEvent(input$c_claude, withProgress(message = "The Claude API is reading the chart...", value = 0.2, do_reading()))
     output$c_claude_out <- renderUI({ r <- claude_read(); if (is.null(r)) return(NULL)
       tagList(
         if (nrow(r$checks)) tags$div(tags$b("On the rule findings:"), tags$ul(lapply(seq_len(nrow(r$checks)), function(k) tags$li(sprintf("%s: %s. %s", r$checks$key[k], r$checks$verdict[k], r$checks$reason[k]))))),
@@ -651,7 +770,7 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
         cc_rec_tile("1 point at your size", if (is.finite(vpp)) sprintf("%s = %s", cc_money(vpp, f$currency, 3), cc_money(vpp * fx$rate, a$currency, 3)) else "—", "size x lot size, then converted")),
         tags$div(actionButton(session$ns("p_refresh"), "Refresh balance", icon = icon("rotate")),
                  tags$span(style = "font-size:12px; color:#166534; margin-left:8px; font-weight:700;", sprintf("Read from Capital.com at %s UK", format(a$read_at, "%H:%M:%S", tz = "Europe/London"))))) })
-    observeEvent(input$p_refresh, { if (is.null(read_account())) note("The balance could not be read: is Capital.com connected?", "error") else note("Balance refreshed from Capital.com."); touch() })
+    observeEvent(input$p_refresh, withProgress(message = "Reading the balance from Capital.com...", value = 0.3, { if (is.null(read_account())) note("The balance could not be read: is Capital.com connected?", "error") else note("Balance refreshed from Capital.com."); touch() }))
     output$p_size_help <- renderUI({ f <- mkt(); if (is.null(f)) return(NULL)
       tags$div(style = "font-size:12px; color:#475569; margin-top:20px;", sprintf("Minimum %s. Units as Capital.com counts them for %s (lot size %s).", cc_fmt(f$min_size, 2), f$name %||% f$epic, cc_fmt(f$lot_size, 2))) })
     scen <- reactiveVal(NULL); scen_msg <- reactiveVal(NULL)
@@ -689,6 +808,7 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
       cd <- if (!is.null(s)) s$current_df else NULL; k1 <- vapply(strsplit(ifelse(is.na(sc$keys %||% ""), "", as.character(sc$keys %||% "")), ","), function(x) if (length(x)) x[1] else "", "")
       j <- if (is.null(cd) || !NROW(cd)) rep(NA_integer_, nrow(sc)) else match(k1, cd$key)
       sc$setup_p <- if (is.null(cd)) NA_real_ else suppressWarnings(as.numeric(cd$hist_win[j])); sc$setup_n <- if (is.null(cd)) NA_integer_ else suppressWarnings(as.integer(cd$hist_n[j]))
+      sc$in_regime <- if (is.null(cd) || !NROW(cd)) NA else as.logical(cd$in_regime[j])
       sc$setup_n[is.na(sc$setup_p)] <- NA; ev <- cc_evidence(sc$rrr, sc$setup_p, sc$setup_n)
       sc$be_pct <- ev$be; sc$evidence <- ev$verdict; sc$ev_record <- ev$record; sc$ev_exp_r <- ev$exp_r; sc$ev_proven <- ev$proven
       attr(sc, "ccy") <- a$currency; attr(sc, "d") <- d; attr(sc, "at") <- now_fn(); sc }
@@ -706,6 +826,8 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
       sc$prof <- vapply(seq_len(nrow(sc)), function(k) cc_profile_near(pf, sc$stop[k], sc$target[k], a1), "")
       sc$news <- cc_news_line(tryCatch(news(), error = function(e) NULL))
       sc <- scen_plan(sc)
+      sc$setup4 <- tryCatch(cc_scen_setup4(sc), error = function(e) rep(NA_character_, nrow(sc)))   # ********************* course set-up type
+      f <- mkt(); sc <- cc_success(sc, if (is.null(s)) NA_character_ else s$regime, a1, if (is.null(f)) 0 else suppressWarnings(as.numeric(f$offer - f$bid)))   # ************* score and chance
       for (k in names(a)) attr(sc, k) <- a[[k]]; sc }
     # ***** every scenario is checked against the trading plan, exactly as the ticket will be: a scenario that breaks a rule is blocked
     #       (the counter-trend rule is the exception: Use scenario halves the size, which is what the plan allows)
@@ -721,7 +843,9 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
       sc$blocked <- (sc$blocked %||% rep(FALSE, nrow(sc))) | hb; sc }
     news_ms <- reactive({ invalidateLater(15 * 60 * 1000); day <- as.Date(format(now_fn(), "%Y-%m-%d", tz = "Europe/London")); tryCatch(morning_fn(day), error = function(e) list(ok = FALSE, why = conditionMessage(e))) })
     news <- reactive({ invalidateLater(60 * 1000); m <- news_ms(); if (!isTRUE(m$ok)) return(NULL)
-      cc_news(m$releases %||% "", now_fn(), if (is.finite(hold_h())) hold_h() else tr_num0(input$s_hold, 10), tr_num0(input$s_pl_news, 30)) })
+      n <- cc_news(m$releases %||% "", now_fn(), if (is.finite(hold_h())) hold_h() else tr_num0(input$s_hold, 10), tr_num0(input$s_pl_news, 30))
+      f <- mkt(); n$for_market <- if (is.null(f) || !nrow(n)) rep(TRUE, nrow(n)) else cc_news_relevant(n$country, n$event, cc_market_profile(f$epic, f$name, f$type, f$currency))   # ******** only releases that move THIS market block it
+      n$in_window <- n$in_window & n$for_market; n })
     output$p_news <- renderUI({ m <- news_ms(); n <- news()
       if (!isTRUE(m$ok)) return(tags$div(style = "color:#92400e; font-weight:700;", icon("circle-xmark"), " Today's Morning Sheet is NOT loaded: ", m$why %||% "not available", " (no release check)."))
       if (is.null(n) || !nrow(n)) return(tags$div(style = "color:#166534;", icon("check"), " Today's Morning Sheet is loaded; it lists no releases for today."))
@@ -729,9 +853,9 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
                        if (any(n$in_window)) paste0("High-impact release in your holding time: ", paste(sprintf("%s %s", n$time[n$in_window], n$event[n$in_window]), collapse = "; "), ". The ticket will flag it.")
                        else "No high-impact release in your holding time."),
               tags$table(class = "table table-condensed", style = "font-size:12.5px; margin-top:4px;",
-                tags$tr(tags$th("UK time"), tags$th("Country"), tags$th("Impact"), tags$th("Release"), tags$th("What it means"), tags$th("In your window?")),
-                lapply(seq_len(nrow(n)), function(i) tags$tr(style = if (n$in_window[i]) "background:#fee2e2;" else "", tags$td(n$time[i]), tags$td(n$country[i]), tags$td(n$importance[i]),
-                                                             tags$td(n$event[i]), tags$td(n$meaning[i]), tags$td(if (n$in_window[i]) "YES" else "")))))
+                tags$tr(tags$th("UK time"), tags$th("Country"), tags$th("Impact"), tags$th("Release"), tags$th("What it means"), tags$th("Moves this market?"), tags$th("In your window?")),
+                lapply(seq_len(nrow(n)), function(i) tags$tr(style = if (n$in_window[i]) "background:#fee2e2;" else if (!isTRUE(n$for_market[i])) "color:#94a3b8;" else "", tags$td(n$time[i]), tags$td(n$country[i]), tags$td(n$importance[i]),
+                                                             tags$td(n$event[i]), tags$td(n$meaning[i]), tags$td(if (isTRUE(n$for_market[i])) "yes" else "no"), tags$td(if (n$in_window[i]) "YES" else "")))))
     })
     deals_today <- reactive({ t <- trades(); d0 <- format(now_fn(), "%Y-%m-%d", tz = "Europe/London")
       td <- t[!is.na(t$placed_ts) & format(t$placed_ts, "%Y-%m-%d", tz = "Europe/London") == d0 & !(t$status %in% c("REJECTED", "DUPLICATE")), , drop = FALSE]
@@ -763,7 +887,7 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
       tr <- htf(f$epic); dt <- deals_today(); rl <- plan_rules()
       cc_plan_check(list(ms_regime = tryCatch({ r <- ms_today(); cc_ms_regime(r$text %||% (r$ms %||% list())$text %||% "", f$name %||% f$epic) }, error = function(e) ""), usual_risk = usual_risk(), risk_money = tryCatch(as.numeric(t$budget$risk_account %||% t$risk_account %||% NA)[1], error = function(e) NA_real_),
         modes = pm_modes(), max_size = tr_num0(input$p_size, NA), atr = atr_now(), min_stop_atr = tr_num0(input$s_pl_stopatr, 1), max_stop_atr = tr_num0(input$s_pl_stopatr_max, 2.5),
-        stop_dist = if (is.finite(t$entry %||% NA)) abs(t$entry - tr_num0(input$o_stop, NA)) else { e0 <- if (identical(input$o_dir, "SELL")) f$bid else f$offer; abs(e0 - tr_num0(input$o_stop, NA)) },
+        stop_dist = if (is.finite(t$entry %||% NA)) abs(t$entry - (t$stop %||% tr_num0(input$o_stop, NA))) else { e0 <- if (identical(input$o_dir, "SELL")) f$bid else f$offer; abs(e0 - tr_num0(input$o_stop, NA)) },
         epic = f$epic, markets = input$s_pl_markets, from = input$s_pl_from, to = input$s_pl_to, any_hours = isTRUE(input$s_pl_anyhours), now = now_fn(), max_day = input$s_pl_maxday, n_today = dt$n,
         max_loss_pct = input$s_pl_maxloss, balance = a$balance %||% NA, pnl_today = dt$pnl, side = input$o_dir, d = tr$d, h4 = tr$h4, fit = cc_trend_fit(input$o_dir, tr$d, tr$h4),
         min_rrr = rrr_min(), ctr_extra = tr_num0(input$s_pl_ctr, 0.5), rrr = t$rrr %||% NA, size = tr_num0(input$o_size, NA), plan_size = t$size_for_plan %||% NA,
@@ -815,7 +939,9 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
         tags$tr(tags$td("Initial balance high / low"), tags$td(paste(f(p$ib_hi), "/", f(p$ib_lo))), tags$td(if (is.finite(p$ib_hi)) "Today's opening range (Setup)" else "Not formed yet today"))) })
     # ---- #10 related markets ---------------------------------------------------------------------------------------
     related <- reactive({ s <- scan(); m <- scan_meta(); if (is.null(s) || is.null(m)) return(NULL)
-      eps <- setdiff(trimws(unlist(strsplit(input$s_rel_epics %||% "", "[,;]"))), c("", m$epic)); if (!length(eps)) return(NULL)
+      f <- mkt(); pr <- if (is.null(f)) NULL else cc_market_profile(f$epic, f$name, f$type, f$currency)   # the market's own related markets (any asset class) are added to Setup's list
+      own <- if (is.null(pr)) character(0) else utils::head(setdiff(pr$related, c("DXY", "VIX")), 3)
+      eps <- setdiff(unique(toupper(c(trimws(unlist(strsplit(input$s_rel_epics %||% "", "[,;]"))), own))), c("", toupper(m$epic))); if (!length(eps)) return(NULL)
       do.call(rbind, lapply(eps, function(e) { b <- tryCatch(fetch_bars(e, m$res, min(s$ctx$b$time), max(s$ctx$b$time)), error = function(x) NULL)
         if (is.null(b) || nrow(b) < 2) return(data.frame(epic = e, move = NA_real_, corr = NA_real_, note = "no candles (check the epic)", stringsAsFactors = FALSE))
         data.frame(epic = e, move = 100 * (utils::tail(b$close, 1) / b$close[1] - 1), corr = cc_corr(s$ctx$b, b), note = "", stringsAsFactors = FALSE) })) })
@@ -903,11 +1029,11 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
     events_t <- reactive(tbl("events"))
     observe({ t <- trades(); c0 <- t[t$status %in% "CLOSED", , drop = FALSE]; c0 <- c0[order(c0$exit_ts, decreasing = TRUE), , drop = FALSE]
       updateSelectInput(session, "rf_pick", choices = if (nrow(c0)) setNames(c0$trade_id, sprintf("%s %s %s, closed %s", c0$trade_id, c0$direction, c0$epic, format(c0$exit_ts, "%d/%m %H:%M", tz = "Europe/London"))) else c("(none)" = "")) })
-    observeEvent(input$rf_save, { id <- input$rf_pick; if (!nzchar(id %||% "")) { note("Choose a closed trade.", "warning"); return() }
+    observeEvent(input$rf_save, withProgress(message = "Saving your reflection to BigQuery...", value = 0.3, { id <- input$rf_pick; if (!nzchar(id %||% "")) { note("Choose a closed trade.", "warning"); return() }
       store$write("events", data.frame(event_id = cc_id("EV"), trade_id = id, event_type = "REFLECTION", note = sprintf("Plan followed: %s; felt: %s; lesson: %s", input$rf_plan, input$rf_feel, input$rf_lesson),
                                        response_json = cc_json(list(plan = input$rf_plan, feel = input$rf_feel, lesson = input$rf_lesson)), stringsAsFactors = FALSE)); touch()
       output$rf_out <- renderUI(tags$div(style = "color:#16a34a;", icon("check"), " Reflection saved with ", id, "."))
-      updateTextAreaInput(session, "rf_lesson", value = "") })
+      updateTextAreaInput(session, "rf_lesson", value = "") }))
     refl <- reactive({ e <- events_t(); e <- e[e$event_type %in% "REFLECTION", , drop = FALSE]; if (!nrow(e)) return(NULL)
       e <- e[order(e$saved_at), , drop = FALSE]; e <- e[!duplicated(e$trade_id, fromLast = TRUE), , drop = FALSE]
       e$plan <- vapply(e$response_json, function(j) tryCatch(jsonlite::fromJSON(j)$plan %||% NA_character_, error = function(x) NA_character_), ""); e })
@@ -917,19 +1043,19 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
       do.call(rbind, lapply(split(seq_len(nrow(t)), t$plan), function(i) data.frame(`Plan followed` = t$plan[i[1]], Trades = length(i), `Win %` = round(100 * mean(pl[i] > 0)), `Net P/L` = round(sum(pl[i], na.rm = TRUE), 2), check.names = FALSE))) })
     output$ps_bias <- renderTable({ b <- cc_bias_checks(trades()); if (is.null(b)) data.frame(Note = "Needs at least 2 closed trades.") else setNames(b, c("Bias", "In your trades?", "Detail")) })
     attitude <- reactive({ e <- events_t(); e <- e[e$event_type %in% "ATTITUDE", , drop = FALSE]; if (!nrow(e)) return(NULL); e[order(e$saved_at), , drop = FALSE] })
-    observeEvent(input$at_save, { x <- vapply(seq_along(cc_attitude_items), function(i) as.numeric(input[[paste0("at_", i)]] %||% NA), 0); sc <- cc_attitude_score(x)
+    observeEvent(input$at_save, withProgress(message = "Saving the attitude survey to BigQuery...", value = 0.3, { x <- vapply(seq_along(cc_attitude_items), function(i) as.numeric(input[[paste0("at_", i)]] %||% NA), 0); sc <- cc_attitude_score(x)
       store$write("events", data.frame(event_id = cc_id("EV"), trade_id = NA_character_, event_type = "ATTITUDE", note = sprintf("Attitude survey %d / %d (%d%%): %s", sc$score, sc$max, sc$pct, sc$band),
-                                       response_json = cc_json(list(answers = x, score = sc$score, pct = sc$pct)), stringsAsFactors = FALSE)); touch() })
+                                       response_json = cc_json(list(answers = x, score = sc$score, pct = sc$pct)), stringsAsFactors = FALSE)); touch() }))
     output$at_out <- renderUI({ a <- attitude(); if (is.null(a)) return(cc_rec_note("Not answered yet."))
       last <- tryCatch(jsonlite::fromJSON(utils::tail(a$response_json, 1)), error = function(e) NULL); sc <- if (is.null(last)) NULL else cc_attitude_score(last$answers)
       tagList(if (!is.null(sc)) tags$div(style = "font-weight:700;", sprintf("Latest: %d / %d (%d%%), %s.", sc$score, sc$max, sc$pct, sc$band), tags$br(), tags$span(style = "font-weight:400;", "Weakest: ", paste(sc$weakest, collapse = "; "))),
         if (nrow(a) > 1) tags$div(style = "font-size:12px; color:#475569;", "History: ", paste(sprintf("%s %s", format(a$saved_at, "%d/%m", tz = "Europe/London"), sub("Attitude survey ([0-9]+ / [0-9]+).*", "\\1", a$note)), collapse = " | "))) })
-    do_build <- function() { s <- scan(); f <- mkt(); a <- acct() %||% read_account()
+    do_build <- function(size = NULL) { s <- scan(); f <- mkt(); a <- acct() %||% read_account(); rec_pending(NULL)
       fail <- function(t) { scen_msg(list(FALSE, t)); note(t, "warning") }
       if (is.null(s) || is.null(f)) { fail("Load the market and its chart in B. Analyse & Place first."); return() }
       if (isTRUE(scan_meta()$restored)) { fail("B shows a saved scan: press 'Analyse' for live prices first."); return() }
       if (is.null(a)) { fail("The account could not be read from Capital.com (see the log)."); return() }
-      sz <- tr_num0(input$p_size, NA); if (!is.finite(sz) || sz <= 0) { fail("Type the size you want first."); return() }
+      sz <- if (!is.null(size) && isTRUE(is.finite(size)) && size > 0) size else tr_num0(input$p_size, NA); if (!is.finite(sz) || sz <= 0) { fail("Type the size you want first."); return() }
       res <- tryCatch({
         f2 <- tryCatch(cc_market_facts(client$market(f$epic)), error = function(e) f); mkt(f2)   # fresh bid / offer
         flt <- list(frac = tr_num0(input$s_pl_filt_atr, 0.1), n = tr_num0(input$s_pl_filt_n, 1))
@@ -944,12 +1070,13 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
       scen_msg(list(TRUE, sprintf("%d market scenarios (deals) worked out at %s UK for size %s and a minimum Reward:Risk of %s, from the price then (bid %s / offer %s). Each is sent at the price of the moment you press Send; its stop and target keep their distances, so its R:R stays. %d blocked by a check.",
                                   nrow(res), format(now_fn(), "%H:%M:%S", tz = "Europe/London"), sz, cc_fmt(rrr_min(), 2), cc_fmt_px(mkt()$bid, d), cc_fmt_px(mkt()$offer, d), sum(res$blocked))))
       cat(sprintf("[C.C] scenarios: size %s, %d of %d blocked\n", sz, sum(res$blocked), nrow(res))) }
-    observeEvent(input$p_build, do_build())
+    observeEvent(input$p_build, withProgress(message = "Working out the scenarios: prices, records and evidence...", value = 0.3, do_build()))
     scen_view <- reactive({ sc <- scen(); if (is.null(sc) || isTRUE(input$p_show_bad)) return(sc); a <- attributes(sc)[c("ccy", "d", "at")]; x <- sc[!sc$blocked, , drop = FALSE]; for (k in names(a)) attr(x, k) <- a[[k]]; x })
     output$p_scen <- DT::renderDT({ sc <- scen_view(); if (!is.null(sc) && !nrow(sc)) return(DT::datatable(data.frame(Note = "No scenario fits your trading plan right now (see the red line above). Tick 'Also show the scenarios that break my plan' to see them and why."), rownames = FALSE, options = list(dom = "t")))
       if (is.null(sc)) return(DT::datatable(data.frame(Note = "Type a size and press 'Work out the scenarios'."), rownames = FALSE, options = list(dom = "t")))
       cy <- attr(sc, "ccy"); d <- attr(sc, "d") %||% 4; hh <- hold_h()
-      x <- data.frame(From = sc$source, Scenario = sc$id, `Price now` = cc_fmt_px(sc$now_px, d),
+      x <- data.frame(`Score 0-100` = if (is.null(sc$score)) NA_integer_ else sc$score, `Chance of target first` = if (is.null(sc$chance)) "-" else sprintf("%.0f%%", sc$chance),
+                      From = sc$source, Scenario = sc$id, `Course set-up (Week 6)` = sc$setup4 %||% "-", `Why this score` = sc$score_why %||% "-", `Chance from` = sc$chance_why %||% "-", `Price now` = cc_fmt_px(sc$now_px, d),
                       Entry = cc_fmt_px(sc$entry, d), `Entry vs now` = "at the price (deal)",
                       Stop = cc_fmt_px(sc$stop, d), `Stop vs now` = cc_vs_now(sc$stop, sc$now_px, d), Target = cc_fmt_px(sc$target, d), `Target vs now` = cc_vs_now(sc$target, sc$now_px, d),
                       `R:R` = round(sc$rrr, 2), `Plan *****` = sc$plan %||% "-", `Trend daily / 4h *` = if (is.null(sc$htf_d)) "-" else paste0(sc$htf_d, " / ", sc$htf_h4, "; phase: ", sc$htf_phase %||% "-"),
@@ -962,7 +1089,13 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
                       `Risk` = cc_money(sc$risk_acc, cy), `% of balance` = round(sc$risk_pct, 2), Reward = cc_money(sc$reward_acc, cy),
                       `Balance if stop` = cc_money(sc$bal_stop, cy), `Balance if target` = cc_money(sc$bal_target, cy), Margin = cc_money(sc$margin, cy),
                       `Size for your plan risk` = round(sc$size_plan, 2), Checks = sc$checks, How = sc$note, `Patterns / reasons` = sc$basis, check.names = FALSE)
-      dt <- DT::datatable(x, rownames = FALSE, options = list(dom = "t", scrollX = TRUE, pageLength = 12))
+      first <- c("Score 0-100", "Chance of target first", "From", "Scenario", "Course set-up (Week 6)", "R:R", "Evidence **********", "This set-up's own record", "Break-even needed", "Plan *****", "With the trend? *", "Entry", "Stop", "Target", "Risk", "Reward", "Why this score", "Chance from")   # *********** what decides the trade first
+      x <- x[, c(intersect(first, names(x)), setdiff(names(x), first)), drop = FALSE]
+      dt <- DT::datatable(x, rownames = FALSE, options = list(dom = "t", scrollX = TRUE, pageLength = 12, order = list(list(0, "desc"))))
+      dt <- DT::formatStyle(dt, "Score 0-100", fontWeight = "800", fontSize = "17px", textAlign = "center", color = "#fff",
+                            backgroundColor = DT::styleInterval(c(49.5, 64.5), c("#dc2626", "#d97706", "#16a34a")))
+      dt <- DT::formatStyle(dt, "Chance of target first", fontWeight = "700", textAlign = "center")
+      wide <- intersect(c("Why this score", "Plan *****", "Patterns / reasons", "How", "News in holding time *", "Checks", "Chance from", "Evidence **********"), names(x)); dt <- DT::formatStyle(dt, wide, `min-width` = "260px")
       # colour blocked rows only when there are some: an empty styleEqual() writes broken JavaScript and the table never draws
       if (any(sc$blocked)) dt <- DT::formatStyle(dt, "Scenario", target = "row", backgroundColor = DT::styleEqual(sc$id[sc$blocked], rep("#fee2e2", sum(sc$blocked))))
       if (any(sc$source == "Claude")) dt <- DT::formatStyle(dt, "From", backgroundColor = DT::styleEqual("Claude", "#ede9fe"))
@@ -979,14 +1112,15 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
           tags$div(style = sprintf("margin:6px 0; padding:6px 10px; border-radius:8px; font-weight:700; background:%s; color:%s;", if (ok) "#dcfce7" else "#fee2e2", if (ok) "#166534" else "#991b1b"),
             if (ok) sprintf("%d of %d scenario(s) fit your trading plan (Plan ***** = OK or half size). Only these can be sent.", ok, nrow(sc))
             else paste0("No scenario fits your trading plan right now, so none can be sent", if (length(common)) paste0(": every one breaks ", paste(common, collapse = "; ")) else "", ". Wait until the rule is met (for example the session opens or the news window passes) and work them out again.")) }) })
-    output$p_pick_ui <- renderUI({ sc <- scen(); if (is.null(sc)) return(NULL); sc <- sc[!sc$blocked, , drop = FALSE]; if (!nrow(sc)) return(cc_rec_note("No scenario that fits your plan to choose.")); radioButtons(session$ns("p_pick"), cc_rec_lab("Your choice (only scenarios that fit your plan)"), setNames(sc$id, sc$id), selected = character(0), inline = TRUE) })
-    do_use <- function(quiet = FALSE) { sc <- scen(); pk <- input$p_pick; k <- if (is.null(sc) || !length(pk)) NA_integer_ else match(pk[1], sc$id); if (is.null(sc) || isTRUE(is.na(k))) { if (!quiet) note("Choose a scenario first.", "warning"); return() }
+    output$p_pick_ui <- renderUI({ sc <- scen(); if (is.null(sc)) return(NULL); sc <- sc[!sc$blocked, , drop = FALSE]; if (!nrow(sc)) return(cc_rec_note("No scenario that fits your plan to choose.")); rp <- isolate(rec_pending()); radioButtons(session$ns("p_pick"), cc_rec_lab("Your choice (only scenarios that fit your plan)"), setNames(sc$id, ifelse(sc$id %in% rp, paste(sc$id, "(recommended)"), sc$id)), selected = if (length(rp) && rp %in% sc$id) rp else character(0), inline = TRUE) })
+    do_use <- function(quiet = FALSE, pick = NULL, size = NULL) { sc <- scen(); pk <- pick %||% input$p_pick; k <- if (is.null(sc) || !length(pk)) NA_integer_ else match(pk[1], sc$id); if (is.null(sc) || isTRUE(is.na(k))) { if (!quiet) note("Choose a scenario first.", "warning"); return() }
       if (isTRUE(sc$blocked[k])) { note(paste("This scenario breaks your plan or a check:", sc$checks[k]), "error"); return() }
       r <- sc[k, ]; d <- attr(sc, "d") %||% 5; updateRadioButtons(session, "o_dir", selected = r$side); updateNumericInput(session, "o_stop", value = round(r$stop, d))
       updateNumericInput(session, "o_target", value = round(r$target, d))
+      tk_anchor(list(side = r$side, entry = r$entry, stop = round(r$stop, d), target = round(r$target, d)))
       need <- rrr_min() + tr_num0(input$s_pl_ctr, 0.5); half <- isTRUE(identical(r$fit, "against") && is.finite(r$rrr) && is.finite(need) && r$rrr < need - 1e-9)
       # ********* the size YOU typed is used, never replaced. Only when 'Size you want' is empty is your plan-risk size used (box ticked).
-      typed <- tr_num0(input$p_size, NA); plan_sz <- suppressWarnings(as.numeric(r$size_plan %||% NA))
+      typed <- if (!is.null(size) && is.finite(size)) size else tr_num0(input$p_size, NA); plan_sz <- suppressWarnings(as.numeric(r$size_plan %||% NA))
       base <- if (is.finite(typed) && typed > 0) typed else if (isTRUE(input$p_size_plan) && isTRUE(is.finite(plan_sz) && plan_sz >= 1)) floor(plan_sz) else NA
       if (!is.finite(base)) { note("Type the size you want in box 2 first.", "warning"); return() }
       sz <- if (half) max(1, floor(base * 0.5)) else base
@@ -998,12 +1132,12 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
       note(sprintf("%s copied into the order ticket: %s, size %s%s, %s, chart %s, %s h. Your reasoning boxes are left for you.", r$id, r$side, format(sz), if (half) sprintf(" (HALF of your %s: against the higher time-frame trend with R:R below the extra needed)", format(base)) else if (!(is.finite(typed) && typed > 0)) " (your plan risk, as 'Size you want' was empty)" else " (the size you typed)",
                    names(cc_setup_choices)[match(cc_scen_setup(r), cc_setup_choices)], cc_chart_label(m$res %||% ""), format(hh)), if (half) "warning" else "message") }
     observeEvent(input$p_pick, do_use(quiet = TRUE))   # ******** choosing the radio button fills the whole ticket
-    observeEvent(input$p_use, do_use())
+    observeEvent(input$p_use, withProgress(message = "Filling the ticket...", value = 0.2, do_use()))
 
     # ---- Claude's suggested trades: Capital.com data + patterns + (by default) today's Morning Sheet from BigQuery
     if (is.null(morning_fn)) morning_fn <- function(day) {
       if (is.null(api_manager) || !isTRUE(api_manager$bq_authenticated)) return(list(ok = FALSE, why = "BigQuery is not connected."))
-      st <- tr_make_store(tr_bq_backend(api_manager)); sh <- tr_read_current(st, "morning_sheets")
+      st <- records_store %||% tr_make_store(tr_bq_backend(api_manager)); sh <- tr_read_current(st, "morning_sheets")   # *********** the Trading Desk's own store: its rows are already in memory, so no new BigQuery read each time
       has <- !is.null(sh) && nrow(sh) && any(!is.na(sh$sheet_date) & as.Date(sh$sheet_date) == day)
       if (!has) return(list(ok = FALSE, why = sprintf("No Morning Sheet for %s in BigQuery.", format(day, "%d/%m/%Y")), missing = TRUE))
       ms <- tryCatch(cc_morning_sheet(sh, tryCatch(tr_read_current(st, "morning_levels"), error = function(e) NULL), day),
@@ -1014,7 +1148,7 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
     load_ms <- function() { day <- as.Date(format(now_fn(), "%Y-%m-%d", tz = "Europe/London"))
       r <- tryCatch(morning_fn(day), error = function(e) list(ok = FALSE, why = paste("Could not read it:", conditionMessage(e)), missing = FALSE))
       cat("[C.C] Morning Sheet of", format(day), ":", if (isTRUE(r$ok)) "found" else r$why, "\n"); ms_today(r); r }
-    observeEvent(input$p_ms_reload, load_ms())
+    observeEvent(input$p_ms_reload, withProgress(message = "Reading today's Morning Sheet from BigQuery...", value = 0.3, load_ms()))
     output$p_ms_ui <- renderUI({ r <- ms_today(); if (is.null(r)) r <- isolate(load_ms())
       if (isTRUE(r$ok)) tagList(radioButtons(session$ns("p_ms_use"), cc_rec_lab("Include today's Morning Sheet"), c("Yes" = "yes", "No" = "no"), selected = isolate(input$p_ms_use) %||% "yes", inline = TRUE),
                                 tags$div(style = "font-size:12px; color:#166534;", icon("check"), sprintf(" Today's Morning Sheet found in BigQuery (saved %s UK).", format(r$saved_at, "%H:%M", tz = "Europe/London"))))
@@ -1024,7 +1158,7 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
     output$p_hist_info <- renderUI({ trades(); claude_info(); input$p_hist_use; ht <- tryCatch(cc_recent_trades(tryCatch(store$current("trades"), error = function(e) trades()), now_fn(), 4), error = function(e) NULL); n <- if (is.null(ht)) 0L else nrow(ht)
       days <- format(rev(cc_prev_workdays(now_fn(), 4)), "%a %d/%m")
       tags$div(style = "font-size:12px; color:#475569; margin-top:8px;", sprintf("%d trade(s) found: %s and today.", n, paste(days, collapse = ", "))) })
-    claude_info <- reactiveVal(NULL)
+    claude_info <- reactiveVal(NULL); rec_pending <- reactiveVal(NULL)
     do_suggest <- function() { sc <- scen(); s <- scan(); f <- mkt(); a <- acct()
       if (is.null(sc) || is.null(s) || is.null(f) || is.null(a)) { note("Work out the scenarios first (it reads the price now).", "warning"); return() }
       asked <- !identical(input$p_ms_use, "no");   # ******** default: include the Morning Sheet whenever there is one
@@ -1050,7 +1184,10 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
         keep <- intersect(names(rules), if (is.null(cl)) names(rules) else names(cl)); all <- rbind(rules[, keep, drop = FALSE], if (!is.null(cl)) cl[, keep, drop = FALSE])
         for (k in c("ccy", "d", "at")) attr(all, k) <- attr(rules, k); all <- add_htf(all, f2$epic); scen(all); save_scenarios(all, if (use) "CLAUDE_WITH_MS" else "CLAUDE")
         cl2 <- all[all$source == "Claude", , drop = FALSE]
-        list(ok = TRUE, text = out$summary, stand = out$stand_aside %||% "", n = nrow(cl2), fit = sum(!cl2$blocked), used = use, rows = cl2, review = out$past_review %||% "")
+        rec <- cc_pick_recommended(all, if (nrow(cl2)) cl2$id[1] else NA_character_)   # *********** always one recommended trade
+        if (!is.null(rec) && isTRUE(rec$fits)) { updateRadioButtons(session, "p_pick", selected = rec$id); rec_pending(rec$id) }
+        list(ok = TRUE, text = out$summary, stand = out$stand_aside %||% "", n = nrow(cl2), fit = sum(!cl2$blocked), used = use, rows = cl2, review = out$past_review %||% "",
+             rec = if (is.null(rec)) NULL else c(rec, list(row = all[rec$k, , drop = FALSE])))
       }, error = function(e) list(ok = FALSE, text = conditionMessage(e), used = use, n = 0L, fit = 0L))
       res$h_asked <- h_asked; res$h_n <- h_n; res$asked <- asked; res$ms_why <- if (asked && !use) (r$why %||% "not found for today") else ""; res$secs <- round(as.numeric(difftime(Sys.time(), t0, units = "secs")), 1)
       claude_info(res)
@@ -1060,33 +1197,52 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
         reply_text = tx, history_asked = h_asked, history_n = as.integer(h_n), past_trades_review = res$review %||% "", stringsAsFactors = FALSE)), error = function(e) paste("not saved:", conditionMessage(e)))
       cat(sprintf("[C.C] Claude suggestions: ok=%s, %s trade(s), %s fit the plan, %.1fs, Morning Sheet %s; saved: %s\n", isTRUE(res$ok), res$n %||% 0, res$fit %||% 0, res$secs,
                   if (isTRUE(res$used)) "used" else if (asked) paste("NOT loaded:", res$ms_why) else "not asked", w)) }
-    observeEvent(input$p_claude, do_suggest())
+    observeEvent(input$p_claude, withProgress(message = "Asking the Claude API for the recommended trade...", value = 0.2, do_suggest()))
     # ********* no button can stop the app: an unexpected error is shown as a message and logged, the session goes on
     safely <- function(f, what) { force(f); function(...) tryCatch(f(...), error = function(e) { cat("[C.C]", what, "failed:", conditionMessage(e), "\n")
       note(sprintf("%s did not complete: %s. Nothing was sent. Try again; if it repeats, send the R console lines.", what, conditionMessage(e)), "error"); invisible(NULL) }) }
     do_use <- safely(do_use, "Filling the ticket"); do_build <- safely(do_build, "Working out the scenarios"); do_suggest <- safely(do_suggest, "The Claude API recommendation")
     do_reading <- safely(do_reading, "The Claude API chart reading"); do_load <- safely(do_load, "Loading the chart")
 
+    rec_box <- function(rc) { if (is.null(rc) || is.null(rc$row) || !NROW(rc$row)) return(NULL); x <- rc$row; f <- mkt(); d <- attr(scen(), "d") %||% cc_px_decimals(f)
+      now <- if (is.null(f)) NA else if (x$side == "BUY") f$offer else f$bid
+      lv <- function(v) if (is.finite(now) && is.finite(v)) sprintf("%s (%+.*f from now)", cc_fmt_px(v, d), d, v - now) else cc_fmt_px(v, d)
+      tags$div(style = sprintf("border:2px solid %s; background:#fff; border-radius:8px; padding:6px 10px; margin:4px 0 6px;", if (isTRUE(rc$fits)) "#16a34a" else "#dc2626"),
+        tags$div(style = "font-size:14px; font-weight:800;", sprintf("Recommended trade: %s", if (startsWith(x$id, x$side)) x$id else paste(x$side, x$id))),
+        tags$div(sprintf("Entry %s | Stop %s | Target %s | R:R %.2f", lv(x$entry), lv(x$stop), lv(x$target), as.numeric(x$rrr %||% NA))),
+        if (!is.null(x$score) && is.finite(x$score)) tags$div(tags$span(style = sprintf("background:%s; color:#fff; border-radius:6px; padding:1px 8px; font-weight:800;", if (x$score >= 65) "#16a34a" else if (x$score >= 50) "#d97706" else "#dc2626"), sprintf("Score %d / 100 (%s)", as.integer(x$score), cc_score_band(x$score))),
+          sprintf(" Chance of target first %.0f%% against a break-even of %.0f%%. %s", x$chance, as.numeric(x$be_pct %||% NA), x$score_why %||% "")),
+        tags$div(sprintf("Evidence: %s | break-even %s", x$evidence %||% "-", if (is.finite(as.numeric(x$be_pct %||% NA))) sprintf("%.0f%%", as.numeric(x$be_pct)) else "-")),
+        tags$div(style = sprintf("font-weight:700; color:%s;", if (isTRUE(rc$fits)) "#166534" else "#b91c1c"), rc$why,
+          if (isTRUE(rc$fits)) " It is selected in Your choice and the ticket is filled: check it and press Send." else " To send it, switch that rule to Warn in Setup, or choose a scenario that fits.")) }
     output$p_claude_out <- renderUI({ r <- claude_info(); if (is.null(r)) return(NULL)
       ms <- if (isTRUE(r$asked) && !isTRUE(r$used)) tags$div(style = "color:#b45309; font-weight:700;", "Morning Sheet asked for but NOT loaded (", r$ms_why, "): Claude worked without it.") else NULL
       if (isTRUE(r$h_asked)) ms <- tagList(ms, if (isTRUE(r$h_n > 0)) tags$div(style = "background:#ecfeff; border:1px solid #a5f3fc; border-radius:6px; padding:4px 8px; margin-bottom:4px;",
         tags$b(sprintf("Review of your last %d trade(s) (previous 4 working days, from BigQuery): ", r$h_n)), if (nzchar(r$review %||% "")) r$review else "no review returned.")
         else tags$div(style = "color:#64748b;", "No trades found in BigQuery for the previous 4 working days."))
       if (!isTRUE(r$ok)) return(tags$div(style = "color:#b91c1c; font-weight:700; margin-top:6px;", ms, "Claude could not suggest trades: ", r$text, sprintf(" (after %.0f s). The call is saved in cc_claude_suggestions.", r$secs %||% NA)))
-      if (!isTRUE(r$n > 0)) return(tags$div(style = "font-size:12.5px; margin-top:6px; background:#fef3c7; border:1px solid #fcd34d; border-radius:8px; padding:6px 10px;", ms,
-        tags$b(sprintf("Claude suggests NO trade now %s. ", if (isTRUE(r$used)) "using today's Morning Sheet" else "without the Morning Sheet")),
-        if (nzchar(r$stand %||% "")) tags$span(tags$b("Stand aside: "), r$stand, " "), r$text, tags$div(style = "color:#64748b;", sprintf("Answer in %.0f s; saved in cc_claude_suggestions.", r$secs %||% NA))))
+      rb <- rec_box(r$rec)
+      if (!isTRUE(r$n > 0)) return(tags$div(style = "font-size:12.5px; margin-top:6px; background:#fef3c7; border:1px solid #fcd34d; border-radius:8px; padding:6px 10px;", ms, rb,
+        if (nzchar(r$stand %||% "")) tags$div(tags$b("Cautions: "), r$stand), r$text, tags$div(style = "color:#64748b;", sprintf("Claude returned no trade of its own, so the recommendation is the app's best scenario. Answer in %.0f s; saved in cc_claude_suggestions.", r$secs %||% NA))))
       tags$div(style = "font-size:12.5px; margin-top:6px; background:#f5f3ff; border:1px solid #ddd6fe; border-radius:8px; padding:6px 10px;",
-        ms, tags$b(sprintf("Claude suggested %d trade(s) %s; %d fit your plan (rows marked Claude in the table). ", r$n, if (isTRUE(r$used)) "using today's Morning Sheet" else "WITHOUT the Morning Sheet", r$fit)),
-        r$text, tags$div(style = "color:#64748b; margin-top:3px;", "Claude's chance is an estimate; the baseline comes from this market's candles and is not a forecast; see Evidence for what is proven. Nothing Claude writes is copied into your reasoning boxes.")) })
+        ms, rb, tags$b(sprintf("Claude suggested %d trade(s) %s; %d fit your plan (rows marked Claude in the table). ", r$n, if (isTRUE(r$used)) "using today's Morning Sheet" else "WITHOUT the Morning Sheet", r$fit)),
+        r$text, if (nzchar(r$stand %||% "")) tags$div(tags$b("Cautions: "), r$stand), tags$div(style = "color:#64748b; margin-top:3px;", "Claude's chance is an estimate; the baseline comes from this market's candles and is not a forecast; see Evidence for what is proven. Nothing Claude writes is copied into your reasoning boxes.")) })
 
+    # *********** the ticket keeps a chosen scenario's stop and target as DISTANCES: its levels follow the live price (as Send
+    # always did), so the R:R shown, checked and sent is the scenario's. Typing your own stop or target makes them fixed prices.
+    tk_anchor <- reactiveVal(NULL)
+    tk_levels <- function(entry, d) { an <- tk_anchor(); stp <- tr_num0(input$o_stop, NA); tgt <- tr_num0(input$o_target, NA); tol <- 10^-d / 2 + 1e-12
+      on <- !is.null(an) && identical(an$side, input$o_dir) && isTRUE(is.finite(entry) && is.finite(stp) && is.finite(tgt) && abs(stp - an$stop) <= tol && abs(tgt - an$target) <= tol)
+      if (!on) return(list(stop = stp, target = tgt, shift = 0, follows = FALSE))
+      sh <- cc_shift_levels(an$entry, entry, an$stop, an$target, d); list(stop = sh$stop, target = sh$target, shift = sh$shift, follows = TRUE) }
     ticket <- reactive({ f <- mkt(); a <- acct(); sz <- tr_num0(input$o_size, NA); type <- "MARKET"   # deals only: never a working order
       entry <- if (is.null(f)) NA else if (input$o_dir == "BUY") f$offer else f$bid
       if (is.null(f) || is.null(a)) return(list(errors = "Choose the market (tab 3 (Market & Patterns)) and read the account first.", warnings = character(0)))
-      fx <- fx_info(f$currency, a$currency)
-      b <- cc_budget(input$o_dir, entry, tr_num0(input$o_stop, NA), tr_num0(input$o_target, NA), sz, f$lot_size, fx$rate, a$balance, a$available, f$margin_factor, f$margin_unit,
+      fx <- fx_info(f$currency, a$currency); lv <- tk_levels(entry, cc_px_decimals(f)); o_stop <- lv$stop; o_target <- lv$target
+      b <- cc_budget(input$o_dir, entry, o_stop, o_target, sz, f$lot_size, fx$rate, a$balance, a$available, f$margin_factor, f$margin_unit,
                      f$offer - f$bid, open_risk(), input$s_risk, input$s_cap, rrr_min(), f$min_size, f$min_stop_distance)
-      b$errors <- c(b$errors, cc_order_problems(input$o_dir, "MARKET", NA, tr_num0(input$o_stop, NA), tr_num0(input$o_target, NA), f$bid, f$offer, f$min_stop_distance))
+      b$errors <- c(b$errors, cc_order_problems(input$o_dir, "MARKET", NA, o_stop, o_target, f$bid, f$offer, f$min_stop_distance), cc_market_closed(f, now_fn()),
+                    cc_size_problems(sz, NA, f$max_size, f$size_step %||% NA))
       if (!isTRUE(client$is_demo())) b$errors <- c(b$errors, "The connection is not the DEMO environment: this app does not send orders.")
       mr <- setup_min(input$o_strategy %||% "PATTERN")   # ******** the minimum reward:risk of the ticket's set-up (general minimum when not set): a rule, the deal is blocked below it
       if (is.finite(mr) && is.finite(b$rrr) && b$rrr < mr - 1e-6) { b$warnings <- setdiff(b$warnings, grep("Reward:risk", b$warnings, value = TRUE))
@@ -1095,41 +1251,44 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
       if (is.finite(ps) && ps > 0 && is.finite(sz) && sz > ps + 1e-9) b$errors <- c(b$errors, sprintf("Size %s is bigger than the size you set in box 1 (%s): this app never sends more than your size.", format(sz), format(ps)))
       b$errors <- unique(b$errors)
       s <- scan(); if (!is.null(s) && s$regime == "MIXED") b$warnings <- c(b$warnings, "Regime is MIXED (ADX between your thresholds): your plan says no trade.")
-      d <- cc_px_decimals(f); stp <- tr_num0(input$o_stop, NA)
+      d <- cc_px_decimals(f); stp <- o_stop
       if (!is.null(s) && is.finite(stp) && is.finite(entry)) { atr <- s$ctx$a[s$n]; sd <- abs(entry - stp)
         if (is.finite(atr) && atr > 0 && sd < 0.5 * atr) b$warnings <- c(b$warnings, sprintf("The stop is only %s from the entry (%.2f x ATR %s): ordinary %s-minute swings may hit it.", cc_fmt_px(sd, d), sd / atr, cc_fmt_px(atr, d), s$ctx$minutes)) }
-      for (k in c("o_stop", "o_target")) { v <- tr_num0(input[[k]], NA); if (is.finite(v) && abs(v - round(v, d)) > 1e-9) b$warnings <- c(b$warnings, sprintf("%s has more than %d decimals: it will be sent as %s.", c(o_stop = "The stop", o_target = "The target")[[k]], d, cc_fmt_px(round(v, d), d))) }
-      c(b, list(entry = entry, ccy = a$currency, fx = fx, d = d, now = if (input$o_dir == "BUY") f$offer else f$bid)) })
+      for (k in c("o_stop", "o_target")) { v <- if (k == "o_stop") o_stop else o_target; if (is.finite(v) && abs(v - round(v, d)) > 1e-9) b$warnings <- c(b$warnings, sprintf("%s has more than %d decimals: it will be sent as %s.", c(o_stop = "The stop", o_target = "The target")[[k]], d, cc_fmt_px(round(v, d), d))) }
+      c(b, list(stop = o_stop, target = o_target, shift = lv$shift, follows = lv$follows, entry = entry, ccy = a$currency, fx = fx, d = d, now = if (input$o_dir == "BUY") f$offer else f$bid)) })
     output$o_checks <- renderUI({ t <- ticket()
-      tagList(if (is.finite(t$risk_account %||% NA)) tags$div(style = "background:#fff; border-radius:8px; padding:8px 12px; margin:6px 0; font-size:13px;",
+      tagList(if (isTRUE(t$follows)) tags$div(style = "background:#ecfeff; border:1px solid #67e8f9; border-radius:8px; padding:6px 12px; margin:6px 0; font-size:13px; font-weight:600; color:#155e75;",
+                sprintf("The stop and target follow the price, keeping the scenario's distances: at the price now they are stop %s and target %s%s. This is what is checked and sent. Type your own stop or target to fix them as prices.",
+                        cc_fmt_px(t$stop, t$d), cc_fmt_px(t$target, t$d), if (isTRUE(abs(t$shift) >= 10^-t$d / 2)) sprintf(" (price moved %+.*f since the scenario)", as.integer(t$d), t$shift) else "")),
+              if (is.finite(t$risk_account %||% NA)) tags$div(style = "background:#fff; border-radius:8px; padding:8px 12px; margin:6px 0; font-size:13px;",
                 sprintf("Price now %s | entry %s | stop %s (%s from now) | target %s (%s from now) | risk %s points = %s (%s%% of balance) | reward %s | R:R %s | balance if stopped %s, if target %s | margin %s",
-                        cc_fmt_px(t$now, t$d), cc_fmt_px(t$entry, t$d), cc_fmt_px(tr_num0(input$o_stop, NA), t$d), cc_vs_now(tr_num0(input$o_stop, NA), t$now, t$d),
-                        cc_fmt_px(tr_num0(input$o_target, NA), t$d), cc_vs_now(tr_num0(input$o_target, NA), t$now, t$d), cc_fmt(t$risk_points, 4), cc_money(t$risk_account, t$ccy), cc_fmt(t$risk_pct, 2), cc_money(t$reward_account, t$ccy), cc_fmt(t$rrr, 2),
+                        cc_fmt_px(t$now, t$d), cc_fmt_px(t$entry, t$d), cc_fmt_px(t$stop, t$d), cc_vs_now(t$stop, t$now, t$d),
+                        cc_fmt_px(t$target, t$d), cc_vs_now(t$target, t$now, t$d), cc_fmt(t$risk_points, 4), cc_money(t$risk_account, t$ccy), cc_fmt(t$risk_pct, 2), cc_money(t$reward_account, t$ccy), cc_fmt(t$rrr, 2),
                         cc_money(t$balance_if_stop, t$ccy), cc_money(t$balance_if_target, t$ccy), cc_money(t$margin_account, t$ccy))),
         if (length(t$errors)) tags$div(style = "color:#b91c1c; font-weight:700;", icon("circle-xmark"), " ", paste(t$errors, collapse = " ")),
         if (length(t$warnings)) tags$div(style = "color:#b45309;", icon("triangle-exclamation"), " ", paste(t$warnings, collapse = " "))) })
-    observeEvent(input$o_send, { t <- ticket()
+    observeEvent(input$o_send, withProgress(message = "Checking the deal against your plan...", value = 0.3, { t <- ticket()
       if (length(t$errors)) { note(paste(t$errors, collapse = " "), "error"); return() }
       if (!isTRUE(input$o_ok)) { note("Tick the box to confirm you have checked the order.", "warning"); return() }
       pc <- plan_chk(); bad <- if (is.null(pc)) character(0) else pc$rule[cc_plan_hard(pc)]
       if (length(bad) && !nzchar(trimws(input$o_break %||% ""))) { note(paste0("This deal breaks your plan (", paste(bad, collapse = "; "), "). Write the reason in 'Reason for breaking a rule' to send it anyway."), "error"); return() }
       f <- mkt(); showModal(modalDialog(title = "Open this deal on the Capital.com DEMO account?",
-        tags$p(sprintf("%s %s of %s at the market (a deal, active at once), stop %s, target %s, Reward:Risk %s.", input$o_dir, input$o_size, f$name %||% f$epic, input$o_stop, input$o_target, cc_fmt(t$rrr, 2))),
+        tags$p(sprintf("%s %s of %s at the market (a deal, active at once), stop %s, target %s, Reward:Risk %s.", input$o_dir, input$o_size, f$name %||% f$epic, cc_fmt_px(t$stop, t$d), cc_fmt_px(t$target, t$d), cc_fmt(t$rrr, 2))),
         tags$p(sprintf("Money at risk to the stop: %s (%s%% of your balance).", cc_money(t$risk_account, t$ccy), cc_fmt(t$risk_pct, 2))),
         if (length(t$warnings)) tags$p(style = "color:#b45309;", paste(t$warnings, collapse = " ")),
-        footer = tagList(modalButton("No, go back"), actionButton(session$ns("o_confirm"), "Yes, send it", class = "btn-danger")))) })
-    observeEvent(input$o_confirm, { removeModal(); f0 <- mkt(); a <- acct(); t <- ticket(); s <- scan()
+        footer = tagList(modalButton("No, go back"), actionButton(session$ns("o_confirm"), "Yes, send it", class = "btn-danger")))) }))
+    observeEvent(input$o_confirm, withProgress(message = "Sending the deal to Capital.com and saving it to BigQuery...", value = 0.3, { removeModal(); f0 <- mkt(); a <- acct(); t <- ticket(); s <- scan()
       gt <- NA_real_
       # the price of this moment (the ticket may be minutes old), and every price rounded to the market's decimals
       f <- tryCatch(cc_market_facts(client$market(f0$epic)), error = function(e) f0); if (!is.finite(f$bid %||% NA)) f <- f0; mkt(f)
       d <- cc_px_decimals(f); typ <- "MARKET"; lvl <- NA_real_
-      stp <- cc_round_px(tr_num0(input$o_stop, NA), d); tgt <- cc_round_px(tr_num0(input$o_target, NA), d); shift_note <- ""
+      stp <- cc_round_px(t$stop %||% tr_num0(input$o_stop, NA), d); tgt <- cc_round_px(t$target %||% tr_num0(input$o_target, NA), d); shift_note <- ""
       if (typ == "MARKET") { now_px <- if (input$o_dir == "BUY") f$offer else f$bid; sh <- cc_shift_levels(t$entry, now_px, stp, tgt, d)
         if (is.finite(sh$shift) && abs(sh$shift) >= 10^-d / 2) {
           shift_note <- sprintf(" The price moved %s%s since the ticket was worked out (%s to %s), so the stop (%s) and the target (%s) moved with it, keeping their distances.",
                                 if (sh$shift > 0) "+" else "-", cc_fmt_px(abs(sh$shift), d), cc_fmt_px(t$entry, d), cc_fmt_px(now_px, d), cc_fmt_px(sh$stop, d), cc_fmt_px(sh$target, d))
           stp <- sh$stop; tgt <- sh$target } }
-      prob <- cc_order_problems(input$o_dir, typ, lvl, stp, tgt, f$bid, f$offer, f$min_stop_distance)
+      prob <- c(cc_order_problems(input$o_dir, typ, lvl, stp, tgt, f$bid, f$offer, f$min_stop_distance), cc_market_closed(f, now_fn()), cc_size_problems(input$o_size, f$min_size, f$max_size, f$size_step %||% NA))
       if (length(prob)) { cat("[C.C] order not sent:", paste(prob, collapse = " "), "\n"); note(paste(prob, collapse = " "), "error")
         output$o_result <- renderUI(tags$div(style = "margin-top:8px; font-weight:700; color:#b91c1c;", "Not sent (nothing reached Capital.com): ", paste(prob, collapse = " "),
                                              sprintf(" Price now: bid %s / offer %s.", cc_fmt_px(f$bid, d), cc_fmt_px(f$offer, d)))); return() }
@@ -1148,7 +1307,7 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
         status = if (!accepted) "REJECTED" else if (TRUE) "OPEN" else "ORDER_WORKING", placed_ts = now_fn(),
         entry_ts = if (accepted && TRUE) cc_ts(res$date) else NA, entry_level = if (accepted && TRUE) cc_num(res$level) else NA,
         stop_initial = stp, stop_level = stp, target_level = tgt, fx_rate = t$fx$rate, risk_account = t$risk_account, reward_account = t$reward_account,
-        purpose = input$o_purpose, strategy = input$o_strategy, chart_period = input$o_chart, expected_hours = tr_num0(input$o_hours, NA),
+        purpose = input$o_purpose, strategy = input$o_strategy, chart_period = if (nzchar(input$o_chart %||% "")) input$o_chart else "15 Min", expected_hours = { h <- tr_num0(input$o_hours, NA); if (is.finite(h)) h else tr_num0(input$s_hold, NA) },   # ******************
         setup_fund = input$o_fund, setup_tech = input$o_tech, trigger_text = input$o_trigger, execution_text = input$o_exec, stop_reason = input$o_stopwhy, target_reason = input$o_tgtwhy,
         mood_entry = input$o_mood, scan_id = scan_id, scenario_json = cc_scenario_snapshot(scen(), input$p_pick, isTRUE(input$o_c_incl), claude_info(), hold_h()),
         warnings = paste(c(t$warnings, { w <- tryCatch({ q <- isolate(plan_chk()); q$rule[cc_plan_warn(q)] }, error = function(e) character(0)); if (length(w)) paste0("Plan deviation (rule on Warn): ", paste(w, collapse = "; "), ".") }), collapse = " "), notes = if (accepted) NA else paste("Not accepted:", res$reason %||% res$dealStatus), stringsAsFactors = FALSE)
@@ -1171,7 +1330,7 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
         if (accepted) sprintf("Deal opened on Capital.com (it is in Trades now): %s, deal %s%s. Stop %s, target %s. Saved as %s.%s", res$dealStatus, res$dealId %||% "-", if (TRUE) sprintf(", filled at %s", cc_fmt_px(cc_num(res$level), d)) else sprintf(", %s at %s", tolower(typ), cc_fmt_px(lvl, d)),
                               cc_fmt_px(stp, d), cc_fmt_px(tgt, d), tid, paste0(shift_note, if (identical(saved_where, "bigquery")) " Recorded in BigQuery (cc_trades) as OPEN. *****" else " Recorded; it is uploaded to BigQuery (cc_trades) when BigQuery is connected. *****"))
         else sprintf("Not accepted: %s Saved as %s with status REJECTED.", res$reason %||% res$dealStatus, tid)))
-      note(if (accepted) "Deal opened." else "Deal not accepted.", if (accepted) "message" else "error") })
+      note(if (accepted) "Deal opened." else "Deal not accepted.", if (accepted) "message" else "error") }))
 
     # ---- positions, orders, sync -------------------------------------------------------------------------------
     live <- reactiveVal(list(pos = data.frame(), ord = data.frame(), at = NULL))
@@ -1214,11 +1373,11 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
         Entry = x$entry_level, Stop = x$stop_level, Target = x$target_level, `Closed (UK)` = ifelse(is.na(x$exit_ts), "", format(x$exit_ts, "%d/%m %H:%M", tz = "Europe/London")),
         Exit = x$exit_level, Code = x$exit_code, `Result (acct ccy)` = round(pl, 2), `Deal id` = x$deal_id, check.names = FALSE),
         rownames = FALSE, options = list(dom = "t", pageLength = 20, scrollX = TRUE)) })
-    observeEvent(input$o_check, { cat("[C.C] Check recorded deals pressed\n"); tryCatch({ if (!isTRUE(ready())) stop("Capital.com is not connected (API Configuration)."); do_sync(); output$o_check_out <- renderUI(tags$div(style = "color:#166534; font-weight:700; margin:6px 0;",
+    observeEvent(input$o_check, withProgress(message = "Checking the recorded deals on Capital.com and BigQuery...", value = 0.3, { cat("[C.C] Check recorded deals pressed\n"); tryCatch({ if (!isTRUE(ready())) stop("Capital.com is not connected (API Configuration)."); do_sync(); output$o_check_out <- renderUI(tags$div(style = "color:#166534; font-weight:700; margin:6px 0;",
         icon("check"), sprintf(" Checked on Capital.com at %s UK; BigQuery updated. Details in the Positions tab.", format(now_fn(), "%H:%M:%S", tz = "Europe/London")))) },
-      error = function(e) output$o_check_out <- renderUI(tags$div(style = "color:#b91c1c; font-weight:700;", "Check failed: ", conditionMessage(e)))) })
-    observeEvent(input$sync, { cat("[C.C] Sync pressed\n"); tryCatch(do_sync(), error = function(e) { cat("[C.C] Sync failed:", conditionMessage(e), "\n")
-      output$sync_out <- renderUI(tags$div(style = "color:#b91c1c; font-weight:700;", "Sync failed: ", conditionMessage(e))) }) })
+      error = function(e) output$o_check_out <- renderUI(tags$div(style = "color:#b91c1c; font-weight:700;", "Check failed: ", conditionMessage(e)))) }))
+    observeEvent(input$sync, withProgress(message = "Syncing deals from Capital.com to BigQuery...", value = 0.3, { cat("[C.C] Sync pressed\n"); tryCatch(do_sync(), error = function(e) { cat("[C.C] Sync failed:", conditionMessage(e), "\n")
+      output$sync_out <- renderUI(tags$div(style = "color:#b91c1c; font-weight:700;", "Sync failed: ", conditionMessage(e))) }) }))
     # records check once per session, as soon as BigQuery is there: no Capital.com needed (uses the saved history)
     checked <- reactiveVal(FALSE)
     observe({ if (checked()) return(); if (!isTRUE(tryCatch(store$connected(), error = function(e) FALSE))) { invalidateLater(3000); return() }
@@ -1244,30 +1403,30 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
     new_version <- function(r, ...) { ch <- list(...); for (k in names(ch)) r[[k]] <- ch[[k]]; r$record_version <- (if (is.na(r$record_version)) 0L else r$record_version) + 1L; store$write("trades", r) }
     act_msg <- function(txt, ok = TRUE) output$act_out <- renderUI(tags$div(style = sprintf("margin-top:8px; font-weight:700; color:%s;", if (ok) "#166534" else "#b91c1c"), txt))
     # ****** in-trade management: on 04/11 price went 1.37 points (about 2R) in favour and then hit the stop; break-even at +1R would have saved it
-    observeEvent(input$pos_be, { p <- live()$pos; k <- match(input$pos_pick, p$deal_id); if (is.na(k)) { note("Choose the position first.", "warning"); return() }
+    observeEvent(input$pos_be, withProgress(message = "Moving the stop to break-even on Capital.com...", value = 0.3, { p <- live()$pos; k <- match(input$pos_pick, p$deal_id); if (is.na(k)) { note("Choose the position first.", "warning"); return() }
       updateNumericInput(session, "pos_stop", value = as.numeric(p$level[k]))
-      note(sprintf("New stop filled with the entry %s. Press 'Change stop / target' to send it (only when price is at least 1R in your favour).", p$level[k])) })
-    observeEvent(input$pos_update, { id <- input$pos_pick; if (!nzchar(id %||% "")) return()
+      note(sprintf("New stop filled with the entry %s. Press 'Change stop / target' to send it (only when price is at least 1R in your favour).", p$level[k])) }))
+    observeEvent(input$pos_update, withProgress(message = "Updating the position on Capital.com...", value = 0.3, { id <- input$pos_pick; if (!nzchar(id %||% "")) return()
       res <- tryCatch(client$update_position(id, tr_num0(input$pos_stop, NA), tr_num0(input$pos_tgt, NA)), error = function(e) list(dealStatus = "ERROR", reason = conditionMessage(e)))
       ok <- identical(toupper(res$dealStatus %||% ""), "ACCEPTED"); r <- trade_of(id)
       store$write("events", data.frame(event_id = cc_id("EV"), trade_id = if (is.null(r)) NA else r$trade_id, event_type = "LEVELS_CHANGED", deal_id = id, deal_status = res$dealStatus %||% NA,
                                        stop_level = tr_num0(input$pos_stop, NA), target_level = tr_num0(input$pos_tgt, NA), request_json = cc_json(res$request %||% list()), note = input$pos_why))
       if (ok && !is.null(r)) new_version(r, stop_level = if (is.finite(tr_num0(input$pos_stop, NA))) input$pos_stop else r$stop_level, target_level = if (is.finite(tr_num0(input$pos_tgt, NA))) input$pos_tgt else r$target_level)
-      read_live(); touch(); act_msg(if (ok) "Stop / target changed." else paste("Not accepted:", res$reason %||% res$dealStatus), ok) })
+      read_live(); touch(); act_msg(if (ok) "Stop / target changed." else paste("Not accepted:", res$reason %||% res$dealStatus), ok) }))
     observeEvent(input$pos_close, { id <- input$pos_pick; if (!nzchar(id %||% "")) return()
       showModal(modalDialog(title = "Close this position on the DEMO account?", footer = tagList(modalButton("No"), actionButton(session$ns("pos_close_ok"), "Yes, close it", class = "btn-warning")))) })
-    observeEvent(input$pos_close_ok, { removeModal(); id <- input$pos_pick
+    observeEvent(input$pos_close_ok, withProgress(message = "Closing the position on Capital.com...", value = 0.3, { removeModal(); id <- input$pos_pick
       res <- tryCatch(client$close_position(id), error = function(e) list(dealStatus = "ERROR", reason = conditionMessage(e))); ok <- identical(toupper(res$dealStatus %||% ""), "ACCEPTED"); r <- trade_of(id)
       store$write("events", data.frame(event_id = cc_id("EV"), trade_id = if (is.null(r)) NA else r$trade_id, event_type = "CLOSE_REQUESTED", deal_id = id, deal_status = res$dealStatus %||% NA, level = cc_num(res$level), note = input$pos_why))
       if (ok && !is.null(r)) { xl <- cc_num(res$level); d <- if (toupper(r$direction) == "BUY") 1 else -1; pnl_i <- d * (xl - r$entry_level) * cc_value_per_point(r$size, r$lot_size)
         fx <- fx_info(r$instrument_currency, r$account_currency)$rate
         new_version(r, status = "CLOSED", exit_level = xl, exit_ts = now_fn(), pnl_instrument = pnl_i, fx_rate = fx, pnl_account_est = pnl_i * fx, exit_code = "ME") }
-      read_live(); touch(); act_msg(if (ok) sprintf("Closed at %s (exit code ME: closed by hand). Sync later to add the amount Capital.com booked.", cc_fmt(cc_num(res$level), 4)) else paste("Not accepted:", res$reason %||% res$dealStatus), ok) })
-    observeEvent(input$ord_cancel, { id <- input$ord_pick; if (!nzchar(id %||% "")) return()
+      read_live(); touch(); act_msg(if (ok) sprintf("Closed at %s (exit code ME: closed by hand). Sync later to add the amount Capital.com booked.", cc_fmt(cc_num(res$level), 4)) else paste("Not accepted:", res$reason %||% res$dealStatus), ok) }))
+    observeEvent(input$ord_cancel, withProgress(message = "Cancelling the order on Capital.com...", value = 0.3, { id <- input$ord_pick; if (!nzchar(id %||% "")) return()
       res <- tryCatch(client$cancel_working_order(id), error = function(e) list(dealStatus = "ERROR", reason = conditionMessage(e))); ok <- identical(toupper(res$dealStatus %||% ""), "ACCEPTED"); r <- trade_of(id)
       store$write("events", data.frame(event_id = cc_id("EV"), trade_id = if (is.null(r)) NA else r$trade_id, event_type = "ORDER_CANCELLED", deal_id = id, deal_status = res$dealStatus %||% NA, note = input$pos_why))
       if (ok && !is.null(r)) new_version(r, status = "CANCELLED")
-      read_live(); touch(); act_msg(if (ok) "Order cancelled." else paste("Not accepted:", res$reason %||% res$dealStatus), ok) })
+      read_live(); touch(); act_msg(if (ok) "Order cancelled." else paste("Not accepted:", res$reason %||% res$dealStatus), ok) }))
 
     # ---- journal -----------------------------------------------------------------------------------------------
     observe({ t <- trades(); if (!nrow(t)) { updateSelectInput(session, "j_trade", choices = c("(no trades yet)" = "")); return() }
@@ -1279,9 +1438,9 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
     observeEvent(input$j_trade, { r <- jrow(); if (is.null(r)) return()
       for (p in list(c("j_fund", "setup_fund"), c("j_tech", "setup_tech"), c("j_trigger", "trigger_text"), c("j_exec", "execution_text"), c("j_stopwhy", "stop_reason"), c("j_tgtwhy", "target_reason"),
                      c("j_why", "exit_reason"), c("j_lessons", "lessons"), c("j_analysis", "analysis"), c("j_devnote", "deviation_note")))
-        updateTextAreaInput(session, p[1], value = if (is.na(r[[p[2]]])) "" else r[[p[2]]])
-      updateSelectInput(session, "j_purpose", selected = r$purpose %||% "PRACTICE"); updateTextInput(session, "j_chart", value = if (is.na(r$chart_period)) "" else r$chart_period)
-      updateNumericInput(session, "j_hours", value = r$expected_hours); updateSelectInput(session, "j_code", selected = if (is.na(r$exit_code)) "" else r$exit_code)
+        updateTextAreaInput(session, p[1], value = if (!cc_blank(r[[p[2]]])) r[[p[2]]] else { au <- j_auto(); v <- if (is.null(au)) NULL else au[[p[2]]]; if (cc_blank(v)) "" else v })   # ****************** your words, else the app's
+      updateSelectInput(session, "j_purpose", selected = r$purpose %||% "PRACTICE"); updateTextInput(session, "j_chart", value = j_chart_auto(r))
+      updateNumericInput(session, "j_hours", value = j_hours_auto(r)); updateSelectInput(session, "j_code", selected = if (is.na(r$exit_code)) "" else r$exit_code)
       updateRadioButtons(session, "j_followed", selected = if (is.na(r$plan_followed)) "Y" else r$plan_followed); updateSelectInput(session, "j_devtype", selected = if (is.na(r$deviation_type)) "" else r$deviation_type)
       if (!is.na(r$mood_exit)) updateSliderInput(session, "j_mood", value = r$mood_exit) })
     output$j_facts <- renderUI({ r <- jrow(); if (is.null(r)) return(NULL); cy <- r$account_currency %||% ""; ic <- r$instrument_currency %||% ""
@@ -1306,6 +1465,15 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
     j_scan <- reactive({ r <- jrow(); if (is.null(r)) return(NULL); sc <- tbl("scans")
       sc <- sc[sc$trade_id %in% r$trade_id | (!is.na(r$scan_id) & sc$scan_id %in% r$scan_id), , drop = FALSE]; if (nrow(sc)) sc[nrow(sc), , drop = FALSE] else NULL })
     j_scen <- reactive({ r <- jrow(); if (is.null(r)) NULL else cc_scenario_read(r$scenario_json) })
+    # ****************** what the sheet's boxes fall back to when the record and the screen are empty
+    trade_day <- function(r) { t0 <- if (!is.null(r$entry_ts) && !is.na(r$entry_ts)) r$entry_ts else r$placed_ts; if (is.null(t0) || is.na(t0)) NA else as.Date(format(as.POSIXct(t0, tz = "UTC"), "%Y-%m-%d", tz = "Europe/London")) }
+    j_ms <- reactive({ r <- jrow(); if (is.null(r)) return(NULL); day <- trade_day(r); if (is.na(day)) return(NULL); x <- tryCatch(morning_fn(day), error = function(e) NULL); if (isTRUE(x$ok)) x else NULL })
+    j_auto <- reactive({ r <- jrow(); if (is.null(r)) return(NULL); sr <- j_scen()
+      tryCatch(cc_auto_reasons(r, sr, tryCatch(j_pats(), error = function(e) NULL), j_scan(), j_ms(), NULL, if (is.finite(suppressWarnings(as.numeric(sr$d %||% NA)))) as.numeric(sr$d) else 3),
+               error = function(e) { cat("[C.C] reasons not worked out:", conditionMessage(e), "\n"); NULL }) })
+    j_chart_auto <- function(r) { if (!cc_blank(r$chart_period)) return(r$chart_period); sc <- j_scan(); if (!is.null(sc) && !is.na(sc$resolution[1])) cc_chart_label(sc$resolution[1]) else "15 Min" }
+    j_hours_auto <- function(r) { h <- suppressWarnings(as.numeric(r$expected_hours)); if (isTRUE(is.finite(h))) return(h); h <- suppressWarnings(as.numeric(j_scen()$hold_h %||% NA))[1]
+      if (isTRUE(is.finite(h))) h else tr_num0(input$s_hold, NA) }
     j_pats <- reactive({ sc <- j_scan(); if (is.null(sc)) NULL else cc_scan_patterns(sc$current_json) })
     c_latest <- function(tid) { e <- tbl("events"); e <- e[e$trade_id %in% tid & e$event_type %in% "C_ANALYSIS", , drop = FALSE]
       if (!nrow(e)) return(NULL); e <- e[order(e$saved_at), , drop = FALSE]; e[nrow(e), , drop = FALSE] }
@@ -1317,10 +1485,12 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
       OPEN = "Status: the trade is still open; the exit part of the sheet is not filled yet.", "") }
     build_sheet <- function(want_pdf = FALSE) { r <- jrow(); if (is.null(r)) stop("Choose a trade first.")
       r <- as.data.frame(utils::modifyList(as.list(r), j_form(r)), stringsAsFactors = FALSE)   # the sheet always uses what is on screen
+      au <- j_auto(); for (k in c("setup_fund", "setup_tech", "trigger_text", "execution_text", "stop_reason", "target_reason", "exit_reason")) if (cc_blank(r[[k]]) && !is.null(au) && !cc_blank(au[[k]])) r[[k]] <- au[[k]]   # ****************** no empty box
+      if (cc_blank(r$chart_period)) r$chart_period <- j_chart_auto(r); if (!isTRUE(is.finite(suppressWarnings(as.numeric(r$expected_hours))))) r$expected_hours <- j_hours_auto(r)
       closed <- identical(r$status, "CLOSED"); sm <- if (closed) j_sum() else NULL
       dir <- file.path(tempdir(), paste0(r$trade_id, "_", format(Sys.time(), "%H%M%OS3"))); dir.create(dir, showWarnings = FALSE, recursive = TRUE); pics <- list(); f1 <- NA_character_
       sc <- j_scan()
-      if (!is.null(sc)) { rs <- tryCatch(cc_scan_restore(sc$bars_json), error = function(e) NULL)
+      if (!is.null(sc)) { scf <- store$full_row("scans", sc$scan_id); if (nrow(scf)) sc <- scf[nrow(scf), , drop = FALSE]; rs <- tryCatch(cc_scan_restore(sc$bars_json), error = function(e) NULL)
         if (!is.null(rs)) { s0 <- rs$scan; ix <- s0$show_from:s0$n; bb <- s0$ctx$b[ix, ]
           sh <- lapply(s0$current, function(o) { if (!is.null(o$lines)) { o$lines$x0 <- o$lines$x0 - s0$show_from + 1; o$lines$x1 <- o$lines$x1 - s0$show_from + 1
               o$lines <- o$lines[o$lines$x1 >= 1, , drop = FALSE]; o$lines$x0 <- pmax(1, o$lines$x0) }; o })
@@ -1356,14 +1526,16 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
       content = function(f) tryCatch({ x <- withProgress(message = "Building the Individual Trade Sheet (PDF)...", value = 0.5, build_sheet(TRUE))
         if (is.na(x$pdf)) stop("LibreOffice could not convert the Word file to PDF."); file.copy(x$pdf, f, overwrite = TRUE) }, error = dl_fail),
       contentType = "application/pdf")
-    observeEvent(input$j_drop, { if (is.null(jrow())) return()
+    observeEvent(input$j_drop, withProgress(message = "Building the sheet and saving it to Dropbox...", value = 0.3, { if (is.null(jrow())) return()
       out <- withProgress(message = "Writing the sheet to Dropbox...", value = 0.4, tryCatch({ x <- build_sheet(TRUE)
-        x$saved <- tr_save_sheet(c(x$docx, x$pdf), "trade"); x }, error = function(e) { cat("[C.C] Dropbox save failed:", conditionMessage(e), "\n"); list(error = conditionMessage(e)) }))
+        x$saved <- tr_save_sheet(c(x$docx, x$pdf), "trade")
+        if (!is.null(x$saved) && nrow(x$saved) && any(x$saved$ok)) tryCatch({ store$write("events", data.frame(event_id = cc_id("EV"), trade_id = jrow()$trade_id, event_type = "TRADE_SHEET", note = paste(basename(c(x$docx, x$pdf)), collapse = ", "), request_json = NA_character_, response_json = NA_character_, stringsAsFactors = FALSE)); touch() }, error = function(e) NULL)   # *********************
+        x }, error = function(e) { cat("[C.C] Dropbox save failed:", conditionMessage(e), "\n"); list(error = conditionMessage(e)) }))
       output$j_sheet_out <- renderUI({ if (!is.null(out$error)) return(tags$div(style = "color:#b91c1c; font-weight:700; margin-top:6px;", "Not saved to Dropbox: ", out$error))
         sv <- out$saved; ok <- !is.null(sv) && nrow(sv) && any(sv$ok)
         tags$div(style = "margin-top:6px; font-size:12.5px;", tags$div(style = sprintf("font-weight:700; color:%s;", if (ok) "#166534" else "#b91c1c"),
             sprintf("%s %s%s", if (ok) "Saved to Dropbox:" else "Not saved to Dropbox:", basename(out$docx), if (!is.na(out$pdf)) " and the PDF" else " (no PDF: LibreOffice is not installed)")),
-          if (!is.null(sv) && nrow(sv)) tags$ul(lapply(seq_len(nrow(sv)), function(k) tags$li(sprintf("%s: %s %s", sv$file[k], if (isTRUE(sv$ok[k])) "saved to" else "not saved", paste(sv$where[k], sv$note[k]))))) else NULL) }) })
+          if (!is.null(sv) && nrow(sv)) tags$ul(lapply(seq_len(nrow(sv)), function(k) tags$li(sprintf("%s: %s %s", sv$file[k], if (isTRUE(sv$ok[k])) "saved to" else "not saved", paste(sv$where[k], sv$note[k]))))) else NULL) }) }))
     # ---- C analysis ---------------------------------------------------------------------------------------------
     observeEvent(input$j_trade, { r <- jrow(); if (is.null(r)) return(); e <- c_latest(r$trade_id)
       updateTextAreaInput(session, "j_c", value = if (is.null(e) || is.na(e$note)) "" else e$note)
@@ -1393,13 +1565,119 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
                                       dd, sub("\\.$", "", sub("^No Morning Sheet for [0-9/]+ in BigQuery", "there is none in BigQuery for that day", x$why %||% "not available")))) })
     c_msg <- reactiveVal(NULL)
     output$j_c_msg <- renderUI({ m <- c_msg(); if (is.null(m)) return(NULL); tags$div(style = sprintf("margin-top:6px; font-weight:700; color:%s;", if (m[[1]]) "#166534" else "#b91c1c"), m[[2]]) })
-    observeEvent(input$j_c_write, { r <- jrow(); if (is.null(r)) return()
+    observeEvent(input$j_c_write, withProgress(message = "The Claude API is writing the analysis...", value = 0.2, { r <- jrow(); if (is.null(r)) return()
       r <- as.data.frame(utils::modifyList(as.list(r), j_form(r)), stringsAsFactors = FALSE)
       ms <- j_ms(); use_ms <- isTRUE(ms$ok) && !isFALSE(input$j_c_ms); p <- cc_c_prompt(r, if (identical(r$status, "CLOSED")) j_sum() else NULL, j_scen(), j_pats(), if (use_ms) ms$text else NULL)
       out <- withProgress(message = "C is writing the analysis...", value = 0.5, tryCatch({ x <- c_fn(p); trimws(if (is.list(x)) x$text else x) }, error = function(e) structure(conditionMessage(e), class = "err")))
       if (inherits(out, "err") || !nzchar(out %||% "")) { c_msg(list(FALSE, paste("C could not write it:", if (inherits(out, "err")) unclass(out) else "empty answer"))); return() }
       updateTextAreaInput(session, "j_c", value = out); c_msg(list(TRUE, paste0("Written", if (use_ms) " with the Morning Sheet" else " without the Morning Sheet", ". Read it, edit if you want, then 'Save my entries to BigQuery' to keep it.")))
-      cat("[C.C] C analysis written for", r$trade_id, "\n") })
+      cat("[C.C] C analysis written for", r$trade_id, "\n") }))
+    # ******************* suggestions for the six boxes
+    sug <- reactiveVal(NULL); sug_msg <- reactiveVal(NULL); sug_box <- c(setup_fund = "j_fund", setup_tech = "j_tech", trigger_text = "j_trigger", execution_text = "j_exec", stop_reason = "j_stopwhy", target_reason = "j_tgtwhy")
+    observeEvent(input$j_trade, { r <- jrow(); sug(NULL); sug_msg(NULL); if (is.null(r)) return(); e <- tbl("events"); e <- e[e$trade_id %in% r$trade_id & e$event_type %in% "FIELD_SUGGESTIONS", , drop = FALSE]
+      if (nrow(e)) { e <- e[order(e$saved_at), , drop = FALSE]; x <- tryCatch(as.data.frame(jsonlite::fromJSON(e$response_json[nrow(e)]), stringsAsFactors = FALSE), error = function(z) NULL)
+        if (!is.null(x) && nrow(x)) { sug(x); sug_msg(list(TRUE, sprintf("Suggestions saved on %s UK.", format(e$saved_at[nrow(e)], "%d/%m/%Y %H:%M", tz = "Europe/London")))) } } }, ignoreInit = FALSE, priority = -1)
+    observeEvent(input$j_sug_go, withProgress(message = "The Claude API is preparing suggestions for the six boxes...", value = 0.2, { r <- jrow(); if (is.null(r)) { sug_msg(list(FALSE, "Choose a trade first.")); return() }
+      r <- as.data.frame(utils::modifyList(as.list(r), j_form(r)), stringsAsFactors = FALSE); ms <- j_ms()
+      own <- lapply(stats::setNames(names(sug_box), names(sug_box)), function(k) r[[k]])
+      p <- cc_field_prompt(r, if (identical(r$status, "CLOSED")) tryCatch(j_sum(), error = function(e) NULL) else NULL, j_scen(), tryCatch(j_pats(), error = function(e) NULL), if (isTRUE(ms$ok)) ms$text else NULL, j_auto(), own)
+      setProgress(0.5, message = "Waiting for the Claude API...")
+      out <- tryCatch({ x <- vision_fn(p); cc_field_parse(if (is.list(x)) x$text else x) }, error = function(e) structure(conditionMessage(e), class = "err"))
+      if (inherits(out, "err") || is.null(out)) { sug_msg(list(FALSE, paste("No suggestions:", if (inherits(out, "err")) unclass(out) else "the answer could not be read. Try again."))); return() }
+      sug(out); setProgress(0.9, message = "Saving the suggestions to BigQuery...")
+      tryCatch({ store$write("events", data.frame(event_id = cc_id("EV"), trade_id = r$trade_id, event_type = "FIELD_SUGGESTIONS", note = sprintf("Suggestions for the six reason boxes%s", if (isTRUE(ms$ok)) ", with the Morning Sheet" else ""),
+        request_json = NA_character_, response_json = as.character(jsonlite::toJSON(out, auto_unbox = TRUE)), stringsAsFactors = FALSE)); touch() }, error = function(e) cat("[C.C] suggestions not saved:", conditionMessage(e), "\n"))
+      sug_msg(list(TRUE, paste0("Suggestions ready", if (isTRUE(ms$ok)) " (with that day's Morning Sheet)" else " (no Morning Sheet for that day)", "; saved to BigQuery. Copy only what you agree with.")))
+      cat("[C.C] field suggestions written for", r$trade_id, "\n") }))
+    lapply(names(sug_box), function(k) observeEvent(input[[paste0("j_sug_use_", k)]], { x <- sug(); if (is.null(x)) return(); v <- x$suggestion[x$field == k]; if (!length(v) || !nzchar(v)) return()
+      updateTextAreaInput(session, sug_box[[k]], value = v); showNotification(sprintf("Copied into '%s'. Edit it so it says what you did, then save.", cc_field_names[[k]]), duration = 5) }))
+    output$j_sug_msg <- renderUI({ m <- sug_msg(); if (is.null(m)) return(NULL); tags$div(style = sprintf("font-weight:700; color:%s; margin-top:6px;", if (isTRUE(m[[1]])) "#166534" else "#b91c1c"), m[[2]]) })
+    output$j_sug_out <- renderUI({ x <- sug(); if (is.null(x)) return(NULL)
+      tags$div(style = "display:grid; grid-template-columns:repeat(auto-fit,minmax(360px,1fr)); gap:8px; margin-top:8px;",
+        lapply(seq_len(nrow(x)), function(i) tags$div(style = "background:#fff; border:1px solid #ddd6fe; border-radius:8px; padding:8px 10px; font-size:12.5px;",
+          tags$div(style = "font-weight:800; color:#4c1d95; margin-bottom:3px;", x$label[i]),
+          tags$div(tags$b("Suggested wording: "), x$suggestion[i]),
+          tags$div(style = "color:#334155; margin-top:3px;", tags$b("Context: "), x$context[i]),
+          tags$div(style = "color:#92400e; margin-top:3px;", tags$b("Check: "), x$check[i]),
+          actionButton(session$ns(paste0("j_sug_use_", x$field[i])), "Copy into my box", icon = icon("arrow-up"), class = "btn-xs", style = "margin-top:5px;")))) })
+    # ******************** one click: every market analysed, the best scenario chosen, all saved to BigQuery, the ticket filled for approval
+    one_res <- reactiveVal(NULL)
+    observeEvent(input$one_go, withProgress(message = "One click: preparing...", value = 0.02, {
+      if (!ready()) return(); eps <- unique(toupper(trimws(unlist(strsplit(input$one_epics %||% "", "[,; ]+"))))); eps <- eps[nzchar(eps)]
+      if (!length(eps)) { note("Type at least one market (epic).", "warning"); return() }
+      sz <- tr_num0(input$one_size, NA); if (is.finite(sz) && sz > 0) updateNumericInput(session, "p_size", value = sz)
+      a <- read_account(); res <- list(); skipped <- character(0); run_id <- cc_id("OC")
+      for (i in seq_along(eps)) { ep <- eps[i]; part <- function(v, m) setProgress((i - 1 + v) / (length(eps) + 0.3), message = sprintf("One click, market %d of %d (%s): %s", i, length(eps), ep, m))
+        part(0.05, "reading Capital.com prices...")
+        f <- tryCatch(cc_market_facts(client$market(ep)), error = function(e) NULL); if (is.null(f) || !is.finite(f$bid %||% NA)) { skipped <- c(skipped, sprintf("%s: not found on Capital.com", ep)); next }
+        mkt(f); scan(NULL); scen(NULL); claude_info(NULL)
+        part(0.15, "chart and patterns..."); do_load(); if (is.null(scan())) { skipped <- c(skipped, sprintf("%s: no chart", ep)); next }
+        sid <- tryCatch(save_scan(note = paste("one click", run_id)), error = function(e) NA_character_)
+        part(0.45, "working out the scenarios..."); do_build(size = sz); if (is.null(scen())) { skipped <- c(skipped, sprintf("%s: no scenario", ep)); next }
+        part(0.6, "the Claude API with the Morning Sheet..."); tryCatch(do_suggest(), error = function(e) cat("[C.C] one click, Claude:", conditionMessage(e), "\n"))
+        res[[ep]] <- list(f = f, scan = scan(), meta = scan_meta(), scen = scen(), claude = claude_info(), scan_id = sid) }
+      if (!length(res)) { one_res(list(ok = FALSE, text = paste("No market could be analysed.", paste(skipped, collapse = "; ")))); return() }
+      setProgress(0.9, message = "One click: choosing the best scenario and saving the run to BigQuery...")
+      all <- do.call(rbind, lapply(names(res), function(ep) { sc <- res[[ep]]$scen; f <- res[[ep]]$f; d <- attr(sc, "d") %||% 3; ccy <- attr(sc, "ccy") %||% ""; g <- function(k) if (k %in% names(sc)) as.character(sc[[k]]) else rep("", nrow(sc))
+        data.frame(epic = ep, market = f$name %||% ep, id = sc$id, source = g("source"), side = sc$side, entry = cc_fmt_px(sc$entry, d), stop = cc_fmt_px(sc$stop, d), target = cc_fmt_px(sc$target, d), rrr = sc$rrr,
+          score = suppressWarnings(as.numeric(g("score"))), chance = suppressWarnings(as.numeric(g("chance"))), be_pct = suppressWarnings(as.numeric(g("be_pct"))), evidence = g("evidence"), setup_rec = g("ev_record"),
+          fit = g("fit"), htf = if ("htf_d" %in% names(sc)) paste0("daily ", sc$htf_d, ", 4-hour ", sc$htf_h4) else "", regime = res[[ep]]$scan$regime %||% "", news = g("news"), score_why = g("score_why"), blocked = as.logical(sc$blocked) %in% TRUE, checks = g("checks"),
+          risk_txt = if ("risk_acc" %in% names(sc)) sprintf("%s %.2f", ccy, as.numeric(sc$risk_acc)) else "-", reward_txt = if ("reward_acc" %in% names(sc)) sprintf("%s %.2f", ccy, as.numeric(sc$reward_acc)) else "-", stringsAsFactors = FALSE) }))
+      pk <- cc_oneclick_pick(all); b <- all[pk$k, ]; best <- res[[b$epic]]
+      mkt(best$f); scan(best$scan); scan_meta(best$meta); scen(best$scen); claude_info(best$claude); rec_pending(b$id)
+      updateRadioButtons(session, "p_pick", selected = b$id); if (pk$fits) do_use(quiet = TRUE, pick = b$id, size = sz)
+      ms_used <- isTRUE(best$claude$used); why <- cc_oneclick_reasons(all, pk$k, length(res), sz, ms_used = ms_used)
+      tryCatch({ store$write("events", data.frame(event_id = run_id, trade_id = NA_character_, event_type = "ONE_CLICK", note = sprintf("Best: %s %s, score %s", b$epic, b$id, b$score),
+        request_json = cc_json(list(markets = eps, size = sz, skipped = skipped, scans = vapply(res, function(z) z$scan_id %||% NA_character_, ""))),
+        response_json = cc_json(list(best = as.list(b), reasons = why, scenarios = all[, c("epic", "id", "side", "score", "chance", "rrr", "evidence", "blocked")])), stringsAsFactors = FALSE)); touch() },
+        error = function(e) cat("[C.C] one click not saved:", conditionMessage(e), "\n"))
+      one_res(list(ok = TRUE, best = b, fits = pk$fits, why = why, n = nrow(all), markets = names(res), skipped = skipped, all = all[pk$order, c("market", "id", "score", "chance", "rrr", "blocked")]))
+      cat(sprintf("[C.C] one click: %d markets, %d scenarios, best %s %s (score %s)\n", length(res), nrow(all), b$epic, b$id, b$score)) }))
+    output$one_out <- renderUI({ r <- one_res(); if (is.null(r)) return(NULL); if (!isTRUE(r$ok)) return(tags$div(style = "color:#b91c1c; font-weight:700; margin-top:6px;", r$text))
+      b <- r$best; col <- if (isTRUE(r$fits)) "#166534" else "#b91c1c"
+      tags$div(style = sprintf("border:2px solid %s; background:#fff; border-radius:10px; padding:8px 12px; margin-top:8px;", col),
+        tags$div(style = "font-size:15px; font-weight:800;", sprintf("Best trade: %s on %s, score %s/100", if (startsWith(b$id, b$side)) b$id else paste(b$side, b$id), b$market, b$score)),
+        tags$div(style = "font-size:12.5px;", sprintf("Entry about %s, stop %s, target %s, R:R %.2f. Markets analysed: %s.%s", b$entry, b$stop, b$target, b$rrr, paste(r$markets, collapse = ", "), if (length(r$skipped)) paste0(" Skipped: ", paste(r$skipped, collapse = "; "), ".") else "")),
+        tags$ol(style = "font-size:12.5px; margin:6px 0; padding-left:20px;", lapply(r$why, tags$li)),
+        if (isTRUE(r$fits)) tagList(
+          tags$div(style = "font-size:12.5px; color:#334155;", "The ticket below is filled with this trade (size from the box above; change it there or in the ticket). Approving opens the usual confirmation with your plan check; the deal is sent only when you confirm there."),
+          tags$button(type = "button", class = "btn", style = "background:#16a34a; color:#fff; font-weight:800; margin-top:6px;", onclick = sprintf("var c=document.getElementById('%s'); if(c && !c.checked){c.checked=true; $(c).trigger('change');} setTimeout(function(){document.getElementById('%s').click();}, 400);", session$ns("o_ok"), session$ns("o_send")), icon("check"), " Approve and place on Capital.com (DEMO)"))
+        else tags$div(style = "color:#b91c1c; font-weight:700;", "Every scenario breaks a rule set to Block in Setup, so nothing can be sent. The best of them is shown; switch that rule to Warn in Setup if you want to trade it."),
+        tags$details(tags$summary(style = "cursor:pointer; font-size:12.5px;", sprintf("All %d scenarios, best first", r$n)), DT::renderDT(DT::datatable(transform(r$all, rrr = round(rrr, 2)), rownames = FALSE, options = list(dom = "t", pageLength = 40))))) })
+    # ********************* Weeks 7-8: trade plan check-up (shown in Setup)
+    output$plan_checkup <- renderUI({ ids <- c("risk", "cap", "minrrr", "adx_t", "adx_r", "hold", "pl_markets", "pl_setups", paste0("pl_r", 1:5), "pl_stopatr", "pl_stopatr_max", "pl_maxloss", "pl_maxday", "pl_lossrow", "pl_news", "pl_ctr", "pl_from", "pl_to", "pl_anyhours")
+      x <- stats::setNames(lapply(ids, function(k) input[[paste0("s_", k)]]), ids); t <- cc_plan_checkup(x); n_ok <- sum(t$Status == "OK")
+      col <- c(OK = "#166534", CHECK = "#b45309", MISSING = "#b91c1c")
+      tags$div(tags$div(style = sprintf("font-weight:800; color:%s; margin-bottom:6px;", if (n_ok == nrow(t)) "#166534" else "#b45309"), sprintf("%d of %d plan items are complete and in line with the course and your written plan.", n_ok, nrow(t))),
+        tags$table(class = "table table-condensed", style = "font-size:12.5px; background:#fff;", tags$tr(lapply(names(t), tags$th)),
+          lapply(seq_len(nrow(t)), function(i) tags$tr(tags$td(t$Section[i]), tags$td(t$Item[i]), tags$td(t$Setting[i]), tags$td(style = sprintf("font-weight:800; color:%s;", col[[t$Status[i]]]), t$Status[i]), tags$td(style = "color:#475569;", t$Why[i]))))) })
+    # ********************* Weeks 9-12: end-of-week assessed trading review (shown in E)
+    wr <- reactiveVal(NULL)
+    week_data <- function() { from <- as.Date(input$wr_from %||% (Sys.Date() - ((as.integer(format(Sys.Date(), "%u")) - 1) %% 7))); to <- from + 6
+      ms <- if (is.null(records_store)) NULL else tryCatch(records_store$current("morning_sheets"), error = function(e) NULL)
+      msd <- if (is.null(ms) || !nrow(ms)) character(0) else { d <- as.Date(ms$sheet_date); as.character(d[!is.na(d) & d >= from & d <= to]) }
+      ev <- tbl("events"); tsh <- ev$trade_id[ev$event_type %in% "TRADE_SHEET" & as.Date(format(as.POSIXct(ev$saved_at, tz = "UTC"), "%Y-%m-%d", tz = "Europe/London")) >= from & as.Date(format(as.POSIXct(ev$saved_at, tz = "UTC"), "%Y-%m-%d", tz = "Europe/London")) <= to]
+      cc_week_review(trades(), from, to, msd, tsh) }
+    observeEvent(input$wr_go, withProgress(message = "End-of-week review: reading your trades and sheets from BigQuery...", value = 0.1, {
+      w <- week_data(); sm <- NULL
+      if (isTRUE(input$wr_claude) && is.function(c_fn)) { setProgress(0.4, message = "The Claude API is writing what worked and what did not...")
+        p <- paste0("You help a trading student write the end-of-week review of the LAT assessed trading (Weeks 9-12). Use ONLY these facts; never invent trades. Write 4 to 6 short bullet lines in the first person, plain English, never mentioning AI: what worked, what did not, where the plan was not followed and whether that was a lapse or had reasons, and one or two concrete changes for next week. Give the number of trades with any rate you cite and say when the sample is too small to judge.\n\n",
+          paste(cc_week_review_lines(w), collapse = "\n"), "\n\nTRADES:\n", if (is.null(w$trades)) "(none closed)" else paste(utils::capture.output(print(w$trades, row.names = FALSE)), collapse = "\n"))
+        sm <- tryCatch({ x <- c_fn(p); txt <- if (is.list(x)) x$text else x; l <- trimws(unlist(strsplit(cc_no_ai_name(txt %||% ""), "\n"))); l[nzchar(l)] }, error = function(e) { note(paste("Claude API:", conditionMessage(e)), "warning"); NULL }) }
+      setProgress(0.7, message = "Saving the review to BigQuery..."); rid <- cc_id("WR")
+      tryCatch({ store$write("events", data.frame(event_id = rid, trade_id = NA_character_, event_type = "WEEK_REVIEW", note = cc_week_review_lines(w)[1], request_json = cc_json(list(from = format(w$from), to = format(w$to))),
+        response_json = cc_json(list(stats = w$stats, lines = cc_week_review_lines(w), summary = sm, trades = w$trades)), stringsAsFactors = FALSE)); touch() }, error = function(e) note(paste("Not saved to BigQuery:", conditionMessage(e)), "warning"))
+      setProgress(0.85, message = "Writing the review to Dropbox (Weekly Reviews)...")
+      sv <- tryCatch({ f <- file.path(tempdir(), sprintf("Weekly_Review_%s.docx", format(w$from, "%d-%m-%Y"))); cc_week_review_docx(w, input$s_name, f, sm); pdf <- tryCatch(tr_docx_to_pdf(f), error = function(e) NA_character_)
+        tr_save_sheet(c(f, pdf), "review") }, error = function(e) data.frame(file = "", where = "", ok = FALSE, note = conditionMessage(e)))
+      wr(list(w = w, sm = sm, saved = sv)) }))
+    output$wr_out <- renderUI({ x <- wr(); if (is.null(x)) return(cc_rec_note("Choose the Monday of the week and press the button. The review is saved to BigQuery (WEEK_REVIEW) and to Dropbox in 'Weekly Reviews' (Word and PDF)."))
+      w <- x$w; sv <- x$saved
+      tags$div(style = "font-size:12.5px;", tags$ul(lapply(cc_week_review_lines(w), tags$li)),
+        if (!is.null(w$by_strategy)) tagList(tags$b("By strategy"), tags$table(class = "table table-condensed", tags$tr(lapply(names(w$by_strategy), tags$th)), lapply(seq_len(nrow(w$by_strategy)), function(i) tags$tr(lapply(w$by_strategy[i, ], function(v) tags$td(format(v))))))),
+        if (!is.null(w$by_class)) tagList(tags$b("By asset class"), tags$table(class = "table table-condensed", tags$tr(lapply(names(w$by_class), tags$th)), lapply(seq_len(nrow(w$by_class)), function(i) tags$tr(lapply(w$by_class[i, ], function(v) tags$td(format(v))))))),
+        if (length(x$sm)) tagList(tags$b("What worked, what did not, next week"), tags$ul(lapply(sub("^[-*] *", "", x$sm), tags$li))),
+        tags$div(style = sprintf("font-weight:700; color:%s;", if (!is.null(sv) && nrow(sv) && any(sv$ok)) "#166534" else "#b91c1c"), if (!is.null(sv) && nrow(sv) && any(sv$ok)) paste("Saved in Dropbox:", paste(unique(sv$where[sv$ok]), collapse = ", ")) else paste("Not saved to Dropbox:", paste(sv$note, collapse = "; ")))) })
     j_form <- function(r) list(purpose = input$j_purpose, chart_period = input$j_chart, expected_hours = tr_num0(input$j_hours, NA), exit_code = if (nzchar(input$j_code %||% "")) input$j_code else r$exit_code,
                   setup_fund = input$j_fund, setup_tech = input$j_tech, trigger_text = input$j_trigger, execution_text = input$j_exec, stop_reason = input$j_stopwhy, target_reason = input$j_tgtwhy,
                   exit_reason = input$j_why, lessons = input$j_lessons, analysis = input$j_analysis, plan_followed = input$j_followed, deviation_type = input$j_devtype,
@@ -1408,7 +1686,7 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
     j_store <- function(r) { f <- j_form(r); same <- vapply(names(f), function(k) { a <- f[[k]]; b <- r[[k]]
         a <- if (is.null(a) || (length(a) == 1 && is.na(a))) "" else as.character(a); b <- if (is.null(b) || (length(b) == 1 && is.na(b))) "" else as.character(b); identical(trimws(a), trimws(b)) }, TRUE)
       if (all(same)) return(NULL); do.call(new_version, c(list(r), f)); touch(); (if (is.na(r$record_version)) 0L else r$record_version) + 1L }
-    observeEvent(input$j_save, { r <- jrow(); if (is.null(r)) return(); v <- j_store(r)
+    observeEvent(input$j_save, withProgress(message = "Saving your entries to BigQuery...", value = 0.3, { r <- jrow(); if (is.null(r)) return(); v <- j_store(r)
       e <- c_latest(r$trade_id); ctext <- trimws(input$j_c %||% ""); inc <- isTRUE(input$j_c_incl)
       old_t <- if (is.null(e) || is.na(e$note)) "" else trimws(e$note); old_i <- if (is.null(e)) NA else isTRUE(tryCatch(jsonlite::fromJSON(e$response_json)$include, error = function(x) TRUE))
       c_saved <- FALSE
@@ -1417,7 +1695,7 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
       output$j_msg <- renderUI(tags$div(style = "color:#16a34a; margin-top:6px; font-weight:700;", icon("check"),
         if (is.null(v) && !c_saved) " Nothing changed since the last save." else paste0(
           if (!is.null(v)) sprintf(" Saved to BigQuery (cc_trades), %s version %d; earlier versions kept.", r$trade_id, v) else "",
-          if (c_saved) " C analysis saved (cc_events, C_ANALYSIS)." else "", " ", format(Sys.time(), "%H:%M:%S")))) })
+          if (c_saved) " C analysis saved (cc_events, C_ANALYSIS)." else "", " ", format(Sys.time(), "%H:%M:%S")))) }))
     output$j_where_sheet <- renderUI({ tg <- tryCatch(tr_sheet_targets("trade"), error = function(e) list(local = "", api = "")); tok <- nzchar(tryCatch(tr_dropbox_token(), error = function(e) ""))
       cc_rec_note("Each button does one thing. The sheet is built from what is on screen when you press it (LAT fields, Capital.com's data, the charts, and at the bottom the context: chart and patterns at the order, the recommended trade, and the C analysis if ticked). ",
         "Orders that were never filled get a sheet that says so.",
@@ -1485,3 +1763,10 @@ cc_trading_records_server <- function(id, client, api_manager = NULL, store = NU
   })
 }
 tr_num0 <- function(x, d = NA_real_) { v <- suppressWarnings(as.numeric(if (is.null(x) || !length(x)) NA else x[1])); if (is.finite(v)) v else d }
+
+# ********************* UI of the end-of-week review (placed in E. Statistics & Backtest by the desk)
+cc_week_review_ui <- function(id) { ns <- NS(id); mon <- Sys.Date() - ((as.integer(format(Sys.Date(), "%u")) - 1) %% 7)
+  tagList(cc_rec_note("Weeks 9-12 of the course end with a Friday review of the assessed trading. This builds it from your records: win rate against break-even, average Reward:Risk, total R, Sharpe, Sortino, maximum drawdown, the share of trades that followed your plan, deviations and lessons, and how many Morning Sheets and Trade Sheets you saved."),
+    fluidRow(column(3, dateInput(ns("wr_from"), cc_rec_lab("Monday of the week"), mon, weekstart = 1)), column(4, tags$div(style = "margin-top:25px;", checkboxInput(ns("wr_claude"), "Add what worked and what did not (Claude API)", TRUE))),
+             column(5, tags$div(style = "margin-top:25px;", actionButton(ns("wr_go"), "Write my end-of-week review (BigQuery, then Dropbox)", icon = icon("clipboard-check"), class = "btn-primary", style = "color:#fff; font-weight:700; white-space:normal;")))),
+    uiOutput(ns("wr_out"))) }

@@ -64,6 +64,7 @@ options(shiny.maxRequestSize = -1)
 
 library(shiny)
 library(shinydashboard)
+library(purrr)        # DaysPlanningExerciseTravel tabs (attached in the same place as in that app)
 library(shinyjs)
 library(shinyWidgets)
 library(httr)
@@ -84,7 +85,6 @@ library(openxlsx)
 library(stringr)
 library(readxl)
 library(writexl)
-library(blastula)
 library(openssl)
 library(dplyr)
 library(av)
@@ -92,6 +92,14 @@ library(fs)
 library(shinyFiles)
 library(magick)
 library(qpdf)
+# DaysPlanningExerciseTravel tabs (Events Scheduling, Day Planner, Travel, Exercise, Diet, Titan Calendar) - the same
+# packages that app uses: tidyr; httr2 + xml2 (Titan calendar / CalDAV, Slack); gargle (Drive service-account tokens);
+# png (Travel map snapshot)
+library(tidyr)
+library(httr2)
+library(gargle)
+library(xml2)
+library(png)
 
 # Async processing (Video Audio Extractor uses this to avoid blocking the
 # UI/other tabs during long MP4 -> MP3 extraction jobs).
@@ -104,16 +112,25 @@ if (requireNamespace("future", quietly = TRUE) && requireNamespace("promises", q
 }
 
 source("R/live_log.R")      # live progress logs + step-by-step job runner (audio tabs)
+source("R/utils_timezone.R")          # time zone dropdown + prompt rules + "[time_zone]:" header (from DaysPlanningFundingTravel)
 source("R/api_manager.R")
 source("R/utils_export.R")            # generic HTML/PDF export (Funding Programmes > Visualizations)
-source("R/utils_calendar_export.R")   # .ics calendar export (Funding Programmes > Browse)
+source("R/utils_calendar_export.R")   # older .ics helpers (kept for compatibility)
+source("R/utils_ics.R")               # .ics calendar engine: time zones, reminders, application-open dates (Funding)
+source("R/utils_slack.R")             # Slack Web API layer (Online Collaboration group, from FundingGanttContactsCollaboration, unchanged)
 source("R/module_loader.R")
 source("R/utils_nav.R")               # sidebar = tab group > topic section; modules of a section = horizontal tabs
 source("R/utils_local_creds.R")       # Windows key-folder auto-load + the API CONNECTIONS lights
 source("R/utils_tables.R")            # on-demand table loading per tab group + the TABLES indicator
+source("R/utils_gdrive.R")            # Google Drive REST client + folder scheme (API Settings > Google Drive)
+source("R/utils_collab_sync.R")        # exchange with CollaborationPlanning through its Drive folder (Funding > Collaboration Sync)
+source("R/utils_diagram_export.R")    # "Save diagram" bar: HTML/PDF/PNG/JPG/GIF/TIFF/SVG/CSV to Google Drive or a zip
 
 # Source utility modules that don't appear in the sidebar but are used by other modules
 source("modules/API Settings/openai_base.R")
+
+source("R/suite_cp.R")                # CollaborationPlanning's own storage code: read/write its cp_ tables (see the file)
+source("R/suite_dpet.R")              # DaysPlanningExerciseTravel helpers in their own environment (see the file)
 
 loader <- ModuleLoader$new(modules_dir = "modules", registry_file = "modules/_module_registry.yml")
 loader$load_all()
@@ -141,7 +158,7 @@ create_ui <- function() {
     ),
     dashboardBody(
       useShinyjs(),
-      tags$head(tags$style(HTML(app_css))),
+      tags$head(tags$style(HTML(app_css)), diagram_export_head()),
       do.call(tabItems, tab_item_list)
     )
   )
@@ -159,6 +176,7 @@ create_server <- function() {
     # sidebar: connection lights + on-demand table checks (one tab group at a time, when it is opened)
     layout <- nav_register(nav_layout(loader$registry, loader$get_all_module_ids()))
     keys_status_wire("keys_status", api_manager)
+    dpet_bridge_wire(api_manager, session, layout)   # Events / Day Planner / Travel / Exercise / Diet: same keys + table checks
     tables_wire(api_manager, session, layout, loader$registry)
 
     all_ids <- loader$get_all_module_ids()

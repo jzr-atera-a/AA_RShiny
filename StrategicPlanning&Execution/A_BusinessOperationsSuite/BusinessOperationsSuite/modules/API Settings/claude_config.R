@@ -16,7 +16,7 @@ claude_config_ui <- function(id) {
           "summaries, and Funding Programmes discovery)."),
         p("You can obtain an API key from: ",
           tags$a(href = "https://console.anthropic.com/settings/keys", target = "_blank",
-                 style = "color: #7ec8e3;", "console.anthropic.com/settings/keys")),
+                 style = "color: #008A82;", "console.anthropic.com/settings/keys")),
         br(),
 
         passwordInput(ns("api_key"), "Anthropic API Key:", placeholder = "sk-ant-...", width = "100%"),

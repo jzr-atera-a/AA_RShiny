@@ -152,6 +152,10 @@ app_api_status_render <- function(api_manager, booting = NULL, checks = NULL) {
     else if (any(stt == "ready")) tbl <- light("Tables", "#22c55e", paste0(paste(unique(lab[stt == "ready"]), collapse = ", "), " loaded"))
     else tbl <- light("Tables", "#94a3b8", "loaded when you open a tab that needs them")
   }
+  gs <- gd_status()
+  gd_col <- switch(gs$state, ok = "#22c55e", warn = "#fbbf24", pending = "#fbbf24", error = "#ef4444", "#94a3b8")
+  gd_txt <- switch(gs$state, ok = "ready", warn = "connected, see the warning in API Configuration", pending = "set up, not tested yet",
+                   error = "last check failed (API Configuration > Google Drive)", "optional: API Configuration > Google Drive")
   tagList(light("BigQuery", bq, if (bq) "connected (suites load when opened)" else if (isTRUE(st$bq_failed)) "key found, connection failed (see Debug Console)" else "not connected: API Configuration > BigQuery"),
-          light("Claude", claude_col, claude_txt), tbl)
+          light("Claude", claude_col, claude_txt), light("Google Drive", gd_col, gd_txt), tbl)
 }

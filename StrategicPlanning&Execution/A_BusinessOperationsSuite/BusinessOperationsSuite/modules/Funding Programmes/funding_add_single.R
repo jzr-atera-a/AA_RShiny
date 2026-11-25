@@ -14,6 +14,7 @@ funding_add_single_ui <- function(id) {
 
         funding_category_dropdown_ui(ns),
         funding_country_cityregion_dropdown_ui(ns),
+        bos_tz_dropdown_ui(ns, label = "Time zone for deadlines and dates:", help = "Saved with the entry, so calendar exports use the right zone."),
 
         hr(),
 
@@ -83,6 +84,7 @@ funding_add_single_server <- function(id, api_manager) {
           stringsAsFactors = FALSE
         )
 
+        df$time_zone <- bos_tz_value(input$time_zone)
         api_manager$bq_insert_funding(df)
         api_manager$trigger_state_update_funding()
 

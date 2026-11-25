@@ -1,0 +1,37 @@
+{
+ "id": "logs",
+ "title": "Log report: top users with tie-breaking",
+ "style": "Google-style practical coding",
+ "difficulty": "Easy\u2013Medium",
+ "minutes": 35,
+ "files": [
+  "report.py",
+  "logparse.py"
+ ],
+ "brief": "Access-log lines look like <code>2024-05-01T10:00:00 alice GET /home 200</code>. <code>logparse.parse_line</code> turns a line into a dict (or <code>None</code> if it is malformed); <code>report.top_users</code> is not written yet.",
+ "tasks": [
+  "Implement <code>top_users(lines, k)</code>: the <b>k users with the most requests</b>, most first; <b>ties broken alphabetically</b> (ascending). Malformed lines are skipped. If k exceeds the number of users return all of them; if k \u2264 0 return <code>[]</code>.",
+  "<b>Bug:</b> real logs contain repeated spaces, tabs and trailing newlines, and those lines are silently dropped. Fields are separated by <b>any run of whitespace</b>.",
+  "Extend <code>test_solution.py</code> to pin down the tie-breaking and whitespace behaviour."
+ ],
+ "ai_prompt": "Implement top_users and make the parser tolerant of whitespace.",
+ "ai_reply": "Done! `top_users` counts users with a Counter and uses `heapq.nlargest` with a `(count, name)` key so ties are broken by name \u2014 O(n + u log k).\n\nI also made `parse_line` strip the line first, which fixes trailing newlines and spaces.",
+ "flaws": [
+  "<code>nlargest</code> with key <code>(count, name)</code> picks the <b>largest</b> name on a tie \u2014 reverse alphabetical. Use <code>nsmallest</code> with <code>(-count, name)</code>, or sort.",
+  "<code>strip().split(\" \")</code> fixes only the ends; tabs and double spaces inside the line still produce the wrong number of fields. <code>split()</code> with no argument splits on any whitespace run.",
+  "<code>k \u2264 0</code> happens to work with <code>nlargest</code>, but the behaviour is not stated or tested."
+ ],
+ "mutants": {
+  "m1": "Ties in insertion order (most_common)",
+  "m2": "Parser only strips the ends",
+  "m3": "k \u2264 0 returns every user"
+ },
+ "rubric": [
+  "Spotted the reversed tie-break",
+  "Spotted that internal whitespace still breaks parsing",
+  "Tests include a tie",
+  "Tests include tabs / double spaces",
+  "Covered k = 0 and k > number of users",
+  "Explained the complexity of the heap vs. sorting"
+ ]
+}

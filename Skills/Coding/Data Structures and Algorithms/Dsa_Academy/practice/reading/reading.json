@@ -1,0 +1,349 @@
+[
+ {
+  "id": "r01",
+  "title": "Mutable default argument",
+  "kind": "output",
+  "level": "Easy",
+  "tags": [
+   "python gotchas"
+  ],
+  "code": "def add(item, bucket=[]):\n    bucket.append(item)\n    return bucket\n\nadd(1)\nadd(2)\nprint(add(3))\n",
+  "question": "What does this print?",
+  "options": [
+   "[3]",
+   "[1, 2, 3]",
+   "[1, 3]",
+   "TypeError"
+  ],
+  "answer": 2,
+  "explanation": "The default list is created once, when the function is defined, and shared by every call that omits <code>bucket</code>. Use <code>bucket=None</code> and create the list inside.",
+  "model": "It appends to one shared default list, so state leaks between calls; the third call sees the two earlier items.",
+  "runnable": true
+ },
+ {
+  "id": "r02",
+  "title": "Closures capture variables, not values",
+  "kind": "output",
+  "level": "Medium",
+  "tags": [
+   "python gotchas",
+   "closures"
+  ],
+  "code": "fs = [lambda: i * i for i in range(4)]\nprint([f() for f in fs])\n",
+  "question": "What does this print?",
+  "options": [
+   "[0, 1, 4, 9]",
+   "[9, 9, 9, 9]",
+   "[0, 0, 0, 0]",
+   "[16, 16, 16, 16]"
+  ],
+  "answer": 2,
+  "explanation": "Each lambda looks up <code>i</code> when it is called; by then the comprehension has finished with <code>i = 3</code>. Bind the value with <code>lambda i=i: i * i</code>.",
+  "model": "Builds four functions that all read the same loop variable late, so they all return 3 squared.",
+  "runnable": true
+ },
+ {
+  "id": "r03",
+  "title": "What does this function compute?",
+  "kind": "explain",
+  "level": "Medium",
+  "tags": [
+   "binary search"
+  ],
+  "code": "def mystery(a, x):\n    lo, hi = 0, len(a)\n    while lo < hi:\n        mid = (lo + hi) // 2\n        if a[mid] <= x:\n            lo = mid + 1\n        else:\n            hi = mid\n    return lo\n",
+  "question": "Given a sorted list <code>a</code>, what does <code>mystery(a, x)</code> return?",
+  "options": [
+   "The index of x, or -1",
+   "The first index whose value is ≥ x (bisect_left)",
+   "The first index whose value is > x (bisect_right)",
+   "The number of elements smaller than x"
+  ],
+  "answer": 3,
+  "explanation": "Every element ≤ x pushes <code>lo</code> to the right, so <code>lo</code> stops at the first element strictly greater than x — the same as <code>bisect.bisect_right</code>. It also equals the count of elements ≤ x.",
+  "model": "Binary search for the insertion point after any existing copies of x: the number of elements ≤ x, i.e. bisect_right. O(log n).",
+  "runnable": true
+ },
+ {
+  "id": "r04",
+  "title": "Hidden quadratic",
+  "kind": "complexity",
+  "level": "Medium",
+  "tags": [
+   "complexity",
+   "strings"
+  ],
+  "code": "def build(words):\n    s = \"\"\n    for w in words:\n        if w not in s.split(\",\"):\n            s += w + \",\"\n    return s\n",
+  "question": "With n words of bounded length, what is the worst-case time complexity?",
+  "options": [
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(n³)"
+  ],
+  "answer": 3,
+  "explanation": "Each iteration splits the whole string built so far (O(n) work) and scans the resulting list (O(n)), so n iterations cost O(n²). A set of seen words plus <code>','.join</code> makes it O(n).",
+  "model": "Deduplicates words into a comma-separated string, but re-splits the growing string each time, so it is quadratic.",
+  "runnable": true
+ },
+ {
+  "id": "r05",
+  "title": "Find the bug: sliding window",
+  "kind": "bug",
+  "level": "Medium",
+  "tags": [
+   "sliding window"
+  ],
+  "code": "def longest_unique(s):\n    seen = {}\n    best = start = 0\n    for i, ch in enumerate(s):\n        if ch in seen:\n            start = seen[ch] + 1\n        seen[ch] = i\n        best = max(best, i - start + 1)\n    return best\n",
+  "question": "<code>longest_unique(\"abba\")</code> should be 2. Which line is wrong?",
+  "options": [
+   "line 2",
+   "line 5",
+   "line 6",
+   "line 8"
+  ],
+  "answer": 3,
+  "bug_line": 6,
+  "explanation": "When the last 'a' is seen, its previous index 0 lies <b>before</b> the window start (2); setting <code>start = 1</code> moves the window backwards and the function returns 3. Use <code>start = max(start, seen[ch] + 1)</code>.",
+  "model": "Longest substring without repeating characters with a last-seen map; the start pointer must never move left.",
+  "runnable": true
+ },
+ {
+  "id": "r06",
+  "title": "Generator laziness",
+  "kind": "output",
+  "level": "Medium",
+  "tags": [
+   "generators"
+  ],
+  "code": "def gen():\n    print(\"start\")\n    yield 1\n    print(\"middle\")\n    yield 2\n\ng = gen()\nprint(\"created\")\nprint(next(g))\n",
+  "question": "What does this print?",
+  "options": [
+   "start\ncreated\n1",
+   "created\nstart\n1",
+   "created\nstart\n1\nmiddle",
+   "start\n1\ncreated"
+  ],
+  "answer": 2,
+  "explanation": "Calling a generator function only creates the generator; its body runs up to the first <code>yield</code> when <code>next</code> is called.",
+  "model": "Shows that generator bodies run lazily, one yield at a time.",
+  "runnable": true
+ },
+ {
+  "id": "r07",
+  "title": "Aliasing in a 2-D grid",
+  "kind": "output",
+  "level": "Easy",
+  "tags": [
+   "python gotchas",
+   "matrices"
+  ],
+  "code": "grid = [[0] * 3] * 2\ngrid[0][1] = 5\nprint(grid)\n",
+  "question": "What does this print?",
+  "options": [
+   "[[0, 5, 0], [0, 0, 0]]",
+   "[[0, 5, 0], [0, 5, 0]]",
+   "[[5, 5, 5], [0, 0, 0]]",
+   "IndexError"
+  ],
+  "answer": 2,
+  "explanation": "<code>[row] * 2</code> repeats a reference to the same inner list. Build rows independently: <code>[[0] * 3 for _ in range(2)]</code>.",
+  "model": "Creates a grid whose rows are the same list object, so writing one row writes both.",
+  "runnable": true
+ },
+ {
+  "id": "r08",
+  "title": "What does this function compute?",
+  "kind": "explain",
+  "level": "Medium",
+  "tags": [
+   "bit manipulation"
+  ],
+  "code": "def f(n):\n    c = 0\n    while n:\n        n &= n - 1\n        c += 1\n    return c\n",
+  "question": "For a non-negative integer n, <code>f(n)</code> returns…",
+  "options": [
+   "⌊log₂ n⌋",
+   "The number of 1 bits in n",
+   "The number of trailing zeros",
+   "n with its bits reversed"
+  ],
+  "answer": 2,
+  "explanation": "<code>n &amp; (n − 1)</code> clears the lowest set bit, so the loop runs once per 1 bit (Kernighan's popcount) — O(number of set bits).",
+  "model": "Counts set bits by repeatedly clearing the lowest one.",
+  "runnable": true
+ },
+ {
+  "id": "r09",
+  "title": "Recursion depth and cost",
+  "kind": "complexity",
+  "level": "Medium",
+  "tags": [
+   "recursion",
+   "complexity"
+  ],
+  "code": "def f(a):\n    if len(a) <= 1:\n        return a\n    mid = len(a) // 2\n    return f(a[:mid]) + f(a[mid:])\n",
+  "question": "Time complexity for a list of length n?",
+  "options": [
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)"
+  ],
+  "answer": 3,
+  "explanation": "Each level of recursion copies O(n) elements in slices and concatenations, and there are log n levels: T(n) = 2T(n/2) + O(n) = O(n log n). It returns a copy of the list.",
+  "model": "Splits the list in halves recursively and glues it back together — merge-sort shape without the sorting, so O(n log n) from copying.",
+  "runnable": true
+ },
+ {
+  "id": "r10",
+  "title": "Find the bug: BFS on a grid",
+  "kind": "bug",
+  "level": "Medium",
+  "tags": [
+   "graphs",
+   "bfs"
+  ],
+  "code": "from collections import deque\n\ndef steps(grid, start, goal):\n    q = deque([(start, 0)])\n    seen = set()\n    while q:\n        (r, c), d = q.popleft()\n        if (r, c) == goal:\n            return d\n        seen.add((r, c))\n        for nr, nc in ((r+1, c), (r-1, c), (r, c+1), (r, c-1)):\n            if 0 <= nr < len(grid) and 0 <= nc < len(grid[0]) and grid[nr][nc] == 0 and (nr, nc) not in seen:\n                q.append(((nr, nc), d + 1))\n    return -1\n",
+  "question": "It returns correct answers but is very slow on large open grids. Which line causes it?",
+  "options": [
+   "line 4",
+   "line 7",
+   "line 10",
+   "line 13"
+  ],
+  "answer": 3,
+  "bug_line": 10,
+  "explanation": "Cells are marked visited when <b>popped</b>, so the same cell can be enqueued many times before it is processed — exponential-looking blow-up on open grids. Mark <code>seen</code> when you <b>enqueue</b> (and add <code>start</code> initially).",
+  "model": "Shortest path in an unweighted grid with BFS; correctness holds but duplicates explode the queue.",
+  "runnable": true
+ },
+ {
+  "id": "r11",
+  "title": "Sorting with keys",
+  "kind": "output",
+  "level": "Easy",
+  "tags": [
+   "sorting"
+  ],
+  "code": "people = [(\"ann\", 31), (\"bob\", 25), (\"cid\", 31), (\"dee\", 25)]\npeople.sort(key=lambda p: -p[1])\nprint([name for name, _ in people])\n",
+  "question": "What does this print?",
+  "options": [
+   "['ann', 'cid', 'bob', 'dee']",
+   "['cid', 'ann', 'dee', 'bob']",
+   "['ann', 'bob', 'cid', 'dee']",
+   "['dee', 'bob', 'cid', 'ann']"
+  ],
+  "answer": 1,
+  "explanation": "Python's sort is stable: people with equal ages keep their original relative order.",
+  "model": "Sorts by age descending; ties stay in input order because Timsort is stable.",
+  "runnable": true
+ },
+ {
+  "id": "r12",
+  "title": "Dictionary iteration while mutating",
+  "kind": "output",
+  "level": "Medium",
+  "tags": [
+   "python gotchas",
+   "hashing"
+  ],
+  "code": "d = {\"a\": 1, \"b\": 2, \"c\": 3}\ntry:\n    for k in d:\n        if d[k] % 2:\n            del d[k]\nexcept RuntimeError as e:\n    print(\"error:\", e)\nprint(sorted(d))\n",
+  "question": "What does this print?",
+  "options": [
+   "['b']",
+   "error: dictionary changed size during iteration\n['b', 'c']",
+   "['a', 'b', 'c']",
+   "error: dictionary changed size during iteration\n['b']"
+  ],
+  "answer": 2,
+  "explanation": "Deleting a key changes the dict's size; the iterator detects it on the next step and raises. Only 'a' was deleted. Iterate over <code>list(d)</code> instead.",
+  "model": "Attempts to drop odd values in place but the iteration aborts after the first deletion.",
+  "runnable": true
+ },
+ {
+  "id": "r13",
+  "title": "What does this class do?",
+  "kind": "explain",
+  "level": "Medium",
+  "tags": [
+   "design",
+   "stacks"
+  ],
+  "code": "class S:\n    def __init__(self):\n        self.a, self.b = [], []\n    def push(self, x):\n        self.a.append(x)\n    def pop(self):\n        if not self.b:\n            while self.a:\n                self.b.append(self.a.pop())\n        return self.b.pop()\n",
+  "question": "What data structure does <code>S</code> implement, and what is the cost of <code>pop</code>?",
+  "options": [
+   "A stack; O(1) worst case",
+   "A queue; O(1) amortised",
+   "A queue; O(n) every call",
+   "A deque; O(log n)"
+  ],
+  "answer": 2,
+  "explanation": "Two stacks reverse the order once: elements leave in insertion order (FIFO). Each element moves from <code>a</code> to <code>b</code> at most once, so pops are O(1) amortised (#232).",
+  "model": "A FIFO queue built from two stacks; the transfer happens only when the out-stack is empty.",
+  "runnable": true
+ },
+ {
+  "id": "r14",
+  "title": "Integer division and negatives",
+  "kind": "output",
+  "level": "Easy",
+  "tags": [
+   "python gotchas",
+   "math"
+  ],
+  "code": "print(-7 // 2, int(-7 / 2), -7 % 2)\n",
+  "question": "What does this print?",
+  "options": [
+   "-3 -3 1",
+   "-4 -3 1",
+   "-4 -4 -1",
+   "-3 -4 -1"
+  ],
+  "answer": 2,
+  "explanation": "<code>//</code> floors towards −∞ (−4), <code>int()</code> truncates towards 0 (−3), and <code>%</code> takes the sign of the divisor (1). This matters in Basic Calculator and Evaluate RPN.",
+  "model": "Contrasts floor division, truncation and Python's modulo sign rule.",
+  "runnable": true
+ },
+ {
+  "id": "r15",
+  "title": "Memoised recursion",
+  "kind": "complexity",
+  "level": "Medium",
+  "tags": [
+   "dynamic programming"
+  ],
+  "code": "from functools import lru_cache\n\n@lru_cache(maxsize=None)\ndef ways(i, j):\n    if i == 0 or j == 0:\n        return 1\n    return ways(i - 1, j) + ways(i, j - 1)\n",
+  "question": "Time complexity of <code>ways(m, n)</code> with the cache?",
+  "options": [
+   "O(2^(m+n))",
+   "O(m + n)",
+   "O(m · n)",
+   "O(m · n · log(mn))"
+  ],
+  "answer": 3,
+  "explanation": "There are (m+1)(n+1) distinct (i, j) states, each computed once with O(1) work. Without the cache it would be exponential.",
+  "model": "Counts lattice paths in a grid (Unique Paths) with top-down DP.",
+  "runnable": true
+ },
+ {
+  "id": "r16",
+  "title": "Find the bug: heap of tuples",
+  "kind": "bug",
+  "level": "Hard",
+  "tags": [
+   "heaps"
+  ],
+  "code": "import heapq\n\ndef merge_lists(lists):\n    h = []\n    for lst in lists:\n        if lst:\n            heapq.heappush(h, (lst.val, lst))\n    out = []\n    while h:\n        val, node = heapq.heappop(h)\n        out.append(val)\n        if node.next:\n            heapq.heappush(h, (node.next.val, node.next))\n    return out\n",
+  "question": "Merging linked lists sometimes crashes with <code>TypeError: '&lt;' not supported between instances of 'ListNode'</code>. Which line needs to change?",
+  "options": [
+   "line 3",
+   "line 7",
+   "line 10",
+   "line 12"
+  ],
+  "answer": 2,
+  "bug_line": 7,
+  "explanation": "When two values are equal, tuple comparison falls through to the nodes, which are not orderable. Add a unique tie-breaker: <code>(lst.val, i, lst)</code> with a counter (and the same on line 13).",
+  "model": "K-way merge with a min-heap; ties on value compare the node objects.",
+  "runnable": true
+ }
+]

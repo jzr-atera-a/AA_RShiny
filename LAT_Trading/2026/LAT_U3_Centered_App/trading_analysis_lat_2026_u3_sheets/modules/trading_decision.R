@@ -114,7 +114,11 @@ trading_decision_server <- function(id, api_manager = NULL, store = NULL, bus = 
     fetcher <- reactive({ input$refresh; tr_fetch_cached(if (is.null(yahoo_fn)) tr_yahoo_fetch else yahoo_fn) })
     now <- reactive({ input$refresh; now_fn() })
     asset <- reactive(toupper(tr_or(input$asset, "BRENT")))
-    sym <- reactive(unname(tr_yahoo_symbols[asset()]))
+    if (exists("cc_watch")) { wv <- reactivePoll(3000, session, function() cc_watch$v, function() cc_watch$v)   # "my markets" of any asset class with a Yahoo symbol
+      observeEvent(wv(), { rg <- tr_registered(); ex <- names(rg)[vapply(rg, function(x) !is.na(tr_yahoo_sym(x$code)), TRUE)]
+        lab <- vapply(ex, function(k) sprintf("%s (%s)", rg[[k]]$label, k), "")
+        updateSelectInput(session, "asset", choices = c(stats::setNames(ex, lab), stats::setNames(names(tr_yahoo_symbols), names(tr_yahoo_symbols))), selected = isolate(input$asset)) }) }
+    sym <- reactive(tr_yahoo_sym(asset()))
     get_bars <- function(range, iv) { s <- sym(); if (is.na(s)) return(NULL)
       for (rg in unique(c(range, "1mo", "5d"))) {   # Yahoo answers HTTP 422 for some range / interval pairs: fall back to a shorter range
         p <- tryCatch(fetcher()(s, rg, iv), error = function(e) { cat("[Decision] Yahoo", s, rg, iv, ":", conditionMessage(e), "\n"); NULL })

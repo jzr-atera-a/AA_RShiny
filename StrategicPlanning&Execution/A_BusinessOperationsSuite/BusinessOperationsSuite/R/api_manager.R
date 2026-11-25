@@ -227,17 +227,20 @@ APIManager <- R6::R6Class("APIManager",
     bq_table_bm_canvas = "business_model_canvas",
     bq_table_de_canvas = "disciplined_entrepreneurship_canvas",
     bq_table_de_roadmap = "disciplined_entrepreneurship_roadmap",
+    bq_table_gantt_tasks = "gantt_tasks",
     bq_full_table_contacts = NULL,
     bq_full_table_communications = NULL,
     bq_full_table_funding = NULL,
     bq_full_table_bm_canvas = NULL,
     bq_full_table_de_canvas = NULL,
     bq_full_table_de_roadmap = NULL,
+    bq_full_table_gantt_tasks = NULL,
     bq_credentials_path = NULL,
     bq_authenticated = FALSE,
     # On-demand table loading: one "unit" per BigQuery-backed tab group (see R/utils_tables.R)
     bq_units_opened = list(),        # unit -> TRUE once the user opened that tab group this session
     bq_units_ready  = list(),        # unit -> TRUE once its tables are verified
+    bq_time_zone_ready = list(),     # table key -> TRUE once its time_zone column is confirmed (funding)
     bq_unit_status  = list(),        # unit -> list(label, state, detail, at, since) shown in the sidebar TABLES box
     bq_unit_check_secs = list(),     # unit -> seconds the table check took
     status_hook = NULL,              # function() pushing bq_unit_status to the browser (set by tables_wire)
@@ -253,7 +256,7 @@ APIManager <- R6::R6Class("APIManager",
 
     # ---- Trello / Jira / Gantt-SMTP (Gantt to Tickets suite) -------------------------------------------------------
     # NOTE: this suite has its OWN email plumbing (gantt_smtp_config / gantt_email_connected /
-    # send_gantt_email(), blastula-based) deliberately kept separate from the smtp_* fields
+    # send_gantt_email(), curl-based like Communications) deliberately kept separate from the smtp_* fields
     # above (curl-based, used by Communications) - same concept, different provider/shape,
     # so they must not share fields.
     trello_key = NULL,
@@ -274,6 +277,14 @@ APIManager <- R6::R6Class("APIManager",
     gantt_contacts_data = NULL,           # Country/City/Organization/Full_Name/LinkedIn/Email/Phone/Date_Added
     gantt_contacts_file = "contacts_database.xlsx",
     state_trigger_gantt = NULL,           # reactiveVal(0) - review_edit/email_send/manage_contacts/email_contacts depend on this
+    dpet = NULL,                          # this session's DaysPlanningExerciseTravel manager (R/suite_dpet.R)
+    gantt_time_zone = NULL,               # zone chosen in Gantt > Review & Edit, reused for Submit to Boards history rows
+
+    # ---- Slack (Online Collaboration group) - token kept in memory only, never printed or logged ----------------
+    slack_state = NULL,                   # reactiveVal: list(ok, team, bot_user, url, scopes...)
+    slack_token = NULL,
+    slack_users = NULL,                   # named vector: user id -> display name
+    slack_log = NULL,                     # reactiveVal: character vector, newest first
 
     # ---- Whisper / ChatGPT (Audio Transcription suite) -------------------------------------------------------
     # NOTE: kept separate from api_manager$openai_api_key (Project Application) and from
@@ -326,6 +337,8 @@ APIManager <- R6::R6Class("APIManager",
       self$state_trigger_canvas <- shiny::reactiveVal(0)
       self$state_trigger_gantt <- shiny::reactiveVal(0)
       self$state_trigger_audio <- shiny::reactiveVal(0)
+      self$slack_state <- shiny::reactiveVal(list(ok = FALSE))
+      self$slack_log <- shiny::reactiveVal(character())
       self$pending_bulk_text_funding <- shiny::reactiveVal("")
 
       self$selected_contact <- shiny::reactiveVal(NULL)
@@ -356,6 +369,7 @@ APIManager <- R6::R6Class("APIManager",
       self$bq_full_table_bm_canvas <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_bm_canvas)
       self$bq_full_table_de_canvas <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_de_canvas)
       self$bq_full_table_de_roadmap <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_de_roadmap)
+      self$bq_full_table_gantt_tasks <- paste0(self$bq_project_id, ".", self$bq_dataset_id, ".", self$bq_table_gantt_tasks)
     },
 
     # =====================================================================
@@ -529,6 +543,7 @@ APIManager <- R6::R6Class("APIManager",
         # That is ALL that happens at connect time (one quick round trip). Tables are no longer created/checked here:
         # each tab group verifies and reads its own tables the first time it is opened (bq_open_unit / bq_need).
         self$bq_units_ready <- list()          # a new connection / project: nothing verified yet
+        self$bq_time_zone_ready <- list()
         self$bq_unit_check_secs <- list()
         self$funding_taxonomy_cache <- NULL
         self$canvas_taxonomy_cache <- NULL
@@ -643,6 +658,15 @@ APIManager <- R6::R6Class("APIManager",
             step_21_test_key_assumptions STRING, step_22_define_mvbp STRING,
             step_23_dogs_eat_dog_food STRING, step_24_develop_product_plan STRING
           )", self$bq_full_table_de_roadmap),
+        # append-only Gantt task log: one row per task per stage (Saved / Submitted_Trello / Submitted_Jira)
+        gantt_tasks = sprintf("
+          CREATE TABLE IF NOT EXISTS `%s` (
+            id INTEGER, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+            upload_batch STRING, log_stage STRING,
+            task_name STRING, description STRING, start_date STRING, end_date STRING,
+            duration_days STRING, assignee STRING, priority STRING, status STRING,
+            labels STRING, additional_notes STRING, submission_result STRING, time_zone STRING
+          )", self$bq_full_table_gantt_tasks),
         NULL)
     },
 
@@ -654,11 +678,12 @@ APIManager <- R6::R6Class("APIManager",
       contacts = c("contacts", "communications"),
       funding  = "funding",
       canvases = c("bm_canvas", "de_canvas", "de_roadmap"),
+      gantt    = "gantt_tasks",
       character()),
     bq_unit_label = function(unit) switch(unit, contacts = "Communications", funding = "Funding Programmes",
-                                          canvases = "Strategy Canvases", unit),
+                                          canvases = "Strategy Canvases", gantt = "Gantt to Tickets", unit),
     bq_unit_of_key = function(key) {
-      for (u in c("contacts", "funding", "canvases")) if (key %in% self$bq_unit_tables(u)) return(u)
+      for (u in c("contacts", "funding", "canvases", "gantt")) if (key %in% self$bq_unit_tables(u)) return(u)
       NULL
     },
 
@@ -686,6 +711,8 @@ APIManager <- R6::R6Class("APIManager",
           if (!tnames[i] %in% known) self$bq_execute(self$bq_table_ddl(keys[i]))
           cat(sprintf("\u2713 [BigQuery] %s table ready (%s)\n", tnames[i], label))
         }
+        # programmes keep the time zone their dates are in (added to older tables, once per connection)
+        if ("funding" %in% keys && !isTRUE(self$bq_time_zone_ready[["funding"]])) self$bq_ensure_time_zone_column("funding")
         TRUE
       }, error = function(e) {
         cat("\u26a0\ufe0f  [BigQuery]", label, "table check failed:", conditionMessage(e), "\n")
@@ -745,13 +772,13 @@ APIManager <- R6::R6Class("APIManager",
     # shorthand used at the top of data methods: make sure the owning tab group's tables are verified
     bq_need = function(key_or_unit) {
       # a unit name ("contacts", "funding", "canvases") or a table key ("communications", "bm_canvas" ...)
-      unit <- if (key_or_unit %in% c("contacts", "funding", "canvases")) key_or_unit else self$bq_unit_of_key(key_or_unit)
+      unit <- if (key_or_unit %in% c("contacts", "funding", "canvases", "gantt")) key_or_unit else self$bq_unit_of_key(key_or_unit)
       if (is.null(unit)) return(invisible(TRUE))
       invisible(self$bq_ensure_unit(unit))
     },
     # finds which app tables a SQL text mentions and ensures their units (safety net for direct queries)
     bq_need_for_query = function(query) {
-      for (k in c("contacts", "communications", "funding", "bm_canvas", "de_canvas", "de_roadmap")) {
+      for (k in c("contacts", "communications", "funding", "bm_canvas", "de_canvas", "de_roadmap", "gantt_tasks")) {
         tn <- self[[paste0("bq_table_", k)]]
         if (!is.null(tn) && grepl(sprintf("%s`", tn), query, fixed = TRUE)) self$bq_need(k)
       }
@@ -801,7 +828,7 @@ APIManager <- R6::R6Class("APIManager",
       DBI::dbWriteTable(conn = con, name = self$bq_table_contacts, value = record, append = TRUE, row.names = FALSE)
 
       self$contacts_cache <- if (is.null(self$contacts_cache) || nrow(self$contacts_cache) == 0) record
-                              else rbind(self$contacts_cache, record)
+                              else bos_rbind_fill(self$contacts_cache, record)   # rows may have source/repeated columns or not
       self$trigger_state_update_contacts()
       invisible(TRUE)
     },
@@ -858,8 +885,33 @@ APIManager <- R6::R6Class("APIManager",
       DBI::dbWriteTable(conn = con, name = self$bq_table_communications, value = record, append = TRUE, row.names = FALSE)
 
       self$communications_cache <- if (is.null(self$communications_cache) || nrow(self$communications_cache) == 0) record
-                                    else rbind(self$communications_cache, record)
+                                    else bos_rbind_fill(self$communications_cache, record)
       invisible(TRUE)
+    },
+
+    # Contacts / messages imported from CollaborationPlanning carry where they came from (source, source_ref) and,
+    # for contacts, repeated = "TRUE" when the person was already in our list. Added once per connection.
+    bq_ensure_contact_source_columns = function() {
+      if (isTRUE(self$bq_time_zone_ready[["contacts_source"]])) return(invisible(TRUE))
+      self$bq_need("contacts")
+      ok <- tryCatch({
+        bigrquery::bq_project_query(self$bq_project_id, sprintf(paste("ALTER TABLE `%s` ADD COLUMN IF NOT EXISTS source STRING,",
+          "ADD COLUMN IF NOT EXISTS source_ref STRING, ADD COLUMN IF NOT EXISTS repeated STRING"), self$bq_full_table_contacts))
+        bigrquery::bq_project_query(self$bq_project_id, sprintf(paste("ALTER TABLE `%s` ADD COLUMN IF NOT EXISTS source STRING,",
+          "ADD COLUMN IF NOT EXISTS source_ref STRING"), self$bq_full_table_communications))
+        TRUE
+      }, error = function(e) tryCatch({
+        bigrquery::bq_project_query(self$bq_project_id, sprintf("SELECT source, source_ref, repeated FROM `%s` LIMIT 0", self$bq_full_table_contacts))
+        bigrquery::bq_project_query(self$bq_project_id, sprintf("SELECT source, source_ref FROM `%s` LIMIT 0", self$bq_full_table_communications))
+        TRUE }, error = function(e2) { cat("\u26a0\ufe0f  [BigQuery] could not add source columns to the contact tables:", conditionMessage(e), "\n"); FALSE }))
+      self$bq_time_zone_ready[["contacts_source"]] <- isTRUE(ok)
+      invisible(isTRUE(ok))
+    },
+    bq_load_communications = function() {
+      self$bq_need("communications")
+      df <- tryCatch(self$bq_query(sprintf("SELECT * FROM `%s`", self$bq_full_table_communications)), error = function(e) data.frame())
+      self$communications_cache <- df
+      df
     },
 
     bq_get_recent_messages = function(contact_id, n = 3) {
@@ -902,13 +954,13 @@ APIManager <- R6::R6Class("APIManager",
       invisible(TRUE)
     },
 
-    send_email = function(to, subject, body, attachments = NULL) {
+    send_email = function(to, subject, body, attachments = NULL, cc = NULL, calendar = NULL) {
       if (!self$smtp_connected) stop("Open the SMTP connection first (SMTP Configuration tab)")
       send_email_with_curl(
         from = self$smtp_username, to = to, subject = subject, body = body,
         host = self$smtp_host, port = self$smtp_port,
         username = self$smtp_username, password = self$smtp_password,
-        attachments = attachments
+        attachments = attachments, cc = cc, calendar = calendar
       )
     },
 
@@ -940,6 +992,52 @@ APIManager <- R6::R6Class("APIManager",
       result
     },
 
+    # Adds a time_zone STRING column where it is missing (shared with DaysPlanningFundingTravel, which writes the same table).
+    bq_ensure_time_zone_column = function(key) {
+      full <- switch(key, funding = self$bq_full_table_funding, gantt_tasks = self$bq_full_table_gantt_tasks, NULL)
+      if (is.null(full)) return(invisible(FALSE))
+      if (identical(key, "gantt_tasks")) {
+        # a gantt_tasks table first made by the FundingGantt app has no time_zone column yet
+        ok <- tryCatch({
+          bigrquery::bq_project_query(self$bq_project_id, sprintf("ALTER TABLE `%s` ADD COLUMN IF NOT EXISTS time_zone STRING", full)); TRUE
+        }, error = function(e) tryCatch({ bigrquery::bq_project_query(self$bq_project_id, sprintf("SELECT time_zone FROM `%s` LIMIT 0", full)); TRUE },
+                                        error = function(e2) FALSE))
+        self$bq_time_zone_ready[[key]] <- isTRUE(ok)
+        return(invisible(isTRUE(ok)))
+      }
+      ok <- tryCatch({
+        # time_zone + where a row came from (source, source_ref, repeated: CollaborationPlanning imports, R/utils_collab_sync.R)
+        bigrquery::bq_project_query(self$bq_project_id, sprintf(paste(
+          "ALTER TABLE `%s` ADD COLUMN IF NOT EXISTS time_zone STRING, ADD COLUMN IF NOT EXISTS source STRING,",
+          "ADD COLUMN IF NOT EXISTS source_ref STRING, ADD COLUMN IF NOT EXISTS repeated STRING"), full))
+        TRUE
+      }, error = function(e) {
+        # no permission to alter? the column may already exist - check by reading it
+        tryCatch({ bigrquery::bq_project_query(self$bq_project_id, sprintf("SELECT time_zone, source, source_ref, repeated FROM `%s` LIMIT 0", full)); TRUE },
+                 error = function(e2) { cat("\u26a0\ufe0f  [BigQuery] could not add time_zone to", key, "-", conditionMessage(e), "\n"); FALSE })
+      })
+      self$bq_time_zone_ready[[key]] <- isTRUE(ok)
+      if (isTRUE(ok)) cat("\u2713 [BigQuery]", key, "time_zone column ready\n")
+      invisible(isTRUE(ok))
+    },
+    # Puts the zone column on rows to upload when the table has it (older tables without it still accept the rows).
+    bq_attach_time_zone = function(data_frame, tz_vec, key) {
+      self$bq_need(key)
+      if (!isTRUE(self$bq_time_zone_ready[[key]])) self$bq_ensure_time_zone_column(key)
+      if (isTRUE(self$bq_time_zone_ready[[key]])) data_frame$time_zone <- tz_vec
+      data_frame
+    },
+
+    # What is already in funding_programmes, for the repeat check of imports (id, name, sponsors, source_ref)
+    bq_funding_keys = function() {
+      self$bq_need("funding")
+      if (!isTRUE(self$bq_time_zone_ready[["funding"]])) self$bq_ensure_time_zone_column("funding")
+      cols <- if (isTRUE(self$bq_time_zone_ready[["funding"]])) "id, programme_name, key_sponsors, source_ref" else "id, programme_name, key_sponsors, '' AS source_ref"
+      d <- self$bq_query(sprintf("SELECT %s FROM `%s`", cols, self$bq_full_table_funding))
+      if (is.null(d) || !nrow(d)) d <- data.frame(id = integer(0), programme_name = character(0), key_sponsors = character(0), source_ref = character(0))
+      d
+    },
+
     bq_insert_funding = function(data_frame) {
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
       self$bq_need("funding")
@@ -959,7 +1057,12 @@ APIManager <- R6::R6Class("APIManager",
       data_frame$id <- seq(start_id, start_id + nrow(data_frame) - 1L)
       data_frame$created_at <- Sys.time()
       for (col in required_cols) if (!col %in% names(data_frame)) data_frame[[col]] <- ""
+      tz_vec <- bos_tz_vector(data_frame$time_zone, nrow(data_frame))   # zone saved with each row
+      prov <- lapply(c(source = "source", source_ref = "source_ref", repeated = "repeated"), function(k)   # imports only
+        if (k %in% names(data_frame)) as.character(data_frame[[k]]) else NULL)
       data_frame <- data_frame[, required_cols]
+      data_frame <- self$bq_attach_time_zone(data_frame, tz_vec, "funding")
+      if (isTRUE(self$bq_time_zone_ready[["funding"]])) for (k in names(prov)) if (!is.null(prov[[k]])) data_frame[[k]] <- prov[[k]]
 
       table_ref <- bigrquery::bq_table(self$bq_project_id, self$bq_dataset_id, self$bq_table_funding)
       bigrquery::bq_table_upload(table_ref, data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
@@ -1146,6 +1249,33 @@ APIManager <- R6::R6Class("APIManager",
       httr::status_code(response) == 200
     },
 
+    # ---- Trello cards that are UPDATED on resubmit (as CollaborationPlanning does), instead of one new card each time ----
+    trello_call = function(method, path, query = list()) {
+      base <- getOption("bos.trello_base", "https://api.trello.com/1")
+      resp <- httr::VERB(method, paste0(base, "/", path), query = c(list(key = self$trello_key, token = self$trello_token), query))
+      if (httr::status_code(resp) >= 300) stop("Trello said (", httr::status_code(resp), "): ", substr(httr::content(resp, as = "text", encoding = "UTF-8"), 1, 200), call. = FALSE)
+      jsonlite::fromJSON(httr::content(resp, as = "text", encoding = "UTF-8"), simplifyVector = FALSE)
+    },
+    trello_board_cards = function() {
+      cs <- self$trello_call("GET", paste0("boards/", self$trello_board_id, "/cards/all"),
+                             list(fields = "name,idList,dueComplete,closed,url,shortUrl,desc"))
+      if (!length(cs)) return(data.frame(id = character(), name = character(), idList = character(), closed = logical(),
+                                         dueComplete = logical(), url = character(), desc = character(), stringsAsFactors = FALSE))
+      data.frame(id = vapply(cs, function(x) x$id, ""), name = vapply(cs, function(x) x$name %||% "", ""),
+                 idList = vapply(cs, function(x) x$idList %||% "", ""), closed = vapply(cs, function(x) isTRUE(x$closed), TRUE),
+                 dueComplete = vapply(cs, function(x) isTRUE(x$dueComplete), TRUE),
+                 url = vapply(cs, function(x) x$shortUrl %||% x$url %||% "", ""), desc = vapply(cs, function(x) x$desc %||% "", ""),
+                 stringsAsFactors = FALSE)
+    },
+    # card_id "" = create in list_id; otherwise update name/description/due (the card stays in the list it was moved to)
+    trello_card_upsert = function(card_id, list_id, name, desc, due = "") {
+      q <- list(name = name, desc = desc)
+      if (nzchar(due %||% "")) q$due <- due
+      card <- if (nzchar(card_id %||% "")) self$trello_call("PUT", paste0("cards/", card_id), q)
+              else self$trello_call("POST", "cards", c(q, list(idList = list_id, pos = "bottom")))
+      list(id = card$id, url = card$shortUrl %||% card$url %||% "")
+    },
+
     set_jira_credentials = function(url, email, token, project_key) {
       self$jira_url <- url
       self$jira_email <- email
@@ -1188,25 +1318,20 @@ APIManager <- R6::R6Class("APIManager",
 
     test_gantt_email_connection = function() {
       if (length(self$gantt_smtp_config) == 0) stop("Email configuration not set")
-      smtp_creds <- blastula::creds(user = self$gantt_smtp_config$user, password = self$gantt_smtp_config$password,
-                                     host = self$gantt_smtp_config$host, port = self$gantt_smtp_config$port,
-                                     use_ssl = self$gantt_smtp_config$ssl)
-      test_email <- blastula::compose_email(
-        body = blastula::md("# Test Email\n\nThis is a test email from the Gantt to Tickets Converter suite.\nYour email configuration is working correctly!")
-      )
-      blastula::smtp_send(test_email, to = self$gantt_smtp_config$user, from = self$gantt_smtp_config$user,
-                           subject = "Test Email - Gantt to Tickets", credentials = smtp_creds)
+      cfg <- self$gantt_smtp_config
+      self$gantt_email_connected <- FALSE
+      send_email_with_curl(from = cfg$user, to = cfg$user, subject = "Test Email - Gantt to Tickets",
+                           body = "Test Email\n\nThis is a test email from the Gantt to Tickets Converter suite.\nYour email configuration is working correctly!",
+                           host = cfg$host, port = cfg$port, username = cfg$user, password = cfg$password, ssl = isTRUE(cfg$ssl))
       self$gantt_email_connected <- TRUE
       invisible(TRUE)
     },
 
     send_gantt_email = function(to, subject, body, cc = NULL) {
       if (!self$gantt_email_connected) stop("Email not configured")
-      smtp_creds <- blastula::creds(user = self$gantt_smtp_config$user, password = self$gantt_smtp_config$password,
-                                     host = self$gantt_smtp_config$host, port = self$gantt_smtp_config$port,
-                                     use_ssl = self$gantt_smtp_config$ssl)
-      email <- blastula::compose_email(body = blastula::md(body))
-      blastula::smtp_send(email, to = to, from = self$gantt_smtp_config$user, subject = subject, credentials = smtp_creds)
+      cfg <- self$gantt_smtp_config
+      send_email_with_curl(from = cfg$user, to = to, cc = cc, subject = subject, body = body,
+                           host = cfg$host, port = cfg$port, username = cfg$user, password = cfg$password, ssl = isTRUE(cfg$ssl))
       invisible(TRUE)
     },
 
@@ -1218,6 +1343,58 @@ APIManager <- R6::R6Class("APIManager",
 
     save_gantt_contacts = function() {
       writexl::write_xlsx(self$gantt_contacts_data, self$gantt_contacts_file)
+    },
+
+    # ---- Gantt task log in BigQuery (from FundingGanttContactsCollaboration) ----
+    # Append-only: every save / submission adds rows, nothing is overwritten.
+    bq_insert_gantt_tasks = function(data_frame, log_stage, upload_batch) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("gantt_tasks")
+      if (!isTRUE(self$bq_authenticated)) stop("Not authenticated to BigQuery")
+      cols <- c("id", "created_at", "upload_batch", "log_stage", "task_name", "description", "start_date", "end_date",
+                "duration_days", "assignee", "priority", "status", "labels", "additional_notes", "submission_result",
+                "time_zone")
+      data_frame$upload_batch <- upload_batch
+      data_frame$log_stage <- log_stage
+      if (is.null(data_frame$time_zone)) data_frame$time_zone <- bos_tz_value(self$gantt_time_zone)
+      for (col in cols) if (!col %in% names(data_frame)) data_frame[[col]] <- ""
+      start_id <- tryCatch({
+        res <- bigrquery::bq_table_download(bigrquery::bq_project_query(self$bq_project_id,
+          sprintf("SELECT COALESCE(MAX(id), 0) AS max_id FROM `%s`", self$bq_full_table_gantt_tasks)))
+        as.integer(res$max_id) + 1L
+      }, error = function(e) 1L)
+      data_frame$id <- seq(start_id, length.out = nrow(data_frame))
+      data_frame$created_at <- Sys.time()
+      if (!isTRUE(self$bq_time_zone_ready[["gantt_tasks"]])) self$bq_ensure_time_zone_column("gantt_tasks")
+      if (!isTRUE(self$bq_time_zone_ready[["gantt_tasks"]])) cols <- setdiff(cols, "time_zone")   # older table: still accepts the rows
+      data_frame <- data_frame[, cols]
+      for (col in setdiff(cols, c("id", "created_at"))) data_frame[[col]] <- as.character(data_frame[[col]])
+      bigrquery::bq_table_upload(bigrquery::bq_table(self$bq_project_id, self$bq_dataset_id, self$bq_table_gantt_tasks),
+                                 data_frame, create_disposition = "CREATE_IF_NEEDED", write_disposition = "WRITE_APPEND")
+      cat("\u2705 [BigQuery] Inserted", nrow(data_frame), "row(s) ->", self$bq_full_table_gantt_tasks, "\n")
+      nrow(data_frame)
+    },
+    bq_get_gantt_tasks = function(limit = 500) {
+      if (isTRUE(self$bq_authenticated)) self$bq_need("gantt_tasks")
+      if (!isTRUE(self$bq_authenticated)) return(data.frame())
+      tryCatch(self$bq_query(sprintf("SELECT * FROM `%s` ORDER BY created_at DESC LIMIT %d",
+                                     self$bq_full_table_gantt_tasks, as.integer(limit))),
+               error = function(e) { cat("\u26a0\ufe0f  [bq_get_gantt_tasks] Query failed:", conditionMessage(e), "\n"); data.frame() })
+    },
+
+    # ---- Slack session (Online Collaboration) ----
+    slack_set_session = function(token, info) {
+      self$slack_token <- token
+      self$slack_state(c(list(ok = TRUE), info))
+    },
+    slack_sign_out = function() {
+      self$slack_token <- NULL
+      self$slack_users <- NULL
+      self$slack_state(list(ok = FALSE))
+    },
+    slack_log_add = function(method, result, secs = NA) {
+      line <- sprintf("[%s] %s - %s%s", format(Sys.time(), "%H:%M:%S"), method, result,
+                      if (is.na(secs)) "" else sprintf(" (%.1fs)", secs))
+      self$slack_log(head(c(line, self$slack_log()), 500))
     },
 
     trigger_state_update_gantt = function() {
@@ -1628,30 +1805,50 @@ APIManager <- R6::R6Class("APIManager",
 # SMTP raw-send helper (used by APIManager$send_email)
 # ---------------------------------------------------------------------------
 
-send_email_with_curl <- function(from, to, subject, body, host, port, username, password, attachments = NULL) {
-  boundary <- paste0("----=_Part_", as.integer(as.numeric(Sys.time()) * 1000))
+# Sends one email through the SMTP server with curl (Titan / GoDaddy: smtpout.secureserver.net:465; also Gmail, Outlook).
+# Port 465 = SSL from the start (smtps://); other ports (587) = plain connection upgraded to TLS (STARTTLS, smtp:// + --ssl-reqd).
+# Used by Communications > Send Email and Gantt to Tickets. Stops with curl's message when the server refuses the email.
+# calendar: optional list(text = <.ics text>, method = "REQUEST", filename = "invite.ics"). It goes in as an inline
+# text/calendar part (email apps then show Yes / No / Maybe) and again as an .ics attachment.
+send_email_with_curl <- function(from, to, subject, body, host, port, username, password, attachments = NULL, cc = NULL, ssl = TRUE,
+                                 calendar = NULL) {
+  boundary <- paste0("----=_Part_", sprintf("%.0f", as.numeric(Sys.time()) * 1000), "_", sample.int(1e6, 1))   # (as.integer overflowed to NA)
+  cc <- cc[nzchar(trimws(cc %||% character(0)))]
 
   email_content <- c(
     paste0("From: ", from),
     paste0("To: ", paste(to, collapse = ", ")),
+    if (length(cc)) paste0("Cc: ", paste(cc, collapse = ", ")),
     paste0("Subject: ", subject),
+    paste0("Date: ", format(Sys.time(), "%a, %d %b %Y %H:%M:%S %z")),
     "MIME-Version: 1.0"
   )
 
-  if (!is.null(attachments) && length(attachments) > 0) {
-    email_content <- c(
-      email_content,
-      paste0('Content-Type: multipart/mixed; boundary="', boundary, '"'),
-      "", paste0("--", boundary),
-      "Content-Type: text/plain; charset=UTF-8",
-      "Content-Transfer-Encoding: 7bit",
-      "", body, ""
-    )
+  if ((!is.null(attachments) && length(attachments) > 0) || !is.null(calendar)) {
+    email_content <- c(email_content, paste0('Content-Type: multipart/mixed; boundary="', boundary, '"'), "", paste0("--", boundary))
+    if (is.null(calendar)) {
+      email_content <- c(email_content, "Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: 8bit", "", body, "")
+    } else {
+      alt <- paste0(boundary, "_alt")
+      method <- calendar$method %||% "REQUEST"
+      email_content <- c(email_content,
+        paste0('Content-Type: multipart/alternative; boundary="', alt, '"'), "",
+        paste0("--", alt), "Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: 8bit", "", body, "",
+        paste0("--", alt), paste0("Content-Type: text/calendar; charset=UTF-8; method=", method),
+        "Content-Transfer-Encoding: base64", "",
+        base64enc::base64encode(charToRaw(enc2utf8(calendar$text)), linewidth = 76, newline = "\r\n"), "",
+        paste0("--", alt, "--"), "",
+        paste0("--", boundary),
+        paste0('Content-Type: application/ics; name="', calendar$filename %||% "invite.ics", '"'),
+        "Content-Transfer-Encoding: base64",
+        paste0('Content-Disposition: attachment; filename="', calendar$filename %||% "invite.ics", '"'), "",
+        base64enc::base64encode(charToRaw(enc2utf8(calendar$text)), linewidth = 76, newline = "\r\n"), "")
+    }
 
     for (att in attachments) {
       if (file.exists(att$path)) {
         file_raw <- readBin(att$path, "raw", file.info(att$path)$size)
-        file_b64 <- base64enc::base64encode(file_raw)
+        file_b64 <- base64enc::base64encode(file_raw, linewidth = 76, newline = "\r\n")
 
         ext <- tolower(tools::file_ext(att$name))
         content_type <- switch(ext,
@@ -1681,21 +1878,35 @@ send_email_with_curl <- function(from, to, subject, body, host, port, username, 
     }
     email_content <- c(email_content, paste0("--", boundary, "--"))
   } else {
-    email_content <- c(email_content, "Content-Type: text/plain; charset=UTF-8", "", body)
+    email_content <- c(email_content, "Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: 8bit", "", body)
   }
 
   email_file <- tempfile(fileext = ".eml")
-  writeLines(email_content, email_file, useBytes = TRUE)
+  on.exit(if (file.exists(email_file)) file.remove(email_file), add = TRUE)
+  con <- file(email_file, "wb")
+  writeBin(charToRaw(enc2utf8(paste(gsub("\r?\n", "\r\n", email_content), collapse = "\r\n"))), con)
+  close(con)
 
-  curl_cmd <- sprintf(
-    'curl --url "smtps://%s:%s" --ssl-reqd --mail-from "%s" --user "%s:%s" --upload-file "%s"',
-    host, port, from, username, password, email_file
-  )
-  for (recipient in to) curl_cmd <- paste0(curl_cmd, sprintf(' --mail-rcpt "%s"', recipient))
+  scheme <- if (as.character(port) %in% getOption("bos.smtps_ports", "465")) "smtps" else "smtp"   # implicit-TLS ports
+  args <- c("--silent", "--show-error", "--url", shQuote(sprintf("%s://%s:%s", scheme, host, port)),
+            if (isTRUE(ssl)) "--ssl-reqd",
+            "--mail-from", shQuote(from), "--user", shQuote(paste0(username, ":", password)),
+            "--upload-file", shQuote(email_file))
+  for (recipient in c(to, cc)) args <- c(args, "--mail-rcpt", shQuote(recipient))
 
-  system(curl_cmd, intern = TRUE, ignore.stderr = FALSE)
-  if (file.exists(email_file)) file.remove(email_file)
+  out <- suppressWarnings(system2("curl", args, stdout = TRUE, stderr = TRUE))
+  status <- attr(out, "status") %||% 0L
+  if (!identical(as.integer(status), 0L)) {
+    stop(sprintf("the mail server did not accept the email (curl %s): %s", status, paste(out, collapse = " ")))
+  }
   TRUE
+}
+
+# rbind for data frames whose columns differ (missing ones are filled with NA)
+bos_rbind_fill <- function(a, b) {
+  for (c in setdiff(names(b), names(a))) a[[c]] <- if (nrow(a)) NA else logical(0)
+  for (c in setdiff(names(a), names(b))) b[[c]] <- if (nrow(b)) NA else logical(0)
+  rbind(a, b[, names(a), drop = FALSE])
 }
 
 # ---------------------------------------------------------------------------
@@ -1711,7 +1922,7 @@ PROGRAMME_FIELDS <- c(
   "recommendations_for_applying", "verified_urls"
 )
 
-parse_programme_text <- function(text) {
+parse_programme_text <- function(text, default_tz = BOS_DEFAULT_TZ) {
   lines <- strsplit(text, "\n")[[1]]
   entries <- list()
   current_entry <- list()
@@ -1775,6 +1986,8 @@ parse_programme_text <- function(text) {
       stringsAsFactors = FALSE
     ))
   }
+  # zone recorded in the text ("[time_zone]: ..."), else the one chosen on the tab
+  if (nrow(parsed_df)) parsed_df$time_zone <- bos_tz_from_text(text, bos_tz_value(default_tz))
   parsed_df
 }
 

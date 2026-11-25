@@ -9,13 +9,17 @@ desk_essential <- c(unname(desk_steps), "D. Trade Log")
 # ******** three screens for the daily work. Each piece of the former tabs 2-6 is shown once, as a card: the daily
 # controls open, the rest folded under "More tools" in the same screen. Nothing is duplicated or moved.
 desk_chunks <- list(
-  ms = list(ms1 = 1:11, ms2 = 12:26, ms3 = 27:37, ms4 = 38:48, ms5 = 49:51),
+  ms = list(ms1 = c(44, 1:11), ms2 = 12:26, ms3 = 27:37, ms4 = c(38:43, 45:49), ms5 = 50:52),   # 44 = one-click Morning Sheet, shown first
   mk = list(mk1 = 1, mk2 = 2, mk3 = 3:7),
   po = list(po1 = 1, po2 = 2, po3 = 3, po4 = 4, po5 = 5, po6 = 6),
   ps = list(ps1 = 1:3, ps2 = 4:8, ps3 = 9:11, ps4 = 12:15),
-  jn = list(jn1 = 1:3, jn2 = 4:14, jn3 = 15:19))
+  jn = list(jn1 = 1:3, jn2 = 4:15, jn3 = 16:20))
 
 desk_css <- "
+#shiny-notification-panel{top:70px;bottom:auto;left:50%;right:auto;transform:translateX(-50%);width:520px;max-width:92vw;z-index:99999}
+.shiny-progress-notification{background:#f0fdfa;border:2px solid #0d9488;border-left:8px solid #0d9488;box-shadow:0 8px 24px rgba(0,0,0,.18);font-size:15px;font-weight:700;color:#134e4a}
+.shiny-progress-notification .progress{height:12px;margin:6px 0 2px;background:#ccfbf1}
+.shiny-progress-notification .progress-bar{background:#0d9488}
 .gd-steps{display:flex;gap:8px;margin:8px 0 4px}
 .gd-step{flex:1;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;font-weight:700;text-decoration:none!important;border:1px solid}
 .gd-step .n{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:12px}
@@ -79,17 +83,19 @@ trading_desk_ui <- function() {
         card("3", "Your review: save to BigQuery and Dropbox", "Your own words, plan followed or not, then the Individual Trade Sheet (Word + PDF) to Dropbox.", "jn2"),
         more("working orders, all trades", c("ps4", "jn3")), prev = desk_steps[["g2"]], nxt = "D. Trade Log"),
       tab("D. Trade Log", body(cc[[9]])),
-      tab("E. Statistics & Backtest", sec("Capital.com trades", body(cc[[6]]), tint = "#f0fdfa"), sec("Backtest & blotter", body(cc[[10]])), sec("IG trades (screenshots)", body(tr[[4]]))),
+      tab("E. Statistics & Backtest", sec("Capital.com trades", body(cc[[6]]), tint = "#f0fdfa"), sec("End-of-week assessed trading review (Weeks 9-12) *********************", cc_week_review_ui("cc_records"), tint = "#fefce8"), sec("Risk review: Sharpe, Sortino and drawdown *****************", ml_risk_ui("ml_lab"), tint = "#eef2ff"), sec("Backtest & blotter", body(cc[[10]])), sec("IG trades (screenshots)", body(tr[[4]]))),
       tab("F. IG / screenshot trades", value = "3. Trades",
           tags$div(style = "font-size:12.5px; color:#475569; margin:4px 0 8px 0;", "For trades placed on IG (or anywhere outside the app): plan, open and close them from screenshots. They are kept in trading_trades, apart from the Capital.com trades."),
           tags$details(class = "gd-more", tags$summary("Order Evidence: Claude reads your deal ticket, Positions and History screenshots"), tags$div(trading_evidence_ui("trading_evidence"))),
           body(tr[[3]])),
       tab("G. Exports (LAT files)", value = "5. Exports (LAT files)", body(tr[[5]])),
+      tab("H. Machine Learning", ml_lab_ui("ml_lab")),
       tab("Setup",
           sec("Plan, period, Dropbox and records (shared by every tab)", body(tr[[1]])),
           sec("Capital.com", tags$div(style = "font-size:12px; color:#475569; margin-bottom:6px;",
                                       "Your name, period, risk, cap, minimum R:R and ADX thresholds are taken from the plan settings above. The Capital.com key file is loaded in API Configuration > Capital.com."),
               uiOutput("desk_cc_plan"), body(cc[[1]]), tint = "#f0fdfa"),
+          sec("Trade plan check-up (Weeks 7-8: Trade Plan Template and Rule of Five) *********************", uiOutput("cc_records-plan_checkup"), tint = "#eff6ff"),
           tags$details(class = "gd-more", tags$summary("Currency & budget"), tags$div(body(cc[[7]]))),
           tags$details(class = "gd-more", tags$summary("Schema & SQL"), tags$div(sec("Capital.com tables (cc_)", body(cc[[8]])), sec("Trading Records tables (trading_)", body(tr[[6]]))))))))))
 }

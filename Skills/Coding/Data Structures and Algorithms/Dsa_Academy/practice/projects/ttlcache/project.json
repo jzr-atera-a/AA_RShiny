@@ -1,0 +1,40 @@
+{
+ "id": "ttlcache",
+ "title": "LRU cache gains a time-to-live",
+ "style": "Meta AI-enabled coding",
+ "difficulty": "Medium",
+ "minutes": 45,
+ "files": [
+  "cache.py",
+  "fakeclock.py"
+ ],
+ "brief": "<code>cache.py</code> has a working <code>LRUCache</code>. Product wants entries to expire. <code>fakeclock.FakeClock</code> lets tests move time by hand instead of sleeping.",
+ "tasks": [
+  "Implement <code>TTLCache(capacity, ttl, clock=time.monotonic)</code>, an LRU cache in which an entry written at time t is <b>expired from t + ttl onwards</b> (so at exactly t + ttl it is gone). <code>get</code> of an expired key returns \u22121. <code>put</code> refreshes the timestamp; <code>get</code> does <b>not</b>.",
+  "Expired entries must <b>never cause a live entry to be evicted</b>, and <code>len(cache)</code> counts live entries only.",
+  "<code>ttl \u2264 0</code> raises <code>ValueError</code>.",
+  "Extend <code>test_solution.py</code> using <code>FakeClock</code>; no <code>time.sleep</code>."
+ ],
+ "ai_prompt": "Add a TTLCache subclass with per-entry expiry.",
+ "ai_reply": "Here's a minimal `TTLCache` that subclasses `LRUCache`. It records when each key was written in `self.born` and treats keys older than `ttl` as missing in `get`. Everything stays O(1).",
+ "flaws": [
+  "<code>&gt; self.ttl</code> keeps an entry alive at exactly t + ttl; the spec says it is expired then.",
+  "Expired entries are never removed, so they still count towards capacity \u2014 a put can evict a <b>live</b> LRU entry while a dead one survives.",
+  "<code>__len__</code> is inherited and counts expired entries.",
+  "<code>born</code> grows forever because evicted keys are never deleted from it (a memory leak).",
+  "No validation of <code>ttl</code>."
+ ],
+ "mutants": {
+  "m1": "Entry alive at exactly t + ttl",
+  "m2": "Expired entries still take capacity",
+  "m3": "len() counts expired entries"
+ },
+ "rubric": [
+  "Spotted the boundary (> vs \u2265)",
+  "Spotted that dead entries evict live ones",
+  "Spotted the born-dict leak",
+  "Tests use FakeClock, not sleep",
+  "Tests cover capacity with expired entries",
+  "Discussed purge cost (O(n) vs heap)"
+ ]
+}

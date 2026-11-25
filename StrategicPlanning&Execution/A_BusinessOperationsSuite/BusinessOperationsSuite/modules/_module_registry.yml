@@ -14,45 +14,37 @@
 #               contacts -> business_contacts, contact_communications
 #               funding  -> funding_programmes
 #               canvases -> business_model_canvas, disciplined_entrepreneurship_canvas, disciplined_entrepreneurship_roadmap
+#               gantt    -> gantt_tasks (append-only task log: Review & Edit saves, Submit to Boards history)
 #   modules:  each module is backed by one `modules/<folder>/<file>.R` defining `<id>_ui()` and `<id>_server()`.
 #
 # Order matters: groups, sections and tabs appear in the order listed here.
+
+# Sidebar order (related groups sit next to each other):
+#   API Settings -> Funding Programmes -> Project Application -> Strategy Canvases          (funding + applying + strategy)
+#   -> Communications (+ Online Collaboration) -> Events Scheduling (+ Travel Planning) -> Day Planner -> Gantt to Tickets
+#   -> Health Tracker (Exercise + Diet) -> Media Processing (Audio, Visual Media, Receipt Processor)
+# `tone:` on a section (Health Tracker, Media Processing) = the green shade of its sidebar item, one per former group,
+#   so items that came from the same group look alike (www/css/global.css, .bos-tone-*).
+# `suite: dpet` on a module = a tab from DaysPlanningExerciseTravel, loaded unchanged with its own helpers (R/suite_dpet.R).
 
 groups:
   - id: api_settings
     label: "API Settings"
     icon: "key"
     expanded: true
-    modules: [claude_config, bq_config, openai_api, debug_console]
+    modules: [claude_config, bq_config, openai_api, gdrive_config, titan_auth, debug_console]
     sections:
       - id: sec_api
         label: "API Settings"
         icon: "key"
-        modules: [claude_config, bq_config, openai_api, debug_console]
-        tab_labels: {claude_config: "Claude", bq_config: "BigQuery", openai_api: "OpenAI (Whisper + ChatGPT)", debug_console: "Debug Console"}
-
-  - id: communications
-    label: "Communications"
-    icon: "envelope"
-    expanded: false
-    modules: [smtp_config, process_contact, explore_contacts, customise_communication, send_email]
-    sections:
-      - id: sec_comm_contacts
-        label: "Contacts"
-        icon: "address-book"
-        modules: [process_contact, explore_contacts]
-        tab_labels: {process_contact: "Process Contact", explore_contacts: "Explore Contacts"}
-      - id: sec_comm_outreach
-        label: "Outreach"
-        icon: "paper-plane"
-        modules: [customise_communication, send_email, smtp_config]
-        tab_labels: {customise_communication: "Customise Message", send_email: "Send Email", smtp_config: "SMTP Settings"}
+        modules: [claude_config, bq_config, openai_api, gdrive_config, titan_auth, debug_console]
+        tab_labels: {claude_config: "Claude", bq_config: "BigQuery", openai_api: "OpenAI (Whisper + ChatGPT)", gdrive_config: "Google Drive", titan_auth: "Titan Calendar", debug_console: "Debug Console"}
 
   - id: funding_programmes
     label: "Funding Programmes"
     icon: "hand-holding-usd"
     expanded: false
-    modules: [generate_programme, funding_bulk_import, funding_add_single, funding_browse, funding_visualizations, funding_about]
+    modules: [generate_programme, funding_bulk_import, funding_add_single, funding_browse, funding_visualizations, funding_collab_sync, funding_about]
     sections:
       - id: sec_fund_find
         label: "Find & Add"
@@ -62,8 +54,8 @@ groups:
       - id: sec_fund_review
         label: "Review"
         icon: "table"
-        modules: [funding_browse, funding_visualizations, funding_about]
-        tab_labels: {funding_browse: "Browse Data", funding_visualizations: "Visualizations", funding_about: "About"}
+        modules: [funding_browse, funding_visualizations, funding_collab_sync, funding_about]
+        tab_labels: {funding_browse: "Browse Data", funding_visualizations: "Visualizations", funding_collab_sync: "Collaboration Sync", funding_about: "About"}
 
   - id: project_application
     label: "Project Application"
@@ -104,6 +96,81 @@ groups:
         modules: [de_roadmap_generate, de_roadmap_view]
         tab_labels: {de_roadmap_generate: "Generate", de_roadmap_view: "View Roadmap"}
 
+  - id: communications
+    label: "Communications"
+    icon: "envelope"
+    expanded: false
+    modules: [smtp_config, process_contact, explore_contacts, collab_contacts, customise_communication, send_email, slack_connection, slack_channels]
+    sections:
+      - id: sec_comm_contacts
+        label: "Contacts"
+        icon: "address-book"
+        modules: [process_contact, explore_contacts, collab_contacts]
+        tab_labels: {process_contact: "Process Contact", explore_contacts: "Explore Contacts", collab_contacts: "From CollaborationPlanning"}
+      - id: sec_comm_outreach
+        label: "Outreach"
+        icon: "paper-plane"
+        modules: [customise_communication, send_email, smtp_config]
+        tab_labels: {customise_communication: "Customise Message", send_email: "Send Email", smtp_config: "SMTP Settings"}
+      - id: sec_collab
+        label: "Online Collaboration"
+        icon: "comments"
+        modules: [slack_connection, slack_channels]
+        tab_labels: {slack_connection: "Slack Connection", slack_channels: "Channels"}
+
+  - id: events_scheduling
+    label: "Events Scheduling"
+    icon: "calendar-alt"
+    expanded: false
+    modules: [scan_events, zoom_schedule, bulk_import_events, browse_events, visualizations_events, events_to_calendar, contacts_send_email, events_about, travel_itinerary_planner]
+    sections:
+      - id: sec_ev_find
+        label: "Find & Save Events"
+        icon: "magnifying-glass"
+        modules: [scan_events, bulk_import_events]
+        tab_labels: {scan_events: "Scan Events", bulk_import_events: "Bulk Import"}
+      - id: sec_ev_calendar
+        label: "Calendar & Invites"
+        icon: "calendar-alt"
+        modules: [events_to_calendar, zoom_schedule, contacts_send_email]
+        tab_labels: {events_to_calendar: "Events to Calendar", zoom_schedule: "Zoom Schedule", contacts_send_email: "Send Invites (Titan)"}
+      - id: sec_ev_review
+        label: "Review"
+        icon: "table"
+        modules: [browse_events, visualizations_events, events_about]
+        tab_labels: {browse_events: "Browse Events", visualizations_events: "Visualizations", events_about: "About"}
+      - id: sec_travel
+        label: "Travel Planning"
+        icon: "globe"
+        modules: [travel_itinerary_planner]
+
+  - id: day_planner
+    label: "Day Planner"
+    icon: "route"
+    expanded: false
+    modules: [generate_schedule, schedule_generate_prep, schedule_prep_checklist, schedule_bulk_import, schedule_add_single, schedule_browse, schedule_visualizations, schedule_commitment_config, schedule_add_commitment, schedule_commitments_browse, schedule_about]
+    sections:
+      - id: sec_dp_plan
+        label: "Plan the Day"
+        icon: "route"
+        modules: [generate_schedule, schedule_bulk_import, schedule_add_single]
+        tab_labels: {generate_schedule: "Generate Schedule", schedule_bulk_import: "Bulk Import", schedule_add_single: "Add Entry"}
+      - id: sec_dp_prep
+        label: "Day Preparation"
+        icon: "clipboard-check"
+        modules: [schedule_generate_prep, schedule_prep_checklist]
+        tab_labels: {schedule_generate_prep: "Generate Prep Steps", schedule_prep_checklist: "Checklist"}
+      - id: sec_dp_commit
+        label: "Commitments"
+        icon: "handshake"
+        modules: [schedule_add_commitment, schedule_commitments_browse, schedule_commitment_config]
+        tab_labels: {schedule_add_commitment: "Add", schedule_commitments_browse: "Browse", schedule_commitment_config: "Trello Config"}
+      - id: sec_dp_review
+        label: "Review"
+        icon: "table"
+        modules: [schedule_browse, schedule_visualizations, schedule_about]
+        tab_labels: {schedule_browse: "Browse Data", schedule_visualizations: "Visualizations", schedule_about: "About"}
+
   - id: gantt_to_tickets
     label: "Gantt to Tickets"
     icon: "tasks"
@@ -126,65 +193,85 @@ groups:
         modules: [api_configuration, email_configuration]
         tab_labels: {api_configuration: "Trello & Jira", email_configuration: "Email (SMTP)"}
 
-  - id: audio_transcription
-    label: "Audio Transcription"
-    icon: "microphone"
+  - id: health_tracker
+    label: "Health Tracker"
+    icon: "heartbeat"
     expanded: false
-    modules: [video_extractor, converter, transcription, summary, bulk_analysis, analytics]
+    modules: [generate_workout, muscle_programme, muscle_log, muscle_map, muscle_progress, exercise_bulk_import, exercise_add_single, exercise_browse, exercise_visualizations, exercise_about, generate_diet, diet_bulk_import, diet_add_single, diet_browse, diet_visualizations, diet_about]
+    sections:
+      - id: sec_ex_log
+        label: "Workouts"
+        icon: "dumbbell"
+        tone: exercise
+        modules: [generate_workout, exercise_bulk_import, exercise_add_single]
+        tab_labels: {generate_workout: "Generate Workout", exercise_bulk_import: "Bulk Import", exercise_add_single: "Add Entry"}
+      - id: sec_ex_muscle
+        label: "Muscle Building"
+        icon: "child"
+        tone: exercise
+        modules: [muscle_programme, muscle_log, muscle_map, muscle_progress]
+        tab_labels: {muscle_programme: "Programme", muscle_log: "Log Sets", muscle_map: "Muscle Map", muscle_progress: "Progress"}
+      - id: sec_ex_review
+        label: "Workout Review"
+        icon: "table"
+        tone: exercise
+        modules: [exercise_browse, exercise_visualizations, exercise_about]
+        tab_labels: {exercise_browse: "Browse Data", exercise_visualizations: "Visualizations", exercise_about: "About"}
+      - id: sec_diet_log
+        label: "Plan & Log"
+        icon: "utensils"
+        tone: diet
+        modules: [generate_diet, diet_bulk_import, diet_add_single]
+        tab_labels: {generate_diet: "Generate Diet", diet_bulk_import: "Bulk Import", diet_add_single: "Add Entry"}
+      - id: sec_diet_review
+        label: "Diet Review"
+        icon: "table"
+        tone: diet
+        modules: [diet_browse, diet_visualizations, diet_about]
+        tab_labels: {diet_browse: "Browse Data", diet_visualizations: "Visualizations", diet_about: "About"}
+
+  - id: media_processing
+    label: "Media Processing"
+    icon: "photo-video"
+    expanded: false
+    modules: [video_extractor, converter, transcription, summary, bulk_analysis, analytics, pdf_splitter, pdf_merger, pdf_text_extractor, image_to_pdf, image_generation, further_context, receipt_settings, receipt_pdf_converter, receipt_to_pdf_converter, receipt_upload, receipt_data_view, receipt_categorize]
     sections:
       - id: sec_audio_prepare
         label: "Prepare Audio"
         icon: "scissors"
+        tone: audio
         modules: [video_extractor, converter]
         tab_labels: {video_extractor: "Video Audio Extractor", converter: "Converter & Splitter"}
       - id: sec_audio_transcribe
         label: "Transcribe & Summarise"
         icon: "file-audio"
+        tone: audio
         modules: [transcription, summary]
         tab_labels: {transcription: "Transcription", summary: "Summary"}
       - id: sec_audio_analyse
         label: "Analysis"
         icon: "chart-bar"
+        tone: audio
         modules: [bulk_analysis, analytics]
         tab_labels: {bulk_analysis: "Bulk Text Analysis", analytics: "Analytics Dashboard"}
-
-  - id: receipt_processor
-    label: "Receipt Processor"
-    icon: "receipt"
-    expanded: false
-    modules: [receipt_settings, receipt_pdf_converter, receipt_to_pdf_converter, receipt_upload, receipt_data_view, receipt_categorize]
-    sections:
-      - id: sec_rc_settings
-        label: "Settings"
-        icon: "cog"
-        modules: [receipt_settings]
-      - id: sec_rc_prepare
-        label: "Prepare Files"
-        icon: "file-image"
-        modules: [receipt_pdf_converter, receipt_to_pdf_converter]
-        tab_labels: {receipt_pdf_converter: "PDF to JPG", receipt_to_pdf_converter: "Convert to PDF"}
-      - id: sec_rc_process
-        label: "Process & Review"
-        icon: "upload"
-        modules: [receipt_upload, receipt_data_view, receipt_categorize]
-        tab_labels: {receipt_upload: "Upload Receipts", receipt_data_view: "View Processed Data", receipt_categorize: "Categorize"}
-
-  - id: visual_media
-    label: "Visual Media"
-    icon: "photo-video"
-    expanded: false
-    modules: [pdf_splitter, pdf_merger, pdf_text_extractor, image_to_pdf, image_generation, further_context]
-    sections:
       - id: sec_vm_pdf
         label: "PDF Tools"
         icon: "file-pdf"
+        tone: visual
         modules: [pdf_splitter, pdf_merger, pdf_text_extractor, image_to_pdf]
         tab_labels: {pdf_splitter: "Splitter", pdf_merger: "Merger", pdf_text_extractor: "Text Extractor", image_to_pdf: "Image to PDF"}
       - id: sec_vm_ai
         label: "AI Images"
         icon: "image"
+        tone: visual
         modules: [image_generation, further_context]
         tab_labels: {image_generation: "Image Generation", further_context: "Further Context"}
+      - id: sec_media_receipts
+        label: "Receipt Processor"
+        icon: "receipt"
+        tone: receipts
+        modules: [receipt_settings, receipt_pdf_converter, receipt_to_pdf_converter, receipt_upload, receipt_data_view, receipt_categorize]
+        tab_labels: {receipt_settings: "Settings", receipt_pdf_converter: "PDF to JPG", receipt_to_pdf_converter: "Convert to PDF", receipt_upload: "Upload Receipts", receipt_data_view: "View Processed Data", receipt_categorize: "Categorize"}
 
 modules:
   claude_config:
@@ -207,6 +294,13 @@ modules:
     icon: "database"
     folder: "API Settings"
     file: "bq_config"
+
+  gdrive_config:
+    enabled: true
+    label: "Google Drive"
+    icon: "google-drive"
+    folder: "API Settings"
+    file: "gdrive_config"
 
   debug_console:
     enabled: true
@@ -302,6 +396,13 @@ modules:
     icon: "plus-circle"
     folder: "Funding Programmes"
     file: "funding_add_single"
+
+  funding_collab_sync:
+    enabled: true
+    label: "Collaboration Sync"
+    icon: "people-arrows"
+    folder: "Funding Programmes"
+    file: "funding_collab_sync"
 
   funding_browse:
     enabled: true
@@ -439,6 +540,7 @@ modules:
     icon: "paper-plane"
     folder: "Gantt to Tickets"
     file: "submit_boards"
+    bq_unit: gantt
 
   email_send:
     enabled: true
@@ -586,3 +688,323 @@ modules:
     icon: "edit"
     folder: "Visual Media"
     file: "further_context"
+
+  # ---- Online Collaboration (from FundingGanttContactsCollaboration) ----
+  slack_connection:
+    enabled: true
+    label: "Slack Connection"
+    icon: "plug"
+    folder: "Online Collaboration"
+    file: "slack_connection"
+
+  slack_channels:
+    enabled: true
+    label: "Slack Channels"
+    icon: "hashtag"
+    folder: "Online Collaboration"
+    file: "slack_channels"
+
+  # ---- from DaysPlanningExerciseTravel (suite: dpet - see R/suite_dpet.R) ----
+  generate_schedule:
+    enabled: true
+    label: "Generate Schedule"
+    icon: "route"
+    folder: "Day Planner"
+    file: "generate_schedule"
+    suite: dpet
+
+  schedule_generate_prep:
+    enabled: true
+    label: "Generate Prep Steps"
+    icon: "lightbulb"
+    folder: "Day Planner"
+    file: "schedule_generate_prep"
+    suite: dpet
+
+  schedule_prep_checklist:
+    enabled: true
+    label: "Prep Checklist"
+    icon: "tasks"
+    folder: "Day Planner"
+    file: "schedule_prep_checklist"
+    suite: dpet
+
+  schedule_bulk_import:
+    enabled: true
+    label: "Bulk Import"
+    icon: "file-import"
+    folder: "Day Planner"
+    file: "schedule_bulk_import"
+    suite: dpet
+
+  schedule_add_single:
+    enabled: true
+    label: "Add Single Entry"
+    icon: "plus-circle"
+    folder: "Day Planner"
+    file: "schedule_add_single"
+    suite: dpet
+
+  schedule_browse:
+    enabled: true
+    label: "Browse Data"
+    icon: "table"
+    folder: "Day Planner"
+    file: "schedule_browse"
+    suite: dpet
+
+  schedule_visualizations:
+    enabled: true
+    label: "Visualizations"
+    icon: "chart-bar"
+    folder: "Day Planner"
+    file: "schedule_visualizations"
+    suite: dpet
+
+  schedule_commitment_config:
+    enabled: true
+    label: "Commitment Trello Config"
+    icon: "key"
+    folder: "Day Planner"
+    file: "schedule_commitment_config"
+    suite: dpet
+
+  schedule_add_commitment:
+    enabled: true
+    label: "Add Commitment"
+    icon: "handshake"
+    folder: "Day Planner"
+    file: "schedule_add_commitment"
+    suite: dpet
+
+  schedule_commitments_browse:
+    enabled: true
+    label: "Browse Commitments"
+    icon: "table"
+    folder: "Day Planner"
+    file: "schedule_commitments_browse"
+    suite: dpet
+
+  schedule_about:
+    enabled: true
+    label: "About"
+    icon: "info-circle"
+    folder: "Day Planner"
+    file: "schedule_about"
+    suite: dpet
+
+  generate_diet:
+    enabled: true
+    label: "Generate Diet"
+    icon: "utensils"
+    folder: "Diet Planner"
+    file: "generate_diet"
+    suite: dpet
+
+  diet_bulk_import:
+    enabled: true
+    label: "Bulk Import"
+    icon: "file-import"
+    folder: "Diet Planner"
+    file: "diet_bulk_import"
+    suite: dpet
+
+  diet_add_single:
+    enabled: true
+    label: "Add Single Entry"
+    icon: "plus-circle"
+    folder: "Diet Planner"
+    file: "diet_add_single"
+    suite: dpet
+
+  diet_browse:
+    enabled: true
+    label: "Browse Data"
+    icon: "table"
+    folder: "Diet Planner"
+    file: "diet_browse"
+    suite: dpet
+
+  diet_visualizations:
+    enabled: true
+    label: "Visualizations"
+    icon: "chart-pie"
+    folder: "Diet Planner"
+    file: "diet_visualizations"
+    suite: dpet
+
+  diet_about:
+    enabled: true
+    label: "About"
+    icon: "info-circle"
+    folder: "Diet Planner"
+    file: "diet_about"
+    suite: dpet
+
+  generate_workout:
+    enabled: true
+    label: "Generate Workout"
+    icon: "dumbbell"
+    folder: "Exercise Tracker"
+    file: "generate_workout"
+    suite: dpet
+
+  muscle_programme:
+    enabled: true
+    label: "Muscle Programme"
+    icon: "dumbbell"
+    folder: "Exercise Tracker"
+    file: "muscle_programme"
+    suite: dpet
+
+  muscle_log:
+    enabled: true
+    label: "Muscle Log"
+    icon: "clipboard-check"
+    folder: "Exercise Tracker"
+    file: "muscle_log"
+    suite: dpet
+
+  muscle_map:
+    enabled: true
+    label: "Muscle Map"
+    icon: "person"
+    folder: "Exercise Tracker"
+    file: "muscle_map"
+    suite: dpet
+
+  muscle_progress:
+    enabled: true
+    label: "Muscle Progress"
+    icon: "chart-line"
+    folder: "Exercise Tracker"
+    file: "muscle_progress"
+    suite: dpet
+
+  exercise_bulk_import:
+    enabled: true
+    label: "Bulk Import"
+    icon: "file-import"
+    folder: "Exercise Tracker"
+    file: "exercise_bulk_import"
+    suite: dpet
+
+  exercise_add_single:
+    enabled: true
+    label: "Add Single Entry"
+    icon: "plus-circle"
+    folder: "Exercise Tracker"
+    file: "exercise_add_single"
+    suite: dpet
+
+  exercise_browse:
+    enabled: true
+    label: "Browse Data"
+    icon: "table"
+    folder: "Exercise Tracker"
+    file: "exercise_browse"
+    suite: dpet
+
+  exercise_visualizations:
+    enabled: true
+    label: "Visualizations"
+    icon: "chart-bar"
+    folder: "Exercise Tracker"
+    file: "exercise_visualizations"
+    suite: dpet
+
+  exercise_about:
+    enabled: true
+    label: "About"
+    icon: "info-circle"
+    folder: "Exercise Tracker"
+    file: "exercise_about"
+    suite: dpet
+
+  scan_events:
+    enabled: true
+    label: "Scan Events"
+    icon: "search-location"
+    folder: "Events Scheduling"
+    file: "scan_events"
+    suite: dpet
+
+  zoom_schedule:
+    enabled: true
+    label: "Zoom Schedule"
+    icon: "video"
+    folder: "Events Scheduling"
+    file: "zoom_schedule"
+    suite: dpet
+
+  bulk_import_events:
+    enabled: true
+    label: "Bulk Import"
+    icon: "file-import"
+    folder: "Events Scheduling"
+    file: "bulk_import_events"
+    suite: dpet
+
+  browse_events:
+    enabled: true
+    label: "Browse Events"
+    icon: "table"
+    folder: "Events Scheduling"
+    file: "browse_events"
+    suite: dpet
+
+  visualizations_events:
+    enabled: true
+    label: "Visualizations"
+    icon: "map-marked-alt"
+    folder: "Events Scheduling"
+    file: "visualizations_events"
+    suite: dpet
+
+  events_to_calendar:
+    enabled: true
+    label: "Events to Calendar"
+    icon: "calendar-plus"
+    folder: "Events Scheduling"
+    file: "events_to_calendar"
+    suite: dpet
+
+  contacts_send_email:
+    enabled: true
+    label: "Send Email"
+    icon: "paper-plane"
+    folder: "Events Scheduling"
+    file: "contacts_send_email"
+    suite: dpet
+
+  events_about:
+    enabled: true
+    label: "About"
+    icon: "info-circle"
+    folder: "Events Scheduling"
+    file: "events_about"
+    suite: dpet
+
+  travel_itinerary_planner:
+    enabled: true
+    label: "Travel Itinerary Planner"
+    icon: "map"
+    folder: "Travel Planning"
+    file: "travel_itinerary_planner"
+    suite: dpet
+
+  titan_auth:
+    enabled: true
+    label: "Titan Authentication"
+    icon: "user-lock"
+    folder: "API Settings"
+    file: "titan_auth"
+    suite: dpet
+
+  collab_contacts:
+    enabled: true
+    label: "From CollaborationPlanning"
+    icon: "people-arrows"
+    folder: "Communications"
+    file: "collab_contacts"
+    bq_unit: contacts

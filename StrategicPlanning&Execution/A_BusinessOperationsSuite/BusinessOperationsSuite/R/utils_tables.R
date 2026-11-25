@@ -65,7 +65,7 @@ tables_wire <- function(api, session, layout, registry) {
   for (g in layout$groups) for (s in g$sections) sec_mods[[s$id]] <- s$modules
 
   push <- function() {
-    stt <- api$bq_unit_status
+    stt <- c(api$bq_unit_status, dpet_unit_status(api))      # this app's units + the DaysPlanningExerciseTravel tabs
     if (!length(stt)) { session$sendCustomMessage("bo-tables-status", list(units = list())); return(invisible()) }
     stt <- stt[order(vapply(stt, function(x) as.numeric(x$at), 0), decreasing = TRUE)]
     units <- lapply(utils::head(stt, 4), function(x)
@@ -104,6 +104,13 @@ tables_wire <- function(api, session, layout, registry) {
     u <- mod_unit[[active_module()]]; if (!is.null(u)) run_unit(u)
   }, ignoreNULL = TRUE, ignoreInit = FALSE)
   # safety net: if the connection arrives later (manual key) any tab still waiting is run
+  last_dpet <- NULL
+  shiny::observe({                                    # DPET table checks do not call status_hook: push when they change
+    shiny::invalidateLater(1000)
+    d <- dpet_unit_status(api)
+    sig <- paste(vapply(d, function(x) paste(x$label, x$state, x$detail), ""), collapse = "|")
+    if (!identical(sig, last_dpet)) { last_dpet <<- sig; push() }
+  })
   shiny::observe({
     shiny::invalidateLater(2000)
     if (isTRUE(api$bq_authenticated)) for (u in names(api$bq_unit_status))

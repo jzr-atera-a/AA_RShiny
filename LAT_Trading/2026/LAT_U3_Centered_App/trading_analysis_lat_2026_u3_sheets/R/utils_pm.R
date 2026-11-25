@@ -685,7 +685,7 @@ pm_ex$orb_down <- function() pm_orb("orb_down", -1)
 
 # ---- stored results: every example with its check, light enough to ship with the app ----------------------------------
 pm_light <- function(r) { r$truth$b <- NULL; r$scan <- list(ctx = list(a = r$scan$ctx$a, ind = r$scan$ctx$ind), regime = r$scan$regime); r }
-pm_run <- function(keys = cc_catalog$key, progress = NULL) {
+pm_run <- function(keys = cc_catalog$key[cc_catalog$matrix %in% TRUE], progress = NULL) {
   out <- list(); for (j in seq_along(keys)) { k <- keys[j]; if (!is.null(progress)) progress(j / length(keys), k)
     out[[k]] <- tryCatch(pm_light(pm_check(k)), error = function(e) list(key = k, ok = FALSE, found = FALSE, error = conditionMessage(e))) }
   attr(out, "at") <- Sys.time(); out }
@@ -701,7 +701,7 @@ pm_summary <- function(res, keys = names(res)) {
 
 # ---- the course's Step 1-6 tabs: their examples drawn precisely, and the 141 patterns split by course step ----------
 # course step -> matrix patterns taught there (all 141 exactly once)
-pm_course_keys <- function(step) { k <- cc_catalog$key; g <- cc_catalog$group; st <- cc_catalog$step
+pm_course_keys <- function(step) { mx <- cc_catalog$matrix %in% TRUE; k <- cc_catalog$key[mx]; g <- cc_catalog$group[mx]; st <- cc_catalog$step[mx]   # practice examples exist for the 141 matrix rows only
   s6 <- c(k[st == 6], "holy_grail_long", "holy_grail_short", "adx_strong", "adx_weak", "di_x_up", "di_x_down")
   s1 <- c(k[st == 1], "failed_breakout", "failed_breakdown", "throwback", "pullback_breakout", "round_number")
   s3 <- c(setdiff(k[st == 5], s6), "vol_squeeze")
@@ -872,7 +872,7 @@ pm_store_status <- function() { st <- pm_store$stats; q <- length(Filter(Negate(
   sprintf("Examples from BigQuery table %s (%s): %d read from BigQuery, %d generated%s, %d saved to BigQuery%s.", pm_table, pm_gen_version, st[["bigquery"]], st[["generated"]],
           if (q) sprintf(" (%d waiting to be saved)", q) else "", st[["saved"]], if (!is.na(pm_store$last_error) && st[["failed"]]) paste0("; last error: ", pm_store$last_error) else "") }
 # every example the app shows (141 patterns + the course variants)
-pm_all_examples <- function() { a <- lapply(cc_catalog$key, function(k) list(key = k, args = list(), seed = 0, outcome = NULL, course_id = NA_character_))
+pm_all_examples <- function() { a <- lapply(cc_catalog$key[cc_catalog$matrix %in% TRUE], function(k) list(key = k, args = list(), seed = 0, outcome = NULL, course_id = NA_character_))
   b <- lapply(names(pm_course_map), function(id) { m <- pm_course_map[[id]]; list(key = m$key, args = m$args, seed = m$seed, outcome = m$outcome, course_id = id) }); c(a, b) }
 
 # a fingerprint of what an example shows (candles, turning points, lines, signal, check), for the regression test
@@ -901,7 +901,7 @@ pm_chart_add <- function(spec, week) { k <- paste0("chart:", spec$id)
                    pattern = if (is.null(cr)) NA_character_ else cr$label, rule = if (is.null(cr)) NA_character_ else cr$rule, bias = if (is.null(cr)) NA_character_ else cr$bias,
                    outcome = if (is.null(m) || is.null(m$outcome)) NA_character_ else m$outcome), envir = pm_charts) }
   k }
-pm_all_desc_keys <- function() c(sort(ls(pm_charts)), cc_catalog$key)
+pm_all_desc_keys <- function() c(sort(ls(pm_charts)), cc_catalog$key[cc_catalog$matrix %in% TRUE])
 pm_desc_label <- function(k) if (startsWith(k, "chart:")) pm_charts[[k]]$title %||% k else cc_catalog$label[cc_catalog$key == k][1]
 pm_desc <- new.env(parent = emptyenv()); pm_desc$text <- list(); pm_desc$loaded <- FALSE; pm_desc$ensured <- FALSE; pm_desc$error <- NA_character_
 pm_desc_backend <- function() { b <- pm_store$backend; if (is.null(b) || is.null(b$desc_read)) NULL else b }

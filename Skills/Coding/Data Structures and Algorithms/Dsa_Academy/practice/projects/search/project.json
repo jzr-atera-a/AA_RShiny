@@ -1,0 +1,38 @@
+{
+ "id": "search",
+ "title": "Search index: tokenising, re-indexing and ranking",
+ "style": "Google-style practical coding",
+ "difficulty": "Medium",
+ "minutes": 45,
+ "files": [
+  "index.py",
+  "textutil.py"
+ ],
+ "brief": "A tiny inverted index. <code>textutil.tokenize</code> splits text into tokens and <code>SearchIndex</code> maps each token to the documents that contain it. <code>search</code> uses AND semantics.",
+ "tasks": [
+  "Tokens are <b>maximal runs of ASCII letters and digits, lower-cased</b> \u2014 punctuation and underscores separate tokens (<code>snake_case \u2192 snake, case</code>). Matching is therefore case-insensitive.",
+  "Calling <code>add</code> again with an existing <code>doc_id</code> <b>replaces</b> that document's text.",
+  "<code>search</code> returns matching ids ranked by the <b>total number of occurrences</b> of the query tokens (a repeated query token counts again), highest first, ties by id ascending. A query without tokens returns <code>[]</code>.",
+  "Extend <code>test_solution.py</code> so it pins down each rule."
+ ],
+ "ai_prompt": "Make search case-insensitive, ignore punctuation, rank by term frequency and handle re-adding a document.",
+ "ai_reply": "Updated! `tokenize` now lower-cases and uses `\\w+`, which drops punctuation. `SearchIndex` keeps a `Counter` per document and ranks results by total term frequency, then by id. Re-adding a document overwrites its counts, so it's handled automatically.",
+ "flaws": [
+  "<code>\\w</code> matches the underscore (and non-ASCII letters), so <code>snake_case</code> stays one token.",
+  "Re-adding overwrites <code>counts</code> but leaves the doc id in the postings of its <b>old</b> tokens \u2014 searching an old word still returns the document, and then <code>score</code> silently counts 0.",
+  "Minor: intersecting the smallest posting set first is faster when one term is rare."
+ ],
+ "mutants": {
+  "m1": "Tokens not lower-cased",
+  "m2": "Re-adding keeps stale postings",
+  "m3": "Results not ranked"
+ },
+ "rubric": [
+  "Spotted \\w includes underscore",
+  "Spotted stale postings on re-add",
+  "Tests check tokenisation directly",
+  "Tests re-add a document and search an old word",
+  "Tests ranking and ties",
+  "Discussed intersection order / complexity"
+ ]
+}

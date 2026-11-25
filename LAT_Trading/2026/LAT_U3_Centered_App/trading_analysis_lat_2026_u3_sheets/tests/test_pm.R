@@ -4,8 +4,8 @@
 suppressMessages({ library(TTR); library(zoo) }); `%||%` <- function(x, y) if (is.null(x)) y else x
 suppressMessages(library(dplyr)); for (f in c("R/utils_cc_catalog.R", "R/utils_cc_api.R", "R/utils_cc_patterns.R", "R/utils_cc_chart.R", "R/utils_synthetic.R", "R/utils_pm.R")) source(f)
 pass <- 0L; fail <- 0L; ok <- function(c, w) { if (isTRUE(c)) { pass <<- pass + 1L; cat("  ok  ", w, "\n") } else { fail <<- fail + 1L; cat("  FAIL", w, "\n") } }
-ok(setequal(names(pm_ex), cc_catalog$key), sprintf("an example exists for every pattern of the matrix (%d of %d)", length(intersect(names(pm_ex), cc_catalog$key)), nrow(cc_catalog)))
-res <- pm_run(); sm <- pm_summary(res, cc_catalog$key)
+mxk <- cc_catalog$key[cc_catalog$matrix]; ok(setequal(names(pm_ex), mxk), sprintf("an example exists for every pattern of the matrix (%d of %d)", length(intersect(names(pm_ex), mxk)), length(mxk)))
+res <- pm_run(); sm <- pm_summary(res, mxk)
 for (k in 1:6) { x <- sm[sm$step == k, ]; ok(all(x$Result == "PASS"), sprintf("Step %d: %d of %d examples found exactly (%s)", k, sum(x$Result == "PASS"), nrow(x), paste(x$key[x$Result != "PASS"], collapse = ", "))) }
 ok(all(vapply(res, function(r) is.null(r$truth$failed), TRUE)), "every example meets its own definition (none had to give up)")
 # drawing: every labelled point sits exactly on its candle's high or low (or close)
@@ -27,7 +27,7 @@ set.seed(11); fa <- function(v2) { tot <- 0; for (sd in 1:3) { set.seed(sd); n <
 f1 <- fa(FALSE); f2 <- fa(TRUE); ok(f2 <= 1.5 * f1 + 3, sprintf("random prices: %d patterns alive with the improved rules vs %d with the current ones (3 series)", f2, f1))
 
 # the course's Step 1-6 tabs: every example that is a matrix pattern, drawn precisely, found exactly, and its outcome as titled
-ks <- unlist(lapply(c(1, 2, 3, 6), pm_course_keys)); ok(setequal(ks, cc_catalog$key) && !anyDuplicated(ks), "the 141 patterns are split across the course steps, each exactly once")
+ks <- unlist(lapply(c(1, 2, 3, 6), pm_course_keys)); ok(setequal(ks, cc_catalog$key[cc_catalog$matrix]) && !anyDuplicated(ks), "the 141 patterns are split across the course steps, each exactly once")
 cbad <- character(0)
 for (id in names(pm_course_map)) { r <- pm_course_get(id); if (!isTRUE(r$ok)) cbad <- c(cbad, id)
   w <- pm_course_map[[id]]$outcome; if (!is.null(w)) { b <- r$bars; e0 <- r$outcome$from; tg <- if (is.finite(r$truth$target %||% NA)) r$truth$target else r$occ$target; cn <- if (is.finite(r$truth$cancel %||% NA)) r$truth$cancel else r$occ$invalid

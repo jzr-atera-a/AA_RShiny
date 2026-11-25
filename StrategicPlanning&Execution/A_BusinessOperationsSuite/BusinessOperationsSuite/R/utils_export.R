@@ -531,7 +531,9 @@ generate_generic_pdf <- function(output_file, title, subtitle = NULL, data_rows,
 # generic_export_box_ui() - from DaysPlanningFundingTravel R/utils_common.R
 # (used by Funding Programmes > Visualizations "Save These Programmes")
 # ---------------------------------------------------------------------------
-generic_export_box_ui <- function(ns, title = "Save This View") {
+generic_export_box_ui <- function(ns, title = "Save This View", ics = FALSE, ics_extra_ui = NULL) {
+  # ics = TRUE adds an "Add to Calendar (.ics)" section to the same box (R/utils_ics.R builds the file);
+  # ics_extra_ui holds tab-specific options (e.g. "Also add application-open dates").
   tagList(
     fluidRow(
       box(title = title, status = "primary", solidHeader = TRUE, width = 12, collapsible = TRUE,
@@ -543,6 +545,17 @@ generic_export_box_ui <- function(ns, title = "Save This View") {
                                             "PDF (print-ready)" = "pdf"))),
             column(4, br(), downloadButton(ns("export_download"), "Save File", class = "btn-success", style = "width: 100%;")),
             column(4, br(), htmlOutput(ns("export_status")))
+          ),
+          if (isTRUE(ics)) tagList(
+            hr(),
+            h4(icon("calendar-alt"), " Add to Calendar (.ics)"),
+            p("Opens in Outlook, Google Calendar, Apple Calendar and Android Calendar. Times are written in the zone ",
+              "saved with each programme. Re-importing the same file updates its entries instead of duplicating them."),
+            fluidRow(
+              column(4, downloadButton(ns("export_ics"), "Download Calendar (.ics)", class = "btn-info", style = "width: 100%;")),
+              column(8, checkboxInput(ns("ics_alarms"), "Include reminders (7 days and 1 day before; 1 hour before timed deadlines)", value = TRUE), ics_extra_ui)
+            ),
+            htmlOutput(ns("export_ics_status"))
           )
       )
     )

@@ -453,7 +453,7 @@ tr_dec_link <- function(store, d, trade_id, fill = TRUE) {
 # When did a limit / stop order most likely fill? Yahoo 15-min bars aligned to the IG ticket's mid price at the time the
 # ticket screenshot was taken. Returns list(time = "HH:MM", ts, note) or NULL. Always an ESTIMATE (the sheet marks it so).
 tr_estimate_fill_time <- function(asset, dir, order_type, level, placed, mid, spread = NA_real_, until = Sys.time(), fetch = tr_yahoo_fetch) {
-  sym <- unname(tr_yahoo_symbols[toupper(tr_or(asset, ""))]); if (is.na(sym) || !is.finite(level) || is.na(placed) || !(order_type %in% c("limit", "stop"))) return(NULL)
+  sym <- tr_yahoo_sym(tr_or(asset, "")); if (is.na(sym) || !is.finite(level) || is.na(placed) || !(order_type %in% c("limit", "stop"))) return(NULL)
   p <- tryCatch(fetch(sym, "5d", "15m"), error = function(e) NULL); if (is.null(p) || !nrow(p$bars)) return(NULL)
   before <- p$bars[as.numeric(p$bars$time) <= as.numeric(placed), , drop = FALSE]; if (!nrow(before)) return(NULL)
   a <- tr_dec_align(list(bars = before, tz = p$tz), if (is.finite(mid)) mid else NA_real_, asset)

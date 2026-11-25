@@ -19,7 +19,9 @@
     var s = (name || "infographic").replace(/[^a-z0-9_\- ]+/gi, "").trim().replace(/\s+/g, "_");
     return (s.length ? s : "infographic").substring(0, 80);
   }
+  var CTX = null;   // where the file goes: www/js/gdrive_export.js (download or Google Drive)
   function download(blob, filename) {
+    if (window.__exportDeliver) { window.__exportDeliver(CTX, blob, filename); return; }
     var url = URL.createObjectURL(blob), a = document.createElement("a");
     a.href = url; a.download = filename; document.body.appendChild(a); a.click();
     setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
@@ -282,6 +284,7 @@
   function blobBytes(b) { return b.arrayBuffer().then(function (ab) { return new Uint8Array(ab); }); }
 
   window.exportInfographic = function (targetId, formatSelectId, defaultName) {
+    CTX = window.__exportTakeCtx ? window.__exportTakeCtx() : null;
     var sel = document.getElementById(formatSelectId), fmt = sel ? sel.value : "pdf";
     var svgs = findPages(targetId);
     if (!svgs.length) { alert("Nothing to export yet - generate or load an infographic first."); return; }
@@ -307,11 +310,11 @@
             var frames = cvs.map(function (cv) { return cv.getContext("2d").getImageData(0, 0, cv.width, cv.height).data; });
             download(encodeGIFAnimated(cv0.width, cv0.height, frames, 300), base + ".gif"); return;
           }
-          if (fmt === "pdf_2up") { makePdf2up(cvs).save(base + ".pdf"); return; }
+          if (fmt === "pdf_2up") { download(makePdf2up(cvs).output("blob"), base + ".pdf"); return; }
           if (fmt === "pdf" || fmt === "pdf_a4") {
-            if (!multi && paperOf(svgs)) { makePdfSlides(cvs, svgs).save(base + ".pdf"); return; }
-            if (multi) { makePdfSlides(cvs, svgs).save(base + ".pdf"); return; }
-            makePdf(cv0, s0, fmt === "pdf_a4").save(base + ".pdf"); return;
+            if (!multi && paperOf(svgs)) { download(makePdfSlides(cvs, svgs).output("blob"), base + ".pdf"); return; }
+            if (multi) { download(makePdfSlides(cvs, svgs).output("blob"), base + ".pdf"); return; }
+            download(makePdf(cv0, s0, fmt === "pdf_a4").output("blob"), base + ".pdf"); return;
           }
           if (fmt === "pptx") {
             var slides = cvs, notes = svgs;

@@ -534,7 +534,7 @@ tr_catalogue <- data.frame(stringsAsFactors = FALSE,
            "COCOA", "COFFEE", "SUGAR", "WHEAT", "CORN", "SOYBEANS",
            "EURUSD", "USDJPY", "GBPUSD", "AUDUSD", "USDCAD", "USDCHF", "NZDUSD", "EURGBP", "EURJPY", "GBPJPY",
            "DOW", "SP500", "NASDAQ", "FTSE100", "GER40", "JP225"),
-  label = c("Brent Crude", "WTI Crude (US Crude)", "Natural Gas (UK)", "Natural Gas (US, Henry Hub)", "Heating Oil", "Gasoline",
+  label = c("Brent Crude", "WTI Crude (US Crude)", "Natural Gas (UK)", "Natural Gas", "Heating Oil", "Gasoline",
             "Gold", "Silver", "Copper", "Platinum",
             "Cocoa", "Coffee", "Sugar", "Wheat", "Corn", "Soybeans",
             "EUR/USD", "USD/JPY", "GBP/USD", "AUD/USD", "USD/CAD", "USD/CHF", "NZD/USD", "EUR/GBP", "EUR/JPY", "GBP/JPY",
@@ -556,9 +556,18 @@ tr_catalogue <- data.frame(stringsAsFactors = FALSE,
 tr_assets <- tr_catalogue$code
 tr_pip_defaults <- setNames(tr_catalogue$std_pip, tr_catalogue$code)
 
+# markets added at run time from the Capital.com watchlist (any asset class): label, class, market, pip, Yahoo symbol, epic
+tr_market_reg <- new.env()
+tr_register_market <- function(code, label = code, asset_class = "Other", market = "Other", std_pip = NA_real_, yahoo = NA_character_, epic = NA_character_) {
+  code <- toupper(trimws(code)); if (!nzchar(code)) return(invisible(NULL))
+  assign(code, list(code = code, label = label, asset_class = asset_class, market = market, std_pip = std_pip, pattern = paste0("^", code, "$"), yahoo = yahoo, epic = epic, registered = TRUE), envir = tr_market_reg)
+  invisible(code)
+}
+tr_registered <- function() mget(ls(tr_market_reg), envir = tr_market_reg)
 tr_instrument <- function(code) {
   code <- toupper(trimws(as.character(code))); if (!length(code) || is.na(code[1])) return(NULL)
-  r <- tr_catalogue[tr_catalogue$code == code[1], , drop = FALSE]; if (nrow(r)) as.list(r[1, ]) else NULL
+  r <- tr_catalogue[tr_catalogue$code == code[1], , drop = FALSE]; if (nrow(r)) return(as.list(r[1, ]))
+  get0(code[1], envir = tr_market_reg, inherits = FALSE)
 }
 tr_asset_class <- function(code) { i <- tr_instrument(code); if (is.null(i)) NA_character_ else i$asset_class }
 tr_market_of <- function(code) { i <- tr_instrument(code); if (is.null(i)) NA_character_ else i$market }
@@ -569,7 +578,8 @@ tr_asset_choices <- function(extra = character(0)) {
   g <- paste(tr_catalogue$asset_class, tr_catalogue$market, sep = " - ")
   out <- lapply(unique(g), function(k) { r <- tr_catalogue[g == k, ]; setNames(r$code, r$label) })
   names(out) <- unique(g)
-  extra <- setdiff(toupper(extra[!is.na(extra) & nzchar(extra)]), tr_catalogue$code)
+  rg <- tr_registered(); if (length(rg)) out <- c(list(`Your Capital.com markets` = setNames(vapply(rg, `[[`, "", "code"), vapply(rg, function(x) as.character(x$label), ""))), out)
+  extra <- setdiff(toupper(extra[!is.na(extra) & nzchar(extra)]), c(tr_catalogue$code, names(rg)))
   if (length(extra)) out <- c(list(Other = setNames(extra, extra)), out)
   out
 }

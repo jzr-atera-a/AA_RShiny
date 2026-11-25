@@ -42,6 +42,7 @@ diagram_generator_ui <- function(id) {
             column(4, downloadButton(ns("download_diagram_svg"), "Download SVG", class = "btn-info")),
             column(4, downloadButton(ns("download_diagram_html"), "Download HTML", class = "btn-info"))
           ),
+          diagram_save_ui(ns("save_diagram"), formats = c("html", DIAGRAM_IMAGE_FORMATS, "source")),
           br(),
           uiOutput(ns("diagram_status_ui")))
     )
@@ -85,12 +86,11 @@ diagram_generator_server <- function(id, api_manager) {
 
         output$diagram_preview_display <- renderUI({
           if (input$diagram_output_format == "svg") {
-            tags$div(style = "border: 2px solid #4a90e2; padding: 20px; background: white; border-radius: 8px;", HTML(result))
+            tags$div(style = "border: 2px solid #00A39A; padding: 20px; background: white; border-radius: 8px;", HTML(result))
           } else if (input$diagram_output_format == "html") {
-            tags$iframe(srcdoc = result, width = "100%", height = "600px", style = "border: 2px solid #4a90e2; border-radius: 8px;")
+            tags$iframe(srcdoc = result, width = "100%", height = "600px", style = "border: 2px solid #00A39A; border-radius: 8px;")
           } else {
-            tags$div(tags$script(src = "https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"),
-                      tags$div(class = "mermaid", result))
+            diagram_mermaid_ui(result)
           }
         })
 
@@ -100,6 +100,9 @@ diagram_generator_server <- function(id, api_manager) {
         output$diagram_status_ui <- renderUI(create_status_ui(FALSE, " Failed to generate diagram"))
       }
     })
+
+    diagram_save_server("save_diagram", "diagram_generator", session$ns("diagram_preview_display"), "html", function()
+      diagram_code_spec(values$diagram_code, values$diagram_type, isolate(input$diagram_type_select), isolate(input$diagram_instructions), "ChatGPT"))
 
     output$download_diagram_main <- downloadHandler(
       filename = function() paste0("diagram_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".", values$diagram_type),

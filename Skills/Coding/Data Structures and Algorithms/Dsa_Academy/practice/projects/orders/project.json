@@ -1,0 +1,40 @@
+{
+ "id": "orders",
+ "title": "Order service: atomic orders + bulk discount",
+ "style": "Meta AI-enabled coding",
+ "difficulty": "Medium",
+ "minutes": 45,
+ "files": [
+  "orders.py",
+  "pricing.py",
+  "inventory.py"
+ ],
+ "brief": "A small order service. <code>Inventory</code> tracks stock, <code>pricing.line_total</code> prices a line and <code>OrderService.place_order</code> takes stock and returns the order total in integer cents.",
+ "tasks": [
+  "<b>Bug (from production):</b> when an order fails part-way, the earlier lines have already been taken from stock. Make <code>place_order</code> atomic \u2014 if it raises, the inventory must be unchanged. The same SKU may appear on several lines.",
+  "<b>Feature:</b> a line with <b>10 or more</b> units gets <b>10% off that line</b>, rounded <b>down</b> to a whole cent.",
+  "Unknown SKUs should raise <code>KeyError</code> and also leave stock untouched.",
+  "Extend <code>test_solution.py</code> so that it would catch a wrong implementation of either change."
+ ],
+ "ai_prompt": "Make place_order atomic and add a 10% bulk discount for lines of 10+ units.",
+ "ai_reply": "Sure! I made two changes:\n\n1. `place_order` now validates every line before touching the inventory, so it can never fail half-way.\n2. `line_total` applies a 10% discount for bulk lines.\n\nThis keeps both functions simple and O(n).",
+ "flaws": [
+  "The pre-check tests each line on its own. With <code>[(\"b\", 3), (\"b\", 3)]</code> and 5 in stock both checks pass, then the second <code>remove</code> raises after the first already took stock \u2014 still not atomic. Aggregate quantities per SKU first.",
+  "<code>qty &gt; BULK_QTY</code> misses the boundary: exactly 10 units must be discounted.",
+  "Float maths: <code>int(total * 0.9)</code> works here but is fragile for money; <code>total * 9 // 10</code> is exact.",
+  "Unknown SKUs are only discovered in the second loop \u2014 after earlier lines took stock."
+ ],
+ "mutants": {
+  "m1": "Discount threshold set to 5 units",
+  "m2": "Non-atomic order (original loop)",
+  "m3": "Discount rounded up instead of down"
+ },
+ "rubric": [
+  "Read the whole AI diff before applying it",
+  "Named the duplicate-SKU hole",
+  "Named the \u2265 10 boundary",
+  "Tests cover both boundaries (9 and 10 units)",
+  "Tests check stock after a failed order",
+  "Used integer arithmetic for money"
+ ]
+}

@@ -1,0 +1,279 @@
+[
+ {
+  "id": "logs",
+  "title": "Log report: top users with tie-breaking",
+  "style": "Google-style practical coding",
+  "difficulty": "Easy–Medium",
+  "minutes": 35,
+  "files": [
+   "report.py",
+   "logparse.py"
+  ],
+  "brief": "Access-log lines look like <code>2024-05-01T10:00:00 alice GET /home 200</code>. <code>logparse.parse_line</code> turns a line into a dict (or <code>None</code> if it is malformed); <code>report.top_users</code> is not written yet.",
+  "tasks": [
+   "Implement <code>top_users(lines, k)</code>: the <b>k users with the most requests</b>, most first; <b>ties broken alphabetically</b> (ascending). Malformed lines are skipped. If k exceeds the number of users return all of them; if k ≤ 0 return <code>[]</code>.",
+   "<b>Bug:</b> real logs contain repeated spaces, tabs and trailing newlines, and those lines are silently dropped. Fields are separated by <b>any run of whitespace</b>.",
+   "Extend <code>test_solution.py</code> to pin down the tie-breaking and whitespace behaviour."
+  ],
+  "ai_prompt": "Implement top_users and make the parser tolerant of whitespace.",
+  "ai_reply": "Done! `top_users` counts users with a Counter and uses `heapq.nlargest` with a `(count, name)` key so ties are broken by name — O(n + u log k).\n\nI also made `parse_line` strip the line first, which fixes trailing newlines and spaces.",
+  "flaws": [
+   "<code>nlargest</code> with key <code>(count, name)</code> picks the <b>largest</b> name on a tie — reverse alphabetical. Use <code>nsmallest</code> with <code>(-count, name)</code>, or sort.",
+   "<code>strip().split(\" \")</code> fixes only the ends; tabs and double spaces inside the line still produce the wrong number of fields. <code>split()</code> with no argument splits on any whitespace run.",
+   "<code>k ≤ 0</code> happens to work with <code>nlargest</code>, but the behaviour is not stated or tested."
+  ],
+  "mutants": {
+   "m1": "Ties in insertion order (most_common)",
+   "m2": "Parser only strips the ends",
+   "m3": "k ≤ 0 returns every user"
+  },
+  "rubric": [
+   "Spotted the reversed tie-break",
+   "Spotted that internal whitespace still breaks parsing",
+   "Tests include a tie",
+   "Tests include tabs / double spaces",
+   "Covered k = 0 and k > number of users",
+   "Explained the complexity of the heap vs. sorting"
+  ],
+  "src": {
+   "report.py": "from logparse import parse_line\n\n\ndef top_users(lines, k):\n    \"\"\"Return the k users with the most requests (see the task).\"\"\"\n    raise NotImplementedError\n",
+   "logparse.py": "\"\"\"Parse access-log lines such as:\n\n    2024-05-01T10:00:00 alice GET /home 200\n\"\"\"\n\n\ndef parse_line(line):\n    \"\"\"Return a dict for a valid line, or None for a malformed one.\"\"\"\n    parts = line.split(\" \")\n    if len(parts) != 5:\n        return None\n    ts, user, method, path, status = parts\n    if not status.isdigit():\n        return None\n    return {\"ts\": ts, \"user\": user, \"method\": method, \"path\": path, \"status\": int(status)}\n"
+  },
+  "reference": {
+   "report.py": "import heapq\nfrom collections import Counter\n\nfrom logparse import parse_line\n\n\ndef top_users(lines, k):\n    \"\"\"k users with the most requests; ties by name ascending; malformed lines skipped.\"\"\"\n    if k <= 0:\n        return []\n    counts = Counter(r[\"user\"] for r in map(parse_line, lines) if r)\n    # nsmallest on (-count, name) gives \"most requests first, then alphabetical\"\n    return [u for u, _ in heapq.nsmallest(k, counts.items(), key=lambda kv: (-kv[1], kv[0]))]\n",
+   "logparse.py": "\"\"\"Parse access-log lines such as:\n\n    2024-05-01T10:00:00 alice GET /home 200\n\"\"\"\n\n\ndef parse_line(line):\n    \"\"\"Return a dict for a valid line, or None for a malformed one.\n\n    Any run of whitespace separates fields; leading / trailing whitespace is ignored.\n    \"\"\"\n    parts = line.split()\n    if len(parts) != 5:\n        return None\n    ts, user, method, path, status = parts\n    if not status.isdigit():\n        return None\n    return {\"ts\": ts, \"user\": user, \"method\": method, \"path\": path, \"status\": int(status)}\n"
+  },
+  "ai_files": {
+   "logparse.py": "\"\"\"Parse access-log lines such as:\n\n    2024-05-01T10:00:00 alice GET /home 200\n\"\"\"\n\n\ndef parse_line(line):\n    \"\"\"Return a dict for a valid line, or None for a malformed one.\"\"\"\n    parts = line.strip().split(\" \")\n    if len(parts) != 5:\n        return None\n    ts, user, method, path, status = parts\n    if not status.isdigit():\n        return None\n    return {\"ts\": ts, \"user\": user, \"method\": method, \"path\": path, \"status\": int(status)}\n",
+   "report.py": "import heapq\nfrom collections import Counter\n\nfrom logparse import parse_line\n\n\ndef top_users(lines, k):\n    \"\"\"Return the k users with the most requests, ties broken by name.\"\"\"\n    counts = Counter(r[\"user\"] for r in map(parse_line, lines) if r)\n    best = heapq.nlargest(k, counts.items(), key=lambda kv: (kv[1], kv[0]))\n    return [user for user, _ in best]\n"
+  },
+  "ai_diff": "--- a/logparse.py\n+++ b/logparse.py\n@@ -6,7 +6,7 @@\n \n def parse_line(line):\n     \"\"\"Return a dict for a valid line, or None for a malformed one.\"\"\"\n-    parts = line.split(\" \")\n+    parts = line.strip().split(\" \")\n     if len(parts) != 5:\n         return None\n     ts, user, method, path, status = parts\n--- a/report.py\n+++ b/report.py\n@@ -1,6 +1,11 @@\n+import heapq\n+from collections import Counter\n+\n from logparse import parse_line\n \n \n def top_users(lines, k):\n-    \"\"\"Return the k users with the most requests (see the task).\"\"\"\n-    raise NotImplementedError\n+    \"\"\"Return the k users with the most requests, ties broken by name.\"\"\"\n+    counts = Counter(r[\"user\"] for r in map(parse_line, lines) if r)\n+    best = heapq.nlargest(k, counts.items(), key=lambda kv: (kv[1], kv[0]))\n+    return [user for user, _ in best]\n",
+  "tests_starter": "import unittest\n\nfrom logparse import parse_line\nfrom report import top_users\n\nLOG = [\n    \"2024-05-01T10:00:00 alice GET /home 200\",\n    \"2024-05-01T10:00:01 bob GET /home 200\",\n    \"2024-05-01T10:00:02 alice POST /cart 201\",\n]\n\n\nclass TestReport(unittest.TestCase):\n    def test_parse_valid(self):\n        self.assertEqual(parse_line(LOG[0])[\"user\"], \"alice\")\n\n    def test_parse_malformed(self):\n        self.assertIsNone(parse_line(\"garbage\"))\n\n    def test_top_one(self):\n        self.assertEqual(top_users(LOG, 1), [\"alice\"])\n\n    # TODO: ties, k larger than the number of users, k = 0, messy whitespace.\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n",
+  "model_tests": "import unittest\n\nfrom logparse import parse_line\nfrom report import top_users\n\nLOG = [\n    \"2024-05-01T10:00:00 alice GET /home 200\",\n    \"2024-05-01T10:00:01 bob GET /home 200\",\n    \"2024-05-01T10:00:02 alice POST /cart 201\",\n    \"2024-05-01T10:00:03 carol GET /home 500\",\n    \"2024-05-01T10:00:04 bob GET /about 200\",\n]\n\n\nclass TestReport(unittest.TestCase):\n    def test_parse_extra_spaces_and_newline(self):\n        r = parse_line(\"2024-05-01T10:00:00   dave\\tGET /x  404\\n\")\n        self.assertEqual((r[\"user\"], r[\"status\"]), (\"dave\", 404))\n\n    def test_tie_broken_alphabetically(self):\n        self.assertEqual(top_users(LOG, 2), [\"alice\", \"bob\"])\n        self.assertEqual(top_users([\"t u2 GET / 200\", \"t u1 GET / 200\"], 1), [\"u1\"])\n\n    def test_k_larger_than_users(self):\n        self.assertEqual(top_users(LOG, 10), [\"alice\", \"bob\", \"carol\"])\n\n    def test_k_zero(self):\n        self.assertEqual(top_users(LOG, 0), [])\n\n    def test_malformed_lines_skipped(self):\n        self.assertEqual(top_users([\"\", \"bad line\", \"t zed GET / 200\"], 5), [\"zed\"])\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n",
+  "hidden_names": [
+   "Hidden.test_empty",
+   "Hidden.test_k_too_large",
+   "Hidden.test_k_zero_and_negative",
+   "Hidden.test_parse_bad_status",
+   "Hidden.test_parse_basic",
+   "Hidden.test_parse_messy_whitespace",
+   "Hidden.test_parse_wrong_field_count",
+   "Hidden.test_random_against_sort",
+   "Hidden.test_ties_alphabetical",
+   "Hidden.test_top_basic"
+  ],
+  "src_hidden_passed": 3,
+  "ai_hidden_passed": 6,
+  "hidden_total": 10
+ },
+ {
+  "id": "orders",
+  "title": "Order service: atomic orders + bulk discount",
+  "style": "Meta AI-enabled coding",
+  "difficulty": "Medium",
+  "minutes": 45,
+  "files": [
+   "orders.py",
+   "pricing.py",
+   "inventory.py"
+  ],
+  "brief": "A small order service. <code>Inventory</code> tracks stock, <code>pricing.line_total</code> prices a line and <code>OrderService.place_order</code> takes stock and returns the order total in integer cents.",
+  "tasks": [
+   "<b>Bug (from production):</b> when an order fails part-way, the earlier lines have already been taken from stock. Make <code>place_order</code> atomic — if it raises, the inventory must be unchanged. The same SKU may appear on several lines.",
+   "<b>Feature:</b> a line with <b>10 or more</b> units gets <b>10% off that line</b>, rounded <b>down</b> to a whole cent.",
+   "Unknown SKUs should raise <code>KeyError</code> and also leave stock untouched.",
+   "Extend <code>test_solution.py</code> so that it would catch a wrong implementation of either change."
+  ],
+  "ai_prompt": "Make place_order atomic and add a 10% bulk discount for lines of 10+ units.",
+  "ai_reply": "Sure! I made two changes:\n\n1. `place_order` now validates every line before touching the inventory, so it can never fail half-way.\n2. `line_total` applies a 10% discount for bulk lines.\n\nThis keeps both functions simple and O(n).",
+  "flaws": [
+   "The pre-check tests each line on its own. With <code>[(\"b\", 3), (\"b\", 3)]</code> and 5 in stock both checks pass, then the second <code>remove</code> raises after the first already took stock — still not atomic. Aggregate quantities per SKU first.",
+   "<code>qty &gt; BULK_QTY</code> misses the boundary: exactly 10 units must be discounted.",
+   "Float maths: <code>int(total * 0.9)</code> works here but is fragile for money; <code>total * 9 // 10</code> is exact.",
+   "Unknown SKUs are only discovered in the second loop — after earlier lines took stock."
+  ],
+  "mutants": {
+   "m1": "Discount threshold set to 5 units",
+   "m2": "Non-atomic order (original loop)",
+   "m3": "Discount rounded up instead of down"
+  },
+  "rubric": [
+   "Read the whole AI diff before applying it",
+   "Named the duplicate-SKU hole",
+   "Named the ≥ 10 boundary",
+   "Tests cover both boundaries (9 and 10 units)",
+   "Tests check stock after a failed order",
+   "Used integer arithmetic for money"
+  ],
+  "src": {
+   "orders.py": "from inventory import Inventory, OutOfStock\nfrom pricing import line_total\n\n\nclass OrderService:\n    def __init__(self, inventory, prices):\n        self.inventory = inventory      # Inventory\n        self.prices = prices            # {sku: unit price in cents}\n\n    def place_order(self, items):\n        \"\"\"items: list of (sku, qty). Takes the stock and returns the total in cents.\n\n        Raises OutOfStock if any line cannot be supplied.\n        \"\"\"\n        total = 0\n        for sku, qty in items:\n            self.inventory.remove(sku, qty)\n            total += line_total(self.prices[sku], qty)\n        return total\n",
+   "pricing.py": "\"\"\"Price calculations. All money is in integer cents.\"\"\"\n\n\ndef line_total(unit_price_cents, qty):\n    \"\"\"Price of one order line.\"\"\"\n    return unit_price_cents * qty\n",
+   "inventory.py": "\"\"\"Warehouse stock levels.\"\"\"\n\n\nclass OutOfStock(Exception):\n    \"\"\"Raised when an item cannot be supplied in the requested quantity.\"\"\"\n\n\nclass Inventory:\n    def __init__(self, stock=None):\n        self._stock = dict(stock or {})\n\n    def available(self, sku):\n        return self._stock.get(sku, 0)\n\n    def add(self, sku, qty):\n        if qty <= 0:\n            raise ValueError(\"qty must be positive\")\n        self._stock[sku] = self._stock.get(sku, 0) + qty\n\n    def remove(self, sku, qty):\n        if qty <= 0:\n            raise ValueError(\"qty must be positive\")\n        if self._stock.get(sku, 0) < qty:\n            raise OutOfStock(sku)\n        self._stock[sku] -= qty\n"
+  },
+  "reference": {
+   "orders.py": "from collections import Counter\n\nfrom inventory import Inventory, OutOfStock\nfrom pricing import line_total\n\n\nclass OrderService:\n    def __init__(self, inventory, prices):\n        self.inventory = inventory      # Inventory\n        self.prices = prices            # {sku: unit price in cents}\n\n    def place_order(self, items):\n        \"\"\"items: list of (sku, qty). Takes the stock and returns the total in cents.\n\n        Atomic: raises OutOfStock (or KeyError for an unknown sku) without taking any stock.\n        \"\"\"\n        need = Counter()\n        for sku, qty in items:\n            if qty <= 0:\n                raise ValueError(\"qty must be positive\")\n            if sku not in self.prices:\n                raise KeyError(sku)\n            need[sku] += qty                      # the same sku may appear on several lines\n        for sku, qty in need.items():\n            if self.inventory.available(sku) < qty:\n                raise OutOfStock(sku)\n        total = 0\n        for sku, qty in items:                    # cannot fail any more\n            self.inventory.remove(sku, qty)\n            total += line_total(self.prices[sku], qty)\n        return total\n",
+   "pricing.py": "\"\"\"Price calculations. All money is in integer cents.\"\"\"\n\nBULK_QTY = 10\n\n\ndef line_total(unit_price_cents, qty):\n    \"\"\"Price of one order line. Lines of BULK_QTY or more units get 10% off, rounded down.\"\"\"\n    total = unit_price_cents * qty\n    if qty >= BULK_QTY:\n        total = total * 9 // 10                   # integer maths: no float rounding surprises\n    return total\n",
+   "inventory.py": "\"\"\"Warehouse stock levels.\"\"\"\n\n\nclass OutOfStock(Exception):\n    \"\"\"Raised when an item cannot be supplied in the requested quantity.\"\"\"\n\n\nclass Inventory:\n    def __init__(self, stock=None):\n        self._stock = dict(stock or {})\n\n    def available(self, sku):\n        return self._stock.get(sku, 0)\n\n    def add(self, sku, qty):\n        if qty <= 0:\n            raise ValueError(\"qty must be positive\")\n        self._stock[sku] = self._stock.get(sku, 0) + qty\n\n    def remove(self, sku, qty):\n        if qty <= 0:\n            raise ValueError(\"qty must be positive\")\n        if self._stock.get(sku, 0) < qty:\n            raise OutOfStock(sku)\n        self._stock[sku] -= qty\n"
+  },
+  "ai_files": {
+   "orders.py": "from inventory import Inventory, OutOfStock\nfrom pricing import line_total\n\n\nclass OrderService:\n    def __init__(self, inventory, prices):\n        self.inventory = inventory      # Inventory\n        self.prices = prices            # {sku: unit price in cents}\n\n    def place_order(self, items):\n        \"\"\"items: list of (sku, qty). Takes the stock and returns the total in cents.\n\n        Raises OutOfStock if any line cannot be supplied. The order is atomic:\n        if it fails, no stock is taken.\n        \"\"\"\n        # Check everything first so that we never fail half-way through.\n        for sku, qty in items:\n            if self.inventory.available(sku) < qty:\n                raise OutOfStock(sku)\n        total = 0\n        for sku, qty in items:\n            self.inventory.remove(sku, qty)\n            total += line_total(self.prices[sku], qty)\n        return total\n",
+   "pricing.py": "\"\"\"Price calculations. All money is in integer cents.\"\"\"\n\nBULK_QTY = 10\nBULK_DISCOUNT = 0.10\n\n\ndef line_total(unit_price_cents, qty):\n    \"\"\"Price of one order line, with 10% off bulk lines.\"\"\"\n    total = unit_price_cents * qty\n    if qty > BULK_QTY:\n        total = int(total * (1 - BULK_DISCOUNT))\n    return total\n"
+  },
+  "ai_diff": "--- a/orders.py\n+++ b/orders.py\n@@ -10,8 +10,13 @@\n     def place_order(self, items):\n         \"\"\"items: list of (sku, qty). Takes the stock and returns the total in cents.\n \n-        Raises OutOfStock if any line cannot be supplied.\n+        Raises OutOfStock if any line cannot be supplied. The order is atomic:\n+        if it fails, no stock is taken.\n         \"\"\"\n+        # Check everything first so that we never fail half-way through.\n+        for sku, qty in items:\n+            if self.inventory.available(sku) < qty:\n+                raise OutOfStock(sku)\n         total = 0\n         for sku, qty in items:\n             self.inventory.remove(sku, qty)\n--- a/pricing.py\n+++ b/pricing.py\n@@ -1,6 +1,12 @@\n \"\"\"Price calculations. All money is in integer cents.\"\"\"\n+\n+BULK_QTY = 10\n+BULK_DISCOUNT = 0.10\n \n \n def line_total(unit_price_cents, qty):\n-    \"\"\"Price of one order line.\"\"\"\n-    return unit_price_cents * qty\n+    \"\"\"Price of one order line, with 10% off bulk lines.\"\"\"\n+    total = unit_price_cents * qty\n+    if qty > BULK_QTY:\n+        total = int(total * (1 - BULK_DISCOUNT))\n+    return total\n",
+  "tests_starter": "import unittest\n\nfrom inventory import Inventory, OutOfStock\nfrom orders import OrderService\n\n\nclass TestOrders(unittest.TestCase):\n    def setUp(self):\n        self.inv = Inventory({\"apple\": 30, \"pear\": 5})\n        self.svc = OrderService(self.inv, {\"apple\": 120, \"pear\": 255})\n\n    def test_simple_order(self):\n        self.assertEqual(self.svc.place_order([(\"apple\", 2)]), 240)\n        self.assertEqual(self.inv.available(\"apple\"), 28)\n\n    def test_out_of_stock_raises(self):\n        with self.assertRaises(OutOfStock):\n            self.svc.place_order([(\"pear\", 6)])\n\n    # TODO: add tests for the bulk-discount boundary and for orders that fail part-way.\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n",
+  "model_tests": "import unittest\n\nfrom inventory import Inventory, OutOfStock\nfrom orders import OrderService\n\n\nclass TestOrders(unittest.TestCase):\n    def setUp(self):\n        self.inv = Inventory({\"apple\": 30, \"pear\": 5})\n        self.svc = OrderService(self.inv, {\"apple\": 120, \"pear\": 255})\n\n    def test_simple_order(self):\n        self.assertEqual(self.svc.place_order([(\"apple\", 2)]), 240)\n        self.assertEqual(self.inv.available(\"apple\"), 28)\n\n    def test_no_discount_below_threshold(self):\n        self.assertEqual(self.svc.place_order([(\"apple\", 9)]), 1080)\n\n    def test_discount_exactly_at_threshold(self):          # catches '> 10'\n        self.assertEqual(self.svc.place_order([(\"apple\", 10)]), 1080)\n\n    def test_discount_rounds_down(self):\n        self.assertEqual(self.svc.place_order([(\"pear\", 5), (\"apple\", 1)]), 1275 + 120)\n        inv = Inventory({\"x\": 50})\n        svc = OrderService(inv, {\"x\": 333})\n        self.assertEqual(svc.place_order([(\"x\", 11)]), 3296)   # 3663 * 0.9 = 3296.7 → 3296\n\n    def test_failure_leaves_stock_untouched(self):\n        with self.assertRaises(OutOfStock):\n            self.svc.place_order([(\"apple\", 3), (\"pear\", 6)])\n        self.assertEqual(self.inv.available(\"apple\"), 30)\n\n    def test_same_sku_on_two_lines(self):                   # catches the per-line pre-check\n        with self.assertRaises(OutOfStock):\n            self.svc.place_order([(\"pear\", 3), (\"pear\", 3)])\n        self.assertEqual(self.inv.available(\"pear\"), 5)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n",
+  "hidden_names": [
+   "Hidden.test_atomic_when_second_line_fails",
+   "Hidden.test_atomic_with_repeated_sku",
+   "Hidden.test_bulk_discount_at_ten",
+   "Hidden.test_bulk_discount_below_ten",
+   "Hidden.test_bulk_discount_rounds_down",
+   "Hidden.test_plain_order_total",
+   "Hidden.test_repeated_sku_that_fits",
+   "Hidden.test_stock_is_taken",
+   "Hidden.test_unknown_sku_takes_nothing"
+  ],
+  "src_hidden_passed": 4,
+  "ai_hidden_passed": 6,
+  "hidden_total": 9
+ },
+ {
+  "id": "search",
+  "title": "Search index: tokenising, re-indexing and ranking",
+  "style": "Google-style practical coding",
+  "difficulty": "Medium",
+  "minutes": 45,
+  "files": [
+   "index.py",
+   "textutil.py"
+  ],
+  "brief": "A tiny inverted index. <code>textutil.tokenize</code> splits text into tokens and <code>SearchIndex</code> maps each token to the documents that contain it. <code>search</code> uses AND semantics.",
+  "tasks": [
+   "Tokens are <b>maximal runs of ASCII letters and digits, lower-cased</b> — punctuation and underscores separate tokens (<code>snake_case → snake, case</code>). Matching is therefore case-insensitive.",
+   "Calling <code>add</code> again with an existing <code>doc_id</code> <b>replaces</b> that document's text.",
+   "<code>search</code> returns matching ids ranked by the <b>total number of occurrences</b> of the query tokens (a repeated query token counts again), highest first, ties by id ascending. A query without tokens returns <code>[]</code>.",
+   "Extend <code>test_solution.py</code> so it pins down each rule."
+  ],
+  "ai_prompt": "Make search case-insensitive, ignore punctuation, rank by term frequency and handle re-adding a document.",
+  "ai_reply": "Updated! `tokenize` now lower-cases and uses `\\w+`, which drops punctuation. `SearchIndex` keeps a `Counter` per document and ranks results by total term frequency, then by id. Re-adding a document overwrites its counts, so it's handled automatically.",
+  "flaws": [
+   "<code>\\w</code> matches the underscore (and non-ASCII letters), so <code>snake_case</code> stays one token.",
+   "Re-adding overwrites <code>counts</code> but leaves the doc id in the postings of its <b>old</b> tokens — searching an old word still returns the document, and then <code>score</code> silently counts 0.",
+   "Minor: intersecting the smallest posting set first is faster when one term is rare."
+  ],
+  "mutants": {
+   "m1": "Tokens not lower-cased",
+   "m2": "Re-adding keeps stale postings",
+   "m3": "Results not ranked"
+  },
+  "rubric": [
+   "Spotted \\w includes underscore",
+   "Spotted stale postings on re-add",
+   "Tests check tokenisation directly",
+   "Tests re-add a document and search an old word",
+   "Tests ranking and ties",
+   "Discussed intersection order / complexity"
+  ],
+  "src": {
+   "index.py": "from textutil import tokenize\n\n\nclass SearchIndex:\n    def __init__(self):\n        self.postings = {}              # token -> set of doc ids\n\n    def add(self, doc_id, text):\n        for tok in tokenize(text):\n            self.postings.setdefault(tok, set()).add(doc_id)\n\n    def search(self, query):\n        \"\"\"Ids of documents that contain every query token, ascending.\"\"\"\n        sets = [self.postings.get(t, set()) for t in tokenize(query)]\n        if not sets:\n            return []\n        return sorted(set.intersection(*sets))\n",
+   "textutil.py": "def tokenize(text):\n    \"\"\"Split text into search tokens.\"\"\"\n    return text.split()\n"
+  },
+  "reference": {
+   "index.py": "from collections import Counter\n\nfrom textutil import tokenize\n\n\nclass SearchIndex:\n    def __init__(self):\n        self.postings = {}              # token -> set of doc ids\n        self.counts = {}                # doc id -> Counter of tokens\n\n    def add(self, doc_id, text):\n        if doc_id in self.counts:       # re-adding replaces the old text\n            for tok in self.counts[doc_id]:\n                ids = self.postings[tok]\n                ids.discard(doc_id)\n                if not ids:\n                    del self.postings[tok]\n        c = Counter(tokenize(text))\n        self.counts[doc_id] = c\n        for tok in c:\n            self.postings.setdefault(tok, set()).add(doc_id)\n\n    def search(self, query):\n        \"\"\"Docs containing every query token; most total occurrences first, then id ascending.\"\"\"\n        terms = tokenize(query)\n        if not terms:\n            return []\n        sets = sorted((self.postings.get(t, set()) for t in set(terms)), key=len)\n        hits = set.intersection(*sets)  # smallest set first\n        score = {d: sum(self.counts[d][t] for t in terms) for d in hits}\n        return sorted(hits, key=lambda d: (-score[d], d))\n",
+   "textutil.py": "import re\n\n_TOKEN = re.compile(r\"[a-z0-9]+\")\n\n\ndef tokenize(text):\n    \"\"\"Maximal runs of ASCII letters / digits, lower-cased. 'snake_case' -> ['snake', 'case'].\"\"\"\n    return _TOKEN.findall(text.lower())\n"
+  },
+  "ai_files": {
+   "index.py": "from collections import Counter\n\nfrom textutil import tokenize\n\n\nclass SearchIndex:\n    def __init__(self):\n        self.postings = {}              # token -> set of doc ids\n        self.counts = {}                # doc id -> Counter of tokens\n\n    def add(self, doc_id, text):\n        toks = tokenize(text)\n        self.counts[doc_id] = Counter(toks)\n        for tok in toks:\n            self.postings.setdefault(tok, set()).add(doc_id)\n\n    def search(self, query):\n        \"\"\"Ids of documents containing every query token, best match first.\"\"\"\n        terms = tokenize(query)\n        sets = [self.postings.get(t, set()) for t in terms]\n        if not sets:\n            return []\n        hits = set.intersection(*sets)\n        score = lambda d: sum(self.counts[d][t] for t in terms)\n        return sorted(hits, key=lambda d: (-score(d), d))\n",
+   "textutil.py": "import re\n\n\ndef tokenize(text):\n    \"\"\"Lower-case words, punctuation removed.\"\"\"\n    return re.findall(r\"\\w+\", text.lower())\n"
+  },
+  "ai_diff": "--- a/index.py\n+++ b/index.py\n@@ -1,17 +1,25 @@\n+from collections import Counter\n+\n from textutil import tokenize\n \n \n class SearchIndex:\n     def __init__(self):\n         self.postings = {}              # token -> set of doc ids\n+        self.counts = {}                # doc id -> Counter of tokens\n \n     def add(self, doc_id, text):\n-        for tok in tokenize(text):\n+        toks = tokenize(text)\n+        self.counts[doc_id] = Counter(toks)\n+        for tok in toks:\n             self.postings.setdefault(tok, set()).add(doc_id)\n \n     def search(self, query):\n-        \"\"\"Ids of documents that contain every query token, ascending.\"\"\"\n-        sets = [self.postings.get(t, set()) for t in tokenize(query)]\n+        \"\"\"Ids of documents containing every query token, best match first.\"\"\"\n+        terms = tokenize(query)\n+        sets = [self.postings.get(t, set()) for t in terms]\n         if not sets:\n             return []\n-        return sorted(set.intersection(*sets))\n+        hits = set.intersection(*sets)\n+        score = lambda d: sum(self.counts[d][t] for t in terms)\n+        return sorted(hits, key=lambda d: (-score(d), d))\n--- a/textutil.py\n+++ b/textutil.py\n@@ -1,3 +1,6 @@\n+import re\n+\n+\n def tokenize(text):\n-    \"\"\"Split text into search tokens.\"\"\"\n-    return text.split()\n+    \"\"\"Lower-case words, punctuation removed.\"\"\"\n+    return re.findall(r\"\\w+\", text.lower())\n",
+  "tests_starter": "import unittest\n\nfrom index import SearchIndex\n\n\nclass TestIndex(unittest.TestCase):\n    def setUp(self):\n        self.ix = SearchIndex()\n        self.ix.add(1, \"the quick brown fox\")\n        self.ix.add(2, \"the lazy dog\")\n\n    def test_single_word(self):\n        self.assertEqual(self.ix.search(\"dog\"), [2])\n\n    def test_and_semantics(self):\n        self.assertEqual(self.ix.search(\"the fox\"), [1])\n\n    # TODO: case, punctuation and underscores, re-adding a document, ranking.\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n",
+  "model_tests": "import unittest\n\nfrom index import SearchIndex\nfrom textutil import tokenize\n\n\nclass TestIndex(unittest.TestCase):\n    def test_tokenize_rules(self):\n        self.assertEqual(tokenize(\"Hello, World! snake_case x2\"), [\"hello\", \"world\", \"snake\", \"case\", \"x2\"])\n\n    def test_case_insensitive(self):\n        ix = SearchIndex(); ix.add(1, \"Quick FOX\")\n        self.assertEqual(ix.search(\"fox QUICK\"), [1])\n\n    def test_readd_replaces(self):\n        ix = SearchIndex(); ix.add(1, \"red apple\"); ix.add(1, \"green pear\")\n        self.assertEqual(ix.search(\"apple\"), [])\n        self.assertEqual(ix.search(\"pear\"), [1])\n\n    def test_ranking(self):\n        ix = SearchIndex(); ix.add(1, \"cat\"); ix.add(2, \"cat cat dog\"); ix.add(3, \"cat cat\")\n        self.assertEqual(ix.search(\"cat\"), [2, 3, 1])\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n",
+  "hidden_names": [
+   "Hidden.test_and_semantics",
+   "Hidden.test_case_insensitive_search",
+   "Hidden.test_empty_query",
+   "Hidden.test_ranking_by_occurrences",
+   "Hidden.test_ranking_ties_by_id",
+   "Hidden.test_readd_changes_rank",
+   "Hidden.test_readd_replaces_text",
+   "Hidden.test_repeated_query_term",
+   "Hidden.test_tokenize_punctuation",
+   "Hidden.test_tokenize_underscore_and_digits",
+   "Hidden.test_unknown_word"
+  ],
+  "src_hidden_passed": 5,
+  "ai_hidden_passed": 9,
+  "hidden_total": 11
+ },
+ {
+  "id": "ttlcache",
+  "title": "LRU cache gains a time-to-live",
+  "style": "Meta AI-enabled coding",
+  "difficulty": "Medium",
+  "minutes": 45,
+  "files": [
+   "cache.py",
+   "fakeclock.py"
+  ],
+  "brief": "<code>cache.py</code> has a working <code>LRUCache</code>. Product wants entries to expire. <code>fakeclock.FakeClock</code> lets tests move time by hand instead of sleeping.",
+  "tasks": [
+   "Implement <code>TTLCache(capacity, ttl, clock=time.monotonic)</code>, an LRU cache in which an entry written at time t is <b>expired from t + ttl onwards</b> (so at exactly t + ttl it is gone). <code>get</code> of an expired key returns −1. <code>put</code> refreshes the timestamp; <code>get</code> does <b>not</b>.",
+   "Expired entries must <b>never cause a live entry to be evicted</b>, and <code>len(cache)</code> counts live entries only.",
+   "<code>ttl ≤ 0</code> raises <code>ValueError</code>.",
+   "Extend <code>test_solution.py</code> using <code>FakeClock</code>; no <code>time.sleep</code>."
+  ],
+  "ai_prompt": "Add a TTLCache subclass with per-entry expiry.",
+  "ai_reply": "Here's a minimal `TTLCache` that subclasses `LRUCache`. It records when each key was written in `self.born` and treats keys older than `ttl` as missing in `get`. Everything stays O(1).",
+  "flaws": [
+   "<code>&gt; self.ttl</code> keeps an entry alive at exactly t + ttl; the spec says it is expired then.",
+   "Expired entries are never removed, so they still count towards capacity — a put can evict a <b>live</b> LRU entry while a dead one survives.",
+   "<code>__len__</code> is inherited and counts expired entries.",
+   "<code>born</code> grows forever because evicted keys are never deleted from it (a memory leak).",
+   "No validation of <code>ttl</code>."
+  ],
+  "mutants": {
+   "m1": "Entry alive at exactly t + ttl",
+   "m2": "Expired entries still take capacity",
+   "m3": "len() counts expired entries"
+  },
+  "rubric": [
+   "Spotted the boundary (> vs ≥)",
+   "Spotted that dead entries evict live ones",
+   "Spotted the born-dict leak",
+   "Tests use FakeClock, not sleep",
+   "Tests cover capacity with expired entries",
+   "Discussed purge cost (O(n) vs heap)"
+  ],
+  "src": {
+   "cache.py": "import time\nfrom collections import OrderedDict\n\n\nclass LRUCache:\n    \"\"\"Least-recently-used cache with O(1) get / put.\"\"\"\n\n    def __init__(self, capacity):\n        if capacity <= 0:\n            raise ValueError(\"capacity must be positive\")\n        self.capacity = capacity\n        self.data = OrderedDict()\n\n    def get(self, key):\n        if key not in self.data:\n            return -1\n        self.data.move_to_end(key)\n        return self.data[key]\n\n    def put(self, key, value):\n        if key in self.data:\n            self.data.move_to_end(key)\n        self.data[key] = value\n        if len(self.data) > self.capacity:\n            self.data.popitem(last=False)\n\n    def __len__(self):\n        return len(self.data)\n\n\nclass TTLCache(LRUCache):\n    \"\"\"LRU cache whose entries also expire (see the task).\"\"\"\n\n    def __init__(self, capacity, ttl, clock=time.monotonic):\n        raise NotImplementedError\n",
+   "fakeclock.py": "class FakeClock:\n    \"\"\"A clock you can move by hand in tests: pass clock=FakeClock() to TTLCache.\"\"\"\n\n    def __init__(self, t=0.0):\n        self.t = t\n\n    def __call__(self):\n        return self.t\n\n    def advance(self, seconds):\n        self.t += seconds\n"
+  },
+  "reference": {
+   "cache.py": "import time\nfrom collections import OrderedDict\n\n\nclass LRUCache:\n    \"\"\"Least-recently-used cache with O(1) get / put.\"\"\"\n\n    def __init__(self, capacity):\n        if capacity <= 0:\n            raise ValueError(\"capacity must be positive\")\n        self.capacity = capacity\n        self.data = OrderedDict()\n\n    def get(self, key):\n        if key not in self.data:\n            return -1\n        self.data.move_to_end(key)\n        return self.data[key]\n\n    def put(self, key, value):\n        if key in self.data:\n            self.data.move_to_end(key)\n        self.data[key] = value\n        if len(self.data) > self.capacity:\n            self.data.popitem(last=False)\n\n    def __len__(self):\n        return len(self.data)\n\n\nclass TTLCache(LRUCache):\n    \"\"\"LRU cache whose entries expire ttl seconds after they were last written.\"\"\"\n\n    def __init__(self, capacity, ttl, clock=time.monotonic):\n        if ttl <= 0:\n            raise ValueError(\"ttl must be positive\")\n        super().__init__(capacity)\n        self.ttl = ttl\n        self.clock = clock\n        self.born = {}\n\n    def _expired(self, key):\n        return self.clock() - self.born[key] >= self.ttl\n\n    def _drop(self, key):\n        del self.data[key]\n        del self.born[key]\n\n    def _purge(self):\n        # O(n); a heap keyed by expiry time makes this O(log n) amortised if needed\n        for key in [k for k in self.data if self._expired(k)]:\n            self._drop(key)\n\n    def get(self, key):\n        if key in self.data and self._expired(key):\n            self._drop(key)\n        return super().get(key)\n\n    def put(self, key, value):\n        self._purge()                           # expired entries never push out live ones\n        self.born[key] = self.clock()\n        if key in self.data:\n            self.data.move_to_end(key)\n        self.data[key] = value\n        if len(self.data) > self.capacity:\n            old, _ = self.data.popitem(last=False)\n            del self.born[old]\n\n    def __len__(self):\n        self._purge()\n        return len(self.data)\n",
+   "fakeclock.py": "class FakeClock:\n    \"\"\"A clock you can move by hand in tests: pass clock=FakeClock() to TTLCache.\"\"\"\n\n    def __init__(self, t=0.0):\n        self.t = t\n\n    def __call__(self):\n        return self.t\n\n    def advance(self, seconds):\n        self.t += seconds\n"
+  },
+  "ai_files": {
+   "cache.py": "import time\nfrom collections import OrderedDict\n\n\nclass LRUCache:\n    \"\"\"Least-recently-used cache with O(1) get / put.\"\"\"\n\n    def __init__(self, capacity):\n        if capacity <= 0:\n            raise ValueError(\"capacity must be positive\")\n        self.capacity = capacity\n        self.data = OrderedDict()\n\n    def get(self, key):\n        if key not in self.data:\n            return -1\n        self.data.move_to_end(key)\n        return self.data[key]\n\n    def put(self, key, value):\n        if key in self.data:\n            self.data.move_to_end(key)\n        self.data[key] = value\n        if len(self.data) > self.capacity:\n            self.data.popitem(last=False)\n\n    def __len__(self):\n        return len(self.data)\n\n\nclass TTLCache(LRUCache):\n    \"\"\"LRU cache whose entries expire ttl seconds after they were written.\"\"\"\n\n    def __init__(self, capacity, ttl, clock=time.monotonic):\n        super().__init__(capacity)\n        self.ttl = ttl\n        self.clock = clock\n        self.born = {}\n\n    def get(self, key):\n        if key in self.born and self.clock() - self.born[key] > self.ttl:\n            return -1\n        return super().get(key)\n\n    def put(self, key, value):\n        self.born[key] = self.clock()\n        super().put(key, value)\n"
+  },
+  "ai_diff": "--- a/cache.py\n+++ b/cache.py\n@@ -29,7 +29,19 @@\n \n \n class TTLCache(LRUCache):\n-    \"\"\"LRU cache whose entries also expire (see the task).\"\"\"\n+    \"\"\"LRU cache whose entries expire ttl seconds after they were written.\"\"\"\n \n     def __init__(self, capacity, ttl, clock=time.monotonic):\n-        raise NotImplementedError\n+        super().__init__(capacity)\n+        self.ttl = ttl\n+        self.clock = clock\n+        self.born = {}\n+\n+    def get(self, key):\n+        if key in self.born and self.clock() - self.born[key] > self.ttl:\n+            return -1\n+        return super().get(key)\n+\n+    def put(self, key, value):\n+        self.born[key] = self.clock()\n+        super().put(key, value)\n",
+  "tests_starter": "import unittest\n\nfrom cache import LRUCache, TTLCache\nfrom fakeclock import FakeClock\n\n\nclass TestCache(unittest.TestCase):\n    def test_lru_eviction(self):\n        c = LRUCache(2)\n        c.put(\"a\", 1); c.put(\"b\", 2); c.get(\"a\"); c.put(\"c\", 3)\n        self.assertEqual(c.get(\"b\"), -1)\n        self.assertEqual(c.get(\"a\"), 1)\n\n    def test_ttl_fresh_value(self):\n        clock = FakeClock()\n        c = TTLCache(2, ttl=10, clock=clock)\n        c.put(\"a\", 1)\n        clock.advance(5)\n        self.assertEqual(c.get(\"a\"), 1)\n\n    # TODO: the exact expiry moment, capacity with expired entries, len().\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n",
+  "model_tests": "import unittest\n\nfrom cache import TTLCache\nfrom fakeclock import FakeClock\n\n\nclass TestTTL(unittest.TestCase):\n    def setUp(self):\n        self.clock = FakeClock()\n        self.c = TTLCache(2, ttl=10, clock=self.clock)\n\n    def test_expires_exactly_at_ttl(self):\n        self.c.put(\"a\", 1)\n        self.clock.advance(10)\n        self.assertEqual(self.c.get(\"a\"), -1)\n\n    def test_put_refreshes(self):\n        self.c.put(\"a\", 1); self.clock.advance(8)\n        self.c.put(\"a\", 2); self.clock.advance(8)\n        self.assertEqual(self.c.get(\"a\"), 2)\n\n    def test_expired_entries_do_not_evict_live_ones(self):\n        self.c.put(\"old\", 0)\n        self.clock.advance(6)\n        self.c.put(\"x\", 1)\n        self.clock.advance(1)\n        self.c.get(\"old\")                     # \"old\" becomes most recently used\n        self.clock.advance(4)                 # t = 11: \"old\" has expired, \"x\" is live\n        self.c.put(\"y\", 2)                    # must not evict \"x\"\n        self.assertEqual(self.c.get(\"x\"), 1)\n\n    def test_len_counts_live_entries(self):\n        self.c.put(\"a\", 1); self.clock.advance(11)\n        self.assertEqual(len(self.c), 0)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n",
+  "hidden_names": [
+   "Hidden.test_alive_just_before_ttl",
+   "Hidden.test_basic_get_put",
+   "Hidden.test_dead_at_ttl",
+   "Hidden.test_expired_make_room",
+   "Hidden.test_get_does_not_refresh",
+   "Hidden.test_invalid_ttl",
+   "Hidden.test_len_live_only",
+   "Hidden.test_lru_still_works",
+   "Hidden.test_missing",
+   "Hidden.test_put_refreshes",
+   "Hidden.test_reinsert_after_expiry"
+  ],
+  "src_hidden_passed": 0,
+  "ai_hidden_passed": 7,
+  "hidden_total": 11
+ }
+]

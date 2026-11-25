@@ -1,0 +1,5 @@
+Third-party browser libraries bundled for offline use (all MIT licensed):
+  html-to-image 1.11.11  https://github.com/bubkoo/html-to-image
+  jsPDF 2.5.2            https://github.com/parallax/jsPDF
+  gifenc 1.0.3           https://github.com/mattdesl/gifenc
+  Ace 1.36.5 (BSD)       see www/ace/LICENSE.txt

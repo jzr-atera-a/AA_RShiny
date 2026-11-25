@@ -1,7 +1,7 @@
 # modules/Gantt to Tickets/email_configuration.R
-# Subtab: Email Configuration (SMTP, blastula-based - separate from the
-# Communications suite's curl-based SMTP Configuration tab; see api_manager.R
-# comment for why these are kept distinct)
+# Subtab: Email Configuration (SMTP) - sends with curl through the same send_email_with_curl() as the
+# Communications suite (Titan / GoDaddy, Gmail, Outlook); the settings are kept separate from
+# Communications' SMTP Configuration (see the api_manager.R comment)
 
 email_configuration_ui <- function(id) {
   ns <- NS(id)
@@ -11,7 +11,7 @@ email_configuration_ui <- function(id) {
       box(title = "SMTP Email Configuration", status = "primary", solidHeader = TRUE, width = 12,
           p("Configure your email settings to send task notifications directly to team members."),
           hr(),
-          selectInput(ns("email_provider"), "Email Provider:", choices = c("Gmail", "Outlook/Office365", "Custom SMTP")),
+          selectInput(ns("email_provider"), "Email Provider:", choices = c("Titan / GoDaddy (smtpout.secureserver.net)", "Titan (smtp.titan.email)", "Gmail", "Outlook/Office365", "Custom SMTP")),
           textInput(ns("smtp_server"), "SMTP Server:", placeholder = "smtp.gmail.com"),
           numericInput(ns("smtp_port"), "SMTP Port:", value = 587, min = 1, max = 65535),
           textInput(ns("smtp_username"), "Email Address:", placeholder = "your.email@example.com"),
@@ -60,7 +60,15 @@ email_configuration_server <- function(id, api_manager) {
   moduleServer(id, function(input, output, session) {
 
     observeEvent(input$email_provider, {
-      if (input$email_provider == "Gmail") {
+      if (startsWith(input$email_provider, "Titan / GoDaddy")) {
+        updateTextInput(session, "smtp_server", value = "smtpout.secureserver.net")   # same server as Communications
+        updateNumericInput(session, "smtp_port", value = 465)
+        updateCheckboxInput(session, "use_ssl", value = TRUE)
+      } else if (startsWith(input$email_provider, "Titan (")) {
+        updateTextInput(session, "smtp_server", value = "smtp.titan.email")
+        updateNumericInput(session, "smtp_port", value = 465)
+        updateCheckboxInput(session, "use_ssl", value = TRUE)
+      } else if (input$email_provider == "Gmail") {
         updateTextInput(session, "smtp_server", value = "smtp.gmail.com")
         updateNumericInput(session, "smtp_port", value = 587)
         updateCheckboxInput(session, "use_ssl", value = TRUE)

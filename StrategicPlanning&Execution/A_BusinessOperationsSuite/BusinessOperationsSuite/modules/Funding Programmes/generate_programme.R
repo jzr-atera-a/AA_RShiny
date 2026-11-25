@@ -21,7 +21,8 @@ generate_programme_ui <- function(id) {
         fluidRow(
           column(6,
                  funding_category_dropdown_ui(ns),
-                 funding_country_cityregion_dropdown_ui(ns)
+                 funding_country_cityregion_dropdown_ui(ns),
+                 bos_tz_dropdown_ui(ns, label = "Time zone for deadlines and dates:")
           ),
           column(6,
                  textAreaInput(ns("search_focus"), "Additional Focus (optional):", height = "140px",
@@ -88,7 +89,7 @@ generate_programme_server <- function(id, api_manager) {
         return(invisible(NULL))
       }
       tryCatch({
-        df <- parse_programme_text(text)
+        df <- parse_programme_text(text, default_tz = input$time_zone)
         parsed_preview(df)
         output$preview_table <- DT::renderDataTable({
           DT::datatable(df, options = list(pageLength = 10, scrollX = TRUE), rownames = FALSE)
@@ -135,7 +136,7 @@ generate_programme_server <- function(id, api_manager) {
       })
 
       prompt <- tryCatch({
-        generate_programme_prompt(cat_val, cc$country, cc$city_region, input$search_focus, input$n_results)
+        bos_tz_wrap_prompt(generate_programme_prompt(cat_val, cc$country, cc$city_region, input$search_focus, input$n_results), input$time_zone, Sys.Date())
       }, error = function(e) {
         shinyjs::hide("loading_spinner")
         output$status <- renderUI({
@@ -159,7 +160,7 @@ generate_programme_server <- function(id, api_manager) {
           }
         )
 
-        programme_text <- overwrite_programme_taxonomy(result$text, cat_val, cc$country, cc$city_region)
+        programme_text <- bos_tz_set_header(overwrite_programme_taxonomy(result$text, cat_val, cc$country, cc$city_region), input$time_zone)
 
         updateTextAreaInput(session, "programme_text_edit", value = programme_text)
         shinyjs::hide("loading_spinner")
@@ -223,7 +224,7 @@ generate_programme_server <- function(id, api_manager) {
       })
 
       tryCatch({
-        parsed_df <- parse_programme_text(current_text)
+        parsed_df <- parse_programme_text(current_text, default_tz = input$time_zone)
         rows_uploaded <- api_manager$bq_insert_funding(parsed_df)
         api_manager$trigger_state_update_funding()
 

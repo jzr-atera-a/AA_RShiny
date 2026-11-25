@@ -1,0 +1,83 @@
+# modules/_module_registry.yml
+# Navigation registry - Atera Analytics dashboard
+#
+# MAIN GROUPS = the sidebar. Each group is one sidebar item; its pages appear as
+# horizontal tabs at the top of the page, in the order listed. A group with one
+# page shows no tabs.
+#
+# Each page is ONE file: modules/<group folder>/<id>.R defining <id>_ui(id) and
+# <id>_server(id, ...). The server may ask for any of: ctx (data + period),
+# app (GA4 connection), drive (Google Drive connection) - it gets only what it names.
+#
+# To regroup: move a page id from one group's `modules:` list to another's.
+# To hide a page: set `enabled: false` under `pages:` below.
+# `sidebar_header` prints a small heading above that group in the sidebar.
+# `charts: true` = the group's charts can be saved to Google Drive (its folders are
+# created by API Configuration > Google Drive > "Create folder tree now").
+
+groups:
+  - id: grp_overview
+    label: "Overview & Monitoring"
+    sidebar_header: "WEBSITE ANALYTICS"
+    icon: "tachometer-alt"
+    folder: "Overview and Monitoring"
+    description: "The big picture: headline numbers with automatic insights, who is on the site right now, and where traffic is heading."
+    charts: true
+    modules: [overview, realtime, trends]
+
+  - id: grp_audience
+    label: "Audience"
+    icon: "users"
+    folder: "Audience"
+    description: "Who visits and where they come from: new and returning visitors, timing, devices and locations, channels, sources and landing pages."
+    charts: true
+    modules: [visitors, acquisition]
+
+  - id: grp_engagement
+    label: "Content & Engagement"
+    icon: "file-alt"
+    folder: "Content and Engagement"
+    description: "What people read and do: page performance, rising and falling pages, every GA4 event and outbound clicks."
+    charts: true
+    modules: [pages, behavior]
+
+  - id: grp_conversions
+    label: "Conversions & Actions"
+    icon: "bullseye"
+    folder: "Conversions and Actions"
+    description: "What visitors act on: the contact funnel and enquiries, plus the website's own events - calls to action, live platforms, the architecture diagram, FAQs and scroll depth."
+    charts: true
+    modules: [conversions, site_events]
+
+  - id: grp_explore
+    label: "Data Explorer"
+    icon: "table"
+    folder: "Data Explorer"
+    description: "Build any report from your property's dimensions and metrics, chart it and export it."
+    charts: true
+    modules: [explorer]
+
+  - id: grp_api
+    label: "API Configuration"
+    sidebar_header: "SETTINGS"
+    icon: "key"
+    folder: "API Configuration"
+    description: "Connections to Google Analytics and Google Drive, and a live view of the app's console for troubleshooting."
+    charts: false
+    modules: [settings, drive_settings, debug_console]
+
+# Per page: tab label, icon, and whether the Period / Compare bar applies.
+pages:
+  overview:       {label: "Overview",              icon: "tachometer-alt", period: true}
+  realtime:       {label: "Real-time",             icon: "clock",          period: false}
+  trends:         {label: "Trends & Forecast",     icon: "chart-area",     period: true}
+  visitors:       {label: "Visitors",              icon: "users",          period: true}
+  acquisition:    {label: "Acquisition",           icon: "bullhorn",       period: true}
+  pages:          {label: "Page Performance",      icon: "file-alt",       period: true}
+  behavior:       {label: "User Behaviour",        icon: "mouse-pointer",  period: true}
+  conversions:    {label: "Contact Funnel",        icon: "envelope",       period: true}
+  site_events:    {label: "Website Events",        icon: "bullseye",       period: true}
+  explorer:       {label: "Data Explorer",         icon: "table",          period: true}
+  settings:       {label: "Google Analytics",      icon: "chart-line",     period: false}
+  drive_settings: {label: "Google Drive",          icon: "google-drive",   period: false}
+  debug_console:  {label: "Debug Console",         icon: "terminal",       period: false}

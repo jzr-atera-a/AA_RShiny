@@ -130,4 +130,20 @@ x$size <- 0.5; ok(isTRUE(rw(cc_plan_check(x), "Higher time-frame")$ok), "counter
 x <- base; x$stop_dist <- 0.17; x$atr <- 0.4; x$min_stop_atr <- 1; ok(isFALSE(rw(cc_plan_check(x), "Stop far enough")$ok), "plan check: stop 0.17 with ATR 0.4 fails (03/11 trade)")
 x$stop_dist <- 0.7; ok(isTRUE(rw(cc_plan_check(x), "Stop far enough")$ok), "plan check: stop 0.7 with ATR 0.4 passes")
 x$min_stop_atr <- 0; ok(is.na(rw(cc_plan_check(x), "Stop far enough")$ok), "plan check: minimum 0 = not set")
+# ********************* Weeks 7-8 trade plan check-up; Weeks 9-12 end-of-week review
+pc0 <- cc_plan_checkup(list(risk = 2, cap = 6, minrrr = 1.5, adx_t = 30, adx_r = 20, hold = 10, pl_markets = "OIL_BRENT, OIL_CRUDE", pl_setups = c("HOLY_GRAIL", "PIVOT_BOUNCE"), pl_r1 = "Pullback to the 20 EMA", pl_r2 = "Reversal candle at a pivot", pl_r3 = "Close beyond the level",
+  pl_stopatr = 1, pl_stopatr_max = 3, pl_maxloss = 50, pl_maxday = 3, pl_lossrow = 3, pl_news = 30, pl_ctr = 2, pl_from = "08:00", pl_to = "17:00"))
+ok(nrow(pc0) == 17 && all(pc0$Status == "OK"), sprintf("plan check-up: a complete plan in line with the course is all OK (%d items)", nrow(pc0)))
+pc1 <- cc_plan_checkup(list(risk = 5, minrrr = 1.2, adx_t = 30, adx_r = 20, pl_setups = c("STRADDLE"), pl_stopatr = 0.5))
+ok(pc1$Status[pc1$Item == "Risk per trade (% of equity)"] == "CHECK" && pc1$Status[pc1$Item == "Minimum Reward:Risk"] == "CHECK" && pc1$Status[pc1$Item == "Set-ups allowed"] == "CHECK" && grepl("resting orders", pc1$Why[pc1$Item == "Set-ups allowed"]) &&
+   pc1$Status[pc1$Item == "Daily loss limit"] == "MISSING" && pc1$Status[pc1$Item == "Plan points 1-5 (your exact triggers)"] == "MISSING", "plan check-up flags risk above 2%, R:R below 1.5, straddles and missing money rules")
+tw <- data.frame(trade_id = paste0("T", 1:5), status = c("CLOSED", "CLOSED", "CLOSED", "OPEN", "CLOSED"), direction = c("BUY", "SELL", "BUY", "BUY", "BUY"), market_name = "Brent", strategy = c("Holy Grail", "Pivot Point Bounce", "Holy Grail", "Holy Grail", "Holy Grail"),
+  entry_ts = as.POSIXct(c("2026-11-16 09:00", "2026-11-17 10:00", "2026-11-19 11:00", "2026-11-20 09:00", "2026-11-24 09:00"), tz = "UTC"), entry_level = 90, stop_initial = c(89, 91, 89, 89, 89), target_level = c(91.5, 88.5, 91.5, 91.5, 91.5),
+  exit_level = c(91.5, 91, 89.5, NA, 91.5), plan_followed = c("Y", "N", "Y", NA, "Y"), deviation_type = c("", "Lapse", "", "", ""), deviation_note = c("", "entered before the trigger", "", "", ""), lessons = c("waited for the pullback", "", "", "", ""), stringsAsFactors = FALSE)
+wk <- cc_week_review(tw, as.Date("2026-11-16"), as.Date("2026-11-22"), c("2026-11-16", "2026-11-17", "2026-11-18"), c("T1", "T2"))
+ok(wk$stats$trades == 4 && wk$stats$closed == 3 && wk$stats$open == 1 && abs(wk$stats$total_r - 0) < 1e-9 && abs(wk$stats$win_pct - 100 / 3) < 1e-6 && abs(wk$stats$followed_pct - 200 / 3) < 1e-6 && wk$stats$morning_sheets == 3 && wk$stats$trade_sheets == 2 && wk$stats$max_dd == 1.5,
+   "end-of-week review: trades of that week only, R total, win rate, plan followed, sheets counted, drawdown")
+ln <- cc_week_review_lines(wk); ok(length(ln) == 7 && grepl("break-even of 40%", ln[2]) && grepl("not yet evidence", ln[7]) && nrow(wk$trades) == 3 && grepl("entered before the trigger", wk$trades$Deviation[2]) && nrow(wk$by_strategy) == 2, "review lines, trades with deviations and lessons, results by strategy")
+fw <- tempfile(fileext = ".docx"); cc_week_review_docx(wk, "J Z", fw, c("- Waited for pullbacks.")); ok(file.exists(fw) && file.size(fw) > 5000, "review written as a Word file")
+ok(identical(tr_sheet_targets("review")$api, sub("/$", "", paste0(tr_lat_base_api(), "/Weekly Reviews"))) || !exists("tr_sheet_targets"), "Dropbox folder 'Weekly Reviews'")
 cat(sprintf("\n%d passed, %d failed\n", pass, fail)); if (fail) quit(status = 1)

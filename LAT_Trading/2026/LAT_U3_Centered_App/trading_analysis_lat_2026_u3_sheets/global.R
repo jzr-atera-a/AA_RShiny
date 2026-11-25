@@ -99,16 +99,16 @@ source("R/utils_calendar_sources.R")
 source("R/utils_local_creds.R")
 source("R/utils_trade_scenarios.R")
 source("R/utils_patterns.R")
-source("R/utils_patterns_llm.R")   # Claude's own pattern scan of the same candles (Trades tab, box 3)
 source("R/utils_cc_api.R")         # Capital.com API client (T Records C.C tab, API Configuration > Capital.com)
 source("R/utils_cc_catalog.R")     # the 141 patterns of the matrix with their coded rules
 source("R/utils_cc_patterns.R")    # rule-based pattern engine on Capital.com prices
 source("R/utils_cc_chart.R")      # chart: patterns drawn on the price + indicator panel; saved scans
 source("R/utils_cc_records.R")     # cc_ BigQuery tables, currency, budget, scenarios, sync
-source("R/utils_cc_tradelog.R")    # ******** Trade Log: every deal and order in the tracking-sheet layout, overnight ranges (cc_ranges)
 source("R/utils_cc_sheet.R")       # closed trade: full summary, static charts, LAT Individual Trade Sheet
-source("R/utils_cc_advice.R"); source("R/utils_synthetic.R"); source("R/utils_pm.R")      # prices rounded, order checks, measured chance, Morning Sheet text, Claude suggestions
-source("R/utils_cc_plan.R"); source("R/utils_cc_course_full.R"); source("R/utils_cc_course_checks.R")      # course study plan: plan rules on the ticket, backtest and blotter, higher time-frame trend, news window
+source("R/utils_cc_markets.R")   # every Capital.com asset class: profiles, hours, navigation, watchlist, Yahoo symbols
+source("R/utils_cc_advice.R"); source("R/utils_ml.R"); source("R/utils_synthetic.R"); source("R/utils_pm.R")      # prices rounded, order checks, measured chance, Morning Sheet text, Claude suggestions
+source("R/utils_gdrive.R")     # Google Drive: charts, diagrams and tables saved for other apps
+source("R/utils_cc_plan.R")      # course study plan: plan rules on the ticket, backtest and blotter, higher time-frame trend, news window
 options(bigrquery.quiet = TRUE)   # no "Job complete / Billed" line for every BigQuery read; errors still show
 source("R/utils_u3_report.R")
 source("R/utils_unit3_rules.R")

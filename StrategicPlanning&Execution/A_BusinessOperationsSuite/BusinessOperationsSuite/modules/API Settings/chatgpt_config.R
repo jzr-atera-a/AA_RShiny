@@ -20,7 +20,7 @@ chatgpt_config_ui <- function(id) {
           "the generation buttons in Project Details, Business Case, Team & Impact, the Diagram Generator, ",
           "and Visual Media's Image Generation + Further Context tabs."),
         p("Get key from: ", tags$a(href = "https://platform.openai.com/api-keys", target = "_blank",
-                                    style = "color: #7ec8e3;", "platform.openai.com/api-keys")),
+                                    style = "color: #008A82;", "platform.openai.com/api-keys")),
         br(),
         passwordInput(ns("api_key"), "OpenAI API Key:", placeholder = "sk-...", width = "100%"),
         textInput(ns("openai_model"), "Model:", value = "gpt-4", width = "50%"),

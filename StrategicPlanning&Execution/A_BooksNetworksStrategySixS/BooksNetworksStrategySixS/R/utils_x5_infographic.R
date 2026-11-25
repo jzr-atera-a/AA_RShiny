@@ -431,5 +431,6 @@ ig_export_ui <- function(ns, target_id, default_filename = "infographic") {
       tags$option(value = "gif", "GIF (animated when there are several slides)")),
     tags$button(type = "button", class = "btn btn-success export-download-btn",
                 onclick = sprintf("window.exportInfographic('%s', '%s', '%s')", target_id, sel, default_filename),
-                tags$i(class = "fa fa-download"), " Download"))
+                tags$i(class = "fa fa-download"), " Download"),
+    gd_save_button("infographic", target_id, sel, default_filename))
 }

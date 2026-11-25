@@ -11,7 +11,8 @@ pm_course_titles <- c("Step 1: Support & resistance, trend lines, candles", "Ste
 pm_section_ui <- function(ns, k) {
   keys <- pm_course_keys(k)
   if (!length(keys)) return(tags$div(style = "background:#f8fafc; border-radius:10px; padding:10px 14px; margin:14px 0; color:#475569;",
-    tags$b("Pattern identification: "), "no chart pattern of the 141-pattern matrix belongs to this step (it is about ", if (k == 4) "options and market cycles" else "volume and market profile", ")."))
+    tags$b("Pattern identification: "), "no chart pattern of the 141-pattern matrix belongs to this step (it is about ", if (k == 4) "options and market cycles" else "volume and market profile", ").",
+    if (k == 5) tags$div(style = "margin-top:6px;", tags$b("On the live chart: "), sprintf("the Week 5 activity sheet's %d profile patterns (P- and b-shaped days, inside days, thin days, double distributions, low / high volume node bounces, POC / VAH / VAL respected, single prints, ledges, Initial Balance breaks and retests, and bounces off 3+ levels) are detected in the Trading Desk B on time-at-price profiles of each UK day; choose the groups Volume profile, Market profile and Initial balance under 'Course tools in the analysis'.", sum(cc_catalog$step == 5 & !cc_catalog$matrix))) else NULL))
   cat_ <- cc_catalog[match(keys, cc_catalog$key), ]
   ch <- lapply(split(stats::setNames(keys, cat_$label), factor(cat_$group, levels = unique(cat_$group))), as.list)
   tags$div(style = "background:#ffffff; border:2px solid #6d28d9; border-radius:12px; padding:12px 16px; margin:16px 0;",

@@ -72,7 +72,10 @@ cc_chart_png <- function(bars, file, title = "", entry = NA, stop = NA, target =
 cc_trade_sheet <- function(tr, sm, name, pics, file, context = list()) {
   closed <- !is.null(sm)
   lv0 <- if (is.finite(tr$entry_level %||% NA)) tr$entry_level else tr$order_level %||% NA
-  if (!closed) sm <- list(value_per_point_account = NA_real_, risk_points = abs(lv0 - tr$stop_initial), risk_account = tr$risk_account,
+  stp0 <- if (is.finite(tr$stop_initial %||% NA)) tr$stop_initial else tr$stop_level %||% NA
+  if (closed && !is.finite(sm$risk_points %||% NA)) { sm$risk_points <- abs(lv0 - stp0); sm$reward_points <- abs(tr$target_level - lv0) }   # ******************
+  if (closed && !is.finite(sm$risk_account %||% NA)) sm$risk_account <- tr$risk_account
+  if (!closed) sm <- list(value_per_point_account = NA_real_, risk_points = abs(lv0 - stp0), risk_account = tr$risk_account,
                           reward_points = abs(tr$target_level - lv0), planned_rrr = NA_real_, open_ts = if (!is.na(tr$entry_ts %||% NA)) tr$entry_ts else tr$placed_ts %||% NA)
   sm$planned_rrr <- sm$planned_rrr %||% NA_real_; nz <- function(x) if (is.null(x) || !length(x)) NA else x
   for (k in c("value_per_point_account", "risk_points", "risk_account", "reward_points", "open_ts")) sm[[k]] <- nz(sm[[k]])
@@ -80,7 +83,7 @@ cc_trade_sheet <- function(tr, sm, name, pics, file, context = list()) {
   ent <- if (is.finite(tr$entry_level %||% NA)) tr$entry_level else tr$order_level %||% NA
   d <- if (toupper(tr$direction) %in% c("BUY", "B")) "B" else "S"; ppa <- sm$value_per_point_account
   trade <- data.frame(chart_period = tr$chart_period, expected_duration_hours = tr$expected_hours, initial_risk_pips = sm$risk_points, initial_risk_gbp = sm$risk_account,
-                      initial_reward_pips = sm$reward_points, stake_per_pip_gbp = ppa, lot_units = suppressWarnings(as.numeric(tr$size)), initial_rrr = sm$planned_rrr, entry_ts = sm$open_ts, direction = d,
+                      initial_reward_pips = sm$reward_points, initial_reward_gbp = if (is.finite(ppa %||% NA) && is.finite(sm$reward_points)) sm$reward_points * ppa else suppressWarnings(as.numeric(tr$reward_account %||% NA)), stake_per_pip_gbp = ppa, lot_units = suppressWarnings(as.numeric(tr$size)), initial_rrr = sm$planned_rrr, entry_ts = sm$open_ts, direction = d,
                       asset = tr$market_name %||% tr$epic, entry_price = ent, stop1 = tr$stop_initial, target = tr$target_level,
                       setup_fundamental = tr$setup_fund, setup_technical = tr$setup_tech, trigger_text = tr$trigger_text, execution_text = tr$execution_text,
                       stop_reason = tr$stop_reason, target_reason = tr$target_reason,
@@ -149,7 +152,9 @@ cc_scan_patterns <- function(current_json) {
 # What C (Claude) is asked after the trade: compare what was recommended with what happened.
 cc_c_prompt <- function(tr, sm, sr, pats, ms_text = NULL) {
   st <- tr$status %||% "-"
-  paste0("You are C, the analyst in a trading-education app (Capital.com DEMO account). Write the 'C analysis' for this trade's Individual Trade Sheet: ",
+  prof <- if (exists("cc_market_profile", mode = "function")) tryCatch(cc_market_profile(tr$epic %||% "", tr$market_name %||% "", NA, tr$instrument_currency %||% NA), error = function(e) NULL) else NULL
+  paste0(if (!is.null(prof)) sprintf("The market is %s (%s, %s); what usually moves it: %s.\n", prof$name, prof$class_label, prof$sub, paste(prof$drivers, collapse = "; ")) else "",
+         "You are C, the analyst in a trading-education app (Capital.com DEMO account). Write the 'C analysis' for this trade's Individual Trade Sheet: ",
          "a short, plain-English analysis (120-220 words, no headings, no bullet symbols) of (1) what was recommended and why, (2) what actually happened, ",
          "(3) whether the reasoning held or failed and why, (4) one or two concrete lessons. Be factual; do not invent prices or times that are not given. ",
          "If the order was never filled or was cancelled, say so and analyse that instead. ",
@@ -176,3 +181,99 @@ cc_context_items <- function(sr, pats, c_text = "", include_c = TRUE, chart = NA
   if (isTRUE(include_c) && nzchar(trimws(c_text %||% ""))) items <- c(items, list(it("caption", "Analysis")), lapply(strsplit(cc_no_ai_name(trimws(c_text)), "\n+")[[1]], function(x) it("text", x)))
   items
 }
+
+# ****************** the reasons box of the Trade Sheet, written from the facts saved with the deal ---------------------------
+# Used for every box left empty: your own words always win. Sources: the chosen scenario (cc_trades.scenario_json), the
+# patterns on the chart at entry (cc_scans), that day's Morning Sheet, the deal Capital.com filled, and the close.
+# Plain facts in the first person; the AI model is never named.
+cc_auto_reasons <- function(tr, sr = NULL, pats = NULL, scan = NULL, ms = NULL, sm = NULL, d = 3) {
+  g <- function(k) { v <- tr[[k]]; if (is.null(v) || !length(v) || is.na(v[1]) || (is.character(v[1]) && !nzchar(v[1]))) NA else v[1] }
+  gs <- function(k, d) { v <- g(k); if (is.na(v)) d else v }; n <- function(k) suppressWarnings(as.numeric(g(k))); px <- function(v) if (is.finite(v)) formatC(v, format = "f", digits = d) else "-"
+  s <- if (is.null(sr)) NULL else sr$scenario; sv <- function(k) if (is.null(s)) NA else cc_scen_val(s, k)
+  sd <- if (is.finite(suppressWarnings(as.numeric(sr$d %||% NA)))) as.numeric(sr$d) else d; d <- sd
+  dir <- toupper(gs("direction", "")); buy <- dir %in% c("BUY", "B"); side <- if (buy) "buy" else "sell"
+  ent <- if (is.finite(n("entry_level"))) n("entry_level") else n("order_level"); stp <- if (is.finite(n("stop_initial"))) n("stop_initial") else n("stop_level"); tgt <- n("target_level")
+  rd <- abs(ent - stp); wd <- abs(tgt - ent); rr <- if (is.finite(rd) && rd > 0) wd / rd else NA_real_
+  tm <- function(x) if (is.null(x) || is.na(x)) "-" else format(as.POSIXct(x, tz = "UTC"), "%H:%M", tz = "Europe/London")
+  parts <- if (is.na(sv("note"))) character(0) else trimws(unlist(strsplit(cc_no_ai_name(as.character(sv("note"))), ";")))
+  part <- function(re) { x <- parts[grepl(re, parts, ignore.case = TRUE)]; if (length(x)) x[1] else NA_character_ }
+  basis <- if (is.na(sv("basis"))) NA_character_ else cc_no_ai_name(as.character(sv("basis")))
+  strat <- g("strategy"); strat <- if (is.na(strat) || strat %in% c("", "NONE", "Other")) NA else strat
+  src <- sv("source"); who <- if (identical(src, "Claude")) "the platform's chart analysis" else if (identical(src, "Rules")) "the app's pattern rules" else if (grepl("^Course", src %||% "")) "the course strategy scanner" else NA
+  res <- if (!is.null(scan) && NROW(scan) && !is.na(scan$resolution[1])) cc_chart_label(scan$resolution[1]) else gs("chart_period", NA)
+  # fundamental
+  fund <- if (is.null(ms)) "No Morning Sheet was saved for this day, so I had no written fundamental view; the trade was taken on the technical set-up only." else {
+    cut <- function(x, k = 420) { x <- gsub("\\s+", " ", x %||% ""); if (nchar(x) > k) paste0(substr(x, 1, k - 3), "...") else x }
+    paste0("From my Morning Sheet: ", if (nzchar(ms$news %||% "")) paste0("overnight news: ", cut(ms$news), " ") else "no overnight news written. ",
+      if (nzchar(ms$window %||% "")) paste0("Releases inside my trading window: ", cut(ms$window, 220), ". ") else "No high-impact release was listed inside my trading window. ",
+      if (nzchar(ms$stand %||% "")) paste0("The sheet marked this market as stand aside (", cut(ms$stand, 150), "), so this trade went against that note. ") else "",
+      if (nzchar(ms$regime %||% "")) paste0("Regime notes: ", cut(ms$regime, 160), ".") else "") }
+  # technical
+  pl <- if (!is.null(pats) && NROW(pats)) { p <- pats[!is.na(pats$Pattern), , drop = FALSE]; aligned <- p[grepl(if (buy) "Bull" else "Bear", p$Bias, ignore.case = TRUE), , drop = FALSE]
+    p <- rbind(aligned, p[!(p$Pattern %in% aligned$Pattern), , drop = FALSE]); p <- utils::head(p, 4); paste(sprintf("%s (%s, record %s)", p$Pattern, tolower(p$Bias %||% "-"), p$`Measured record`), collapse = "; ") } else NA
+  s4 <- tryCatch(cc_scen_setup4(as.data.frame(c(list(id = sv("id") %||% "", basis = basis %||% "", source = src %||% "", keys = if (is.na(sv("keys"))) "" else sv("keys")), list()), stringsAsFactors = FALSE)), error = function(e) NA_character_)
+  tech <- paste0(if (!is.na(strat)) paste0("Set-up: ", strat, if (length(s4) && !is.na(s4) && !is.na(sv("id"))) paste0(" (one of the course's four set-ups: ", s4, ")") else "", ". ") else if (length(s4) && !is.na(s4) && !is.na(sv("id"))) paste0("Course set-up type: ", s4, ". ") else "",
+    if (!is.null(scan) && NROW(scan) && !is.na(scan$regime[1])) sprintf("Market regime %s (ADX %s on the %s chart). ", scan$regime[1], if (is.finite(suppressWarnings(as.numeric(scan$adx[1])))) formatC(as.numeric(scan$adx[1]), format = "f", digits = 1) else "-", res %||% "-") else "",
+    if (!is.na(pl)) paste0("Patterns on the chart when I entered: ", pl, ". ") else "",
+    if (!is.na(sv("id"))) sprintf("I took the %s scenario%s, R:R %s.", cc_no_ai_name(as.character(sv("id"))), if (!is.na(who)) paste0(" from ", who) else "", if (is.finite(suppressWarnings(as.numeric(sv("rrr"))))) formatC(as.numeric(sv("rrr")), format = "f", digits = 2) else "-") else "")
+  if (!nzchar(trimws(tech))) tech <- sprintf("A %s on %s at %s with the stop at %s and the target at %s (R:R %s); no scenario or chart scan was saved with this deal.", side, gs("market_name", gs("epic", "the market")), px(ent), px(stp), px(tgt), if (is.finite(rr)) formatC(rr, format = "f", digits = 2) else "-")
+  # trigger
+  brk <- part("break filter"); trig <- paste0(
+    if (!is.na(basis)) paste0("The signal was ", sub("\\s*\\(measured.*$", "", strsplit(basis, ";")[[1]][1]), if (!is.null(res) && !is.na(res)) paste0(" on the ", res, " chart") else "", ". ") else sprintf("I %s when price was at %s. ", if (buy) "bought" else "sold", px(ent)),
+    if (!is.na(brk)) paste0("Confirmation: ", sub("^break filter[ *]*:\\s*", "", brk, ignore.case = TRUE), ". ") else "",
+    if (!is.null(ms) && nzchar(ms$window %||% "")) "I checked the releases in my trading window before entering." else "")
+  # execution
+  fill_at <- if (!is.na(g("entry_ts"))) tm(g("entry_ts")) else tm(g("placed_ts")); wo <- suppressWarnings(as.numeric(sv("now_px")))
+  ot <- toupper(gs("order_type", "MARKET")); ol <- n("order_level")
+  exe <- paste0(if (ot %in% c("MARKET", "") || !is.finite(ol)) sprintf("%s %s at the market on Capital.com (a deal, filled at once), at %s at %s UK, with the stop and the target attached to the deal. ", if (buy) "Bought" else "Sold", format(gs("size", "-")), px(ent), fill_at)
+    else sprintf("I placed a %s %s order for %s at %s on Capital.com; it filled at %s at %s UK, with the stop and the target attached. ", side, tolower(ot), format(gs("size", "-")), px(ol), px(ent), fill_at),
+    if (!(ot %in% c("MARKET", "")) && is.finite(ol) && is.finite(ent)) { sl <- if (buy) ent - ol else ol - ent; if (abs(sl) < 10^-d / 2) "No slippage against the order level." else sprintf("Slippage %s points %s the order level.", px(abs(sl)), if (sl > 0) "against me at" else "in my favour at") } else
+    if (is.finite(wo) && is.finite(ent)) { dv <- if (buy) ent - wo else wo - ent; if (abs(dv) < 10^-d / 2) "The fill was at the price the scenario was worked out from." else sprintf("The scenario was worked out at %s, so I %s %s %s; the stop and target were moved with the price to keep their distances.", px(wo), if (buy) "bought" else "sold", px(abs(dv)), if (dv > 0) "worse" else "better") } else "")
+  # stop / target
+  sp <- part("^stop"); tp <- part("^target"); risk <- n("risk_account"); rew <- n("reward_account"); ccy <- gs("account_currency", "")
+  money <- function(v) if (is.finite(v)) sprintf(" (%s %.2f)", ccy, v) else ""
+  stopr <- paste0(if (!is.na(sp)) paste0(toupper(substr(sp, 1, 1)), substr(sp, 2, nchar(sp)), ". ") else "",
+    sprintf("Stop at %s, %s points %s the entry%s.", px(stp), px(rd), if (buy) "below" else "above", money(risk)),
+    if (!is.na(basis) && grepl("cancel", sp %||% "")) " Beyond that level the set-up is no longer valid." else "")
+  tgtr <- paste0(if (!is.na(tp)) paste0(toupper(substr(tp, 1, 1)), substr(tp, 2, nchar(tp)), ". ") else "",
+    sprintf("Target at %s, %s points from the entry%s, giving a reward to risk of %s", px(tgt), px(wd), money(rew), if (is.finite(rr)) formatC(rr, format = "f", digits = 2) else "-"),
+    if (is.finite(rr) && rr > 0) sprintf(" (break-even win rate %.0f%%).", 100 / (1 + rr)) else ".")
+  # exit
+  code <- toupper(gs("exit_code", "")); xl <- n("exit_level"); xt <- g("exit_ts")
+  exitr <- if (!identical(gs("status", ""), "CLOSED")) NA_character_ else if (startsWith(code, "T")) sprintf("The target at %s was reached at %s UK.", px(tgt), tm(xt)) else if (startsWith(code, "S"))
+    sprintf("The stop at %s was hit at %s UK (closed at %s).", px(stp), tm(xt), px(xl)) else sprintf("I closed the trade at %s at %s UK before the stop or the target was reached.", px(xl), tm(xt))
+  lapply(list(setup_fund = fund, setup_tech = tech, trigger_text = trig, execution_text = exe, stop_reason = stopr, target_reason = tgtr, exit_reason = exitr), function(x) if (is.na(x)) x else trimws(cc_no_ai_name(gsub("\\s+", " ", x)))) }
+cc_blank <- function(x) is.null(x) || !length(x) || is.na(x[1]) || !nzchar(trimws(as.character(x[1])))
+
+# ******************* suggestions for the six reason boxes of the Individual Trade Sheet ------------------------------------------
+# The Claude API gives, per box: a suggested wording, the context behind it and a question for the trader to check. Shown in
+# C. Review beside the boxes; the trader decides what to copy. Saved as a FIELD_SUGGESTIONS event; never printed on the sheet.
+cc_field_names <- c(setup_fund = "Set-up (fundamental)", setup_tech = "Set-up (technical)", trigger_text = "Trigger", execution_text = "Execution",
+                    stop_reason = "Reason for Stop Loss placement", target_reason = "Reason for Target Limit placement")
+cc_field_prompt <- function(tr, sm, sr, pats, ms_text = NULL, auto = NULL, own = NULL) {
+  g <- function(k) { v <- tr[[k]]; if (is.null(v) || !length(v) || is.na(v[1])) "-" else as.character(v[1]) }
+  pl <- if (!is.null(pats) && NROW(pats)) paste(sprintf("- %s (%s, %s, record %s)", pats$Pattern, pats$Bias, pats$Status %||% "-", pats$`Measured record`), collapse = "\n") else "(no chart scan saved)"
+  fx <- function(x) paste(sprintf("- %s: %s", cc_field_names[names(x)], vapply(x, function(v) if (cc_blank(v)) "(empty)" else as.character(v), "")), collapse = "\n")
+  paste0("You help a trading student fill the six reason boxes of the LAT Individual Trade Sheet for one trade. The student decides what to write; you only suggest. ",
+    "Use ONLY the facts below; never invent prices, times, news or patterns. If a fact is missing, say so in 'context'.\n\n",
+    "TRADE: ", g("direction"), " ", g("size"), " ", g("market_name"), " (", g("epic"), "), order type ", g("order_type"), ", order level ", g("order_level"), ", filled at ", g("entry_level"), " at ", g("entry_ts"), " UTC; stop ", g("stop_initial"),
+    ", target ", g("target_level"), "; risk ", g("risk_account"), " and reward ", g("reward_account"), " ", g("account_currency"), "; set-up chosen: ", g("strategy"), "; chart period ", g("chart_period"), "; status ", g("status"),
+    if (!is.null(sm)) paste0("; result: ", paste(cc_summary_lines(sm), collapse = " ")) else "", ".\n",
+    "SCENARIO CHOSEN WHEN THE ORDER WAS PLACED:\n", paste(cc_scenario_lines(sr), collapse = "\n"), "\n",
+    "PATTERNS ON THE CHART AT ENTRY:\n", pl, "\n",
+    if (!is.null(ms_text)) paste0("THE STUDENT'S MORNING SHEET FOR THAT DAY:\n", ms_text, "\n") else "MORNING SHEET: none saved for that day.\n",
+    "WHAT THE APP WOULD WRITE FROM THE SAVED FACTS:\n", fx(auto %||% list()), "\n",
+    "WHAT THE STUDENT HAS WRITTEN SO FAR:\n", fx(own %||% list()), "\n\n",
+    "For EACH of the six boxes give: 'suggestion' = a wording the student could use, 1-3 sentences, first person, plain English, factual, as written by a trader (never mention AI, Claude, a model or an assistant); ",
+    "'context' = 1-2 sentences of what the course expects in this box and which fact supports or weakens the suggestion (for example a record with few cases, a release inside the window, an entry far from the signal); ",
+    "'check' = one short question the student should answer honestly before writing (for example whether they really saw the trigger before entering). ",
+    "Set-up (fundamental) = the news / macro reason; Set-up (technical) = the pattern or strategy and the regime; Trigger = the exact event that made the entry; Execution = how and at what price the order was placed and filled; ",
+    "Reason for Stop Loss placement = why the stop is at that level (the level that cancels the idea, ATR); Reason for Target Limit placement = why the target is there (measured target, level, R:R). ",
+    "If the student already wrote a box, improve it only where the facts disagree, and say so in 'context'.\n",
+    "Reply with ONE JSON object only: {\"fields\":{\"setup_fund\":{\"suggestion\":\"\",\"context\":\"\",\"check\":\"\"},\"setup_tech\":{...},\"trigger_text\":{...},\"execution_text\":{...},\"stop_reason\":{...},\"target_reason\":{...}}}") }
+cc_field_parse <- function(txt) {
+  j <- tryCatch(jsonlite::fromJSON(sub("(?s)^[^{]*", "", sub("(?s)[^}]*$", "", txt %||% "", perl = TRUE), perl = TRUE), simplifyVector = FALSE), error = function(e) NULL)
+  f <- j$fields; if (is.null(f)) return(NULL)
+  rows <- lapply(names(cc_field_names), function(k) { x <- f[[k]] %||% list(); v <- function(n) { y <- x[[n]]; if (is.null(y)) "" else trimws(as.character(y[[1]])) }
+    data.frame(field = k, label = cc_field_names[[k]], suggestion = cc_no_ai_name(v("suggestion")), context = v("context"), check = v("check"), stringsAsFactors = FALSE) })
+  out <- do.call(rbind, rows); if (!any(nzchar(out$suggestion))) NULL else out }

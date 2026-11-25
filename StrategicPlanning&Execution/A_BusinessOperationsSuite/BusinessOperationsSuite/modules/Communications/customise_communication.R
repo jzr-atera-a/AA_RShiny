@@ -75,7 +75,7 @@ customise_communication_server <- function(id, api_manager) {
       }
       tagList(
         h4(icon("user"), " ", contact$full_name),
-        tags$hr(style = "border-color: #4a90e2;"),
+        tags$hr(style = "border-color: #00A39A;"),
         fluidRow(
           column(6,
                  p(tags$strong("Company: "), contact$company),
@@ -88,7 +88,7 @@ customise_communication_server <- function(id, api_manager) {
                  p(tags$strong("LinkedIn: "), contact$linkedin),
                  p(tags$strong("University: "), contact$university))
         ),
-        tags$hr(style = "border-color: #4a90e2;"),
+        tags$hr(style = "border-color: #00A39A;"),
         p(tags$strong("Areas of Interest: "), contact$areas_of_interest),
         p(tags$strong("Academic Background: "), contact$academic_background),
         p(tags$strong("Notes: "), contact$user_notes),
@@ -126,7 +126,7 @@ customise_communication_server <- function(id, api_manager) {
         api_manager$communication_summary(result$text)
         removeNotification(id = "summarizing")
         output$communication_summary_ui <- renderUI({
-          div(p(icon("lightbulb"), tags$strong(" Communication Summary:"), style = "color: #7ec8e3; margin-bottom: 10px;"),
+          div(p(icon("lightbulb"), tags$strong(" Communication Summary:"), style = "color: #008A82; margin-bottom: 10px;"),
               p(result$text))
         })
       }, error = function(e) {
@@ -150,12 +150,12 @@ customise_communication_server <- function(id, api_manager) {
           messages <- api_manager$recent_messages()
           if (is.null(messages) || nrow(messages) == 0) {
             return(div(class = "empty-state", div(class = "empty-state-icon", icon("comments")),
-              p(icon("info-circle"), " No previous messages found for this contact.", style = "color: #7ec8e3;"),
+              p(icon("info-circle"), " No previous messages found for this contact.", style = "color: #008A82;"),
               p("This is the first time you're communicating with ", contact$full_name, ".")))
           }
           do.call(tagList, lapply(seq_len(nrow(messages)), function(i) {
-            div(style = "border-bottom: 1px solid #4a90e2; padding: 10px 0; margin: 10px 0;",
-                p(tags$strong(icon("calendar"), " ", messages$created_at[i]), style = "color: #7ec8e3; margin-bottom: 5px;"),
+            div(style = "border-bottom: 1px solid #00A39A; padding: 10px 0; margin: 10px 0;",
+                p(tags$strong(icon("calendar"), " ", messages$created_at[i]), style = "color: #008A82; margin-bottom: 5px;"),
                 p(tags$strong("Channel: "), messages$channel_type[i], " | ", tags$strong("Purpose: "), messages$communication_purpose[i],
                   " | ", tags$strong("Language: "), messages$language[i]),
                 p(messages$message_content[i], style = "font-style: italic;"))
@@ -164,7 +164,7 @@ customise_communication_server <- function(id, api_manager) {
 
         if (!is.null(api_manager$recent_messages())) summarize_communication()
         else output$communication_summary_ui <- renderUI({
-          div(class = "empty-state", p(icon("info-circle"), " No communication history to summarize.", style = "color: #7ec8e3;"))
+          div(class = "empty-state", p(icon("info-circle"), " No communication history to summarize.", style = "color: #008A82;"))
         })
 
       }, error = function(e) {
@@ -210,10 +210,10 @@ customise_communication_server <- function(id, api_manager) {
         removeNotification(id = "generating")
 
         output$generated_message_display <- renderUI({
-          div(p(icon("envelope"), tags$strong(" Generated Message:"), style = "color: #7ec8e3; margin-bottom: 10px;"),
-              tags$hr(style = "border-color: #4a90e2;"),
+          div(p(icon("envelope"), tags$strong(" Generated Message:"), style = "color: #008A82; margin-bottom: 10px;"),
+              tags$hr(style = "border-color: #00A39A;"),
               p(result$text, style = "white-space: pre-wrap; line-height: 1.8;"),
-              tags$hr(style = "border-color: #4a90e2;"),
+              tags$hr(style = "border-color: #00A39A;"),
               p(tags$small(icon("info-circle"), " Channel: ", channel, " | Purpose: ", purpose,
                            " | Language: ", language, " | Length: ~", length, " words"), style = "color: #a0aec0;"))
         })

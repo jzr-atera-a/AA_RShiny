@@ -54,6 +54,16 @@ APIManager <- R6::R6Class(
     bq_full_table_communications = NULL,
     bq_authenticated   = FALSE,
     bq_temp_file       = NULL,
+    bq_key_path        = NULL,     # service-account .json the BigQuery connection uses (Google Drive can share it)
+
+    # ── Google Drive (diagram saving, see R/utils_gdrive.R) ───────────────
+    gdrive_use_bq_key  = TRUE,     # TRUE: same service account as BigQuery; FALSE: gdrive_key_path
+    gdrive_key_path    = NULL,
+    gdrive_root_id     = NULL,     # id of the shared root folder (the only place the app writes)
+    gdrive_root_name   = NULL,
+    gdrive_account     = NULL,     # service-account e-mail the folder must be shared with
+    gdrive_authenticated = FALSE,
+    gdrive_status      = NULL,     # short text for the status box
 
     # ── Non-blocking schema-compatibility warning (Events only — see notes
     #    on check_events_table_compatibility below) ─────────────────────────
@@ -643,6 +653,7 @@ APIManager <- R6::R6Class(
           missing <- setdiff(required_fields, names(json_content))
           if (length(missing) > 0) stop("Missing JSON fields: ", paste(missing, collapse = ", "))
           bq_auth(path = json_path, cache = FALSE)
+          self$bq_key_path <- json_path
 
         } else if (!is.null(json_text)) {
           json_content <- fromJSON(json_text)
@@ -652,6 +663,7 @@ APIManager <- R6::R6Class(
           temp_file <- tempfile(fileext = ".json")
           writeLines(json_text, temp_file)
           self$bq_temp_file <- temp_file
+          self$bq_key_path <- temp_file
           bq_auth(path = temp_file, cache = FALSE)
 
         } else {
@@ -1011,7 +1023,7 @@ APIManager <- R6::R6Class(
       if (!self$bq_authenticated) stop("Not authenticated to BigQuery")
       values <- unique(as.character(values)); if (!length(values)) return(invisible(0L))
       self$bq_muscle_ensure()
-      lit <- paste0("'", gsub("'", "\\\\'", values), "'", collapse = ",")
+      lit <- paste0("'", safe_sql_escape(values), "'", collapse = ",")
       bq_project_query(self$bq_project_id, sprintf("DELETE FROM `%s` WHERE %s IN (%s)", self$bq_muscle_full(key), col, lit))
       self$muscle_cache <- new.env(parent = emptyenv())
       invisible(length(values))

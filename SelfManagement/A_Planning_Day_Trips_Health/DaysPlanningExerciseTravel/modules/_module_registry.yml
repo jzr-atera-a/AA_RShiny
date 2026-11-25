@@ -1,0 +1,340 @@
+# modules/_module_registry.yml
+# Central Module Registry - Business Operations Suite
+# Each sub-tab is ONE file: modules/<Tab group>/<id>.R (header + <id>_ui + <id>_server). See STRUCTURE.md.
+# Change 'enabled: false' to disable any module. Priority controls ordering
+# WITHIN each sidebar group. Group membership/order/expanded state is
+# controlled by the top-level `groups:` list below.
+#
+# SIDEBAR SECTIONS: inside a group, `sections:` bundles modules by topic. Each section is ONE sidebar item and its
+# modules appear as horizontal tabs in the page. To regroup, move a module id between `sections:` lists (keep it in the
+# group's `modules:` list too). A module no section lists keeps its own sidebar item. See R/utils_nav.R.
+
+groups:
+  - id: api_config
+    label: "API Configuration"
+    icon: "key"
+    expanded: true
+    modules: [bigquery_auth, claude_api_config, gdrive_api_config, titan_auth, debug_console]
+    sections:
+      - id: sec_connections
+        label: "API Configuration"
+        icon: "key"
+        modules: [bigquery_auth, claude_api_config, gdrive_api_config, titan_auth, debug_console]
+        tab_labels: {bigquery_auth: "BigQuery", claude_api_config: "Claude", gdrive_api_config: "Google Drive", titan_auth: "Titan Calendar", debug_console: "Debug Console"}
+
+  - id: day_planner
+    label: "Day Planner"
+    icon: "route"
+    expanded: false
+    modules: [generate_schedule, schedule_generate_prep, schedule_prep_checklist, schedule_bulk_import, schedule_add_single, schedule_browse, schedule_visualizations, schedule_commitment_config, schedule_add_commitment, schedule_commitments_browse, schedule_about]
+    sections:
+      - id: sec_dp_plan
+        label: "Plan the Day"
+        icon: "route"
+        modules: [generate_schedule, schedule_bulk_import, schedule_add_single]
+        tab_labels: {generate_schedule: "Generate Schedule", schedule_bulk_import: "Bulk Import", schedule_add_single: "Add Entry"}
+      - id: sec_dp_prep
+        label: "Day Preparation"
+        icon: "clipboard-check"
+        modules: [schedule_generate_prep, schedule_prep_checklist]
+        tab_labels: {schedule_generate_prep: "Generate Prep Steps", schedule_prep_checklist: "Checklist"}
+      - id: sec_dp_commit
+        label: "Commitments"
+        icon: "handshake"
+        modules: [schedule_add_commitment, schedule_commitments_browse, schedule_commitment_config]
+        tab_labels: {schedule_add_commitment: "Add", schedule_commitments_browse: "Browse", schedule_commitment_config: "Trello Config"}
+      - id: sec_dp_review
+        label: "Review"
+        icon: "table"
+        modules: [schedule_browse, schedule_visualizations, schedule_about]
+        tab_labels: {schedule_browse: "Browse Data", schedule_visualizations: "Visualizations", schedule_about: "About"}
+
+  - id: diet_planner
+    label: "Diet Planner"
+    icon: "utensils"
+    expanded: false
+    modules: [generate_diet, diet_bulk_import, diet_add_single, diet_browse, diet_visualizations, diet_about]
+    sections:
+      - id: sec_diet_log
+        label: "Plan & Log"
+        icon: "utensils"
+        modules: [generate_diet, diet_bulk_import, diet_add_single]
+        tab_labels: {generate_diet: "Generate Diet", diet_bulk_import: "Bulk Import", diet_add_single: "Add Entry"}
+      - id: sec_diet_review
+        label: "Review"
+        icon: "table"
+        modules: [diet_browse, diet_visualizations, diet_about]
+        tab_labels: {diet_browse: "Browse Data", diet_visualizations: "Visualizations", diet_about: "About"}
+
+  - id: exercise_tracker
+    label: "Exercise Tracker"
+    icon: "dumbbell"
+    expanded: false
+    modules: [generate_workout, muscle_programme, muscle_log, muscle_map, muscle_progress, exercise_bulk_import, exercise_add_single, exercise_browse, exercise_visualizations, exercise_about]
+    sections:
+      - id: sec_ex_log
+        label: "Workouts"
+        icon: "dumbbell"
+        modules: [generate_workout, exercise_bulk_import, exercise_add_single]
+        tab_labels: {generate_workout: "Generate Workout", exercise_bulk_import: "Bulk Import", exercise_add_single: "Add Entry"}
+      - id: sec_ex_muscle
+        label: "Muscle Building"
+        icon: "child"
+        modules: [muscle_programme, muscle_log, muscle_map, muscle_progress]
+        tab_labels: {muscle_programme: "Programme", muscle_log: "Log Sets", muscle_map: "Muscle Map", muscle_progress: "Progress"}
+      - id: sec_ex_review
+        label: "Workout Review"
+        icon: "table"
+        modules: [exercise_browse, exercise_visualizations, exercise_about]
+        tab_labels: {exercise_browse: "Browse Data", exercise_visualizations: "Visualizations", exercise_about: "About"}
+
+  - id: events_scheduling
+    label: "Events Scheduling"
+    icon: "calendar-alt"
+    expanded: false
+    modules: [scan_events, zoom_schedule, bulk_import_events, browse_events, visualizations_events, events_to_calendar, contacts_send_email, events_about]
+    sections:
+      - id: sec_ev_find
+        label: "Find & Save Events"
+        icon: "magnifying-glass"
+        modules: [scan_events, bulk_import_events]
+        tab_labels: {scan_events: "Scan Events", bulk_import_events: "Bulk Import"}
+      - id: sec_ev_calendar
+        label: "Calendar & Invites"
+        icon: "calendar-alt"
+        modules: [events_to_calendar, zoom_schedule, contacts_send_email]
+        tab_labels: {events_to_calendar: "Events to Calendar", zoom_schedule: "Zoom Schedule", contacts_send_email: "Send Email"}
+      - id: sec_ev_review
+        label: "Review"
+        icon: "table"
+        modules: [browse_events, visualizations_events, events_about]
+        tab_labels: {browse_events: "Browse Events", visualizations_events: "Visualizations", events_about: "About"}
+
+  - id: travel_planning
+    label: "Travel Planning"
+    icon: "globe"
+    expanded: true
+    modules: [travel_itinerary_planner]
+
+modules:
+  bigquery_auth:
+    enabled: true
+    priority: 1
+    description: "BigQuery authentication - one connection, three tables"
+
+  claude_api_config:
+    enabled: true
+    priority: 2
+    description: "Claude API credentials management, shared by all suites"
+
+  gdrive_api_config:
+    enabled: true
+    priority: 2.5
+    description: "Shared Google Drive folder where saved diagrams are kept for other R Shiny apps"
+
+  debug_console:
+    enabled: true
+    priority: 90
+    description: "Live mirror of the R console, copy-friendly for mobile browsers"
+
+  generate_schedule:
+    enabled: true
+    priority: 3
+    description: "AI-powered day/trip schedule generation"
+
+  schedule_generate_prep:
+    enabled: true
+    priority: 70
+    description: "AI-generated night-before preparation checklist for a planned day"
+
+  schedule_prep_checklist:
+    enabled: true
+    priority: 71
+    description: "Interactive checklist to track completion of a day's preparation steps"
+
+  schedule_bulk_import:
+    enabled: true
+    priority: 4
+    description: "Parse and upload schedules in bulk"
+
+  schedule_add_single:
+    enabled: true
+    priority: 5
+    description: "Add an individual schedule row entry"
+
+  schedule_browse:
+    enabled: true
+    priority: 6
+    description: "Browse and download all planned schedules"
+
+  schedule_visualizations:
+    enabled: true
+    priority: 7
+    description: "Itinerary timeline visualization with time-allocation chart"
+
+  schedule_commitment_config:
+    enabled: true
+    priority: 72
+    description: "Trello API credentials for pushing commitments to a board, local to this feature"
+
+  schedule_add_commitment:
+    enabled: true
+    priority: 73
+    description: "Log a new monthly commitment, with optional push to Trello"
+
+  schedule_commitments_browse:
+    enabled: true
+    priority: 74
+    description: "Browse, filter, and update the status of monthly commitments; load one into Generate Schedule"
+
+  schedule_about:
+    enabled: true
+    priority: 8
+    description: "Day Planner schema documentation"
+
+  generate_diet:
+    enabled: true
+    priority: 9
+    description: "AI-generated daily meal plan"
+
+  diet_bulk_import:
+    enabled: true
+    priority: 10
+    description: "Parse and upload a day's diet log in bulk"
+
+  diet_add_single:
+    enabled: true
+    priority: 11
+    description: "Log a single meal entry"
+
+  diet_browse:
+    enabled: true
+    priority: 12
+    description: "Browse and download all logged diet days"
+
+  diet_visualizations:
+    enabled: true
+    priority: 13
+    description: "Daily nutrition timeline and macro chart"
+
+  diet_about:
+    enabled: true
+    priority: 14
+    description: "Diet Planner schema documentation"
+
+  generate_workout:
+    enabled: true
+    priority: 15
+    description: "AI-generated workout plan"
+
+  muscle_programme:
+    enabled: true
+    priority: 15.1
+    description: "Weekly muscle-building split; three options per day (gym / no equipment / home kit); Claude plans, app drives progression"
+
+  muscle_log:
+    enabled: true
+    priority: 15.2
+    description: "Log sets, loads, reps and RIR for a planned muscle workout"
+
+  muscle_map:
+    enabled: true
+    priority: 15.3
+    description: "Interactive anatomy diagram with weekly set gaps per muscle"
+
+  muscle_progress:
+    enabled: true
+    priority: 15.4
+    description: "Week-over-week volume, load progression and editable weekly set targets"
+
+  exercise_bulk_import:
+    enabled: true
+    priority: 16
+    description: "Parse and upload a workout session in bulk"
+
+  exercise_add_single:
+    enabled: true
+    priority: 17
+    description: "Log a single exercise/activity entry"
+
+  exercise_browse:
+    enabled: true
+    priority: 18
+    description: "Browse and download all logged workouts"
+
+  exercise_visualizations:
+    enabled: true
+    priority: 19
+    description: "Workout timeline and volume/calories chart"
+
+  exercise_about:
+    enabled: true
+    priority: 20
+    description: "Exercise Tracker schema documentation"
+
+  scan_events:
+    enabled: true
+    priority: 30
+    description: "AI-powered city event scanning via Claude web search"
+
+  zoom_schedule:
+    enabled: true
+    priority: 30.5
+    description: "Read a Zoom invite screenshot with Claude and hand it to Events to Calendar"
+
+  bulk_import_events:
+    enabled: true
+    priority: 31
+    description: "Parse and bulk-upload events text"
+
+  add_single_event:
+    enabled: false
+    priority: 32
+    description: "Manually add a single event"
+
+  browse_events:
+    enabled: true
+    priority: 33
+    description: "Browse and download all events"
+
+  visualizations_events:
+    enabled: true
+    priority: 34
+    description: "Event details, calendar, and chart visualizations"
+
+  events_about:
+    enabled: true
+    priority: 35
+    description: "Events Scheduling schema documentation"
+
+  titan_auth:
+    enabled: true
+    priority: 3
+    description: "Sign in to the Titan calendar from an authenticateT.R file"
+
+  events_to_calendar:
+    enabled: true
+    priority: 37
+    description: "Create events, import .ics files and save them to the Titan calendar"
+
+  contacts_send_email:
+    enabled: true
+    priority: 65
+    description: "Compose and send emails with attachments"
+
+  travel_itinerary_planner:
+    enabled: true
+    priority: 80
+    description: "AI-powered travel itinerary planner with Claude - discover attractions, select favorites, generate optimized multi-day plans"
+
+settings:
+  auto_install: false
+  check_versions: true
+  verbose: true
+  dev_mode: false
+
+app:
+  name: "Business Operations Suite: Travel + Day Planner + Diet + Exercise + Events + Funding + Gantt + Contacts"
+  version: "2.0.0"
+  description: "Eight AI-powered suites in one app: AI travel itinerary planning (with HTML/PDF/calendar export), day/trip scheduling with prep checklists and monthly commitments, daily diet planning, exercise tracking, city event discovery, funding programme discovery, Gantt-to-tickets conversion, and AI contact management. Diet, Exercise, Events, Funding, and Gantt task browsing support calendar (.ics) export for Outlook and Android Calendar. Shares one Claude connection and one BigQuery connection, with app-specific APIs (Trello x2 separate connections, Jira, OpenAI, SMTP x2 separate connections) kept local to their own suites."
+  author: "Your Team"

@@ -2,8 +2,8 @@
 # and the order sent at the price of the moment (3 Nov 2026 cases). Run from the app folder: Rscript tests/test_cc_advice.R
 suppressMessages({ library(shiny); library(TTR); library(zoo); library(DT); library(plotly) })
 `%||%` <- function(x, y) if (is.null(x)) y else x
-for (f in c("R/utils_trading_records.R", "R/utils_cc_catalog.R", "R/utils_cc_api.R", "R/utils_cc_patterns.R", "R/utils_cc_chart.R", "R/utils_cc_records.R", "R/utils_trading_templates.R", "R/utils_cc_sheet.R", "R/utils_cc_plan.R", "R/utils_cc_course_full.R", "R/utils_cc_course_checks.R", "R/utils_cc_advice.R",
-            "modules/cc_api_config.R", "modules/cc_trading_records.R")) source(f)
+for (f in c("R/utils_trading_records.R", "R/utils_cc_catalog.R", "R/utils_cc_api.R", "R/utils_cc_patterns.R", "R/utils_cc_chart.R", "R/utils_cc_records.R", "R/utils_trading_templates.R", "R/utils_cc_sheet.R", "R/utils_cc_plan.R", "R/utils_cc_markets.R", "R/utils_cc_advice.R",
+            "modules/api_config.R", "modules/cc_trading_records.R")) source(f)
 pass <- 0L; fail <- 0L
 ok <- function(cond, what) { if (isTRUE(cond)) { pass <<- pass + 1L; cat("  ok  ", what, "\n") } else { fail <<- fail + 1L; cat("  FAIL", what, "\n") } }
 
@@ -95,7 +95,7 @@ testServer(cc_trading_records_server, args = list(client = cl, store = store, fe
   session$setInputs(p_show_bad = TRUE); x <- as.character(output$p_scen); ok(grepl("Stop vs now", x) && grepl("Baseline: any moment, after spread (not a forecast)", x, fixed = TRUE) && grepl("Evidence", x) && grepl("Break-even needed", x) && grepl("Claude", x), "table shows levels vs now, the evidence, break-even, the baseline and the estimate")
   ui <- paste(as.character(output$p_ms_ui), collapse = ""); ok(grepl("found in BigQuery", ui) && grepl("p_ms_use", ui), "today's Morning Sheet found: the option is on")
   session$setInputs(p_ms_use = "yes", p_claude = 1); sc2 <- scen()
-  ok(any(grepl("OPEC unchanged", prompts)) && grepl("AND the Morning Sheet", tail(prompts, 1)), "Claude received today's Morning Sheet")
+  ok(any(grepl("OPEC unchanged", prompts)) && grepl("and the Morning Sheet (news direction", tail(prompts, 1), fixed = TRUE), "Claude received today's Morning Sheet")
   cr <- sc2[sc2$source == "Claude", ]
   ok(nrow(cr) == 1 && cr$type == "MARKET" && cr$entry == mkt()$bid && cr$stop == 66.12 && cr$claude_p == 41 && is.finite(cr$meas_p) && cr$rrr >= 1.5 - 1e-6, "Claude's trade added as a deal at the bid, meeting the minimum R:R, with Claude's and the measured chance")
   ok(sc2$claude_p[sc2$id == "BUY MARKET"] == 52, "Claude's estimate added to the rule scenario")
@@ -148,4 +148,48 @@ testServer(cc_trading_records_server, args = list(client = cl, store = store, fe
   session$setInputs(p_show_bad = TRUE)
   session$setInputs(p_build = 9); sc <- scen(); ok(all(c("htf_d", "htf_h4", "fit") %in% names(sc)) && grepl("Trend daily / 4h", paste(as.character(output$p_scen), collapse = "")), "every scenario shows the daily / 4-hour trend and whether it is with or against it")
 })
+# ************ always one recommended trade
+sc0 <- data.frame(id = c("BUY MARKET", "SELL MARKET", "CLAUDE 1"), side = c("BUY", "SELL", "SELL"), rrr = c(3.2, 1.5, 2), blocked = c(FALSE, FALSE, TRUE),
+                  evidence = c("PROVEN: record above break-even", "NO RECORD for this set-up (baseline only)", "NO RECORD"), ev_proven = c(TRUE, FALSE, FALSE),
+                  ev_exp_r = c(0.54, NA, NA), checks = c("", "", "Market regime (ADX) fails"), stringsAsFactors = FALSE)
+r1 <- cc_pick_recommended(sc0, "CLAUDE 1"); ok(identical(r1$id, "BUY MARKET") && r1$fits, "Claude's first trade breaks a blocking rule: the proven scenario that fits is recommended")
+r2 <- cc_pick_recommended(sc0, "SELL MARKET"); ok(identical(r2$id, "SELL MARKET") && r2$fits, "Claude's first trade fits the plan: it is the recommendation")
+sc1 <- sc0; sc1$blocked <- TRUE; r3 <- cc_pick_recommended(sc1); ok(!is.null(r3) && !r3$fits && grepl("CANNOT be sent", r3$why), "nothing fits: a recommendation is still given and flagged as not sendable")
+ok(is.null(cc_pick_recommended(NULL)), "no scenarios: no recommendation")
+fx <- list(name = "Brent", epic = "OIL_BRENT", currency = "USD", bid = 94.198, offer = 94.238, min_stop_distance = 0.1, decimals = 3)
+bb <- data.frame(time = Sys.time() - (60:1) * 900, open = 94, high = 94.3, low = 93.8, close = 94.1)
+sx <- list(ctx = list(n = 60, b = bb, o = bb$open, h = bb$high, l = bb$low, c = bb$close, a = rep(0.28, 60), minutes = 15), adx = 29.7, regime = "MIXED", current_df = NULL)
+pp <- tryCatch(cc_suggest_prompt(sx, fx, NULL, list(min_rrr = 1.5)), error = function(e) conditionMessage(e))
+ok(grepl("MUST recommend a trade", pp) && grepl("NEVER empty", pp) && grepl("standing aside is NOT an answer", pp) && !grepl("return an empty list", pp), "the prompt always asks for a recommended trade")
+ok(grepl("number of cases \\(n\\)", pp) && grepl("never cite a straddle record", pp) && grepl("which reading it is", pp), "the prompt asks for n with every record, names the ADX / trend reading and leaves out straddles")
+ok(isTRUE(cc_suggest_parse('{"summary":"x","cautions":"regime unclear","suggestions":[]}', fx, 1.5)$stand_aside == "regime unclear"), "cautions are read from the reply")
+# ************* score and chance
+sx <- data.frame(id = c("A", "B", "C", "D"), rrr = c(4.34, 2.04, 2.06, 2), meas_p = c(13, 33, 34, 33), setup_p = c(19, 62, NA, 62), setup_n = c(31, 13, NA, 13),
+  evidence = c("NOT PROVEN: record near break-even", "PROVEN: record above break-even", "NO RECORD for this set-up (baseline only)", "PROVEN: record above break-even"),
+  fit = c("with", "against", "against", "with"), confl = c("0/4 (x)", "3/4 (x)", "3/4 (x)", "4/4 (x)"), news = c("17:00 Fed: high impact", "17:00 Fed: high impact", "none", "none"),
+  entry = c(91.568, 91.528, 91.643, 91.5), stop = c(91.153, 92.148, 92.34, 92.1), plan = c("OK", "OK | WARN (allowed, Setup): High-impact news in the holding time; Morning Sheet allows this market today", "OK", "BREAKS: Daily loss limit"),
+  blocked = c(FALSE, FALSE, FALSE, TRUE), in_regime = c(TRUE, TRUE, NA, TRUE), stringsAsFactors = FALSE)
+ss <- cc_success(sx, "TREND", 0.41, 0.04)
+ok(all(ss$score >= 0 & ss$score <= 100) && all(ss$chance >= 0 & ss$chance <= 100), "score and chance are between 0 and 100")
+ok(abs(ss$chance[2] - (62 * 13 + 33 * 30) / 43) < 0.6 && ss$chance[3] == 34, "chance: a 13-case record is pulled towards the baseline; no record = the baseline")
+ok(ss$score[2] > ss$score[1] && ss$score[2] > ss$score[3], "the proven set-up above break-even scores highest of the sendable ones")
+ok(ss$score[4] <= 25 && grepl("capped at 25", ss$score_why[4]), "a blocked scenario is capped at 25")
+ok(grepl("edge", ss$score_why[2]) && grepl("-10 trend", ss$score_why[2]) && grepl("-8 news", ss$score_why[2]) && grepl("-6 Morning Sheet", ss$score_why[2]) && grepl("\\+8 evidence", ss$score_why[2]), "the score lists every factor with its points")
+s0 <- cc_success(data.frame(id = "X", rrr = 1.5, meas_p = 40, entry = 10, stop = 9, stringsAsFactors = FALSE)); ok(s0$score == 50, "chance equal to break-even and nothing else = 50")
+ok(identical(cc_score_band(c(70, 55, 30)), c("STRONG", "FAIR", "WEAK")), "score bands")
+rr <- cc_pick_recommended(ss, "C"); ok(identical(rr$id, "B") && grepl("Highest score", rr$why) && grepl("Claude's first choice C", rr$why), "the recommendation is the highest score; Claude's lower-scored choice is named")
+rr2 <- cc_pick_recommended(ss, "B"); ok(identical(rr2$id, "B") && grepl("Claude's first choice", rr2$why), "Claude's first choice is kept when it has the best score")
+# course tools: groups and their steps
+gt <- cc_group_tbl(); ok(nrow(gt) == length(unique(cc_catalog$group)) && sum(gt$n) == nrow(cc_catalog) && all(grepl("^Step [12356]", gt$steps)) && any(grepl("^Step 5", gt$steps)), sprintf("every pattern group has its course step (%d patterns, Step 5 included)", nrow(cc_catalog)))
+ok(all(cc_groups_ok(c("holy_grail_long", "doji"), NULL)) && identical(cc_groups_ok(cc_catalog$key[cc_catalog$group == "RSI"][1], "MACD"), FALSE), "group filter: NULL keeps everything")
+# ******************** one click across markets
+oa <- data.frame(epic = c("OIL_BRENT", "OIL_BRENT", "OIL_CRUDE", "NATURALGAS"), market = c("Brent", "Brent", "WTI", "Gas"), id = c("BUY MARKET", "SELL MARKET", "SELL MARKET", "BUY MARKET"), side = c("BUY", "SELL", "SELL", "BUY"),
+  stop = "1", target = "2", rrr = c(1.5, 2.1, 2.0, 3), score = c(48, 61, 58, 80), chance = c(41, 45, 44, 30), be_pct = c(40, 32, 33, 25), evidence = c("NOT PROVEN", "PROVEN: record above break-even", "NO RECORD", "PROVEN"),
+  setup_rec = c("", "62% of 13 cases", "none", ""), fit = c("with", "against", "with", "with"), htf = "daily UP, 4-hour UP", regime = "TREND", news = c("-", "17:00 Fed: high impact", "-", "-"), score_why = "50 +11 edge",
+  blocked = c(FALSE, FALSE, FALSE, TRUE), risk_txt = "GBP 0.94", reward_txt = "GBP 1.91", stringsAsFactors = FALSE)
+op <- cc_oneclick_pick(oa); ok(op$k == 2 && op$fits && identical(op$order[4], 4L), "one click: the highest score among the scenarios that can be sent wins, across markets; a blocked one goes last even with a higher score")
+ow <- cc_oneclick_reasons(oa, op$k, 3, size = 2, ms_used = TRUE)
+ok(length(ow) == 5 && grepl("4 scenario\\(s\\) worked out across 3 market", ow[1]) && grepl("61/100", ow[1]) && grepl("62% of 13 cases", ow[2]) && grepl("AGAINST", ow[3]) && grepl("Morning Sheet was used", ow[4]) && grepl("17:00 Fed", ow[4]) && grepl("next best was SELL MARKET on WTI at 58/100", ow[5]),
+   "one click: 5 reasons (score against break-even, evidence, trend and regime, Morning Sheet and news, money and the runner-up)")
+ob <- oa; ob$blocked <- TRUE; ok(!cc_oneclick_pick(ob)$fits, "every scenario blocked: the best is shown but cannot be sent")
 cat(sprintf("\n%d passed, %d failed\n", pass, fail)); if (fail) quit(status = 1)

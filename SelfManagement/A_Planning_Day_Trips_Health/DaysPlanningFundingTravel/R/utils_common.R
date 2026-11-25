@@ -16,8 +16,16 @@
 # ============================================================
 # SHARED GENERIC HELPERS (used by all three suites)
 # ============================================================
+# Escape a value for a BigQuery (GoogleSQL) string literal. GoogleSQL uses BACKSLASH escapes, so the backslash itself
+# must be escaped first: before, a value containing "\" (or ending in one) changed its meaning or broke the query.
 safe_sql_escape <- function(x) {
-  gsub("'", "\\'", x, fixed = TRUE)
+  x <- as.character(x)
+  x <- gsub("\\", "\\\\", x, fixed = TRUE)   # backslash first
+  x <- gsub("'", "\\'", x, fixed = TRUE)
+  x <- gsub("\"", "\\\"", x, fixed = TRUE)
+  x <- gsub("\r\n", "\n", x, fixed = TRUE)
+  x <- gsub("\n", "\\n", x, fixed = TRUE)   # fixed = TRUE: in regex mode the replacement "\\n" would become a plain "n"
+  x
 }
 
 has_real_value <- function(x) {
@@ -806,7 +814,7 @@ setup_events_category_cascade <- function(input, output, session, api_manager) {
 }
 
 # ── Claude prompt - real events only, web search enabled via
-#    call_claude(..., enable_web_search = TRUE) in scan_events/server.R ─────
+#    call_claude(..., enable_web_search = TRUE) in modules/Events Scheduling/scan_events.R ─────
 generate_scan_prompt <- function(city            = "",
                                  country         = "",
                                  date_from       = NULL,

@@ -22,9 +22,11 @@ analytics_ui <- function(id) {
     ),
     fluidRow(
       box(title = "Word Count Distribution", status = "primary", solidHeader = TRUE, width = 6,
-          plotlyOutput(ns("wordPlot"))),
+          plotlyOutput(ns("wordPlot")),
+          diagram_save_ui(ns("save_word"), formats = c("html", DIAGRAM_IMAGE_FORMATS, "csv"))),
       box(title = "Processing Time", status = "primary", solidHeader = TRUE, width = 6,
-          plotlyOutput(ns("timePlot")))
+          plotlyOutput(ns("timePlot")),
+          diagram_save_ui(ns("save_time"), formats = c("html", DIAGRAM_IMAGE_FORMATS, "csv")))
     ),
     fluidRow(
       box(title = "Transcription History", status = "info", solidHeader = TRUE, width = 12,
@@ -56,18 +58,19 @@ analytics_server <- function(id, api_manager) {
       valueBox(if (!is.nan(avg)) paste(round(avg, 2), "s") else "0 s", "Avg Time", icon = icon("clock"), color = "yellow")
     })
 
-    output$wordPlot <- renderPlotly({
+    word_plot <- reactive({
       data <- transcriptions()
       if (nrow(data) > 0) {
         plot_ly(x = seq_len(nrow(data)), y = data$word_count, type = "scatter", mode = "lines+markers",
-                line = list(color = "#667eea"), marker = list(color = "#764ba2")) %>%
+                line = list(color = "#008A82"), marker = list(color = "#00A39A")) %>%
           layout(xaxis = list(title = "File"), yaxis = list(title = "Words"))
       } else {
         plot_ly() %>% layout(annotations = list(text = "No data yet", showarrow = FALSE))
       }
     })
+    output$wordPlot <- renderPlotly(word_plot())
 
-    output$timePlot <- renderPlotly({
+    time_plot <- reactive({
       data <- transcriptions()
       if (nrow(data) > 0) {
         plot_ly(x = seq_len(nrow(data)), y = data$processing_time, type = "bar", marker = list(color = "#11998e")) %>%
@@ -76,6 +79,18 @@ analytics_server <- function(id, api_manager) {
         plot_ly() %>% layout(annotations = list(text = "No data yet", showarrow = FALSE))
       }
     })
+    output$timePlot <- renderPlotly(time_plot())
+
+    # Save diagram bars (Google Drive / zip): the chart itself + the numbers behind it
+    analytics_spec <- function(title, plot, sub) function() {
+      d <- isolate(transcriptions())
+      if (!nrow(d)) return(list(ready = FALSE, why = "No transcriptions yet - nothing to save."))
+      list(title = title, subtitle = sub(d), plot = isolate(plot()), data = data.frame(file_no = seq_len(nrow(d)), as.data.frame(d), check.names = FALSE))
+    }
+    diagram_save_server("save_word", "analytics", session$ns("wordPlot"), "plotly",
+                        analytics_spec("Word Count Distribution", word_plot, function(d) sprintf("%d file(s), %s words", nrow(d), format(sum(d$word_count, na.rm = TRUE), big.mark = ","))))
+    diagram_save_server("save_time", "analytics", session$ns("timePlot"), "plotly",
+                        analytics_spec("Processing Time", time_plot, function(d) sprintf("Average %.2f s per file", mean(d$processing_time, na.rm = TRUE))))
 
     output$historyTable <- renderDT({
       data <- transcriptions()

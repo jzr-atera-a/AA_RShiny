@@ -2,8 +2,8 @@
 # against a fake Capital.com client and an in-memory store. Run from the app folder: Rscript tests/test_cc_module.R
 suppressMessages({ library(shiny); library(TTR); library(zoo); library(DT); library(plotly) })
 `%||%` <- function(x, y) if (is.null(x)) y else x
-source("R/utils_cc_catalog.R"); source("R/utils_cc_api.R"); source("R/utils_cc_patterns.R"); source("R/utils_cc_chart.R"); source("R/utils_cc_records.R"); source("R/utils_cc_tradelog.R"); source("R/utils_trading_templates.R"); source("R/utils_cc_sheet.R"); source("R/utils_cc_plan.R"); source("R/utils_cc_course_full.R"); source("R/utils_cc_course_checks.R"); source("R/utils_cc_advice.R")
-source("modules/cc_api_config.R"); source("modules/cc_trading_records.R")
+source("R/utils_cc_catalog.R"); source("R/utils_cc_api.R"); source("R/utils_cc_patterns.R"); source("R/utils_cc_chart.R"); source("R/utils_cc_records.R"); source("R/utils_trading_templates.R"); source("R/utils_cc_sheet.R"); source("R/utils_cc_plan.R"); source("R/utils_cc_markets.R"); source("R/utils_cc_advice.R")
+source("modules/api_config.R"); source("modules/cc_trading_records.R")
 pass <- 0L; fail <- 0L
 ok <- function(cond, what) { if (isTRUE(cond)) { pass <<- pass + 1L; cat("  ok  ", what, "\n") } else { fail <<- fail + 1L; cat("  FAIL", what, "\n") } }
 src <- readLines("tests/test_cc_api_records.R"); eval(parse(text = src[grep("^js <- ", src):(grep("^cat\\(\"Credentials file", src) - 1)]))   # the fake Capital.com
@@ -32,7 +32,7 @@ testServer(cc_trading_records_server, args = list(client = cl, store = store, fe
   session$setInputs(m_epic = "OIL_BRENT"); ok(!is.null(mkt()) && mkt()$currency == "USD", "market facts read (quoted in USD)")
   session$setInputs(c_window = "48", c_res = "MINUTE_15", c_load = 1)
   ok(!is.null(scan()) && scan()$n == n, "chart loaded and every pattern rule run")
-  ok(nrow(cc_coverage(scan())) == 141, "coverage of all 141 matrix rows is available")
+  ok(nrow(cc_coverage(scan())) == nrow(cc_catalog), "coverage of every catalogue row is available")
   ch <- tryCatch({ output$c_chart; "ok" }, error = function(e) paste(class(e)[1], conditionMessage(e))); ok(identical(ch, "ok"), paste("the chart renders right after loading:", ch))
   ok(length(picks()) == nrow(scan()$current_df), "every pattern alive is drawn by default")
   session$setInputs(c_pick = scan()$current_df$key[2]); ok(length(picks()) == 1 && picks()[[1]]$num == 2, "ticking one box draws only that pattern, keeping its number")
@@ -85,6 +85,13 @@ testServer(cc_trading_records_server, args = list(client = cl, store = store, fe
   sent <- list(); session$setInputs(p_size = NA, p_size_plan = FALSE, p_pick = sc4$id[!sc4$blocked][1]); session$setInputs(p_pick = sc4$id[!sc4$blocked][min(2, sum(!sc4$blocked))])
   ok(is.null(sent$o_size), "********* no size typed and the plan-risk box off: the ticket size is left alone and you are asked to type it")
   session$setInputs(p_size = 2, p_size_plan = FALSE)
+  do.call(session$setInputs, c(setNames(as.list(rep("off", length(cc_plan_mode_rules))), paste0("s_pm_", names(cc_plan_mode_rules))), list(p_size = 2, p_build = 41))); sA <- scen(); rA <- sA[!sA$blocked, ][1, ]
+  session$setInputs(p_pick = rA$id); session$setInputs(o_dir = rA$side, o_stop = round(rA$stop, attr(sA, "d")), o_target = round(rA$target, attr(sA, "d")), o_size = 2, o_strategy = cc_scen_setup(rA))
+  r0 <- ticket()$rrr; f0 <- mkt(); mv <- 0.3 * abs(rA$entry - rA$stop) * (if (rA$side == "BUY") 1 else -1); mkt(modifyList(f0, list(bid = f0$bid + mv, offer = f0$offer + mv))); session$flushReact(); tk <- ticket()
+  ok(isTRUE(tk$follows) && abs(tk$rrr - r0) < 0.02 && abs(tk$shift - mv) < 1e-6 && !any(grepl("below the minimum", tk$errors)), sprintf("*********** price moved 30%% of the stop distance: the ticket keeps R:R %.2f (was refused as below the minimum before)", tk$rrr))
+  ok(abs((tk$stop - round(rA$stop, attr(sA, "d"))) - mv) < 1e-3 && abs((tk$target - round(rA$target, attr(sA, "d"))) - mv) < 1e-3, "*********** stop and target moved with the price, distances kept")
+  session$setInputs(o_stop = round(rA$stop, attr(sA, "d")) + (if (rA$side == "BUY") -0.05 else 0.05)); tk2 <- ticket(); ok(!isTRUE(tk2$follows) && abs(tk2$stop - input$o_stop) < 1e-9, "*********** a stop you type yourself is a fixed price")
+  mkt(f0); do.call(session$setInputs, setNames(as.list(rep("block", length(cc_plan_mode_rules))), paste0("s_pm_", names(cc_plan_mode_rules))))
   session$setInputs(p_size = 3, p_build = 21); session$setInputs(p_pick = character(0), p_use = 31)
   ok(TRUE, "********* Copy pressed with no scenario selected (after changing the size and working them out again): no crash")
   r <- tryCatch({ session$setInputs(p_pick = NULL, p_use = 32); "ok" }, error = function(e) conditionMessage(e)); ok(identical(r, "ok"), "********* ... nor with the choice empty")

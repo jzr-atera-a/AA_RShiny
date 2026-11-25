@@ -82,6 +82,5 @@ algo_handbook_server <- function(id, api_manager) {
         showNotification(sprintf("%s selected: its sample question is in the selector's question box (edit it to your own).", TD_ALGO_ITEMS[[pid]][1]), type = "message", duration = 6)
       })
     })
-    session$onSessionEnded(function() {})
   })
 }

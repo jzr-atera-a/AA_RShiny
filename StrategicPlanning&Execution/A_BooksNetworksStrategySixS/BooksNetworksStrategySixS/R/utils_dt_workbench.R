@@ -251,7 +251,7 @@ dt_workbench_server <- function(input, output, session, api_manager, set_text) {
     content <- tagList(tags$div(class = "dt-svg-wrap", dt_svg(nodes(), m, s)),
                        if (!is.null(s)) tagList(dt_recommendation_ui(s, m), tags$h4(class = "dt-h", "Risk profile of each first option"), dt_risk_table(s))
                        else tags$div(class = "dt-warn", icon("exclamation-triangle"), " Fix the issues listed above to see expected values and the recommendation."))
-    export_capture_wrapper(ns, content, if (nzchar(m$title %||% "")) m$title else "decision_tree")
+    export_capture_wrapper(ns, content, if (nzchar(m$title %||% "")) m$title else "decision_tree", meta = hdr())
   })
   output$dt_risk <- renderUI({ s <- sol(); if (is.null(s)) NULL else dt_outcome_table(s) })
   output$dt_prob_tbl <- renderUI({ if (is.null(sol())) NULL else dt_prob_table(sens_p()) })

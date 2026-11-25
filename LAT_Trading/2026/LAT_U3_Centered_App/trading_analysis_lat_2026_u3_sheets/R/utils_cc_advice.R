@@ -97,7 +97,8 @@ cc_morning_sheet <- function(sheets, levels, day) {
     if (nzchar(v("regime_summary"))) paste0("Regime notes: ", v("regime_summary"), "\n") else "",
     if (nzchar(v("planned_setups"))) paste0("Planned set-ups: ", v("planned_setups"), "\n") else "",
     if (isTRUE(as.logical(s$stand_aside[1]))) paste0("STAND ASIDE today: ", v("stand_aside_reason"), "\n") else "")
-  list(sheet_id = s$sheet_id, saved_at = s$saved_at, text = txt, releases = v("todays_releases"))
+  list(sheet_id = s$sheet_id, saved_at = s$saved_at, text = txt, releases = v("todays_releases"), news = v("overnight_news"), window = v("releases_in_window"), regime = v("regime_summary"),
+       planned = v("planned_setups"), stand = if (isTRUE(as.logical(s$stand_aside[1]))) if (nzchar(v("stand_aside_reason"))) v("stand_aside_reason") else "yes" else "")
 }
 
 # ---- Claude's suggested trades ----------------------------------------------------------------------------------
@@ -108,34 +109,39 @@ cc_suggest_prompt <- function(scan, f, scen, plan, morning = NULL, now = Sys.tim
   pats <- if (is.null(cd) || !nrow(cd)) "(none)" else paste(sprintf("- %s [%s%s]: cancels beyond %s, target %s; record %s", cd$label, ifelse(is.na(cd$dir), "context", ifelse(cd$dir > 0, "bullish", "bearish")),
     ifelse(cd$in_regime, "", ", outside regime"), cc_fmt_px(cd$invalid, d), cc_fmt_px(cd$target, d),
     ifelse(cd$hist_n >= 1, sprintf("target first %s%% n=%d", ifelse(is.finite(cd$hist_win), round(cd$hist_win), "-"), cd$hist_n), "none")), collapse = "\n")
-  sc <- if (is.null(scen) || !nrow(scen)) "(none)" else paste(sprintf("%s: entry %s, stop %s, target %s, R:R %s", scen$id, cc_fmt_px(scen$entry, d), cc_fmt_px(scen$stop, d), cc_fmt_px(scen$target, d), round(scen$rrr, 2)), collapse = "\n")
+  sc <- if (is.null(scen) || !nrow(scen)) "(none)" else paste(sprintf("%s: entry %s, stop %s, target %s, R:R %s%s", scen$id, cc_fmt_px(scen$entry, d), cc_fmt_px(scen$stop, d), cc_fmt_px(scen$target, d), round(scen$rrr, 2),
+    if (is.null(scen$score)) "" else sprintf("; app score %s/100 (%s); measured chance of target first %s%%", scen$score, scen$score_why, scen$chance), if (is.null(scen$setup4)) "" else paste0("; course set-up type: ", scen$setup4)), collapse = "\n")
   paste0(
     "You help a trading student on a DEMO account plan intraday trades on ", f$name %||% f$epic, " (Capital.com ", f$epic, ", quoted in ", f$currency %||% "", " with ", d, " decimals). ",
     "Time now ", format(now, "%d/%m/%Y %H:%M", tz = "Europe/London"), " UK. Price now: bid ", cc_fmt_px(f$bid, d), ", offer ", cc_fmt_px(f$offer, d), ". ",
-    "Capital.com minimum stop distance ", f$min_stop_distance %||% "-", ".\n",
+    "Capital.com minimum stop distance ", f$min_stop_distance %||% "-", "; deal size minimum ", f$min_size %||% "-", ", step ", f$size_step %||% "-", ".\n",
+    if (exists("cc_market_profile", mode = "function")) tryCatch(cc_profile_prompt(cc_market_profile(f$epic, f$name, f$type, f$currency), if (exists("cc_hours_text", mode = "function")) cc_hours_text(f$hours, now) else NULL), error = function(e) "") else "",
     "Chart: ", ctx$minutes, "-minute candles; ATR(14) ", cc_fmt_px(ctx$a[n], d), "; ADX(14) ", round(scan$adx %||% NA, 1), "; regime ", scan$regime, ".\n",
     "Student's plan: minimum reward:risk ", plan$min_rrr %||% "-", "; risk per trade ", plan$risk_pct %||% "-", "% of balance; holding up to ", plan$hold_h %||% "-", " hours.\n",
-    if (length(plan$rules_text) && nzchar(plan$rules_text)) paste0("Student's trading plan rules and their state NOW (a trade that breaks one cannot be sent; do NOT propose it):\n", plan$rules_text, "\n") else "",
+    if (length(plan$rules_text) && nzchar(plan$rules_text)) paste0("Student's trading plan rules and their state NOW (a trade that breaks a blocking rule cannot be sent, so prefer trades that pass them):\n", plan$rules_text, "\n") else "",
     "Patterns found now by rule (with their measured record on this market):\n", pats, "\n",
-    "The app's rule-based scenarios (all are deals at the market):\n", sc, "\n",
+    "The app's rule-based scenarios (all are deals at the market; the score 0-100 combines the measured chance against break-even with trend, regime, news, confluence, stop width, spread and plan rules):\n", sc, "\n",
+    if (length(scan$groups)) paste0("The student chose these course tools for this analysis: ", paste(scan$groups, collapse = ", "), ". Base your reasons on these tools only.\n") else "",
     "Last 40 candles (UK time, open high low close):\n", bars, "\n",
     if (!is.null(morning)) paste0("\n", morning, "\n") else "\nNo Morning Sheet is included.\n",
     if (!is.null(history) && nzchar(history)) paste0("\nTHE STUDENT'S OWN TRADES OF THE PREVIOUS 4 WORKING DAYS AND TODAY (from BigQuery):\n", history,
       "\nFIRST evaluate these trades: what repeated mistake made them lose (for example stops inside normal noise or below 1 ATR, a stop on an obvious level such as the overnight low, R:R below the plan, trading against the higher time-frame or the Morning Sheet bias, size), ",
       "and what would have turned them into winners (for example moving the stop to break-even at +1R, a wider stop with a smaller size). Then make sure every trade you suggest avoids those mistakes. Put the evaluation in past_trades_review (3-6 short sentences, facts from the list only).\n") else "",
-    "\nTASK: propose up to 3 trades that make sense NOW, using the price action, the patterns",
-    if (!is.null(morning)) " AND the Morning Sheet (news direction, releases inside the holding window, levels; respect STAND ASIDE)" else "", ". ",
-    "RULES: every trade is a DEAL opened NOW at the market (BUY at the offer ", cc_fmt_px(f$offer, d), ", SELL at the bid ", cc_fmt_px(f$bid, d), "): no limit or stop entries, no waiting orders. ",
-    "Reward:risk = |target - entry| / |entry - stop| MUST be at least ", plan$min_rrr %||% 1.5, " (the student's minimum): a trade below it cannot be placed, so do not propose it. ",
+    "\nTASK: you MUST recommend a trade. Return 1 to 3 trades, best first: the FIRST trade in suggestions is your recommendation and the list is NEVER empty. ",
+    "Use the price action, the patterns", if (!is.null(morning)) " and the Morning Sheet (news direction, releases inside the holding window, levels)" else "", ". ",
+    "If conditions are poor (regime unclear, a release in the window, the Morning Sheet says no trade, weak records), still recommend the best available trade and put every caution in cautions; standing aside is NOT an answer. ",
+    "RULES: every trade is a DEAL opened NOW at the market (BUY at the offer ", cc_fmt_px(f$offer, d), ", SELL at the bid ", cc_fmt_px(f$bid, d), "): no limit or stop entries, no waiting orders, so never base a trade on a straddle and never cite a straddle record. ",
+    "Reward:risk = |target - entry| / |entry - stop| MUST be at least ", plan$min_rrr %||% 1.5, " (the student's minimum). ",
     "For each give: side BUY or SELL; type MARKET; entry = the offer for BUY, the bid for SELL; ",
     "stop and target as absolute prices with ", d, " decimals; the stop beyond a real level and at least about 1 ATR from the entry; ",
-    "probability_pct = your estimate (0-100) that the target is reached before the stop; horizon_hours; why (max 2 short sentences, facts only); main_risk (1 short sentence, e.g. a release in the window). ",
-    "Every trade must respect the plan rules above (direction with the major trend of the Rule of Five when it has one, the higher R:R when against the daily / 4-hour trend, the allowed set-ups). If a rule that applies to every trade fails now (session, news window, regime, losses in a row), return an empty list and put the reason in stand_aside_reason. ",
+    "probability_pct = your estimate (0-100) that the target is reached before the stop; horizon_hours; why (max 2 short sentences, facts only); main_risk (1 short sentence). ",
+    "Prefer, in this order: a trade that passes every plan rule marked FAILS now (blocking) above; then one with the set-up record above break-even; then the higher R:R. If every direction breaks a blocking rule, still recommend the better one and name the rule in cautions. ",
     "EVIDENCE RULE: the 'baseline' figure of a scenario is how often ANY trade with those distances reached its target first in this market, whatever the set-up; it is not a forecast. ",
-    "A trade only pays if its chance is above break-even = 100 / (1 + R:R) percent (40% at 1.5, 33% at 2.0). Suggest a trade only when you can name the specific evidence that lifts it above break-even; ",
-    "state in 'why' the break-even percent and why your probability_pct is above it. A pattern record with fewer than 30 cases is weak evidence: say so. If nothing clears break-even, or today's Morning Sheet marks this market UNCLEAR / no trade, return an empty list: standing aside is a correct answer. ",
-    "Also give probability_pct for each of the app's scenarios. If no trade makes sense, return an empty list and say why in summary. ",
-    "Reply with ONE JSON object only: {\"summary\":\"1-2 sentences\",\"morning_sheet_used\":true|false,\"stand_aside_reason\":\"\",",
+    "Break-even = 100 / (1 + R:R) percent (40% at 1.5, 33% at 2.0); state it in 'why' with the evidence you used. ",
+    "WRITING RULES: give the number of cases (n) with every record or rate you cite, and call any record with n below 30 weak; never draw a firm lesson from fewer than 10 trades; ",
+    "when you cite ADX or a trend, say which reading it is (live ", ctx$minutes, "-minute chart, Morning Sheet, daily or 4-hour) and, if two readings disagree, say so once; do not repeat a point. ",
+    "Also give probability_pct for each of the app's scenarios. ",
+    "Reply with ONE JSON object only: {\"summary\":\"1-2 sentences\",\"morning_sheet_used\":true|false,\"cautions\":\"\",",
     "\"suggestions\":[{\"side\":\"SELL\",\"type\":\"MARKET\",\"entry\":0,\"stop\":0,\"target\":0,\"probability_pct\":0,\"horizon_hours\":0,\"why\":\"\",\"main_risk\":\"\"}],",
     "\"scenario_estimates\":[{\"id\":\"BUY MARKET\",\"probability_pct\":0}]", if (!is.null(history) && nzchar(history)) ",\"past_trades_review\":\"\"" else "", "}")
 }
@@ -161,16 +167,11 @@ cc_suggest_parse <- function(txt, f, min_rrr = NA) {
         rows$note[low] <- paste0(rows$note[low], sprintf(" (Target moved out to your minimum Reward:Risk %.2f.)", min_rrr)) } }
   }
   est <- j$scenario_estimates; est <- if (is.data.frame(est) && nrow(est) && all(c("id", "probability_pct") %in% names(est))) data.frame(id = as.character(est$id), claude_p = suppressWarnings(as.numeric(est$probability_pct)), stringsAsFactors = FALSE) else NULL
-  list(ok = TRUE, rows = rows, estimates = est, summary = as.character(j$summary %||% ""), used_sheet = isTRUE(j$morning_sheet_used), stand_aside = as.character(j$stand_aside_reason %||% ""), past_review = paste(as.character(unlist(j$past_trades_review %||% "")), collapse = " "))
+  list(ok = TRUE, rows = rows, estimates = est, summary = as.character(j$summary %||% ""), used_sheet = isTRUE(j$morning_sheet_used), stand_aside = as.character(j$cautions %||% j$stand_aside_reason %||% ""), past_review = paste(as.character(unlist(j$past_trades_review %||% "")), collapse = " "))
 }
 
 # ---- Yahoo as an alternative source of candles (futures / FX quotes; shifted onto Capital.com's price) -------------
-cc_yahoo_symbol <- function(epic, name = "") {
-  map <- c(OIL_BRENT = "BZ=F", OIL_CRUDE = "CL=F", GOLD = "GC=F", SILVER = "SI=F", NATURALGAS = "NG=F", COPPER = "HG=F", EURUSD = "EURUSD=X", GBPUSD = "GBPUSD=X",
-           USDJPY = "JPY=X", AUDUSD = "AUDUSD=X", USDCAD = "CAD=X", USDCHF = "CHF=X", NZDUSD = "NZDUSD=X", EURGBP = "EURGBP=X", US30 = "^DJI", US500 = "^GSPC", US100 = "^NDX",
-           UK100 = "^FTSE", DE40 = "^GDAXI", J225 = "^N225")
-  e <- toupper(epic %||% ""); if (e %in% names(map)) return(unname(map[[e]]))
-  n <- toupper(name %||% ""); if (grepl("BRENT", n)) "BZ=F" else if (grepl("CRUDE|WTI", n)) "CL=F" else if (grepl("GOLD", n)) "GC=F" else NA_character_ }
+# cc_yahoo_symbol(): R/utils_cc_markets.R (every asset class)
 cc_yahoo_bars <- function(fetch, symbol, res, hist_days = 20) {
   iv <- c(MINUTE_5 = "5m", MINUTE_15 = "15m", MINUTE_30 = "30m", HOUR = "60m")[res]
   if (is.na(iv)) stop("Yahoo has no ", res, " candles: choose 5, 15 or 30 minutes or 1 hour.")
@@ -224,8 +225,82 @@ cc_evidence <- function(rrr, setup_p, setup_n, min_n = 30L) {
        exp_r = ifelse(has, setup_p / 100 * rrr - (1 - setup_p / 100), NA_real_),
        record = ifelse(has, sprintf("%.0f%% of %d cases (likely %.0f-%.0f%%)", setup_p, as.integer(setup_n), w$lo, w$hi), "none"))
 }
+# *********** one recommended trade, always: Claude's first trade if the plan allows it, otherwise the scenario that fits the plan
+# with the best evidence (PROVEN first, then expected R, then R:R); if nothing fits the plan, the best one anyway, flagged
+cc_pick_recommended <- function(sc, claude_first = NA_character_) {
+  if (is.null(sc) || !NROW(sc)) return(NULL)
+  bl <- if ("blocked" %in% names(sc)) as.logical(sc$blocked) else rep(FALSE, nrow(sc)); bl[is.na(bl)] <- FALSE
+  scv <- if ("score" %in% names(sc)) suppressWarnings(as.numeric(sc$score)) else rep(NA_real_, nrow(sc)); has_sc <- any(is.finite(scv))
+  best <- if (has_sc && any(!bl)) max(scv[!bl], na.rm = TRUE) else NA
+  if (!is.na(claude_first) && claude_first %in% sc$id) { k <- match(claude_first, sc$id)   # ************* Claude's first choice wins only when its score is within 5 points of the best
+    if (!bl[k] && (!has_sc || !is.finite(scv[k]) || scv[k] >= best - 5)) return(list(k = k, id = sc$id[k], fits = TRUE, why = if (has_sc && is.finite(scv[k])) sprintf("Claude's first choice, it fits your plan and its score (%d) is the best or within 5 points of it.", as.integer(scv[k])) else "Claude's first choice, and it fits your plan.")) }
+  num <- function(x) { v <- suppressWarnings(as.numeric(if (is.null(x)) rep(NA, nrow(sc)) else x)); v[!is.finite(v)] <- -Inf; v }
+  pv <- if ("ev_proven" %in% names(sc)) as.logical(sc$ev_proven) else rep(FALSE, nrow(sc)); pv[is.na(pv)] <- FALSE
+  ag <- grepl("^AGAINST", as.character(sc$evidence %||% rep("", nrow(sc))))
+  o <- if ("score" %in% names(sc) && any(is.finite(suppressWarnings(as.numeric(sc$score))))) order(bl, -num(sc$score), -num(sc$rrr)) else order(bl, ag, !pv, -num(sc$ev_exp_r), -num(sc$rrr)); k <- o[1]
+  list(k = k, id = sc$id[k], fits = !bl[k],
+       why = if (!bl[k] && has_sc) sprintf("Highest score among the scenarios that fit your plan (%d of 100)%s.", as.integer(scv[k]), if (!is.na(claude_first) && claude_first %in% sc$id && claude_first != sc$id[k]) sprintf("; Claude's first choice %s scored %s", claude_first, ifelse(is.finite(scv[match(claude_first, sc$id)]), as.integer(scv[match(claude_first, sc$id)]), "-")) else "")
+             else if (!bl[k]) sprintf("Best evidence among the scenarios that fit your plan (%s).", sc$evidence[k] %||% "no record")
+             else sprintf("No scenario fits your plan now; this is the best of the rest and it CANNOT be sent while a blocking rule fails: %s", sc$checks[k] %||% sc$plan[k] %||% "")) }
 # regime label written for a market in today's Morning Sheet text ("- Brent Crude: ..., UNCLEAR_NO_TRADE"); "" when not found
 cc_ms_regime <- function(ms_text, market_name) { if (is.null(ms_text) || !nzchar(ms_text %||% "") || !nzchar(market_name %||% "")) return("")
   w <- strsplit(tolower(market_name), "[^a-z]+")[[1]]; w <- w[nchar(w) >= 4 & !w %in% c("spot", "crude", "cash", "index")]; if (!length(w)) return("")
   ln <- grep("^- ", strsplit(ms_text, "\n")[[1]], value = TRUE); ln <- ln[grepl(w[1], tolower(ln), fixed = TRUE)]; if (!length(ln)) return("")
   m <- regmatches(ln[1], regexpr("UNCLEAR_NO_TRADE|TREND|RANGE", ln[1])); if (length(m)) m else "" }
+
+# ************* two figures per scenario, first columns of the scenario table ------------------------------------------
+# chance (0-100): how often the target is likely to be reached before the stop. Measured only: the set-up's own record
+#   pulled towards the baseline of this market when it has few cases (as if 30 baseline cases were added to it).
+# score (0-100): the chance against the break-even of the R:R (expected R: 0 R = 50, +1 R = 100, -1 R = 0), then points
+#   for every other critical factor: evidence, higher time-frame trend, regime, news, confluence, stop width, spread,
+#   Morning Sheet and the other plan rules. A scenario blocked by a check or the plan is capped at 25.
+cc_success <- function(sc, regime = NA_character_, atr = NA_real_, spread = 0, prior_n = 30) {
+  if (is.null(sc) || !NROW(sc)) return(sc)
+  n <- nrow(sc); g <- function(k, d = NA) if (k %in% names(sc)) sc[[k]] else rep(d, n); num <- function(k) suppressWarnings(as.numeric(g(k)))
+  rrr <- num("rrr"); be <- cc_breakeven(rrr); base <- num("meas_p"); sp <- num("setup_p"); sn <- num("setup_n"); has <- is.finite(sp) & is.finite(sn) & sn > 0
+  b0 <- ifelse(is.finite(base), base, be)                                   # no baseline: break-even is the neutral start
+  chance <- ifelse(has, (sp * sn + b0 * prior_n) / (sn + prior_n), b0)
+  exp_r <- chance / 100 * (1 + rrr) - 1
+  pts <- list(); add <- function(name, v) pts[[name]] <<- ifelse(is.finite(v), v, 0)
+  add("edge", 50 + 50 * pmax(-1, pmin(1, exp_r)) - 50)                      # shown as + / - around 50
+  ev <- as.character(g("evidence", ""))
+  add("evidence", ifelse(grepl("^PROVEN", ev), 8, ifelse(grepl("^AGAINST", ev), -12, ifelse(grepl("^NO RECORD", ev), -5, ifelse(grepl("too few", ev), -3, 0)))))
+  fit <- as.character(g("fit", "")); add("trend", ifelse(fit %in% "with", 6, ifelse(fit %in% "against", -10, 0)))
+  inr <- as.logical(g("in_regime")); add("regime", ifelse(identical(regime, "MIXED"), -6, 0) + ifelse(inr %in% TRUE, 4, ifelse(inr %in% FALSE, -4, 0)))
+  nw <- as.character(g("news", "")); add("news", ifelse(is.na(nw) | nw %in% c("", "-", "none", "Morning Sheet not loaded"), 0, -8))
+  cf <- as.character(g("confl", "")); cs <- suppressWarnings(as.numeric(sub("^([0-9]+)/([0-9]+).*$", "\\1", cf))); co <- suppressWarnings(as.numeric(sub("^([0-9]+)/([0-9]+).*$", "\\2", cf)))
+  add("confluence", ifelse(is.finite(cs) & is.finite(co) & co > 0, round((cs / co - 0.5) * 10), 0))
+  sd <- abs(num("entry") - num("stop")); add("stop width", if (is.finite(atr) && atr > 0) ifelse(sd / atr < 1, -6, 0) else 0)
+  add("spread", if (is.finite(spread) && spread > 0) ifelse(spread / sd > 0.2, -8, ifelse(spread / sd > 0.1, -4, 0)) else 0)
+  pl <- as.character(g("plan", "")); fails <- lapply(strsplit(sub("^[^:|]*[:|]\\s*", "", ifelse(grepl("BREAKS|WARN", pl), pl, "")), ";|\\|"), trimws)
+  covered <- "High-impact news|Higher time-frame|Rule of Five|Market regime|^$|^OK$|^half size|WARN \\(allowed"
+  add("Morning Sheet", ifelse(grepl("Morning Sheet allows this market", pl), -6, 0))
+  add("other plan rules", vapply(fails, function(x) { x <- sub("^WARN \\(allowed, Setup\\):\\s*", "", x); x <- x[!grepl(covered, x) & !grepl("Morning Sheet allows", x)]; -min(9, 3 * length(x)) }, 0))
+  m <- do.call(cbind, pts); raw <- 50 + rowSums(m); bl <- as.logical(g("blocked", FALSE)) %in% TRUE
+  score <- pmax(0, pmin(100, round(raw))); score[bl] <- pmin(score[bl], 25)
+  sc$chance <- round(chance); sc$score <- as.integer(score); sc$exp_r_chance <- round(exp_r, 2)
+  sc$score_why <- vapply(seq_len(n), function(i) { v <- m[i, ]; v <- v[v != 0 | names(v) == "edge"]
+    paste0(sprintf("50 %+d edge (chance %.0f%% vs break-even %.0f%% = %+.2f R)", as.integer(round(v[["edge"]])), chance[i], be[i], exp_r[i]),
+           if (length(v) > 1) paste0(" ", paste(sprintf("%+d %s", as.integer(v[names(v) != "edge"]), names(v)[names(v) != "edge"]), collapse = " ")) else "",
+           if (bl[i]) "; capped at 25: blocked by a check or the plan" else "") }, "")
+  sc$chance_why <- ifelse(has, sprintf("set-up record %.0f%% of %d cases, pulled towards the baseline %.0f%%", sp, as.integer(sn), b0),
+                          ifelse(is.finite(base), sprintf("baseline only %.0f%% (no record for this set-up)", base), "break-even only (no record, no baseline)"))
+  sc }
+cc_score_band <- function(score) ifelse(!is.finite(score), "-", ifelse(score >= 65, "STRONG", ifelse(score >= 50, "FAIR", "WEAK")))
+
+# ******************** one click: the best scenario across markets and the 5 reasons shown to the trader ------------------------
+cc_oneclick_pick <- function(all) {
+  if (is.null(all) || !NROW(all)) return(NULL); sc <- suppressWarnings(as.numeric(all$score)); sc[!is.finite(sc)] <- -1; bl <- as.logical(all$blocked) %in% TRUE
+  rr <- suppressWarnings(as.numeric(all$rrr)); rr[!is.finite(rr)] <- 0; o <- order(bl, -sc, -rr); list(k = o[1], fits = !bl[o[1]], order = o) }
+cc_oneclick_reasons <- function(all, k, n_markets, size = NA, ccy = "", ms_used = FALSE) {
+  r <- all[k, , drop = FALSE]; g <- function(x) { v <- r[[x]]; if (is.null(v) || !length(v) || is.na(v[1])) "" else as.character(v[1]) }; num <- function(x) suppressWarnings(as.numeric(g(x)))
+  be <- num("be_pct"); if (!is.finite(be)) be <- 100 / (1 + num("rrr")); others <- all[-k, , drop = FALSE]; others <- others[!(as.logical(others$blocked) %in% TRUE), , drop = FALSE]
+  nxt <- if (nrow(others)) others[order(-suppressWarnings(as.numeric(others$score))), , drop = FALSE][1, ] else NULL
+  c(sprintf("Highest score of %d scenario(s) worked out across %d market(s): %s on %s scores %s/100 (%s), with a measured %s%% chance of reaching the target first against the %.0f%% its R:R of %.2f needs.",
+            nrow(all), n_markets, g("id"), g("market"), g("score"), cc_score_band(num("score")), g("chance"), be, num("rrr")),
+    sprintf("Evidence: %s. %s", if (nzchar(g("evidence"))) g("evidence") else "no record", if (nzchar(g("setup_rec")) && !g("setup_rec") %in% c("none", "-")) paste0("Set-up record: ", g("setup_rec"), ".") else "The chance comes from this market's baseline for these stop and target distances."),
+    sprintf("Trend and regime: %s the daily / 4-hour trend (%s); market regime %s.", if (g("fit") == "with") "with" else if (g("fit") == "against") "AGAINST" else "neutral to", if (nzchar(g("htf"))) g("htf") else "-", if (nzchar(g("regime"))) g("regime") else "-"),
+    sprintf("Morning Sheet and news: %s %s", if (isTRUE(ms_used)) "today's Morning Sheet was used by the Claude API." else "no Morning Sheet was found for today.",
+            if (nzchar(g("news")) && !g("news") %in% c("-", "none")) paste("High-impact news inside the holding time:", substr(g("news"), 1, 160)) else "No high-impact release inside the holding time."),
+    sprintf("Risk %s to make %s at size %s (stop %s, target %s)%s. %s", g("risk_txt"), g("reward_txt"), if (is.finite(size)) format(size) else "-", g("stop"), g("target"),
+            if (!is.null(nxt)) sprintf("; next best was %s on %s at %s/100", nxt$id, nxt$market, nxt$score) else "", if (nzchar(g("score_why"))) paste("Score detail:", g("score_why")) else "")) }

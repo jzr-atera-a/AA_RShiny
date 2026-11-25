@@ -67,10 +67,9 @@ clear_debug_log <- function() {
 # (grouped under "API Configuration" in the sidebar), with each suite's tabs
 # grouped under their own named section. See R/utils_api.R for how one
 # shared APIManager class serves every suite's BigQuery table(s), and
-# R/module_loader.R for the recursive module-discovery that lets modules
-# live inside these grouped subfolders
-# (modules/"Day Planner"/generate_schedule/manifest.yml etc) instead of a
-# flat modules/<id>/ layout.
+# R/module_loader.R for module discovery: one folder per main tab group and
+# ONE .R file per sub-tab (modules/"Day Planner"/generate_schedule.R etc),
+# each holding its header, <id>_ui and <id>_server. See STRUCTURE.md.
 #
 # NOTE: this is a SEPARATE unified app from the Book Summary / Flex Table /
 # Mind Map / Knowledge Graph unified suite - same architectural pattern,
@@ -94,7 +93,7 @@ suppressPackageStartupMessages({
 # DEPLOYMENT DEPENDENCY DECLARATIONS - DO NOT REMOVE
 # ============================================================
 # rsconnect's static dependency scanner can only see literal
-# library()/pkg::fn() calls, not packages named inside YAML manifests, so
+# library()/pkg::fn() calls, not packages named inside module headers, so
 # every package any module needs (across all three suites) is declared here
 # explicitly. `curl` is required for the streaming Claude API implementation
 # (curl::curl_fetch_stream) shared by every suite's Generate/Scan tab.
@@ -109,7 +108,8 @@ suppressPackageStartupMessages({
   library(dplyr)
   library(stringr)
   library(tidyr)
-  library(httr2)    # Titan calendar (CalDAV) - Events Scheduling
+  library(httr2)    # Titan calendar (CalDAV) - Events Scheduling; Google Drive REST calls
+  library(gargle)   # Google service-account tokens for Google Drive (bigrquery depends on it)
   library(xml2)
   library(uuid)
 })
@@ -120,14 +120,19 @@ source("R/utils_common.R")
 source("R/utils_api.R")
 source("R/utils_export.R")
 source("R/utils_ics.R")
+source("R/utils_calendar_export.R")   # calendar (.ics) export helpers, loaded once (the Browse tabs used to re-source this per session)
 source("R/utils_titan.R")
 source("R/utils_slack.R")
 source("R/utils_zoom.R")
 source("R/utils_muscle_body.R")
 source("R/utils_muscle.R")
 source("R/utils_local_creds.R")
+source("R/utils_gdrive.R")            # Google Drive folders and uploads for saved diagrams
+source("R/utils_diagram.R")           # diagram engine: PNG, PDF, SVG, HTML and GIF
+source("R/utils_drive_export.R")      # 'Save to Google Drive' box shared by the diagram tabs
 source("R/utils_nav.R")
 source("R/utils_tables.R")
+source("R/utils_suite_tabs.R")        # shared Bulk Import / Browse implementations
 
 api_manager <- APIManager$new()
 

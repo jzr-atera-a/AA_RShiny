@@ -103,7 +103,17 @@ tr_api_error_text <- function(status, body) {
 tr_yahoo_symbols <- c(EURUSD = "EURUSD=X", USDJPY = "JPY=X", GBPUSD = "GBPUSD=X", AUDUSD = "AUDUSD=X", WTI = "CL=F", BRENT = "BZ=F",
                       GOLD = "GC=F", SILVER = "SI=F", NATGAS = "NG=F", COPPER = "HG=F", USDCAD = "CAD=X", USDCHF = "CHF=X", NZDUSD = "NZDUSD=X",
                       EURGBP = "EURGBP=X", EURJPY = "EURJPY=X", GBPJPY = "GBPJPY=X", DOW = "^DJI", SP500 = "^GSPC", NASDAQ = "^NDX", FTSE100 = "^FTSE",
-                      GER40 = "^GDAXI", JP225 = "^N225")
+                      GER40 = "^GDAXI", JP225 = "^N225", PLATINUM = "PL=F", HEATOIL = "HO=F", GASOLINE = "RB=F", COCOA = "CC=F", COFFEE = "KC=F", SUGAR = "SB=F",
+                      WHEAT = "ZW=F", CORN = "ZC=F", SOYBEANS = "ZS=F")
+# Yahoo symbol of an app market code: the built-in list, then markets added from the Capital.com watchlist, then the epic's map
+tr_yahoo_sym <- function(code) {
+  cd <- toupper(trimws(as.character(code %||% "")[1])); if (is.na(cd) || !nzchar(cd)) return(NA_character_)
+  if (cd %in% names(tr_yahoo_symbols)) return(unname(tr_yahoo_symbols[[cd]]))
+  r <- if (exists("tr_market_reg")) get0(cd, envir = tr_market_reg, inherits = FALSE) else NULL
+  if (!is.null(r) && !is.na(r$yahoo %||% NA)) return(r$yahoo)
+  if (exists("cc_yahoo_symbol", mode = "function")) return(cc_yahoo_symbol(if (!is.null(r) && !is.na(r$epic %||% NA)) r$epic else cd, if (is.null(r)) "" else r$label))
+  NA_character_
+}
 
 tr_yahoo_url <- function(symbol, range = "5d", interval = "60m")
   paste0("https://query1.finance.yahoo.com/v8/finance/chart/", utils::URLencode(symbol, reserved = TRUE), "?range=", range, "&interval=", interval, "&includePrePost=true")
@@ -167,19 +177,24 @@ tr_scale_to <- function(ref, yahoo) {
 # ref = named numeric vector of current prices already on the sheet (IG screenshots), used only for scaling.
 # Returns list(rows = data.frame(code, low, high, cur, time, scale, source), dow, nikkei, problems)
 # decimals shown for a price: FX 4 (JPY pairs 3), everything else (oil and index points, gold) 1
-tr_price_digits <- function(code) { cd <- toupper(if (is.null(code) || is.na(code[1])) "" else code[1]); if (grepl("JPY", cd)) 3 else if (grepl("^[A-Z]{6}$", cd)) 4 else 1 }
+tr_price_digits <- function(code) { cd <- toupper(if (is.null(code) || is.na(code[1])) "" else code[1]); if (cd %in% c("WTI", "BRENT", "NATGAS")) 0 else if (grepl("JPY", cd)) 3 else if (grepl("^[A-Z]{6}$", cd)) 4 else 1 }
+# ******************** IG quotes oil and gas in points: the unit of every oil and gas row of the Morning Sheet (user's choice, 21 Nov)
+tr_ig_points <- c(WTI = 100, BRENT = 100, NATGAS = 1000)
 tr_yahoo_morning <- function(codes, day, now = Sys.time(), ref = numeric(0), fetch = tr_yahoo_fetch) {
   win <- tr_overnight_window(day, now); rows <- list(); problems <- character(0)
   rng <- if (as.numeric(difftime(now, win$to, units = "days")) > 4) "1mo" else "5d"
   for (cd in unique(toupper(codes[!is.na(codes) & nzchar(codes)]))) {
-    sym <- tr_yahoo_symbols[cd]; if (is.na(sym)) { problems <- c(problems, paste0(cd, ": no Yahoo symbol known")); next }
+    sym <- tr_yahoo_sym(cd); if (is.na(sym)) { problems <- c(problems, paste0(cd, ": no Yahoo symbol known")); next }
     p <- tryCatch(fetch(sym, rng, "60m"), error = function(e) { problems <<- c(problems, paste0(cd, ": ", conditionMessage(e))); NULL }); if (is.null(p)) next
     o <- tr_overnight_from_bars(p$bars, win$from, win$to); if (is.null(o)) { problems <- c(problems, paste0(cd, ": no bars in the overnight window")); next }
-    k <- tr_scale_to(unname(ref[cd]), o$cur)
-    if (k == 1 && cd %in% c("WTI", "BRENT") && o$cur < 1000) k <- 100        # IG quotes oil in points (x100) even when no IG price is typed
+    # ******************** every oil and gas row in IG points (WTI / Brent x100, natural gas x1000), whatever unit the typed price was in.
+    # Before 21 Nov a typed price in dollars was subtracted from a price already in cents: Brent lows of -34.1 and highs of 254.7.
+    k <- if (!is.na(tr_ig_points[cd])) tr_ig_points[[cd]] else tr_scale_to(unname(ref[cd]), o$cur)
     dg <- tr_price_digits(cd); rd <- function(v) round(v, dg)
-    # shift onto the IG price when you have typed / read it (IG and Yahoo differ by a few points to ~2%)
-    rf <- unname(ref[cd]); off <- if (length(rf) == 1 && is.finite(rf)) rf - o$cur * k else 0
+    rf <- suppressWarnings(as.numeric(unname(ref[cd]))); if (length(rf) != 1) rf <- NA_real_
+    if (is.finite(rf) && !is.na(tr_ig_points[cd]) && rf < o$cur * k / 10) rf <- rf * k        # a typed price in dollars, brought to IG points
+    # shift onto the IG price when you have typed / read it (IG and Yahoo differ by a few points to ~2%); a gap over 3% is a wrong price, not an offset
+    off <- if (is.finite(rf) && abs(rf / (o$cur * k) - 1) <= 0.03) rf - o$cur * k else { if (is.finite(rf)) problems <- c(problems, sprintf("%s: the price on the sheet (%s) is more than 3%% from the market (%s), so it was not used.", cd, format(rf), format(round(o$cur * k, dg)))); 0 }
     # previous session high / low / close from the SAME hourly series (the daily series can be on another futures contract)
     hb_all <- p$bars; ud <- as.Date(format(hb_all$time, "%Y-%m-%d", tz = "Europe/London"))
     prev_d <- suppressWarnings(max(ud[ud < as.Date(day) & !(format(ud, "%u") %in% c("6", "7"))]))
@@ -439,14 +454,14 @@ tr_trade_facts <- function(trade, legs = NULL, events = NULL, levels = NULL, she
 # Server (Dropbox API, "Full Dropbox" app): /London Academy of Trading/Jose-F_Zubizarreta/{...}
 # LAT_DROPBOX_ROOT overrides the Dropbox root (tests, or another computer).
 tr_lat_student_rel <- "London Academy of Trading/Jose-F_Zubizarreta"
-tr_lat_sheet_dirs <- c(morning = "Morning Sheets", trade = "Individual Trade Sheets", other = "")
+tr_lat_sheet_dirs <- c(morning = "Morning Sheets", trade = "Individual Trade Sheets", review = "Weekly Reviews", other = "")
 tr_lat_root_local <- function() Sys.getenv("LAT_DROPBOX_ROOT", "C:/Users/jfz00/Dropbox")
 # a Windows drive path (C:/...) means nothing on Linux / macOS: it would become a folder named "C:" inside the app
 tr_local_path_ok <- function(p) length(p) == 1 && !is.na(p) && nzchar(p) && (.Platform$OS.type == "windows" || !grepl("^[A-Za-z]:[/\\]", p))
 tr_lat_base_local <- function() file.path(tr_lat_root_local(), tr_lat_student_rel)
 tr_lat_base_api <- function() paste0("/", tr_lat_student_rel)
 # where a sheet of this kind goes: list(local = folder or "" when this computer has no such Dropbox, api = Dropbox path)
-tr_sheet_targets <- function(kind = c("morning", "trade", "other")) {
+tr_sheet_targets <- function(kind = c("morning", "trade", "review", "other")) {
   kind <- match.arg(kind); sub <- tr_lat_sheet_dirs[[kind]]
   root_ok <- !tr_is_server() && tr_local_path_ok(tr_lat_root_local()) && dir.exists(tr_lat_root_local())
   list(local = if (root_ok) sub("/$", "", file.path(tr_lat_base_local(), sub)) else "", api = sub("/$", "", paste0(tr_lat_base_api(), if (nzchar(sub)) paste0("/", sub) else "")))
@@ -495,7 +510,7 @@ tr_yahoo_range_for <- function(from) { d <- as.numeric(difftime(Sys.time(), from
   if (d <= 4) "5d" else if (d <= 28) "1mo" else if (d <= 85) "3mo" else if (d <= 180) "6mo" else if (d <= 360) "1y" else "2y" }
 # kind "entry": the run-up to the entry; "post_exit": entry to 12 h after the exit. Returns list(file, caption) or NULL.
 tr_trade_chart_png <- function(trade, legs = NULL, events = NULL, kind = c("entry", "post_exit"), file = tempfile(fileext = ".png"), fetch = tr_yahoo_fetch, now = Sys.time()) {
-  kind <- match.arg(kind); sym <- unname(tr_yahoo_symbols[toupper(trade$asset)]); if (is.na(sym) || is.na(trade$entry_ts)) return(NULL)
+  kind <- match.arg(kind); sym <- tr_yahoo_sym(trade$asset); if (is.na(sym) || is.na(trade$entry_ts)) return(NULL)
   utc <- function(x) { x <- as.POSIXct(x); attr(x, "tzone") <- "UTC"; x }
   trade$entry_ts <- utc(trade$entry_ts); if (!is.null(legs) && nrow(legs)) legs$exit_ts <- utc(legs$exit_ts); if (!is.null(events) && nrow(events)) events$event_ts <- utc(events$event_ts)
   ex <- if (!is.null(legs) && nrow(legs) && any(!is.na(legs$exit_ts))) max(legs$exit_ts, na.rm = TRUE) else as.POSIXct(NA)
@@ -548,21 +563,22 @@ u3_urls <- function(txt) { u <- unlist(regmatches(tr_or(txt, ""), gregexpr("http
 # =============================================================================================
 # M. Fill the empty cells of a Morning Sheet from Yahoo (values already there are kept)
 # =============================================================================================
-tr_morning_codes <- c("EURUSD", "USDJPY", "GBPUSD", "AUDUSD", "WTI", "GOLD", "BRENT")
+tr_morning_codes <- c("EURUSD", "USDJPY", "GBPUSD", "AUDUSD", "WTI", "GOLD", "BRENT", "NATGAS")
 # hdr: one-row morning_sheets frame; lv: its morning_levels rows (may be empty); y: tr_yahoo_morning() result.
 # Returns list(hdr, lv, filled = character vector of what was filled).
-tr_morning_fill <- function(hdr, lv, y, sid, day) {
+tr_morning_fill <- function(hdr, lv, y, sid, day, refresh = FALSE) {   # refresh = TRUE ********************: replace the values, not only the empty ones
   filled <- character(0)
   lv <- tr_coerce("morning_levels", if (is.null(lv) || !nrow(lv)) NULL else lv)
-  for (cd in unique(c(tr_morning_codes, lv$instrument))) {
+  for (cd in unique(c(tr_morning_codes, lv$instrument, if (!is.null(y$rows)) y$rows$code))) {   # every market read (watchlist markets of any asset class too)
     r <- if (!is.null(y$rows)) y$rows[y$rows$code == cd, , drop = FALSE] else NULL; if (is.null(r) || !nrow(r)) next
     i <- which(lv$instrument == cd)[1]
     if (is.na(i)) { lv <- rbind(lv, tr_coerce("morning_levels", data.frame(level_id = paste0(sid, "_", cd), sheet_id = sid, sheet_date = as.Date(day), instrument = cd, stringsAsFactors = FALSE))); i <- nrow(lv) }
-    set <- function(col, val, lab) if (!is.finite(suppressWarnings(as.numeric(lv[[col]][i]))) && is.finite(val)) { lv[[col]][i] <<- val; filled <<- c(filled, paste(tr_asset_label(cd), lab)) }
+    set <- function(col, val, lab) if ((refresh || !is.finite(suppressWarnings(as.numeric(lv[[col]][i])))) && is.finite(val)) { lv[[col]][i] <<- val; filled <<- c(filled, paste(tr_asset_label(cd), lab)) }
     set("overnight_low", r$low, "low"); set("overnight_high", r$high, "high"); set("current_price", r$cur, "price")
-    if (is.na(lv$time_now_uk[i]) || !nzchar(lv$time_now_uk[i]) || grepl("~", lv$time_now_uk[i])) { lv$time_now_uk[i] <- r$time; filled <- c(filled, paste(tr_asset_label(cd), "time")) }
+    if (refresh) { for (cc in c("adx14", "prior_high", "prior_low", "prior_close")) if (cc %in% names(lv)) lv[[cc]][i] <- c(adx14 = r$adx, prior_high = r$prior_high, prior_low = r$prior_low, prior_close = r$prior_close)[[cc]] }
+    if (refresh || is.na(lv$time_now_uk[i]) || !nzchar(lv$time_now_uk[i]) || grepl("~", lv$time_now_uk[i])) { lv$time_now_uk[i] <- r$time; filled <- c(filled, paste(tr_asset_label(cd), "time")) }
   }
-  idx <- function(x, p, pc, pp, lab) if (!is.null(x) && !is.finite(suppressWarnings(as.numeric(hdr[[p]])))) {
+  idx <- function(x, p, pc, pp, lab) if (!is.null(x) && (refresh || !is.finite(suppressWarnings(as.numeric(hdr[[p]]))) || !is.finite(suppressWarnings(as.numeric(hdr[[pp]]))))) {
     hdr[[p]] <<- x$price; hdr[[pc]] <<- round(x$chg_pct, 2); hdr[[pp]] <<- round(x$chg_pts, 2); filled <<- c(filled, lab) }
   idx(y$dow, "dow_price", "dow_change_pct", "dow_change_pts", "Dow"); idx(y$nikkei, "nikkei_price", "nikkei_change_pct", "nikkei_change_pts", "Nikkei")
   list(hdr = hdr, lv = lv, filled = filled)

@@ -113,12 +113,13 @@ tr_save_to_dropbox <- function(files, local_dir = "", api_dir = "", token = Sys.
 }
 
 # Top 3 news for the Morning Sheet: general markets, Brent oil, or another asset the user names
-tr_news_prompt <- function(day, topic = c("general", "brent", "other"), asset = "") {
+tr_news_prompt <- function(day, topic = c("general", "brent", "other", "markets"), asset = "", n = if (identical(topic[1], "markets")) 5 else 3) {
   topic <- match.arg(topic)
   what <- switch(topic, general = "the global financial markets (equities, bonds, currencies, commodities, central banks)",
                  brent = "Brent crude oil (supply, OPEC+, inventories, demand, geopolitics, prices)",
-                 other = sprintf("%s (what moves its price)", if (nzchar(asset)) asset else "the markets"))
-  paste0("Use web search to find the 3 most important news stories about ", what, " published overnight before ", format(as.Date(day), "%A %d %B %Y"),
+                 other = sprintf("%s (what moves its price)", if (nzchar(asset)) asset else "the markets"),
+                 markets = sprintf("the markets this trader follows, at least one story per market when there is one: %s", if (nzchar(asset)) asset else "the global markets"))
+  paste0("Use web search to find the ", n, " most important news stories about ", what, " published overnight before ", format(as.Date(day), "%A %d %B %Y"),
          " 07:00 UK time (from about 18:00 UK the previous evening; on a Monday include the weekend). Use reputable news sources (Reuters, Bloomberg, Financial Times, ",
          "CNBC, MarketWatch, Wall Street Journal, AP, the official source for policy decisions).\n",
          "For each story write for a reader who has not followed it:\n",
@@ -126,16 +127,16 @@ tr_news_prompt <- function(day, topic = c("general", "brent", "other"), asset = 
          "- context: 2 to 3 further FACTUAL sentences taken from the source: the background (what was expected or decided before, the previous level, who is involved), ",
          "the figures reported, and what the source says happens next (a meeting, a deadline, a release). Name the market or asset concerned.\n",
          "No opinions of your own, no trading advice, no predictions beyond what the source reports. Give the source name, the publication time if shown, and the exact article URL. ",
-         "Do NOT invent: if you find fewer than 3 stories with a source, return fewer.\n",
+         "Do NOT invent: if you find fewer than ", n, " stories with a source, return fewer.\n",
          "Reply with ONE JSON object and nothing else: {\"news\": [{\"headline\": string, \"context\": string, \"source\": string, \"time\": string|null, \"url\": string}]}")
 }
 # items -> list of valid items (headline + https URL), at most 3
-tr_news_items <- function(items) {
+tr_news_items <- function(items, n = 5) {
   if (is.null(items) || !length(items)) return(list())
   if (is.data.frame(items)) items <- lapply(seq_len(nrow(items)), function(i) as.list(items[i, ]))
   g <- function(x, k) { v <- x[[k]]; if (is.null(v) || !length(v) || is.na(v[1])) "" else trimws(as.character(v[1])) }
   ok <- Filter(function(x) is.list(x) && nzchar(g(x, "headline")) && grepl("^https?://", g(x, "url")), items)
-  utils::head(lapply(ok, function(x) list(headline = sub("[.]?$", ".", g(x, "headline")), context = g(x, "context"), source = g(x, "source"), time = g(x, "time"), url = g(x, "url"))), 3)
+  utils::head(lapply(ok, function(x) list(headline = sub("[.]?$", ".", g(x, "headline")), context = g(x, "context"), source = g(x, "source"), time = g(x, "time"), url = g(x, "url"))), n)
 }
 # one paragraph per story: headline, context, (source, time) and the link (made clickable on the Word sheet)
 tr_news_lines <- function(items) {
@@ -156,3 +157,51 @@ tr_ms_check_levels <- function(all) {
     if (is.finite(lo) && (lo > cur * (1 + 1e-9) || lo < cur * 0.85)) { notes <- c(notes, sprintf("%s low %s (price %s).", nm, format(lo), format(cur))); all$low[k] <- NA } }
   list(levels = all, notes = notes)
 }
+
+# ******************** calendar repairs (21 Nov): yesterday's list carried with its results, impact for an energy trader, units, implausible actuals
+# prev: yesterday's "Today's Data Releases" (data frame); over: the overnight list from the feeds. The overnight list is the union:
+# every event of yesterday's list stays, the feed's row wins, an actual already known is kept.
+tr_cal_carry <- function(prev, over) {
+  key <- function(d) paste(gsub("^[A-Za-z]{3} ", "", d$time), gsub("[^a-z0-9]", "", tolower(sub(" \\((oil|energy)\\)$", "", d$event))))
+  if (is.null(prev) || !nrow(prev)) return(over %||% prev); if (is.null(over) || !nrow(over)) return(prev)
+  ko <- key(over); kp <- key(prev)
+  for (i in which(kp %in% ko)) { j <- match(kp[i], ko); if (!nzchar(over$actual[j] %||% "") && nzchar(prev$actual[i] %||% "")) over$actual[j] <- prev$actual[i] }
+  out <- rbind(over, prev[!(kp %in% ko), names(over), drop = FALSE]); m <- vapply(out$time, function(t) { x <- regmatches(t, regexpr("\\d{1,2}:\\d{2}", t)); if (length(x)) { h <- as.numeric(strsplit(x, ":")[[1]]); h[1] * 60 + h[2] } else 9999 }, 0)
+  dy <- match(substr(out$time, 1, 3), c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")); dy[is.na(dy)] <- 0
+  out <- out[order(dy, m), , drop = FALSE]; rownames(out) <- NULL; out }
+tr_cal_fix <- function(df) {
+  if (is.null(df) || !nrow(df)) return(df)
+  ev <- df$event; gas <- grepl("(?i)natural gas|nat gas", ev, perl = TRUE)
+  df$event <- ifelse(gas, sub(" \\(oil\\)$", " (energy)", ev), ev)
+  df$importance[grepl("(?i)EIA|crude oil inventories|natural gas storage|crude inventories", df$event, perl = TRUE)] <- "High"   # the plan's key events
+  api <- grepl("(?i)API weekly|API crude", df$event, perl = TRUE); df$importance[api & df$importance %in% c("Low", "")] <- "Medium"
+  num <- function(x) suppressWarnings(as.numeric(gsub("[^0-9.+-]", "", x)))
+  pct <- grepl("%", df$forecast) | grepl("%", df$previous)
+  add <- pct & nzchar(df$actual) & !grepl("%", df$actual) & !is.na(num(df$actual)) & !grepl("[KMB]$", df$actual)
+  df$actual[add] <- paste0(df$actual[add], "%")
+  a <- num(df$actual); f <- num(df$forecast); p <- num(df$previous); same_unit <- !grepl("[KMB]", paste(df$actual, df$forecast))
+  thr <- pmax(5 * abs(f - ifelse(is.na(p), f, p)), 0.5 * abs(f), 1)
+  bad <- same_unit & !is.na(a) & !is.na(f) & abs(a - f) > thr & !grepl("check", df$actual)
+  df$actual[bad] <- paste(df$actual[bad], "(check)")
+  df }
+
+# ******************** news for the one-click sheet: one block, short lines, reputable sources only, no repeats
+tr_news_bad_source <- "(?i)(^|[./ ])(x\\.com|twitter|substack|reddit|captainaltcoin|facebook|tiktok|youtube|medium\\.com|wtop)"
+tr_news_lines_short <- function(items, max_items = 5, max_chars = 170) {
+  it <- tr_news_items(items); if (!length(it)) return(character(0))
+  it <- Filter(function(x) !grepl(tr_news_bad_source, paste(x$source, x$url), perl = TRUE), it)
+  key <- vapply(it, function(x) gsub("[^a-z]", "", tolower(substr(x$headline, 1, 40))), ""); it <- it[!duplicated(key)]
+  cut <- function(t) { t <- gsub("\\s+", " ", trimws(t)); if (nchar(t) > max_chars) paste0(sub("\\s+\\S*$", "", substr(t, 1, max_chars - 1)), "...") else t }
+  vapply(utils::head(it, max_items), function(x) sprintf("- %s (%s)", cut(paste(x$headline, x$context)), if (nzchar(x$source)) x$source else "source"), "") }
+# the student's own lines are kept; every earlier block written by the app is replaced
+tr_news_own_part <- function(txt) { if (is.null(txt) || is.na(txt)) return(""); trimws(sub("(?s)\\n?(Found online \\(unverified\\)|Note: levels and headlines found online).*$", "", txt, perl = TRUE)) }
+# regime, set-ups and stand-aside from the hourly ADX of the plan's markets (thresholds from Setup)
+tr_ms_regime_auto <- function(lv, thr = c(30, 20), markets = c("BRENT", "WTI", "NATGAS", "EURUSD")) {
+  r <- lv[lv$instrument %in% markets & is.finite(lv$adx14), , drop = FALSE]
+  if (!nrow(r)) return(list(regime = NA_character_, setups = NA_character_, stand = TRUE, why = "No ADX could be worked out for the plan's markets."))
+  lab <- ifelse(r$adx14 >= thr[1], "trend", ifelse(r$adx14 <= thr[2], "range", "unclear"))
+  st <- ifelse(lab == "trend", "Holy Grail (pullback to the 20-period average)", ifelse(lab == "range", "Pivot Point Bounce", "none: no trade by my plan"))
+  nm <- vapply(r$instrument, tr_asset_label, "")
+  list(regime = paste(sprintf("%s ADX(14, 1 hour) %.1f: %s", nm, r$adx14, c(trend = "trending", range = "range-bound", unclear = "unclear (between the thresholds)")[lab]), collapse = "; "),
+       setups = paste(sprintf("%s: %s", nm, st), collapse = "; "), stand = all(lab == "unclear"),
+       why = if (all(lab == "unclear")) sprintf("Every market's ADX is between %g and %g, which my plan treats as no trade.", thr[2], thr[1]) else NA_character_) }

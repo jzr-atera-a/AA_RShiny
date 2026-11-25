@@ -49,7 +49,7 @@ social_tab_server <- function(id, api_manager, aud) {
     })
     output$diagram <- renderUI({
       d <- design()
-      export_capture_wrapper(session$ns, render_techdesign(d), d$meta$title)
+      export_capture_wrapper(session$ns, render_techdesign(d), d$meta$title, meta = d)
     })
 
     observeEvent(input$reset, { tailored(NULL); set_status("status-info", "fa fa-info-circle", "Showing the built-in design.") })
@@ -86,7 +86,6 @@ social_tab_server <- function(id, api_manager, aud) {
     })
 
     output$status <- renderUI(tags$div())
-    session$onSessionEnded(function() {})
   })
 }
 
@@ -112,6 +111,5 @@ social_guide_server <- function(id, api_manager) {
     output$tbl <- DT::renderDataTable(DT::datatable(df(), rownames = FALSE, options = list(pageLength = 40, scrollX = TRUE)))
     output$dl <- downloadHandler(filename = function() paste0("social_dynamics_top36_", format(Sys.Date(), "%Y%m%d"), ".md"),
                                  content = function(file) writeLines(social_report_md(), file, useBytes = TRUE))
-    session$onSessionEnded(function() {})
   })
 }

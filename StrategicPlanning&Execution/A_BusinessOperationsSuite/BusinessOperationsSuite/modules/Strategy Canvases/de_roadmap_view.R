@@ -35,6 +35,7 @@ de_roadmap_view_ui <- function(id) {
     ),
     fluidRow(
       column(12,
+             tags$div(id = ns("canvas_area"),
              h2("Disciplined Entrepreneurship Roadmap", style = "text-align: center; color: white; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);"),
              div(class = "de-roadmap-container",
                  div(class = "de-roadmap-grid", lapply(1:4, step_box)),
@@ -50,7 +51,8 @@ de_roadmap_view_ui <- function(id) {
                      div(class = "roadmap-legend-item", div(class = "roadmap-legend-line legend-line4"), span("HOW DO YOU MAKE MONEY OFF YOUR PRODUCT?")),
                      div(class = "roadmap-legend-item", div(class = "roadmap-legend-line legend-line5"), span("HOW DO YOU DESIGN & BUILD YOUR PRODUCT? / HOW DO YOU SCALE YOUR BUSINESS?"))
                  ))
-      )
+      ),
+             diagram_save_ui(ns("save_canvas"), formats = c("html", DIAGRAM_IMAGE_FORMATS, "csv")))
     )
   )
 }
@@ -92,6 +94,15 @@ de_roadmap_view_server <- function(id, api_manager) {
       }
     }
     render_defaults()
+    loaded <- reactiveVal(NULL)
+    canvas_sel <- function() paste(c(input$business_area, input$project, input$business_focus), collapse = " / ")
+    diagram_save_server("save_canvas", "de_roadmap_view", session$ns("canvas_area"), "html", function() {
+      r <- loaded(); t <- if (is.null(r)) "" else attr(r, "sel")
+      cols <- if (is.null(r)) character(0) else names(r)[grepl("^step_", names(r))]
+      list(title = if (is.null(r)) "DE Roadmap (template)" else paste("DE Roadmap", t), subtitle = t, bg = "#006b66",
+           data = data.frame(step = 1:24, title = ROADMAP_STEP_TITLES[1:24],
+                             content = vapply(1:24, function(n) if (n <= length(cols)) diagram_plain(as.character(r[[cols[n]]][1])) else "", ""), stringsAsFactors = FALSE))
+    })
 
     setup_canvas_selection_cascade(input, output, session, api_manager)
 
@@ -117,6 +128,7 @@ de_roadmap_view_server <- function(id, api_manager) {
               )
             })
           }
+          r <- result[1, , drop = FALSE]; attr(r, "sel") <- canvas_sel(); loaded(r)
           showNotification("✓ Roadmap loaded successfully!", type = "message")
         } else {
           showNotification("No roadmap found for this selection.", type = "warning")

@@ -1,0 +1,6 @@
+.Renviron
+.Rhistory
+.RData
+auth/*.json
+data/*.csv
+rsconnect/

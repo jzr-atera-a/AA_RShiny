@@ -118,11 +118,15 @@ explore_contacts_server <- function(id, api_manager) {
           options = list(dom = 't', ordering = FALSE), rownames = FALSE, class = 'cell-border stripe'
         ))
       }
-      display_data <- filtered_data()[, display_cols]
-      datatable(display_data,
+      # people imported from CollaborationPlanning: where they came from, and repeated ones highlighted (amber)
+      extra <- intersect(c("source", "repeated"), names(filtered_data()))
+      display_data <- filtered_data()[, c(display_cols, extra), drop = FALSE]
+      dt <- datatable(display_data,
         options = list(scrollX = TRUE, pageLength = 10, lengthMenu = c(5, 10, 25, 50), order = list(list(1, 'asc'))),
-        editable = list(target = 'cell', disable = list(columns = 0)),
+        editable = list(target = 'cell', disable = list(columns = c(0, length(display_cols) - 1 + seq_along(extra)))),
         selection = 'single', rownames = FALSE, class = 'cell-border stripe')
+      if ("repeated" %in% extra) dt <- formatStyle(dt, "repeated", target = "row", backgroundColor = styleEqual("TRUE", "#fff3cd"))
+      dt
     })
 
     observeEvent(input$contacts_table_cell_edit, {

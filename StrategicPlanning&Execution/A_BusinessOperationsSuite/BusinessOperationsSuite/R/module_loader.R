@@ -27,6 +27,10 @@ ModuleLoader <- R6::R6Class("ModuleLoader",
           warning(sprintf("[ModuleLoader] Missing file for module '%s': %s", mod_id, path))
           next
         }
+        if (identical(meta$suite, "dpet")) {          # DaysPlanningExerciseTravel tab: its own helpers (R/suite_dpet.R)
+          if (dpet_source_module(path, mod_id)) n_loaded <- n_loaded + 1
+          next
+        }
         source(path, local = FALSE)
 
         ui_fn <- paste0(mod_id, "_ui")

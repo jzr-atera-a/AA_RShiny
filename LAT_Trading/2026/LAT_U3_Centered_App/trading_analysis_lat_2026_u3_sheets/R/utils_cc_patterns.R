@@ -817,7 +817,7 @@ cc_key_stats <- function(hist) {
 cc_scan <- function(b, minutes = 15, settings = list(), daily = NULL, show_from = 1L, hist_step = NULL, progress = NULL) {
   ctx <- cc_ctx(b, minutes, settings, daily); n <- ctx$n
   if (n < 40) stop("Only ", n, " candles: at least 40 are needed (choose a longer history or a smaller candle).")
-  vec <- c(cc_det_candles(ctx), cc_det_gaps(ctx), cc_det_spikes(ctx), cc_det_indicators(ctx), cc_det_divergence(ctx), cc_det_strategies(ctx))
+  vec <- c(cc_det_candles(ctx), cc_det_gaps(ctx), cc_det_spikes(ctx), cc_det_indicators(ctx), cc_det_divergence(ctx), cc_det_strategies(ctx), tryCatch(cc_det_course(ctx), error = function(e) { cat("[C.C] course patterns:", conditionMessage(e), "\n"); list() }))
   if (!is.null(progress)) progress(0.4)
   # pivot detectors through the history (sampled) and at the last candle
   step <- if (is.null(hist_step)) max(1L, as.integer(floor((n - 60) / 220))) else hist_step
@@ -868,6 +868,8 @@ cc_scan <- function(b, minutes = 15, settings = list(), daily = NULL, show_from 
     o$status <- if (mv >= 0.3) "confirmed" else if (mv <= -0.3) "failed" else if (length(after) < 2) "pending" else "forming"
     o$conf <- o$conf + if (o$status == "confirmed") 15 else 0; o })
   cur <- Filter(function(o) o$status != "failed", cur)
+  # ************* course tools chosen by the user: only the patterns of the ticked groups count as alive (records keep every pattern)
+  grp <- unlist(settings$groups); if (length(grp)) cur <- Filter(function(o) cc_groups_ok(o$key, grp), cur)
   # best instance per key
   if (length(cur)) { sc <- vapply(cur, function(o) o$i1 * 1000 + o$conf, 0); cur <- cur[order(-sc)]; cur <- cur[!duplicated(vapply(cur, `[[`, "", "key"))] }
   # regime
@@ -894,7 +896,7 @@ cc_scan <- function(b, minutes = 15, settings = list(), daily = NULL, show_from 
     cur_df <- cur_df[order(-cur_df$strength, cur_df$step), , drop = FALSE]
   }
   list(ctx = ctx, n = n, show_from = show_from, regime = regime, adx = adx_n, current = cur, current_df = cur_df, hist = hist, stats = stats,
-       tally = cc_tally(cur_df), at = Sys.time())
+       tally = cc_tally(cur_df), groups = if (length(grp)) grp else NULL, at = Sys.time())
 }
 
 # Facts tally: one vote per family and side, only rows in regime, with a direction, and not context rows.
@@ -935,7 +937,8 @@ cc_claude_prompt <- function(scan, label, candle_label, max_rows = 150) {
                                                    f(scan$current_df$invalid), f(scan$current_df$target)), collapse = "\n") else "(none)"
   paste0("You check a rule-based chart scan for a trading student. Market: ", label, ", ", candle_label, " candles from Capital.com (mid prices). Candle ", n - i0 + 1, " is the last.\n\n",
          "CANDLES (no,time_uk,open,high,low,close):\n", bars, "\n\nINDICATORS computed in R (no,ema20,ema50,ema200,rsi14,macd_hist,adx14,atr14):\n", indt,
-         "\n\nThe R rules found these patterns alive at the last candle:\n", found, "\n\nCATALOGUE keys you may use:\n", paste(sprintf("%s = %s", cc_catalog$key, cc_catalog$label), collapse = "; "),
+         "\n\nThe R rules found these patterns alive at the last candle:\n", found, "\n\nCATALOGUE keys you may use:\n", { ck <- cc_catalog[cc_groups_ok(cc_catalog$key, scan$groups), , drop = FALSE]; paste(sprintf("%s = %s", ck$key, ck$label), collapse = "; ") },
+         if (length(scan$groups)) paste0("\n\nThe student chose these course tools for this analysis: ", paste(scan$groups, collapse = ", "), ". Use ONLY catalogue keys of these groups; do not name patterns of other groups.") else "",
          "\n\nTASK: (1) For each R finding, say 'agree' or 'doubt' with one short reason. (2) List any catalogue pattern R missed that is alive in the last 10 candles, with candle numbers, the level that cancels it and its target taken from the structure. Use the indicator numbers given; do not estimate your own. Do not suggest a trade, a side, or a probability. An empty list is a valid answer.\n",
          'Reply with JSON only: {"checks":[{"key":"...","verdict":"agree|doubt","reason":"..."}],"additions":[{"key":"...","from_candle":0,"to_candle":0,"invalid":0,"target":0,"note":"..."}]}')
 }
@@ -947,9 +950,148 @@ cc_claude_parse <- function(txt, scan, max_rows = 150) {
   adds <- list(); refused <- 0L
   for (z in j$additions %||% list()) { key <- cc_chr(z$key); row <- cc_catalog[cc_catalog$key == key, , drop = FALSE]
     t1 <- cc_num(z$to_candle) + i0 - 1; inv <- cc_num(z$invalid); tg <- cc_num(z$target); dr <- cc_dir_of(row$bias[1])
-    ok <- nrow(row) == 1 && is.finite(t1) && t1 >= n - 9 && t1 <= n && (is.na(dr) || ((!is.finite(inv) || dr * (last - inv) > 0) && (!is.finite(tg) || dr * (tg - last) > 0)))
+    ok <- nrow(row) == 1 && all(cc_groups_ok(key, scan$groups)) && is.finite(t1) && t1 >= n - 9 && t1 <= n && (is.na(dr) || ((!is.finite(inv) || dr * (last - inv) > 0) && (!is.finite(tg) || dr * (tg - last) > 0)))
     if (!ok) { refused <- refused + 1L; next }
     adds[[length(adds) + 1]] <- data.frame(key = key, label = row$label, bias = row$bias, from = cc_num(z$from_candle) + i0 - 1, to = t1, invalid = inv, target = tg, note = cc_chr(z$note), stringsAsFactors = FALSE) }
   list(checks = ck, additions = if (length(adds)) do.call(rbind, adds) else data.frame(), refused = refused)
 }
 
+
+
+# ********************* course additions: detectors for cc_catalog_course (Week 1, 2, 3, 5, 6 activity sheets) ------------------
+# time-at-price profile of each UK day (Capital.com has no traded volume): bins of 0.25 ATR, one count per candle touching a bin
+cc_day_profiles <- function(ctx, bin_atr = 0.25) {
+  day <- format(ctx$uk, "%Y-%m-%d"); ud <- unique(day); a0 <- stats::median(ctx$a, na.rm = TRUE); w <- max(bin_atr * a0, 1e-9)
+  hm <- as.numeric(format(ctx$uk, "%H")) * 60 + as.numeric(format(ctx$uk, "%M")); st <- strsplit(ctx$or_start %||% "08:00", ":")[[1]]; s0 <- as.numeric(st[1]) * 60 + as.numeric(st[2]); om <- ctx$or_minutes %||% 60
+  lapply(ud, function(d) { ix <- which(day == d); lo <- min(ctx$l[ix]); hi <- max(ctx$h[ix]); br <- seq(floor(lo / w) * w, ceiling(hi / w) * w + w, by = w); mids <- utils::head(br, -1) + w / 2
+    cnt <- vapply(mids, function(m) sum(ctx$l[ix] <= m & ctx$h[ix] >= m), 0); tot <- sum(cnt); pi <- which.max(cnt)
+    lo_i <- hi_i <- pi; acc <- cnt[pi]; while (acc < 0.7 * tot && (lo_i > 1 || hi_i < length(cnt))) { up <- if (hi_i < length(cnt)) cnt[hi_i + 1] else -1; dn <- if (lo_i > 1) cnt[lo_i - 1] else -1
+      if (up >= dn) { hi_i <- hi_i + 1; acc <- acc + up } else { lo_i <- lo_i - 1; acc <- acc + dn } }
+    pk <- which(cnt >= 0.7 * cnt[pi] & cnt >= c(0, utils::head(cnt, -1)) & cnt >= c(utils::tail(cnt, -1), 0))
+    lvn <- integer(0); if (length(pk) >= 2) for (j in seq_len(length(pk) - 1)) { seg <- pk[j]:pk[j + 1]; m <- seg[which.min(cnt[seg])]; if (cnt[m] <= 0.4 * cnt[pi]) lvn <- c(lvn, m) }
+    rn <- length(cnt); inner <- seq_len(rn) > ceiling(0.1 * rn) & seq_len(rn) <= floor(0.9 * rn); sp <- which(cnt == 1 & inner)
+    single <- if (length(sp)) { r <- split(sp, cumsum(c(1, diff(sp) != 1))); r <- r[vapply(r, length, 1L) * w >= 0.5 * a0]; vapply(r, function(z) mean(mids[z]), 0) } else numeric(0)
+    ib <- ix[hm[ix] >= s0 & hm[ix] < s0 + om]
+    tol <- 0.1 * a0; ledge_lo <- if (sum(abs(ctx$l[ix] - lo) <= tol) >= 3) lo else NA_real_; ledge_hi <- if (sum(abs(ctx$h[ix] - hi) <= tol) >= 3) hi else NA_real_
+    list(day = d, ix = ix, lo = lo, hi = hi, open = ctx$o[ix[1]], close = ctx$c[ix[length(ix)]], mids = mids, cnt = cnt, n = length(ix), poc = mids[pi], vah = mids[hi_i], val = mids[lo_i],
+         hvn = mids[pk], lvn = mids[lvn], single = single, ledge_lo = ledge_lo, ledge_hi = ledge_hi,
+         ib_hi = if (length(ib)) max(ctx$h[ib]) else NA_real_, ib_lo = if (length(ib)) min(ctx$l[ib]) else NA_real_, ib_end = if (length(ib)) max(ib) else NA_integer_) }) }
+
+cc_det_course <- function(ctx) {
+  o <- ctx$o; h <- ctx$h; l <- ctx$l; c <- ctx$c; a <- ctx$a; n <- ctx$n; ind <- ctx$ind; L <- function(x, k = 1) cc_lag(x, k)
+  if (n < 30) return(list()); out <- list()
+  addi <- function(key, i, dir, inv, tg, note, k = 1, level = NA_real_) { if (i < 12) return(); ent <- c[i]
+    if (!is.finite(tg) || (dir > 0 && tg <= ent + 0.3 * a[i]) || (dir < 0 && tg >= ent - 0.3 * a[i])) tg <- cc_next_level(ctx, i, ent, dir)
+    if (!is.finite(inv) || (dir > 0 && inv >= ent) || (dir < 0 && inv <= ent)) inv <- NA_real_; f <- cc_fill_dflt(dir, ent, inv, tg, a[i])
+    out[[length(out) + 1]] <<- cc_occ(key, max(1, i - k + 1), i, ent, f$invalid, f$target, note, level = level, dir = dir, conf = 60,
+      lines = if (is.finite(level)) cc_seg(max(1, i - 15), level, i, level, "#0d9488", "dash") else NULL) }
+  add <- function(key, sel, dir, note, inv_fun = NULL, tg_fun = NULL, k = 1, lev = NULL) for (i in which(sel %in% TRUE)) {
+    inv <- if (!is.null(inv_fun)) inv_fun(i) else if (dir > 0) min(l[max(1, i - k + 1):i]) - 0.1 * a[i] else max(h[max(1, i - k + 1):i]) + 0.1 * a[i]
+    addi(key, i, dir, inv, if (!is.null(tg_fun)) tg_fun(i) else NA_real_, note, k, if (!is.null(lev)) lev[i] else NA_real_) }
+  bd <- abs(c - o); rg <- pmax(h - l, 1e-12); upw <- h - pmax(o, c); low <- pmin(o, c) - l; upc <- c > o; dnc <- c < o
+  pt <- (L(c, 1) - L(c, 11)) / L(a, 1)
+  roll <- function(x, k, f) { r <- rep(NA_real_, n); if (n >= k) for (i in k:n) r[i] <- suppressWarnings(f(x[(i - k + 1):i])); r[!is.finite(r)] <- NA_real_; r }
+  lo50 <- L(roll(l, 50, min), 1); hi50 <- L(roll(h, 50, max), 1); hi20 <- L(roll(h, 20, max), 1); lo20 <- L(roll(l, 20, min), 1)
+  zz <- ctx$zz; piv_lo <- if (!is.null(zz) && nrow(zz)) zz[zz$type %in% c("L", "low", -1), , drop = FALSE] else NULL; piv_hi <- if (!is.null(zz) && nrow(zz)) zz[zz$type %in% c("H", "high", 1), , drop = FALSE] else NULL
+  near_piv <- function(i, x, which = "low") { p <- if (which == "low") piv_lo else piv_hi; if (is.null(p) || !nrow(p)) return(FALSE); k <- p$conf %||% p$idx; v <- p$price %||% p$value; ok <- k < i; any(abs(v[ok] - x) <= 0.5 * a[i]) }
+  # --- Week 1: single candles
+  ham <- low >= 2 * bd & low >= 0.6 * rg & upw <= 0.15 * rg & rg >= 0.5 * a; inv <- upw >= 2 * bd & upw >= 0.6 * rg & low <= 0.15 * rg & rg >= 0.5 * a
+  sup <- vapply(seq_len(n), function(i) isTRUE(abs(l[i] - lo50[i]) <= 0.5 * a[i]) || (i > 12 && near_piv(i, l[i], "low")), TRUE)
+  add("hammer_support", ham & pt <= -1 & sup, 1L, "Hammer at support after a fall")
+  add("inverted_hammer", inv & pt <= -1, 1L, "Inverted hammer after a fall (needs a higher close next)")
+  add("shooting_star", inv & pt >= 1, -1L, "Shooting star after a rise")
+  add("hanging_man", ham & pt >= 1, -1L, "Hanging man after a rise")
+  doji <- bd <= 0.1 * rg
+  add("dragonfly_doji", doji & upw <= 0.1 * rg & low >= 0.6 * rg & rg >= 0.7 * a & pt <= -1, 1L, "Dragonfly doji after a fall")
+  add("long_legged_doji_down", doji & upw >= 0.3 * rg & low >= 0.3 * rg & rg >= 1 * a & pt <= -1, 1L, "Long legged doji in a downtrend: indecision")
+  mb <- bd >= 0.85 * rg & bd >= 1 * a
+  add("marubozu_break_res", mb & upc & c > hi20, 1L, "Marubozu closing above the 20-candle high", lev = hi20)
+  add("marubozu_break_sup", mb & dnc & c < lo20, -1L, "Marubozu closing below the 20-candle low", lev = lo20)
+  tl_at <- function(i, p) { if (is.null(p) || nrow(p) < 2) return(NA_real_); k <- p$conf %||% p$idx; ix <- p$idx; v <- p$price %||% p$value; ok <- which(k < i); if (length(ok) < 2) return(NA_real_)
+    j <- utils::tail(ok, 2); x1 <- ix[j[1]]; x2 <- ix[j[2]]; if (x2 == x1) return(NA_real_); v[j[1]] + (v[j[2]] - v[j[1]]) * (i - x1) / (x2 - x1) }
+  for (i in which(mb & dnc & seq_len(n) > 30)) { y <- tl_at(i, piv_lo); yp <- tl_at(i - 1, piv_lo); if (is.finite(y) && is.finite(yp) && c[i] < y && c[i - 1] >= yp && !is.null(piv_lo) && diff(utils::tail((piv_lo$price %||% piv_lo$value)[(piv_lo$conf %||% piv_lo$idx) < i], 2)) > 0)
+    addi("marubozu_break_uptl", i, -1L, h[i] + 0.1 * a[i], NA_real_, "Marubozu closing through the uptrend line", level = y) }
+  for (i in which(mb & upc & seq_len(n) > 30)) { y <- tl_at(i, piv_hi); yp <- tl_at(i - 1, piv_hi); if (is.finite(y) && is.finite(yp) && c[i] > y && c[i - 1] <= yp && !is.null(piv_hi) && diff(utils::tail((piv_hi$price %||% piv_hi$value)[(piv_hi$conf %||% piv_hi$idx) < i], 2)) < 0)
+    addi("marubozu_break_dntl", i, 1L, l[i] - 0.1 * a[i], NA_real_, "Marubozu closing through the downtrend line", level = y) }
+  # --- Week 2: Fibonacci pullback with the trend
+  if (!is.null(zz) && nrow(zz) >= 3) { zi <- zz$idx; zv <- zz$price %||% zz$value; zc <- zz$conf %||% zz$idx
+    for (i in 40:n) { kk <- which(zc < i); if (length(kk) < 2) next; j2 <- utils::tail(kk, 1); j1 <- j2 - 1; if (j1 < 1) next
+      A <- zv[j1]; B <- zv[j2]; leg <- B - A; if (abs(leg) < 3 * a[i]) next; seg <- (zi[j2] + 1):i; if (length(seg) < 2) next
+      if (leg > 0) { pl <- min(l[seg]); r50 <- B - 0.5 * leg; r618 <- B - 0.618 * leg
+        if (pl >= r618 - 0.25 * a[i] && pl <= r50 + 0.25 * a[i] && upc[i] && c[i] > r50 && c[i - 1] <= r50 + 0.25 * a[i] && l[i] - pl <= 1.5 * a[i]) {
+          y <- tl_at(i, piv_lo); note <- if (is.finite(y) && abs(pl - y) <= 0.5 * a[i]) "Fibonacci 50 / 61.8% pullback held, on the uptrend line" else "Fibonacci 50 / 61.8% pullback held"
+          addi("fib_trend_cont_long", i, 1L, B - 0.786 * leg - 0.1 * a[i], pl + leg, note, level = r618) } }
+      else { ph <- max(h[seg]); r50 <- B - 0.5 * leg; r618 <- B - 0.618 * leg
+        if (ph <= r618 + 0.25 * a[i] && ph >= r50 - 0.25 * a[i] && dnc[i] && c[i] < r50 && c[i - 1] >= r50 - 0.25 * a[i] && ph - h[i] <= 1.5 * a[i]) {
+          y <- tl_at(i, piv_hi); note <- if (is.finite(y) && abs(ph - y) <= 0.5 * a[i]) "Fibonacci 50 / 61.8% pullback held, on the downtrend line" else "Fibonacci 50 / 61.8% pullback held"
+          addi("fib_trend_cont_short", i, -1L, B - 0.786 * leg + 0.1 * a[i], ph + leg, note, level = r618) } } } }
+  # --- Week 3: indicator strategies
+  adx <- ind$adx; rangey <- adx <= ctx$adx_range; rangey[is.na(rangey)] <- FALSE; r25 <- adx <= 25; r25[is.na(r25)] <- FALSE
+  add("bb_range_buy", rangey & L(l) <= L(ind$bb_dn) & c > ind$bb_dn & upc, 1L, "Lower band touched in a range, closed back above", tg_fun = function(i) ind$bb_mid[i], k = 2)
+  add("bb_range_sell", rangey & L(h) >= L(ind$bb_up) & c < ind$bb_up & dnc, -1L, "Upper band touched in a range, closed back below", tg_fun = function(i) ind$bb_mid[i], k = 2)
+  add("bb_inout_buy", L(c) < L(ind$bb_dn) & c > ind$bb_dn, 1L, "Close outside the lower band, then back inside", tg_fun = function(i) ind$bb_mid[i], k = 2)
+  add("bb_inout_sell", L(c) > L(ind$bb_up) & c < ind$bb_up, -1L, "Close outside the upper band, then back inside", tg_fun = function(i) ind$bb_mid[i], k = 2)
+  rsi <- ind$rsi; nearlo <- abs(l - lo50) <= 0.5 * a; nearhi <- abs(h - hi50) <= 0.5 * a
+  add("rsi_range_buy", r25 & L(rsi) < 30 & rsi >= 30 & nearlo, 1L, "RSI back above 30 at the bottom of the range", tg_fun = function(i) hi50[i])
+  add("rsi_range_sell", r25 & L(rsi) > 70 & rsi <= 70 & nearhi, -1L, "RSI back below 70 at the top of the range", tg_fun = function(i) lo50[i])
+  sk <- ind$stoch_k; sd <- ind$stoch_d
+  add("stoch_range_buy", r25 & L(sk) <= L(sd) & sk > sd & sk < 20 & nearlo, 1L, "Stochastic buy below 20 at the bottom of the range", tg_fun = function(i) hi50[i])
+  add("stoch_range_sell", r25 & L(sk) >= L(sd) & sk < sd & sk > 80 & nearhi, -1L, "Stochastic sell above 80 at the top of the range", tg_fun = function(i) lo50[i])
+  mx_up <- L(ind$macd) <= L(ind$macd_signal) & ind$macd > ind$macd_signal; mx_dn <- L(ind$macd) >= L(ind$macd_signal) & ind$macd < ind$macd_signal
+  lev_lo <- vapply(seq_len(n), function(i) isTRUE(nearlo[i]) || (i > 12 && near_piv(i, l[i], "low")), TRUE); lev_hi <- vapply(seq_len(n), function(i) isTRUE(nearhi[i]) || (i > 12 && near_piv(i, h[i], "high")), TRUE)
+  add("macd_rev_level_buy", mx_up & pt <= -1.5 & lev_lo, 1L, "MACD buy at a primary level after a fall")
+  add("macd_rev_level_sell", mx_dn & pt >= 1.5 & lev_hi, -1L, "MACD sell at a primary level after a rise")
+  add("ma2_buy", L(ind$ema20) <= L(ind$ema50) & ind$ema20 > ind$ema50, 1L, "20 EMA crossed above the 50 EMA")
+  add("ma2_sell", L(ind$ema20) >= L(ind$ema50) & ind$ema20 < ind$ema50, -1L, "20 EMA crossed below the 50 EMA")
+  # --- Week 6: ADX and DMI
+  adx30 <- roll(adx, 20, function(x) max(x, na.rm = TRUE)) > 30; falling <- adx < L(adx) & L(adx) < L(adx, 2) & L(adx, 2) < L(adx, 3); near20 <- abs(c - ind$ema20) <= 0.5 * a
+  add("adx_pullback_up", adx30 & falling & ind$di_p > ind$di_n & near20 & !(L(adx30 & falling & ind$di_p > ind$di_n & near20) %in% TRUE), 1L, "ADX easing in a pullback to the 20 EMA, uptrend")
+  add("adx_pullback_down", adx30 & falling & ind$di_n > ind$di_p & near20 & !(L(adx30 & falling & ind$di_n > ind$di_p & near20) %in% TRUE), -1L, "ADX easing in a pullback to the 20 EMA, downtrend")
+  adx_up <- adx >= 25 & adx > L(adx)
+  add("dmi_buy_adx", L(ind$di_p) <= L(ind$di_n) & ind$di_p > ind$di_n & adx_up, 1L, "+DI crossed above -DI with ADX 25+ and rising")
+  add("dmi_sell_adx", L(ind$di_n) <= L(ind$di_p) & ind$di_n > ind$di_p & adx_up, -1L, "-DI crossed above +DI with ADX 25+ and rising")
+  # --- Week 5: profiles of each UK day
+  pf <- cc_day_profiles(ctx); if (length(pf) < 2) return(out)
+  dayof <- integer(n); for (k in seq_along(pf)) dayof[pf[[k]]$ix] <- k
+  avg_rg <- vapply(seq_along(pf), function(k) { j <- max(1, k - 10):(k - 1); if (k == 1) NA_real_ else mean(vapply(pf[j], function(p) p$hi - p$lo, 0)) }, 0)
+  bounce_l <- function(i, x) is.finite(x) && l[i] <= x + 0.15 * a[i] && l[i] >= x - 0.5 * a[i] && c[i] >= x + 0.2 * a[i] && c[i] > o[i] && min(l[max(1, i - 4):(i - 1)]) > x + 0.3 * a[i]   # came down to it from above
+  bounce_s <- function(i, x) is.finite(x) && h[i] >= x - 0.15 * a[i] && h[i] <= x + 0.5 * a[i] && c[i] <= x - 0.2 * a[i] && c[i] < o[i] && max(h[max(1, i - 4):(i - 1)]) < x - 0.3 * a[i]
+  fired <- character(0); once <- function(key, d) { id <- paste(key, d); if (id %in% fired) return(FALSE); fired <<- c(fired, id); TRUE }
+  for (i in seq_len(n)) { k <- dayof[i]; if (k < 2 || i < 12) next; P <- pf[[k - 1]]; D <- pf[[k]]; rec <- pf[max(1, k - 5):(k - 1)]; ai <- a[i]; rp <- P$hi - P$lo; if (rp <= 0) next
+    # shapes of yesterday and where we trade today
+    pos <- (P$poc - P$lo) / rp; bottom <- sum(P$cnt[P$mids < P$lo + 0.4 * rp]) / sum(P$cnt); top <- sum(P$cnt[P$mids > P$hi - 0.4 * rp]) / sum(P$cnt)
+    if (pos >= 2 / 3 && bottom < 0.2 && c[i] > P$poc && once("vp_p_shape", D$day)) addi("vp_p_shape", i, 1L, P$poc - 0.2 * ai, NA_real_, "Yesterday P-shaped; trading above its POC", level = P$poc)
+    if (pos <= 1 / 3 && top < 0.2 && c[i] < P$poc && once("vp_b_shape", D$day)) addi("vp_b_shape", i, -1L, P$poc + 0.2 * ai, NA_real_, "Yesterday b-shaped; trading below its POC", level = P$poc)
+    if (k >= 3) { Q <- pf[[k - 2]]; if (P$hi < Q$hi && P$lo > Q$lo) {
+      e50 <- ind$ema50; up50 <- is.finite(e50[i]) && i > 20 && e50[i] > e50[i - 20]; dn50 <- is.finite(e50[i]) && i > 20 && e50[i] < e50[i - 20]
+      if (up50 && c[i] > P$hi + 0.1 * ai && once("vp_inside_day_up", D$day)) addi("vp_inside_day_up", i, 1L, P$lo, P$hi + rp, "Inside day broken upwards with the trend", level = P$hi)
+      if (dn50 && c[i] < P$lo - 0.1 * ai && once("vp_inside_day_down", D$day)) addi("vp_inside_day_down", i, -1L, P$hi, P$lo - rp, "Inside day broken downwards with the trend", level = P$lo) } }
+    thin <- is.finite(avg_rg[k - 1]) && rp >= 1.5 * avg_rg[k - 1] && max(P$cnt) <= 0.35 * P$n
+    if (thin && P$close > P$open && c[i] <= P$hi - 0.3 * rp && c[i] >= P$lo && once("vp_thin_day_retrace_dn", D$day)) addi("vp_thin_day_retrace_dn", i, -1L, P$hi + 0.1 * ai, P$lo, "Thin up-day being retraced", level = P$hi)
+    if (thin && P$close < P$open && c[i] >= P$lo + 0.3 * rp && c[i] <= P$hi && once("vp_thin_day_retrace_up", D$day)) addi("vp_thin_day_retrace_up", i, 1L, P$lo - 0.1 * ai, P$hi, "Thin down-day being retraced", level = P$lo)
+    if (length(P$hvn) >= 2 && length(P$lvn)) { pk <- sort(P$hvn); g <- P$lvn[1]; lo_pk <- max(pk[pk < g], -Inf); hi_pk <- min(pk[pk > g], Inf)
+      if (is.finite(lo_pk) && is.finite(hi_pk) && hi_pk - lo_pk >= 1 * ai && c[i] > lo_pk && c[i] < hi_pk) {
+        if (upc[i] && c[i] > g && once("vp_double_dist_fill_up", D$day)) addi("vp_double_dist_fill_up", i, 1L, lo_pk, hi_pk, "Filling the low volume gap upwards", level = g)
+        if (dnc[i] && c[i] < g && once("vp_double_dist_fill_dn", D$day)) addi("vp_double_dist_fill_dn", i, -1L, hi_pk, lo_pk, "Filling the low volume gap downwards", level = g) } }
+    # levels of the last 5 days
+    lvn <- unlist(lapply(rec, `[[`, "lvn")); hvn <- unlist(lapply(rec, function(p) p$mids[p$cnt >= 0.85 * max(p$cnt) & p$mids != p$poc])); sgl <- unlist(lapply(rec, `[[`, "single")); led_lo <- unlist(lapply(rec, `[[`, "ledge_lo")); led_hi <- unlist(lapply(rec, `[[`, "ledge_hi"))
+    tryl <- function(key, xs, note) for (x in xs) if (bounce_l(i, x)) { addi(key, i, 1L, l[i] - 0.1 * ai, NA_real_, note, level = x); break }
+    trys <- function(key, xs, note) for (x in xs) if (bounce_s(i, x)) { addi(key, i, -1L, h[i] + 0.1 * ai, NA_real_, note, level = x); break }
+    tryl("vp_lvn_bounce_long", lvn, "Bounce off a low volume node"); trys("vp_lvn_bounce_short", lvn, "Rejected at a low volume node")
+    tryl("vp_hvn_bounce_long", hvn, "Bounce off a high volume node"); trys("vp_hvn_bounce_short", hvn, "Rejected at a high volume node")
+    tryl("mp_poc_long", P$poc, "Respecting yesterday's POC"); trys("mp_poc_short", P$poc, "Respecting yesterday's POC")
+    tryl("mp_val_long", P$val, "Respecting yesterday's VAL"); trys("mp_vah_short", P$vah, "Respecting yesterday's VAH")
+    if (i > 1 && c[i - 1] > P$vah) tryl("mp_vah_long", P$vah, "VAH holding as support"); if (i > 1 && c[i - 1] < P$val) trys("mp_val_short", P$val, "VAL holding as resistance")
+    tryl("mp_single_print_long", sgl, "Single prints holding as support"); trys("mp_single_print_short", sgl, "Single prints holding as resistance")
+    tryl("mp_ledge_long", led_lo[is.finite(led_lo)], "Ledge holding as support"); trys("mp_ledge_short", led_hi[is.finite(led_hi)], "Ledge holding as resistance")
+    # initial balance of today
+    if (is.finite(D$ib_hi) && !is.na(D$ib_end) && i > D$ib_end) { ibr <- D$ib_hi - D$ib_lo; seg <- D$ix[D$ix > D$ib_end & D$ix < i]
+      if (c[i] > D$ib_hi + 0.1 * ai && once("ib_break_up", D$day)) addi("ib_break_up", i, 1L, D$ib_hi - 0.3 * ai, D$ib_hi + ibr, "Break through the Initial Balance high", level = D$ib_hi)
+      if (c[i] < D$ib_lo - 0.1 * ai && once("ib_break_down", D$day)) addi("ib_break_down", i, -1L, D$ib_lo + 0.3 * ai, D$ib_lo - ibr, "Break through the Initial Balance low", level = D$ib_lo)
+      if (length(seg) && any(c[seg] > D$ib_hi + 0.1 * a[seg]) && l[i] <= D$ib_hi + 0.15 * ai && c[i] > D$ib_hi && once("ib_retest_up", D$day)) addi("ib_retest_up", i, 1L, D$ib_hi - 0.3 * ai, D$ib_hi + ibr, "Retest of the IB high held", level = D$ib_hi)
+      if (length(seg) && any(c[seg] < D$ib_lo - 0.1 * a[seg]) && h[i] >= D$ib_lo - 0.15 * ai && c[i] < D$ib_lo && once("ib_retest_down", D$day)) addi("ib_retest_down", i, -1L, D$ib_lo + 0.3 * ai, D$ib_lo - ibr, "Retest of the IB low held", level = D$ib_lo) }
+    # three or more levels together
+    levs <- c(unlist(lapply(rec, function(p) c(p$poc, p$vah, p$val, p$ib_hi, p$ib_lo, p$ledge_lo, p$ledge_hi))), lvn, hvn, sgl); levs <- levs[is.finite(levs)]
+    if (c[i] - l[i] >= 0.3 * ai && sum(abs(levs - l[i]) <= 0.3 * ai) >= 3 && c[i] > o[i] && min(l[max(1, i - 4):(i - 1)]) > l[i] + 0.3 * ai) addi("profile_confluence_long", i, 1L, l[i] - 0.1 * ai, NA_real_, sprintf("Bounce off %d profile levels together", sum(abs(levs - l[i]) <= 0.3 * ai)), level = l[i])
+    if (h[i] - c[i] >= 0.3 * ai && sum(abs(levs - h[i]) <= 0.3 * ai) >= 3 && c[i] < o[i] && max(h[max(1, i - 4):(i - 1)]) < h[i] - 0.3 * ai) addi("profile_confluence_short", i, -1L, h[i] + 0.1 * ai, NA_real_, sprintf("Rejected at %d profile levels together", sum(abs(levs - h[i]) <= 0.3 * ai)), level = h[i]) }
+  out }

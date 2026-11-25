@@ -116,6 +116,8 @@ cc_new_client <- function(http_fn = cc_http_curl, sleep_fn = Sys.sleep, now_fn =
   obj$search_markets <- function(term) request("GET", "/markets", query = list(searchTerm = term))$markets %||% list()
   obj$market <- function(epic) request("GET", paste0("/markets/", utils::URLencode(epic, reserved = TRUE)))
   obj$markets <- function(epics) request("GET", "/markets", query = list(epics = paste(epics, collapse = ",")))
+  obj$navigation <- function() request("GET", "/marketnavigation")                                   # top asset classes
+  obj$navigation_node <- function(node_id, limit = 500) request("GET", paste0("/marketnavigation/", utils::URLencode(node_id, reserved = TRUE)), query = list(limit = limit))
   obj$prices <- function(epic, resolution = "MINUTE_15", max = 1000, from = NULL, to = NULL)
     request("GET", paste0("/prices/", utils::URLencode(epic, reserved = TRUE)), query = list(resolution = resolution, max = max, from = from, to = to))
   obj$positions <- function() request("GET", "/positions")$positions %||% list()
@@ -229,7 +231,9 @@ cc_market_facts <- function(m) {
        min_size = rule(dr$minDealSize), max_size = rule(dr$maxDealSize), min_stop_distance = rule(dr$minStopOrProfitDistance %||% dr$minNormalStopOrLimitDistance),
        min_step = rule(dr$minSizeIncrement %||% dr$minStepDistance),
        bid = cc_num(sn$bid), offer = cc_num(sn$offer), status = cc_chr(sn$marketStatus), update = cc_chr(sn$updateTimeUTC %||% sn$updateTime),
-       scaling = cc_num(sn$scalingFactor %||% ins$scalingFactor), decimals = cc_num(sn$decimalPlacesFactor))
+       scaling = cc_num(sn$scalingFactor %||% ins$scalingFactor), decimals = cc_num(sn$decimalPlacesFactor),
+       max_stop_distance = rule(dr$maxStopOrProfitDistance), size_step = rule(dr$minSizeIncrement), guaranteed_stop = isTRUE(ins$guaranteedStopAllowed),
+       hours = tryCatch(cc_hours_parse(ins$openingHours), error = function(e) NULL), symbol = cc_chr(ins$symbol), country = cc_chr(ins$country %||% ins$countryCode))
 }
 
 # positions -> data.frame

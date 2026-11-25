@@ -1,0 +1,290 @@
+# modules/Day Planner/generate_schedule.R
+# ---- module ----------------------------------------------
+# id:           generate_schedule
+# name:         Generate Schedule
+# icon:         route
+# description:  AI-powered day/trip schedule generation
+# packages:     shiny, shinydashboard, httr, curl, jsonlite, shinyjs
+# api_required: claude
+# -----------------------------------------------------------
+
+# ---- UI ----
+generate_schedule_ui <- function(id) {
+  ns <- NS(id)
+
+  tagList(
+    fluidRow(
+      box(
+        title = "Day Information",
+        status = "primary",
+        solidHeader = TRUE,
+        width = 12,
+
+        fluidRow(
+          column(6,
+                 dateInput(ns("schedule_date"), "Date:", value = Sys.Date()),
+                 schedule_daytype_dropdown_ui(ns),
+                 bos_tz_dropdown_ui(ns)
+          ),
+          column(6,
+                 schedule_country_city_dropdown_ui(ns),
+                 p(class = "text-muted", style = "margin-top: -8px; font-size: 0.85em;",
+                   icon("cloud-sun"), " Required for Travel days; optional otherwise - used to look up ",
+                   "the real weather forecast for that day and plan around it."),
+                 textAreaInput(ns("trip_details"), "Additional Details:", height = "140px",
+                               placeholder = paste(
+                                 "e.g., Start point: Hotel near Bir-Hakeim.",
+                                 "End point: back at the hotel by 8pm.",
+                                 "Must visit: Eiffel Tower, Louvre.",
+                                 "Prefer walking over taxis.",
+                                 sep = "\n"))
+          )
+        ),
+
+        hr(),
+
+        fluidRow(
+          column(3, actionButton(ns("generate"), "Plan Schedule", icon = icon("route"),
+                                 class = "btn-primary btn-lg", style = "width: 100%;")),
+          column(3, actionButton(ns("copy_to_bulk"), "Copy to Bulk Import", icon = icon("arrow-right"),
+                                 class = "btn-info btn-lg", style = "width: 100%;")),
+          column(3, actionButton(ns("parse_and_upload"), "Parse & Upload Direct", icon = icon("cloud-upload-alt"),
+                                 class = "btn-success btn-lg", style = "width: 100%;")),
+          column(3, downloadButton(ns("download"), "Download Text", class = "btn-warning", style = "width: 100%;"))
+        )
+      )
+    ),
+
+    fluidRow(
+      box(
+        title = "Generated Schedule",
+        status = "success",
+        solidHeader = TRUE,
+        width = 12,
+
+        div(id = ns("loading_spinner"), style = "display: none; text-align: center; padding: 20px;",
+            icon("spinner", class = "fa-spin fa-3x"),
+            h4("Planning schedule... This may take 30-90 seconds.")),
+
+        h5("Review & Edit (re-parse after any manual fix):"),
+        textAreaInput(ns("schedule_text_edit"), NULL, height = "350px",
+                      placeholder = "Generated schedule will appear here - editable before upload."),
+        actionButton(ns("reparse"), "Re-Parse & Update Preview", icon = icon("sync"), class = "btn-default"),
+
+        br(), br(),
+        htmlOutput(ns("status")),
+        br(),
+        DT::dataTableOutput(ns("preview_table"))
+      )
+    )
+  )
+}
+
+# ---- Server ----
+generate_schedule_server <- function(id, api_manager) {
+  moduleServer(id, function(input, output, session) {
+
+    parsed_preview <- reactiveVal(NULL)
+    day_type_react <- setup_schedule_daytype_cascade(input, output, session, api_manager)
+    country_city_react <- setup_schedule_country_city_cascade(input, output, session, api_manager)
+
+    # Receives a commitment's full context from Browse Commitments'
+    # "Send to Generate Schedule" button - appended (not replacing) onto
+    # whatever the person has already typed, since they may already have
+    # their own trip details in progress.
+    observeEvent(api_manager$pending_commitment_context(), {
+      incoming <- api_manager$pending_commitment_context()
+      if (nchar(trimws(incoming)) > 0) {
+        current <- input$trip_details %||% ""
+        combined <- if (nchar(trimws(current)) > 0) paste0(current, "\n\n", incoming) else incoming
+        updateTextAreaInput(session, "trip_details", value = combined)
+        api_manager$set_pending_commitment_context("")
+      }
+    }, ignoreInit = TRUE)
+
+    run_parse_preview <- function(text, quiet = FALSE) {
+      if (trimws(text) == "") {
+        parsed_preview(NULL)
+        output$preview_table <- DT::renderDataTable({})
+        return(invisible(NULL))
+      }
+      tryCatch({
+        df <- parse_schedule_text(text, default_tz = input$time_zone)
+        parsed_preview(df)
+        output$preview_table <- DT::renderDataTable({
+          DT::datatable(df, options = list(pageLength = 10, scrollX = TRUE), rownames = FALSE)
+        })
+
+        warnings <- c()
+        if (!"Summary" %in% df$row_type) warnings <- c(warnings, "No Summary row found - the day total/insights row is missing.")
+        if (!"Location" %in% df$row_type) warnings <- c(warnings, "No Location row found - is this really a full day plan?")
+
+        if (!quiet) {
+          output$status <- renderUI({
+            tagList(
+              tags$div(class = "status-success", tags$i(class = "fa fa-check-circle"),
+                       sprintf(" Parsed %d row(s)", nrow(df))),
+              if (length(warnings) > 0) tags$div(class = "status-warning",
+                       tags$i(class = "fa fa-exclamation-triangle"),
+                       paste(" Warning:", paste(warnings, collapse = "; "))) else NULL
+            )
+          })
+        }
+      }, error = function(e) {
+        parsed_preview(NULL)
+        output$preview_table <- DT::renderDataTable({})
+        if (!quiet) {
+          output$status <- renderUI({
+            tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"),
+                     " Parse issue (blocking): ", e$message)
+          })
+        }
+      })
+    }
+
+    observeEvent(input$generate, {
+
+      if (!api_manager$claude_authenticated) {
+        showNotification("Please configure and save Claude API credentials first!", type = "error", duration = 10)
+        output$status <- renderUI({
+          tags$div(class = "status-error", tags$i(class = "fa fa-exclamation-triangle"),
+                   " Please configure Claude API in the Claude API Config tab first!")
+        })
+        return()
+      }
+
+      dt <- day_type_react()
+      if (nchar(dt) == 0) { showNotification("Please select or enter a Type of Day!", type = "error"); return() }
+
+      is_travel <- identical(dt, "Travel")
+      cc <- country_city_react()
+
+      if (is_travel) {
+        if (nchar(cc$country) == 0 || nchar(cc$city) == 0) {
+          showNotification("Please select or enter both Country and City for a Travel day!", type = "error"); return()
+        }
+      }
+      # Country/City are optional for non-Travel days - when provided, they're
+      # used to look up the real weather forecast and are stored on the row;
+      # when left blank, weather lookup is skipped gracefully (see
+      # generate_schedule_prompt()).
+      country <- if (nchar(cc$country) > 0) cc$country else "N/A"
+      city    <- if (nchar(cc$city) > 0) cc$city else "N/A"
+
+      shinyjs::show("loading_spinner")
+      updateTextAreaInput(session, "schedule_text_edit", value = "")
+
+      progress_msg <- reactiveVal("Initializing...")
+      output$status <- renderUI({
+        tags$div(class = "status-info", tags$i(class = "fa fa-spinner fa-spin"), " ", progress_msg())
+      })
+
+      prompt <- tryCatch({
+        bos_tz_wrap_prompt(
+          generate_schedule_prompt(as.character(input$schedule_date), dt, country, city, input$trip_details),
+          input$time_zone, input$schedule_date)
+      }, error = function(e) {
+        shinyjs::hide("loading_spinner")
+        output$status <- renderUI({
+          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Failed to build prompt: ", e$message)
+        })
+        NULL
+      })
+      if (is.null(prompt)) return()
+
+      tryCatch({
+        # enable_web_search = TRUE - the prompt instructs Claude to look up
+        # the real weather forecast for the day/location before planning
+        # (see generate_schedule_prompt's WEATHER RESEARCH step).
+        result <- api_manager$call_claude(
+          prompt = prompt,
+          progress_callback = function(msg) { progress_msg(msg) },
+          enable_web_search = TRUE
+        )
+
+        schedule_text <- bos_tz_set_header(overwrite_schedule_header(
+          result$text, as.character(input$schedule_date), dt, country, city, input$trip_details
+        ), input$time_zone)
+
+        updateTextAreaInput(session, "schedule_text_edit", value = schedule_text)
+        shinyjs::hide("loading_spinner")
+
+        run_parse_preview(schedule_text, quiet = TRUE)
+
+        truncation_note <- if (isTRUE(result$truncated)) {
+          tagList(tags$br(), tags$span(style = "color: #f39c12;",
+                                        "⚠️ Response truncated - increase Max Tokens and try again"))
+        } else NULL
+
+        output$status <- renderUI({
+          tags$div(class = if (isTRUE(result$truncated)) "status-warning" else "status-success",
+                   tags$i(class = if (isTRUE(result$truncated)) "fa fa-exclamation-triangle" else "fa fa-check-circle"),
+                   " ✓ Schedule planned!", truncation_note)
+        })
+
+        showNotification("✓ Schedule planned successfully!", type = "message")
+
+      }, error = function(e) {
+        shinyjs::hide("loading_spinner")
+        output$status <- renderUI({
+          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Planning Failed: ", e$message)
+        })
+        showNotification(paste("Error:", e$message), type = "error", duration = 15)
+      })
+    })
+
+    observeEvent(input$reparse, {
+      run_parse_preview(input$schedule_text_edit)
+    })
+
+    observeEvent(input$copy_to_bulk, {
+      current_text <- input$schedule_text_edit
+      if (nchar(trimws(current_text %||% "")) > 0) {
+        api_manager$set_pending_bulk_text_schedule(current_text)
+        nav_goto(session, "schedule_bulk_import")
+        showNotification("✓ Schedule copied to Bulk Import tab!", type = "message")
+      } else {
+        showNotification("No schedule to copy. Generate first.", type = "warning")
+      }
+    })
+
+    observeEvent(input$parse_and_upload, {
+      if (!api_manager$bq_authenticated) { showNotification("Please authenticate with BigQuery first!", type = "error"); return() }
+
+      current_text <- input$schedule_text_edit
+      if (nchar(trimws(current_text %||% "")) == 0) { showNotification("No schedule to upload. Generate first.", type = "warning"); return() }
+
+      output$status <- renderUI({
+        tags$div(class = "status-info", tags$i(class = "fa fa-spinner fa-spin"), " Parsing and uploading...")
+      })
+
+      tryCatch({
+        parsed_df <- parse_schedule_text(current_text, default_tz = input$time_zone)
+        rows_uploaded <- api_manager$bq_insert_schedule(parsed_df)
+        api_manager$trigger_state_update_schedule()
+
+        output$status <- renderUI({
+          tags$div(class = "status-success", tags$i(class = "fa fa-check-circle"),
+                   sprintf(" Successfully uploaded %d rows!", rows_uploaded))
+        })
+        showNotification(sprintf("✓ Uploaded %d rows!", rows_uploaded), type = "message")
+
+      }, error = function(e) {
+        output$status <- renderUI({
+          tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", e$message)
+        })
+        showNotification(paste("Error:", e$message), type = "error")
+      })
+    })
+
+    output$download <- downloadHandler(
+      filename = function() paste0("schedule_", as.character(input$schedule_date), "_", format(Sys.Date(), "%Y%m%d"), ".txt"),
+      content = function(file) writeLines(input$schedule_text_edit %||% "", file)
+    )
+
+    output$status <- renderUI({ tags$div() })
+    output$preview_table <- DT::renderDataTable({})
+
+    session$onSessionEnded(function() {})
+  })
+}

@@ -1,0 +1,315 @@
+# modules/Exercise Tracker/exercise_visualizations.R
+# ---- module ----------------------------------------------
+# id:           exercise_visualizations
+# name:         Visualizations
+# icon:         chart-bar
+# description:  Workout timeline and volume/calories chart
+# packages:     shiny, shinydashboard, DT, plotly
+# -----------------------------------------------------------
+
+# ---- UI ----
+exercise_visualizations_ui <- function(id) {
+  ns <- NS(id)
+
+  tagList(
+    fluidRow(
+      box(title = "Select a Session to Visualize", status = "primary", solidHeader = TRUE, width = 12,
+          p("Filter by Session Type to find the logged workout you want, then load its timeline."),
+          fluidRow(
+            column(4, selectInput(ns("viz_session_type"), "Session Type:", choices = NULL)),
+            column(4, selectInput(ns("select_date"), "Date:", choices = NULL)),
+            column(4, selectInput(ns("filter_row_type"), "Filter by Row Type (Optional):", choices = c("All Rows" = "all")))
+          ),
+          fluidRow(column(12, actionButton(ns("load_viz"), "Load Visualizations",
+                                          class = "btn-success btn-lg", icon = icon("chart-bar"), style = "width: 100%;"))),
+          hr(), htmlOutput(ns("status"))
+      )
+    ),
+
+    fluidRow(
+      box(title = "Session Overview", status = "info", solidHeader = TRUE, width = 12, collapsible = TRUE,
+          htmlOutput(ns("day_header")),
+          fluidRow(
+            column(3, valueBoxOutput(ns("total_exercises"), width = 12)),
+            column(3, valueBoxOutput(ns("total_calories"), width = 12)),
+            column(3, valueBoxOutput(ns("session_type_box"), width = 12)),
+            column(3, valueBoxOutput(ns("total_entries"), width = 12))
+          )
+      )
+    ),
+
+    fluidRow(
+      box(title = "Session Timeline", status = "success", solidHeader = TRUE, width = 12, collapsible = TRUE,
+          htmlOutput(ns("timeline_html")))
+    ),
+
+    fluidRow(
+      box(title = "Calories Burned per Entry", status = "warning", solidHeader = TRUE, width = 12, collapsible = TRUE,
+          plotlyOutput(ns("calories_chart"), height = "500px"))
+    ),
+
+    generic_export_box_ui(ns, title = "Save This Workout Session", ics = TRUE,
+                          ics_extra_ui = selectInput(ns("ics_start_time"), "Workout start time (exercise rows have no clock time):",
+                                                     choices = sprintf("%02d:%02d", rep(5:22, each = 2), rep(c(0, 30), 18)),
+                                                     selected = "18:00")),
+    drive_export_ui(ns)
+  )
+}
+
+# Chart data for the calories chart: one row per exercise with parsable calories. Shared by the in-app chart and the Drive diagram.
+exercise_chart_data <- function(d) {
+  ex_rows <- d[d$row_type == "Exercise", ]
+  chart_data <- data.frame(entry = character(), category = character(), calories = numeric(), stringsAsFactors = FALSE)
+  for (i in seq_len(nrow(ex_rows))) {
+    row <- ex_rows[i, ]
+    cal <- exercise_parse_calories(row$calories_burned)
+    if (!is.na(cal)) {
+      chart_data <- rbind(chart_data, data.frame(
+        entry = paste0(row$row_sequence, ". ", row$exercise_name),
+        category = row$exercise_category %||% "Other", calories = cal, stringsAsFactors = FALSE))
+    }
+  }
+  chart_data
+}
+
+# Diagram of the calories chart for the Save-to-Google-Drive box: one stacked series per category.
+exercise_diagram_calories <- function(d) {
+  cd <- exercise_chart_data(d)
+  cats <- unique(cd$category)
+  series <- lapply(cats, function(ct) list(name = ct, values = ifelse(cd$category == ct, cd$calories, 0)))
+  dg_bar(paste0("Estimated calories per entry - ", d$workout_date[1]), cd$entry, series,
+         subtitle = paste0(length(cd$entry), " entries with calories"), stacked = TRUE,
+         y_title = "Calories (kcal)", table = cd)
+}
+
+# ---- Server ----
+exercise_visualizations_server <- function(id, api_manager) {
+  moduleServer(id, function(input, output, session) {
+
+    viz_data <- reactiveVal(NULL)
+
+    viz_taxonomy <- reactive({
+      api_manager$tab_gate("exercise_visualizations")     # loads when this tab is first opened, not before
+      api_manager$state_trigger_exercise()
+      if (!api_manager$bq_authenticated) return(data.frame(session_type = character(), stringsAsFactors = FALSE))
+      tryCatch(api_manager$bq_get_exercise_taxonomy(), error = function(e) data.frame(session_type = character(), stringsAsFactors = FALSE))
+    })
+
+    observeEvent(viz_taxonomy(), {
+      tax <- viz_taxonomy()
+      session_types <- sort(unique(tax$session_type[nchar(trimws(tax$session_type)) > 0]))
+      if (length(session_types) == 0) {
+        updateSelectInput(session, "viz_session_type", choices = c("(no workouts logged yet)" = ""))
+      } else {
+        current <- isolate(input$viz_session_type)
+        selected <- if (!is.null(current) && current %in% session_types) current else session_types[1]
+        updateSelectInput(session, "viz_session_type", choices = setNames(session_types, session_types), selected = selected)
+      }
+    }, ignoreNULL = FALSE)
+
+    observeEvent(input$viz_session_type, {
+      if (is.null(input$viz_session_type) || input$viz_session_type == "") {
+        updateSelectInput(session, "select_date", choices = c("(select a session type first)" = ""))
+        return()
+      }
+      dates <- tryCatch({
+        safe_st <- safe_sql_escape(input$viz_session_type)
+        r <- api_manager$bq_query(sprintf(
+          "SELECT DISTINCT workout_date FROM `%s` WHERE session_type = '%s' ORDER BY workout_date DESC",
+          api_manager$bq_full_table_exercise, safe_st))
+        r$workout_date
+      }, error = function(e) character())
+
+      if (length(dates) == 0) updateSelectInput(session, "select_date", choices = c("(no dates found)" = ""))
+      else updateSelectInput(session, "select_date", choices = setNames(dates, dates))
+    }, ignoreInit = TRUE)
+
+    observeEvent(input$select_date, {
+      if (!api_manager$bq_authenticated || is.null(input$select_date) || input$select_date == "") return()
+      tryCatch({
+        safe_date <- safe_sql_escape(input$select_date)
+        query <- sprintf("SELECT DISTINCT row_type FROM `%s` WHERE workout_date = '%s' ORDER BY row_type",
+                         api_manager$bq_full_table_exercise, safe_date)
+        row_types <- api_manager$bq_query(query)
+        if (nrow(row_types) > 0) {
+          updateSelectInput(session, "filter_row_type", choices = c("All Rows" = "all", setNames(row_types$row_type, row_types$row_type)))
+        }
+      }, error = function(e) {})
+    })
+
+    observeEvent(input$load_viz, {
+      if (!api_manager$bq_authenticated) { showNotification("Please authenticate with BigQuery first!", type = "error"); return() }
+      if (is.null(input$select_date) || input$select_date == "") { showNotification("Please select a date!", type = "warning"); return() }
+
+      output$status <- renderUI({ tags$div(class = "status-info", tags$i(class = "fa fa-spinner fa-spin"), " Loading visualization data...") })
+
+      tryCatch({
+        safe_date <- safe_sql_escape(input$select_date)
+        query <- if (input$filter_row_type == "all") {
+          sprintf("SELECT * FROM `%s` WHERE workout_date = '%s' ORDER BY row_sequence", api_manager$bq_full_table_exercise, safe_date)
+        } else {
+          sprintf("SELECT * FROM `%s` WHERE workout_date = '%s' AND row_type = '%s' ORDER BY row_sequence",
+                  api_manager$bq_full_table_exercise, safe_date, safe_sql_escape(input$filter_row_type))
+        }
+        data <- api_manager$bq_query(query)
+
+        if (nrow(data) == 0) {
+          output$status <- renderUI({ tags$div(class = "status-warning", tags$i(class = "fa fa-exclamation-triangle"), " No data found") })
+          return()
+        }
+
+        viz_data(data)
+
+        output$day_header <- renderUI({
+          tags$div(class = "book-header", tags$h2(data$workout_date[1]),
+                   tags$div(class = "author", tags$i(class = "fa fa-dumbbell"), " ", data$session_type[1]))
+        })
+
+        output$total_exercises <- renderValueBox({ valueBox(sum(data$row_type == "Exercise"), "Exercises", icon = icon("dumbbell"), color = "aqua") })
+
+        summary_row <- data[data$row_type == "Summary", ]
+        total_cal_val <- if (nrow(summary_row) > 0) summary_row$calories_burned[1] else "—"
+        output$total_calories <- renderValueBox({ valueBox(total_cal_val, "Total Calories Burned", icon = icon("fire"), color = "yellow") })
+
+        output$session_type_box <- renderValueBox({ valueBox(data$session_type[1], "Session Type", icon = icon("tag"), color = "green") })
+        output$total_entries <- renderValueBox({ valueBox(nrow(data), "Total Entries", icon = icon("database"), color = "blue") })
+
+        output$timeline_html <- renderUI({
+          d <- viz_data(); req(!is.null(d))
+          html_parts <- c('<div class="viz-card">')
+          html_parts <- c(html_parts, sprintf('<div class="chapter-title"><i class="fa fa-calendar-day"></i> %s Session</div>', as.character(d$workout_date[1])))
+
+          row_icon <- function(rt) switch(rt, "Exercise" = "fa fa-dumbbell", "Summary" = "fa fa-flag-checkered", "fa fa-circle")
+
+          for (i in seq_len(nrow(d))) {
+            row <- d[i, ]
+            cat_label <- if (has_real_value(row$exercise_category)) paste0(" (", row$exercise_category, ")") else ""
+            html_parts <- c(html_parts, sprintf('<div class="section-tag"><i class="%s"></i> %s: %s%s</div>',
+                                                row_icon(as.character(row$row_type)), as.character(row$row_type),
+                                                as.character(row$exercise_name), cat_label))
+            html_parts <- c(html_parts, sprintf('<div class="details-text">%s</div>', as.character(row$exercise_details)))
+
+            metrics <- c()
+            if (has_real_value(row$metric_primary)) {
+              metrics <- c(metrics, sprintf('<div class="metric-box"><div class="metric-label">Primary Metric</div><div class="metric-value" style="font-size: 1em;">%s</div></div>', as.character(row$metric_primary)))
+            }
+            if (has_real_value(row$metric_secondary)) {
+              metrics <- c(metrics, sprintf('<div class="metric-box"><div class="metric-label">Secondary Metric</div><div class="metric-value" style="font-size: 1em;">%s</div></div>', as.character(row$metric_secondary)))
+            }
+            if (has_real_value(row$calories_burned)) {
+              metrics <- c(metrics, sprintf('<div class="metric-box"><div class="metric-label">Calories</div><div class="metric-value" style="font-size: 1em;">%s</div></div>', as.character(row$calories_burned)))
+            }
+            if (length(metrics) > 0) html_parts <- c(html_parts, paste(metrics, collapse = ""))
+
+            if (has_real_value(row$observations)) {
+              html_parts <- c(html_parts, '<div class="reference-box">')
+              html_parts <- c(html_parts, sprintf('<h5><i class="fa fa-lightbulb"></i> %s</h5>', if (row$row_type == "Summary") "Key Insights" else "Notes"))
+              html_parts <- c(html_parts, sprintf('<p style="margin-top: 8px; color: #555;">%s</p>', as.character(row$observations)))
+              html_parts <- c(html_parts, '</div>')
+            }
+            if (i < nrow(d)) html_parts <- c(html_parts, '<hr style="margin: 20px 0; border-top: 1px solid #e0e0e0;">')
+          }
+          html_parts <- c(html_parts, '</div>')
+          HTML(paste(html_parts, collapse = ""))
+        })
+
+        output$calories_chart <- renderPlotly({
+          d <- viz_data(); req(!is.null(d))
+          chart_data <- exercise_chart_data(d)
+
+          if (nrow(chart_data) == 0) return(plot_ly() %>% layout(title = "No parsable calorie data available"))
+
+          chart_data$entry <- factor(chart_data$entry, levels = chart_data$entry)
+          plot_ly(chart_data, x = ~entry, y = ~calories, color = ~category, type = 'bar') %>%
+            layout(title = "Estimated Calories per Entry", xaxis = list(title = "", tickangle = -35), yaxis = list(title = "Calories (kcal)"))
+        })
+
+        output$status <- renderUI({
+          tags$div(class = "status-success", tags$i(class = "fa fa-check-circle"),
+                   sprintf(" Loaded visualizations for %s (%d entries)", data$workout_date[1], nrow(data)))
+        })
+        showNotification("✓ Visualizations loaded!", type = "message")
+
+      }, error = function(e) {
+        output$status <- renderUI({ tags$div(class = "status-error", tags$i(class = "fa fa-times-circle"), " Error: ", e$message) })
+        showNotification(paste("Error:", e$message), type = "error")
+      })
+    })
+
+    output$status <- renderUI({ tags$div() })
+    output$day_header <- renderUI({ tags$div() })
+    output$timeline_html <- renderUI({ tags$div() })
+    output$calories_chart <- renderPlotly({ plot_ly() })
+    output$total_exercises <- renderValueBox({ valueBox(0, "Exercises", icon = icon("dumbbell"), color = "aqua") })
+    output$total_calories <- renderValueBox({ valueBox("—", "Total Calories Burned", icon = icon("fire"), color = "yellow") })
+    output$session_type_box <- renderValueBox({ valueBox("—", "Session Type", icon = icon("tag"), color = "green") })
+    output$total_entries <- renderValueBox({ valueBox(0, "Total Entries", icon = icon("database"), color = "blue") })
+
+    # ── Save as HTML/PDF (shared generic exporter, see R/utils_export.R) ──
+    output$export_download <- downloadHandler(
+      filename = function() {
+        d <- viz_data()
+        base_name <- if (!is.null(d) && nrow(d) > 0) paste0("workout_", d$workout_date[1]) else "workout_export"
+        paste0(base_name, if (identical(input$export_format, "pdf")) ".pdf" else ".html")
+      },
+      content = function(file) {
+        tryCatch({
+          d <- viz_data()
+          if (is.null(d) || nrow(d) == 0) {
+            writeLines("<html><body><p>No data loaded - load a workout session first.</p></body></html>", file)
+            return()
+          }
+
+          cols <- c("row_type", "exercise_category", "exercise_name", "exercise_details", "metric_primary", "metric_secondary", "calories_burned", "observations")
+          labels <- c("Type", "Category", "Exercise", "Details", "Primary Metric", "Secondary Metric", "Calories", "Notes")
+          subtitle <- sprintf("%s - %s | %d entries", d$workout_date[1], d$session_type[1], nrow(d))
+
+          if (identical(input$export_format, "pdf")) {
+            ok <- generate_generic_pdf(file, paste0("Workout - ", d$workout_date[1]), subtitle, d, cols, labels)
+            if (!isTRUE(ok)) stop("PDF generation failed internally - see console log above for the real cause")
+          } else {
+            result <- generate_generic_html(paste0("Workout - ", d$workout_date[1]), subtitle, d, cols, labels)
+            writeLines(result$content, file)
+          }
+        }, error = function(e) {
+          cat("\u274c [exercise_visualizations export] Error:", e$message, "\n")
+          writeLines(c("<html><body>", "<h2>Export failed</h2>",
+                       paste0("<p>", htmltools::htmlEscape(e$message), "</p>"),
+                       "<p>Check the Debug Console (API Configuration group) for full detail.</p>",
+                       "</body></html>"), file)
+        })
+      }
+    )
+    output$export_status <- renderUI({ tags$div() })
+
+    # ── Add to Calendar (.ics) - engine in R/utils_ics.R ──
+    ics_result <- reactive({
+      ics_safe_build(ics_events_exercise, viz_data(),
+                     start_time = input$ics_start_time %||% "18:00",
+                     alarms = isTRUE(input$ics_alarms))
+    })
+    output$export_ics_status <- renderUI({ ics_status_html(ics_result(), loaded = !is.null(viz_data())) })
+    output$export_ics <- downloadHandler(
+      filename = function() { d <- viz_data(); ics_filename("workout", if (!is.null(d) && nrow(d) > 0) d$workout_date[1]) },
+      content = function(file) {
+        d <- viz_data()
+        ics_write_safe(function() ics_result()$events,
+                       paste("Workout", if (!is.null(d) && nrow(d) > 0) as.character(d$workout_date[1]) else ""), file)
+      },
+      contentType = "text/calendar"
+    )
+
+    # Titan calendar buttons (".ics load to calendar" / "Load events into calendar")
+    drive_export_server(input, output, session, api_manager, group = "Exercise Tracker", tab = "Visualizations",
+      specs = reactive({
+        d <- viz_data()
+        if (is.null(d) || nrow(d) == 0) return(list())
+        list(calories_per_entry = exercise_diagram_calories(d))
+      }),
+      subject = function() { d <- viz_data(); if (is.null(d) || nrow(d) == 0) "general" else as.character(d$workout_date[1]) })
+
+    titan_viz_hook(input, output, session, api_manager, ics_result, "Exercise Tracker")
+
+    session$onSessionEnded(function() {})
+  })
+}

@@ -1,8 +1,7 @@
 # R/utils_common.R
-# Shared Utility Functions - UNIFIED Book Summary + Flex Table + Mind
-# Map + Knowledge Graph Suite
+# Shared utility functions of every suite: parsers, prompt builders, cascading dropdowns and renderers.
 # =====================================================================
-# This file merges the four sibling apps' utils_common.R files. Only
+# Only
 # genuinely IDENTICAL helpers are shared once (safe_sql_escape, %||%,
 # the 3-level Category/Domain/Topic cascade - parametrized by method
 # name since Mind Map and Knowledge Graph each have their own table).
@@ -12,8 +11,14 @@
 # and their parsers, validators, and prompt builders should not be
 # conflated.
 
+# Text made safe for a single-quoted BigQuery (GoogleSQL) string literal: a backslash and a quote are each escaped with a
+# backslash and line breaks become \n. Doubling the quote, as other SQL dialects do, is a syntax error in BigQuery, so a
+# value such as "Don't Do" used to make the query fail.
 safe_sql_escape <- function(input_value) {
-  gsub("'", "''", input_value)
+  x <- as.character(input_value)
+  x <- gsub("\\", "\\\\", x, fixed = TRUE)
+  x <- gsub("'", "\\'", x, fixed = TRUE)
+  gsub("\r\n|\r|\n", "\\\\n", x)
 }
 
 # ====================================================================
@@ -857,7 +862,7 @@ setup_category_topic_cascade <- function(input, output, session, api_manager) {
 # Shared by BOTH Mind Map's and Knowledge Graph's "Generate" tabs (the
 # only two callers - Edit/Visualize tabs in each app use existing-only
 # dropdowns plus a 4th "version" selector, written inline in their own
-# server.R rather than through this shared "add new" helper). Since
+# server rather than through this shared "add new" helper). Since
 # Mind Map and Knowledge Graph each have their OWN BigQuery table and
 # their own APIManager methods (bq_get_mindmap_taxonomy vs
 # bq_get_kg_taxonomy), this function is parametrized by METHOD NAME
@@ -2574,7 +2579,6 @@ build_cytoscape_elements <- function(entities_df, relationships_df) {
   c(node_elements, edge_elements)
 }
 
-`%||%` <- function(x, y) if (is.null(x)) y else x
 
 # ============================================================
 # STRATEGIC ANALYSIS (AI-generated strategy diagrams)
@@ -2673,7 +2677,8 @@ DIAGRAM_TYPES_BY_GROUP <- list(
                               "porters_generic_strategies", "tows_matrix",
                               "blue_ocean_errc", "value_curve"),
   business_model_design   = c("business_model_canvas", "lean_canvas"),
-  decision_making_process = c("frame_diagnose_choose_act", "pdca_cycle", "weighted_decision_matrix", "decision_tree"),
+  decision_making_process = c("frame_diagnose_choose_act", "pdca_cycle", "weighted_decision_matrix", "decision_tree",
+                              "decision_questions_wheel"),
   organizational_alignment = c("mckinsey_7s", "raci_matrix"),
   timing_lifecycle        = c("disruptive_innovation", "product_lifecycle",
                               "technology_adoption_lifecycle", "trend_to_commoditization",
@@ -2701,6 +2706,7 @@ DIAGRAM_TYPE_LABELS <- c(
   pdca_cycle = "PDCA Cycle (Plan-Do-Check-Act)",
   weighted_decision_matrix = "Weighted Decision Matrix",
   decision_tree = "Decision Tree (expected value)",
+  decision_questions_wheel = "Hard Decision Questions Wheel (20 questions)",
   mckinsey_7s = "McKinsey 7S Framework",
   raci_matrix = "RACI Matrix",
   disruptive_innovation = "Disruptive Innovation Curve",
@@ -2733,6 +2739,7 @@ DIAGRAM_RENDER_SHAPE <- c(
   blue_ocean_errc = "grid", value_curve = "line_chart",
   business_model_canvas = "business_model_canvas", lean_canvas = "business_model_canvas",
   frame_diagnose_choose_act = "linear_flow", pdca_cycle = "radial", weighted_decision_matrix = "table", decision_tree = "decision_tree",
+  decision_questions_wheel = "question_wheel",
   mckinsey_7s = "network", raci_matrix = "table",
   disruptive_innovation = "line_chart", product_lifecycle = "line_chart",
   technology_adoption_lifecycle = "bar_chart", trend_to_commoditization = "bar_chart",
@@ -2913,6 +2920,7 @@ framework_specific_guidance <- function(diagram_type, rules_count = NULL, outcom
       'implement and monitor. sub_text for each box must describe what this phase means SPECIFICALLY for ',
       'this topic, not the generic dictionary definition of the phase.\n\n'
     ),
+    "decision_questions_wheel" = qw_framework_guidance(),
     "pdca_cycle" = paste0(
       'FRAMEWORK = PDCA Cycle (a continuous-improvement loop). Exactly 4 outer segments in clockwise ',
       'order: Plan, Do, Check, Act. No center rings needed for this framework.\n\n'
@@ -3069,6 +3077,7 @@ diagram_type_instructions <- function(diagram_type, diagram_group, category, dom
   )
 
   shape_block <- switch(shape,
+    "question_wheel" = qw_shape_block(sep),
     "decision_tree" = paste0(
       'Title block (exactly one, first):\n[component_type]: title\n[layout_role]: title\n[label_text]: <diagram title>\n',
       '[sub_text]: <the decision question in one sentence>\n[unit_label]: <currency code, e.g. GBP, USD, EUR>\n',
@@ -3482,27 +3491,24 @@ diagram_type_dropdown_ui <- function(ns) {
 
 # Wires the Framework dropdown's choices to whichever Group is currently
 # selected. Called once per module that shows both dropdowns.
-setup_diagram_group_type_cascade <- function(input, output, session) {
+setup_group_type_cascade <- function(input, session, types_by_group, type_labels, empty_label) {
   observeEvent(input$diagram_group_select, {
-    grp <- input$diagram_group_select
-    types <- DIAGRAM_TYPES_BY_GROUP[[grp]]
-    if (is.null(types) || length(types) == 0) {
-      updateSelectInput(session, "diagram_type_select", choices = c("(no frameworks in this group)" = ""))
-    } else {
-      updateSelectInput(session, "diagram_type_select",
-                        choices = setNames(types, DIAGRAM_TYPE_LABELS[types]))
-    }
+    types <- types_by_group[[input$diagram_group_select]]
+    updateSelectInput(session, "diagram_type_select",
+                      choices = if (is.null(types) || length(types) == 0) stats::setNames("", empty_label) else setNames(types, type_labels[types]))
   }, ignoreNULL = FALSE)
 }
+setup_diagram_group_type_cascade <- function(input, output, session)
+  setup_group_type_cascade(input, session, DIAGRAM_TYPES_BY_GROUP, DIAGRAM_TYPE_LABELS, "(no frameworks in this group)")
 
 # NOTE ON VISUALIZATIONS/BROWSE: the actual diagram-picker cascade (Category
 # -> Domain -> Topic -> Diagram) is implemented directly inside
-# diagram_visualizations/server.R as FOUR separate, chained selectInputs -
+# diagram_visualizations.R as FOUR separate, chained selectInputs -
 # deliberately NOT a single dropdown with concatenated labels like
 # "Grid - Hedge Fund Startup AI SWOT (generated)". A mega-dropdown that
 # concatenates every field becomes unusable once there are more than a
 # handful of diagrams; four small chained dropdowns (mirroring
-# visualize_kg_d3/server.R's own Category -> Domain -> Topic -> Graph
+# visualize_kg_d3.R's own Category -> Domain -> Topic -> Graph
 # Version cascade exactly) keep each list short and let the person narrow
 # down step by step, the same way every other suite's Visualize/Browse tab
 # already works in this app.
@@ -3527,6 +3533,7 @@ render_diagram <- function(components_df, diagram_type) {
   }
 
   if (identical(shape, "decision_tree")) return(render_decision_tree(components_df))
+  if (identical(shape, "question_wheel")) return(render_question_wheel(components_df))
 
   html_family <- c("grid", "quadrant", "table", "stacked_list", "linear_flow", "business_model_canvas", "value_chain", "rules_table")
   svg_family <- c("radial", "network")
@@ -3550,7 +3557,7 @@ render_diagram <- function(components_df, diagram_type) {
 # layout comes from CSS Grid/Flexbox, not from any position field Claude
 # wrote - the browser's layout engine makes overlap impossible by
 # construction. Uses the same HTML-fragment-string + HTML() pattern as
-# Flex Table's table_viewer/server.R.
+# Flex Table's table_viewer.R.
 render_diagram_html_grid <- function(components_df, diagram_type) {
   title_row <- components_df[components_df$component_type == "title", , drop = FALSE]
   title_text <- if (nrow(title_row) > 0) title_row$label_text[1] else components_df$diagram_name[1]
@@ -4528,20 +4535,8 @@ generate_sixsigma_prompt <- function(diagram_type, diagram_group, category, doma
 # lines (diagram_type/diagram_group/category/domain/topic - all fixed by
 # the user's dropdown selections, never Claude's to change). The 6th line
 # (title) is only forced when the user supplied an explicit title_hint.
-overwrite_sixsigma_header <- function(text, diagram_type, diagram_group, category, domain, topic, title_override = NULL) {
-  lines <- strsplit(text, "\n")[[1]]
-  metadata_line_idx <- which(grepl("^\\[.+\\]$", trimws(lines)))
-  metadata_line_idx <- head(metadata_line_idx, 6)
-
-  values <- list(diagram_type, diagram_group, category, domain, topic, title_override)
-  for (i in seq_along(metadata_line_idx)) {
-    v <- values[[i]]
-    if (!is.null(v) && !is.na(v) && nchar(trimws(v)) > 0) {
-      lines[metadata_line_idx[i]] <- paste0("[", trimws(v), "]")
-    }
-  }
-  paste(lines, collapse = "\n")
-}
+# The first six lines have the same meaning in both suites, so the same function serves both.
+overwrite_sixsigma_header <- overwrite_diagram_header
 
 # Parser: same two-part structure as parse_diagram_text() (metadata block
 # via a scan of the first N bare "[value]" lines, then component blocks
@@ -4692,18 +4687,8 @@ sixsigma_type_dropdown_ui <- function(ns) {
 
 # Wires the Type dropdown's choices to whichever Group is currently
 # selected. Called once per module that shows both dropdowns.
-setup_sixsigma_group_type_cascade <- function(input, output, session) {
-  observeEvent(input$diagram_group_select, {
-    grp <- input$diagram_group_select
-    types <- SIXSIGMA_TYPES_BY_GROUP[[grp]]
-    if (is.null(types) || length(types) == 0) {
-      updateSelectInput(session, "diagram_type_select", choices = c("(no tools in this group)" = ""))
-    } else {
-      updateSelectInput(session, "diagram_type_select",
-                        choices = setNames(types, SIXSIGMA_TYPE_LABELS[types]))
-    }
-  }, ignoreNULL = FALSE)
-}
+setup_sixsigma_group_type_cascade <- function(input, output, session)
+  setup_group_type_cascade(input, session, SIXSIGMA_TYPES_BY_GROUP, SIXSIGMA_TYPE_LABELS, "(no tools in this group)")
 
 # ============================================================
 # SIX SIGMA - GENERIC RENDERERS
@@ -5881,7 +5866,7 @@ render_sankey <- function(components_df) {
 # (e.g. "bcg_matrix"), never a free-text name it invents - this is what
 # lets a click on a recommended tool deterministically auto-select the
 # right Group + Framework dropdown on the Generate Diagram tab (see
-# generate_diagram/server.R's observer on
+# generate_diagram.R's observer on
 # api_manager$pending_diagram_selection()). Any id Claude returns that
 # isn't a real, current diagram_type is dropped by
 # parse_diagram_recommendations() rather than trusted - the same
@@ -5911,6 +5896,7 @@ DIAGRAM_TYPE_SHORT_DESC <- c(
   pdca_cycle = "Runs a continuous-improvement loop (Plan-Do-Check-Act).",
   weighted_decision_matrix = "Compares options against multiple weighted criteria with raw scores laid out clearly.",
   decision_tree = "Lays out a sequence of decisions and uncertain outcomes with probabilities and payoffs, calculates the expected value of every option, recommends the best route and shows how sure you need to be (critical probabilities, risk of loss).",
+  decision_questions_wheel = "Stress-tests a hard decision (often a qualitative one: a pivot, a hire, exiting a business) with 20 fixed questions in four angles - Problem & Purpose, Facts & Options, Risks & Costs, People & Action - including 'What would my replacement do?', a pre-mortem and reversibility; answers each question, flags the open ones and gives a verdict on whether to decide now, test first or wait.",
   mckinsey_7s = "Assesses whether an organization's structure, systems, and culture align with its strategy.",
   raci_matrix = "Clarifies who is Responsible, Accountable, Consulted, and Informed across a set of tasks.",
   disruptive_innovation = "Shows how a disruptor's performance trajectory could overtake an incumbent's.",
@@ -5969,12 +5955,12 @@ generate_diagram_recommendation_prompt <- function(problem_description, num_reco
   )
 }
 
-# Parser: validates every diagram_type id against the CURRENT catalog
-# (DIAGRAM_TYPES) before trusting it - an id Claude got wrong, invented,
+# Parser (shared by the Strategic and Six Sigma recommenders): validates every diagram_type id against the CURRENT
+# catalog before trusting it - an id Claude got wrong, invented,
 # or that has since been removed from the catalog is dropped rather than
 # passed through, since a broken id would silently fail to auto-select
 # anything when a recommendation is clicked.
-parse_diagram_recommendations <- function(text, num_recommendations) {
+parse_tool_recommendations <- function(text, num_recommendations, types, types_by_group, type_labels, group_labels, tag) {
   lines <- strsplit(text, "\n")[[1]]
   blocks <- list()
   current <- list()
@@ -6020,18 +6006,18 @@ parse_diagram_recommendations <- function(text, num_recommendations) {
   dropped <- 0
   for (b in blocks) {
     dt <- b$diagram_type %||% ""
-    if (!dt %in% DIAGRAM_TYPES) {
-      cat(sprintf("⚠️  [Strategy Recommender][DEBUG] Dropping recommendation with unrecognized diagram_type '%s' (rank %s) - not in the current catalog\n", dt, b$rank %||% "?"))
+    if (!dt %in% types) {
+      cat(sprintf("⚠️  [%s][DEBUG] Dropping recommendation with unrecognized diagram_type '%s' (rank %s) - not in the current catalog\n", tag, dt, b$rank %||% "?"))
       dropped <- dropped + 1
       next
     }
-    grp <- names(which(sapply(DIAGRAM_TYPES_BY_GROUP, function(x) dt %in% x)))[1]
+    grp <- names(which(sapply(types_by_group, function(x) dt %in% x)))[1]
     df <- rbind(df, data.frame(
       rank = suppressWarnings(as.integer(b$rank %||% NA)),
       diagram_type = dt,
-      diagram_label = DIAGRAM_TYPE_LABELS[[dt]],
+      diagram_label = type_labels[[dt]],
       diagram_group = grp,
-      diagram_group_label = DIAGRAM_GROUP_LABELS[[grp]],
+      diagram_group_label = group_labels[[grp]],
       reasoning = b$reasoning %||% "",
       drawbacks = b$drawbacks %||% "",
       stringsAsFactors = FALSE
@@ -6042,12 +6028,14 @@ parse_diagram_recommendations <- function(text, num_recommendations) {
   df <- df[order(df$rank), ]
 
   if (dropped > 0) {
-    cat(sprintf("⚠️  [Strategy Recommender][DEBUG] %d recommendation(s) dropped for invalid diagram_type; %d valid recommendation(s) remain (requested %d)\n",
-                dropped, nrow(df), num_recommendations))
+    cat(sprintf("⚠️  [%s][DEBUG] %d recommendation(s) dropped for invalid diagram_type; %d valid recommendation(s) remain (requested %d)\n",
+                tag, dropped, nrow(df), num_recommendations))
   }
 
   df
 }
+parse_diagram_recommendations <- function(text, num_recommendations)
+  parse_tool_recommendations(text, num_recommendations, DIAGRAM_TYPES, DIAGRAM_TYPES_BY_GROUP, DIAGRAM_TYPE_LABELS, DIAGRAM_GROUP_LABELS, "Strategy Recommender")
 
 # ============================================================
 # SIX SIGMA TOOL RECOMMENDER (Six Sigma Analysis only)
@@ -6143,80 +6131,8 @@ generate_sixsigma_recommendation_prompt <- function(problem_description, num_rec
 # Parser: validates every diagram_type id against the CURRENT Six Sigma
 # catalog (SIXSIGMA_ALL_TYPES) before trusting it, exactly mirroring
 # parse_diagram_recommendations()'s discipline.
-parse_sixsigma_recommendations <- function(text, num_recommendations) {
-  lines <- strsplit(text, "\n")[[1]]
-  blocks <- list()
-  current <- list()
-  last_field <- NULL
-  fields <- c("rank", "diagram_type", "reasoning", "drawbacks")
-
-  flush_block <- function() {
-    if (length(current) > 0 && !is.null(current$diagram_type)) {
-      blocks[[length(blocks) + 1]] <<- current
-    }
-  }
-
-  for (line in lines) {
-    line <- trimws(line)
-    if (line == "") { flush_block(); current <- list(); last_field <- NULL; next }
-
-    matched <- FALSE
-    for (field in fields) {
-      pat <- paste0("^\\[", field, "\\]:\\s*(.*)$")
-      if (grepl(pat, line, ignore.case = TRUE)) {
-        value <- trimws(sub(pat, "\\1", line, ignore.case = TRUE))
-        if (field == "rank" && !is.null(current$rank)) { flush_block(); current <- list() }
-        current[[field]] <- value
-        last_field <- field
-        matched <- TRUE
-        break
-      }
-    }
-    if (!matched && length(current) > 0 && !is.null(last_field)) {
-      current[[last_field]] <- paste(current[[last_field]], line)
-    }
-  }
-  flush_block()
-
-  if (length(blocks) == 0) stop("No valid recommendation blocks found in the Editing Tool's response")
-
-  df <- data.frame(
-    rank = integer(), diagram_type = character(), diagram_label = character(), diagram_group = character(),
-    diagram_group_label = character(), reasoning = character(), drawbacks = character(),
-    stringsAsFactors = FALSE
-  )
-
-  dropped <- 0
-  for (b in blocks) {
-    dt <- b$diagram_type %||% ""
-    if (!dt %in% SIXSIGMA_ALL_TYPES) {
-      cat(sprintf("⚠️  [Six Sigma Recommender][DEBUG] Dropping recommendation with unrecognized diagram_type '%s' (rank %s) - not in the current catalog\n", dt, b$rank %||% "?"))
-      dropped <- dropped + 1
-      next
-    }
-    grp <- names(which(sapply(SIXSIGMA_TYPES_BY_GROUP, function(x) dt %in% x)))[1]
-    df <- rbind(df, data.frame(
-      rank = suppressWarnings(as.integer(b$rank %||% NA)),
-      diagram_type = dt,
-      diagram_label = SIXSIGMA_TYPE_LABELS[[dt]],
-      diagram_group = grp,
-      diagram_group_label = SIXSIGMA_GROUP_LABELS[[grp]],
-      reasoning = b$reasoning %||% "",
-      drawbacks = b$drawbacks %||% "",
-      stringsAsFactors = FALSE
-    ))
-  }
-
-  if (nrow(df) == 0) stop("The Editing Tool's response contained no recommendations with a valid, recognized diagram_type")
-  df <- df[order(df$rank), ]
-
-  if (dropped > 0) {
-    cat(sprintf("⚠️  [Six Sigma Recommender][DEBUG] %d recommendation(s) dropped for invalid diagram_type; %d valid recommendation(s) remain (requested %d)\n",
-                dropped, nrow(df), num_recommendations))
-  }
-
-  df
-}
+parse_sixsigma_recommendations <- function(text, num_recommendations)
+  parse_tool_recommendations(text, num_recommendations, SIXSIGMA_ALL_TYPES, SIXSIGMA_TYPES_BY_GROUP, SIXSIGMA_TYPE_LABELS, SIXSIGMA_GROUP_LABELS, "Six Sigma Recommender")
 
 # ============================================================
 # VISUALIZATION EXPORT (Strategic Analysis, Six Sigma, Flex Table)
@@ -6236,18 +6152,21 @@ parse_sixsigma_recommendations <- function(text, num_recommendations) {
 export_controls_ui <- function(ns, target_id, default_filename = "diagram") {
   format_select_id <- ns("export_format")
   tags$div(class = "export-controls-bar",
-    tags$label("Download visualization as:", `for` = format_select_id, class = "export-controls-label"),
+    tags$label("Save visualization as:", `for` = format_select_id, class = "export-controls-label"),
     tags$select(id = format_select_id, class = "form-control export-format-select",
       tags$option(value = "pdf", "PDF"),
       tags$option(value = "pptx", "PowerPoint (PPTX)"),
       tags$option(value = "html", "HTML"),
-      tags$option(value = "jpeg", "JPEG Image")
+      tags$option(value = "png", "PNG Image"),
+      tags$option(value = "jpeg", "JPEG Image"),
+      tags$option(value = "gif", "GIF Image")
     ),
     tags$button(
       type = "button", class = "btn btn-success export-download-btn",
       onclick = sprintf("window.exportVisualization('%s', '%s', '%s')", target_id, format_select_id, default_filename),
       tags$i(class = "fa fa-download"), " Download"
-    )
+    ),
+    gd_save_button("diagram", target_id, format_select_id, default_filename)
   )
 }
 
@@ -6259,12 +6178,16 @@ export_controls_ui <- function(ns, target_id, default_filename = "diagram") {
 # themselves) so the export mechanism stays a concern of the
 # Visualizations tab that's showing the content, not of the generic
 # renderer functions, which have no reason to know about DOM export ids.
-export_capture_wrapper <- function(ns, content, export_title) {
-  tags$div(
+# `meta` (optional): what is drawn - a data frame of the diagram's rows, a Technical Design / matrix / infographic
+# object, or list(category, domain, topic). It only labels the file when it is saved to Google Drive: main group /
+# category / domain / topic / title (see R/utils_gdrive.R); the main group and sub-tab come from the module id.
+export_capture_wrapper <- function(ns, content, export_title, meta = NULL) {
+  do.call(tags$div, c(list(
     id = ns("export_target"), class = "export-capture-target",
-    `data-export-title` = export_title %||% "diagram",
-    content
-  )
+    `data-export-title` = export_title %||% "diagram"),
+    gd_target_attrs(ns, meta),
+    list(content)
+  ))
 }
 
 # ============================================================

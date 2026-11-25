@@ -17,14 +17,14 @@ image_generation_ui <- function(id) {
                selectInput(ns("aspectRatio"), "Aspect Ratio:",
                            choices = c("1:1 (Square)" = "1:1", "4:3 (Standard)" = "4:3", "3:4 (Portrait)" = "3:4",
                                        "16:9 (Widescreen)" = "16:9", "9:16 (Tall Portrait)" = "9:16"), selected = "1:1"),
-               h4("Dimensions", style = "margin-top: 20px; color: #667eea;"),
+               h4("Dimensions", style = "margin-top: 20px; color: #008A82;"),
                fluidRow(
                  column(6, numericInput(ns("height"), "Height:", value = 10, min = 1, max = 200, step = 0.5)),
                  column(6, selectInput(ns("unit"), "Unit:", choices = c("cm", "inches"), selected = "cm"))
                ),
                div(class = "dimension-display", textOutput(ns("calculatedWidth"))),
                br(),
-               h4("Model & Quality", style = "color: #667eea;"),
+               h4("Model & Quality", style = "color: #008A82;"),
                fluidRow(
                  column(6, selectInput(ns("model"), "DALL-E Model:", choices = c("DALL-E 3" = "dall-e-3", "DALL-E 2" = "dall-e-2"), selected = "dall-e-3")),
                  column(6, conditionalPanel(condition = sprintf("input['%s'] == 'dall-e-3'", ns("model")),
@@ -36,7 +36,7 @@ image_generation_ui <- function(id) {
                actionButton(ns("generateBtn"), "Generate Image", class = "btn-success", style = "width: 100%; font-size: 16px; padding: 12px;", icon = icon("magic")),
                br(), br(),
                conditionalPanel(condition = "output.imageGenerated", ns = ns,
-                                 h4("Download Options", style = "color: #667eea;"),
+                                 h4("Download Options", style = "color: #008A82;"),
                                  selectInput(ns("downloadFormat"), "Download Format:",
                                              choices = c("JPG (High Quality)" = "jpg", "PNG (Lossless)" = "png", "TIFF (Professional)" = "tiff",
                                                          "GIF (Compatible)" = "gif", "PDF (Document)" = "pdf", "SVG (Scalable)" = "svg"), selected = "jpg"),

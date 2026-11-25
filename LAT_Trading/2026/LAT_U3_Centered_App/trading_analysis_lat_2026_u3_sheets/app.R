@@ -21,6 +21,7 @@ library(curl)
 
 source("global.R", local = TRUE)
 for (f in list.files("modules", pattern = "\\.R$", full.names = TRUE)) source(f, local = TRUE)
+tryCatch(gd_auto_connect(), error = function(e) cat("[Google Drive]", conditionMessage(e), "\n"))   # key + folder from GDRIVE_* or the local key folder
 
 u3_instruments <- list(
   Commodities = c("Brent crude (BZ=F)" = "BZ=F", "WTI crude (CL=F)" = "CL=F", "Gold (GC=F)" = "GC=F", "Natural gas (NG=F)" = "NG=F"),
@@ -93,6 +94,7 @@ ui <- dashboardPage(
         menuSubItem("BigQuery", tabName = "econ_bigquery_auth", icon = icon("database")),
         menuSubItem("Claude API", tabName = "econ_claude_config", icon = icon("robot")),
         menuSubItem("Capital.com", tabName = "cc_api_config", icon = icon("building-columns")),
+        menuSubItem("Google Drive", tabName = "gdrive_config", icon = icon("google-drive")),
         menuSubItem("Trello & Jira", tabName = "trello_jira_config", icon = icon("trello")),
         menuSubItem("Debug Console", tabName = "debug_console", icon = icon("terminal")))
     ),
@@ -109,7 +111,7 @@ ui <- dashboardPage(
       uiOutput("api_status"))
   ),
   dashboardBody(
-    tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "css/global.css"), tags$meta(charset = "UTF-8"),
+    tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "css/global.css"), tags$meta(charset = "UTF-8"), tags$script(src = "js/gdrive_export.js"),
               tags$meta(name = "viewport", content = "width=device-width, initial-scale=1.0")),
     tabItems(
       tabItem(tabName = "u3_start", u3_start_ui()),
@@ -124,6 +126,7 @@ ui <- dashboardPage(
       tabItem(tabName = "econ_bigquery_auth", econ_bigquery_auth_ui("econ_bigquery_auth")),
       tabItem(tabName = "econ_claude_config", econ_claude_config_ui("econ_claude_config")),
       tabItem(tabName = "cc_api_config", cc_api_config_ui("cc_api_config")),
+      tabItem(tabName = "gdrive_config", gdrive_config_ui("gdrive_config")),
       tabItem(tabName = "trello_jira_config", trello_jira_config_ui("trello_jira_config")),
       tabItem(tabName = "debug_console", debug_console_ui("debug_console"))
     )
@@ -187,7 +190,8 @@ server <- function(input, output, session) {
       light("BigQuery", bq, FALSE, if (bq) "ready" else if (bq_fail) "key found, connection failed (see Debug Console)" else "not connected: API Configuration > BigQuery"),
       light("Claude", cl, FALSE, if (cl) "ready (key loaded)" else "no key: API Configuration > Claude API"),
       light("Capital.com", cc_client$connected(), cc_client$has_credentials() && !cc_client$connected(),
-            if (cc_client$connected()) sprintf("ready (%s)", toupper(cc_client$environment())) else if (cc_client$has_credentials()) "credentials loaded, not connected" else "not set up: API Configuration > Capital.com"))
+            if (cc_client$connected()) sprintf("ready (%s)", toupper(cc_client$environment())) else if (cc_client$has_credentials()) "credentials loaded, not connected" else "not set up: API Configuration > Capital.com"),
+      light("Google Drive", gd_client$connected(), FALSE, if (gd_client$connected()) "ready: the cloud buttons save charts and tables" else "optional: API Configuration > Google Drive"))
   })
 
   econ_bigquery_auth_server("econ_bigquery_auth", api_manager)
@@ -205,7 +209,10 @@ server <- function(input, output, session) {
 
   cc_store <- cc_make_store(cc_bq_backend(api_manager))   # separate cc_ tables: the IG records are not touched
   cc_api_config_server("cc_api_config", cc_client, cc_store)
-  cc_trading_records_server("cc_records", cc_client, api_manager, cc_store)
+  gdrive_config_server("gdrive_config", gd_client, cc_store)        # API Configuration > Google Drive
+  gdrive_export_server(input, output, session, gd_client, cc_store)  # the cloud button on every chart, diagram, picture and table
+  cc_trading_records_server("cc_records", cc_client, api_manager, cc_store, records_store = records_store)
+  ml_lab_server("ml_lab", cc_client, cc_store, records_store = records_store)   # ************** machine learning on candle history
   trading_desk_server(input, session, output, cc_store = cc_store, records_store = records_store)   # one place for the shared plan settings
   pattern_matrix_server("pattern_matrix", data_manager, api_manager)   # course Steps 1-6 (with their own step servers) + the 141 patterns
 
